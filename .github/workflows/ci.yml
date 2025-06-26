@@ -117,13 +117,8 @@ jobs:
     - name: 🔍 Gosecセキュリティスキャン
       uses: securego/gosec@master
       with:
-        args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
+        args: './...'
         
-    - name: 📤 セキュリティ結果のアップロード
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: gosec-results.sarif
 
   # 脆弱性チェック (Vulnerability Check)
   vulnerability:
