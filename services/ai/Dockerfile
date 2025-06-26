@@ -6,9 +6,7 @@ FROM python:3.13-slim as builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -16,21 +14,17 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN pip install poetry
-
-# Configure Poetry
-ENV POETRY_VENV_IN_PROJECT=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Set work directory
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml poetry.lock* ./
+COPY pyproject.toml uv.lock ./
 
 # Install dependencies
-RUN poetry install --no-dev --no-root && rm -rf $POETRY_CACHE_DIR
+RUN uv sync --frozen --no-dev
 
 # Production stage
 FROM python:3.13-slim as production
@@ -40,11 +34,14 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 
-# Install runtime dependencies
+# Install runtime dependencies and uv
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
+
+# Install uv in production
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Create non-root user
 RUN groupadd -r beaver && useradd -r -g beaver beaver
@@ -88,9 +85,9 @@ RUN apt-get update && apt-get install -y \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-# Install development Python packages
-COPY --from=builder /app/.venv /app/.venv
-RUN /app/.venv/bin/pip install pytest pytest-asyncio pytest-cov black isort flake8 mypy
+# Copy development dependency files and install dev dependencies
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen
 
 # Switch back to beaver user
 USER beaver

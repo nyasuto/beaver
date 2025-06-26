@@ -1,38 +1,39 @@
 # 🐍 Beaver AI Services
 
-AI processing services for Beaver knowledge dam construction tool. Provides LangChain + OpenAI/Anthropic integration for content analysis, summarization, and classification.
+AI processing services for Beaver knowledge dam construction tool. Provides real OpenAI/Anthropic integration for GitHub Issue summarization and content analysis.
 
 ## 🚀 Features
 
-- **AI-Powered Summarization**: Convert GitHub Issues into concise summaries
-- **Content Classification**: Automatically categorize content into predefined categories
-- **Multi-Provider Support**: OpenAI and Anthropic API integration
+- **Real AI Summarization**: Live OpenAI/Anthropic integration for GitHub Issues
+- **Multi-Provider Support**: OpenAI GPT-4 and Anthropic Claude API integration
+- **Structured Analysis**: Category detection, complexity assessment, key points extraction
+- **Fallback System**: Graceful degradation when AI services fail
 - **RESTful API**: FastAPI-based REST API with automatic documentation
 - **Health Monitoring**: Comprehensive health check endpoints
-- **Docker Support**: Production-ready containerization
+- **Docker Support**: Production-ready containerization with uv
 - **Async Processing**: High-performance async request handling
 
 ## 📋 Requirements
 
 - Python 3.9+
 - At least one AI API key (OpenAI or Anthropic)
-- Poetry (recommended) or pip
+- uv (recommended) or pip
 
 ## 🏗️ Installation
 
-### Using Poetry (Recommended)
+### Using uv (Recommended)
 
 ```bash
 cd services/ai
-poetry install
-poetry shell
+uv sync
+uv run python -m app.main
 ```
 
 ### Using pip
 
 ```bash
 cd services/ai
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### Using Docker
@@ -62,14 +63,14 @@ ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
 ### Development Mode
 
 ```bash
-# Using Poetry
-poetry run python -m app.main
+# Using uv (recommended)
+uv run python -m app.main
+
+# Using uvicorn directly with uv
+uv run uvicorn app.main:app --reload --port 8000
 
 # Using Python directly
 python -m app.main
-
-# Using uvicorn directly
-uvicorn app.main:app --reload --port 8000
 ```
 
 ### Production Mode
@@ -78,8 +79,8 @@ uvicorn app.main:app --reload --port 8000
 # Using Docker Compose
 docker-compose -f docker-compose.yml --profile production up
 
-# Using Poetry
-ENVIRONMENT=production poetry run python -m app.main
+# Using uv
+ENVIRONMENT=production uv run python -m app.main
 ```
 
 ## 📡 API Endpoints
@@ -139,13 +140,17 @@ curl -X POST "http://localhost:8000/api/v1/classify/" \
 
 ```bash
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run with coverage
-poetry run pytest --cov=app --cov-report=html
+uv run pytest --cov=app --cov-report=html
 
 # Run specific test file
-poetry run pytest tests/test_health.py -v
+uv run pytest tests/test_health.py -v
+
+# Run with development dependencies
+uv sync --group dev
+uv run pytest
 ```
 
 ## 🐳 Docker Usage
@@ -198,17 +203,17 @@ Structured logging with configurable levels:
 
 ```bash
 # Format code
-poetry run black app/ tests/
-poetry run isort app/ tests/
+uv run black app/ tests/
+uv run isort app/ tests/
 
 # Lint code
-poetry run flake8 app/ tests/
+uv run flake8 app/ tests/
 
 # Type checking
-poetry run mypy app/
+uv run mypy app/
 
 # All quality checks
-poetry run black app/ && poetry run isort app/ && poetry run flake8 app/ && poetry run mypy app/
+uv run black app/ && uv run isort app/ && uv run flake8 app/ && uv run mypy app/
 ```
 
 ### Adding New Features
@@ -224,15 +229,18 @@ poetry run black app/ && poetry run isort app/ && poetry run flake8 app/ && poet
 ```
 services/ai/
 ├── app/
-│   ├── core/           # Core configuration and utilities
+│   ├── core/           # Core configuration and AI clients
+│   │   ├── ai_client.py    # OpenAI/Anthropic integration
+│   │   ├── config.py       # Settings management
+│   │   └── logging.py      # Structured logging
 │   ├── models/         # Pydantic schemas
 │   ├── routers/        # API route handlers
 │   └── main.py         # FastAPI application
 ├── tests/              # Test files
-├── Dockerfile          # Multi-stage Docker build
+├── Dockerfile          # Multi-stage Docker build (uv-based)
 ├── docker-compose.yml  # Container orchestration
-├── pyproject.toml      # Poetry configuration
-└── requirements.txt    # Pip-compatible dependencies
+├── pyproject.toml      # Modern PEP 621 configuration
+└── uv.lock            # Locked dependencies for reproducible builds
 ```
 
 ## 🤝 Integration with Go Services
@@ -257,11 +265,31 @@ MIT License - Part of the Beaver project.
 
 ## 🚨 Important Notes
 
-- **Mock Implementation**: Current endpoints return mock responses for testing
-- **Phase 1 Implementation**: Real AI integration will be implemented in Phase 1 MVP
-- **Security**: API keys are required but validation is lenient for development
+- **Live AI Integration**: Real OpenAI/Anthropic API integration implemented
+- **Fallback System**: Graceful degradation when AI services fail
+- **Security**: API keys required for AI providers
 - **Performance**: Production deployment requires proper resource allocation
+- **Dependency Management**: Uses modern uv for fast, reliable builds
+
+## 🔄 Development Workflow
+
+```bash
+# Setup development environment
+uv sync --group dev
+
+# Run development server
+uv run uvicorn app.main:app --reload
+
+# Run tests
+uv run pytest
+
+# Format and lint
+uv run black app/ && uv run flake8 app/
+
+# Docker development
+docker-compose up --build
+```
 
 ---
 
-**Ready to power Beaver's AI knowledge extraction! 🦫🧠**
+**Powering Beaver's AI knowledge extraction with real intelligence! 🦫🧠✨**
