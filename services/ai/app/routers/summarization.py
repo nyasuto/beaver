@@ -6,12 +6,14 @@ Provides AI-powered summarization of GitHub Issues and content.
 
 import logging
 import time
+import asyncio
 from typing import Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi import status
 
 from app.core.config import Settings, get_settings
+from app.core.ai_client import AIClient
 from app.models.schemas import (
     SummarizationRequest,
     SummarizationResponse,
@@ -39,49 +41,71 @@ async def _validate_ai_provider(provider: AIProvider, settings: Settings) -> Non
         )
 
 
-async def _mock_summarization(request: SummarizationRequest, settings: Settings) -> SummarizationResponse:
+async def _get_ai_client(settings: Settings) -> AIClient:
+    """Get or create AI client instance"""
+    # In production, this would be a singleton or dependency
+    return AIClient(settings)
+
+
+async def _real_summarization(request: SummarizationRequest, settings: Settings) -> SummarizationResponse:
     """
-    Mock summarization implementation
+    Real AI-powered summarization implementation using OpenAI/Anthropic
+    """
+    ai_client = await _get_ai_client(settings)
     
-    TODO: Replace with actual LangChain + OpenAI/Anthropic implementation in Phase 1
+    try:
+        result = await ai_client.summarize_issue(
+            issue=request.issue,
+            provider=request.provider,
+            model=request.model,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature,
+            include_comments=request.include_comments,
+            language=request.language
+        )
+        
+        return SummarizationResponse(
+            summary=result['summary'],
+            key_points=result['key_points'],
+            category=result['category'],
+            complexity=result['complexity'],
+            processing_time=result['processing_time'],
+            provider_used=result['provider_used'],
+            model_used=result['model_used'],
+            token_usage=result['token_usage']
+        )
+        
+    except Exception as e:
+        logger.error(f"AI summarization error: {str(e)}")
+        # Fallback to basic summarization if AI fails
+        return await _fallback_summarization(request, settings, str(e))
+
+
+async def _fallback_summarization(request: SummarizationRequest, settings: Settings, error: str) -> SummarizationResponse:
+    """
+    Fallback summarization when AI fails
     """
     start_time = time.time()
-    
-    # Simulate processing time
-    await asyncio.sleep(0.5)
-    
-    # Mock response based on issue data
     issue = request.issue
     
-    # Generate mock summary
-    summary = f"Issue #{issue.number}: {issue.title}の要約\n\n"
-    summary += f"この課題は{issue.user}によって作成され、{len(issue.comments)}件のコメントが付いています。"
-    
-    if issue.state == "closed":
-        summary += " 課題は解決済みです。"
-    else:
-        summary += " 課題は現在オープンな状態です。"
+    # Generate basic summary
+    summary = f"Issue #{issue.number}: {issue.title}\n\n"
+    summary += f"Created by {issue.user}, currently {issue.state}."
+    if issue.comments:
+        summary += f" Has {len(issue.comments)} comments."
+    summary += f"\n\nNote: AI processing failed ({error}), showing basic summary."
     
     # Generate key points
     key_points = [
-        f"作成者: {issue.user}",
-        f"状態: {issue.state}",
-        f"ラベル: {', '.join(issue.labels) if issue.labels else 'なし'}",
+        f"Author: {issue.user}",
+        f"Status: {issue.state}",
+        f"Labels: {', '.join(issue.labels) if issue.labels else 'None'}",
     ]
     
     if issue.comments:
-        key_points.append(f"コメント数: {len(issue.comments)}件")
+        key_points.append(f"Comments: {len(issue.comments)}")
     
-    # Determine complexity based on content length and comments
-    content_length = len(issue.body) + sum(len(c.body) for c in issue.comments)
-    if content_length < 500:
-        complexity = "low"
-    elif content_length < 2000:
-        complexity = "medium"
-    else:
-        complexity = "high"
-    
-    # Determine category based on labels or content
+    # Basic category detection
     category = "general"
     if any("bug" in label.lower() for label in issue.labels):
         category = "bug-fix"
@@ -89,6 +113,15 @@ async def _mock_summarization(request: SummarizationRequest, settings: Settings)
         category = "feature-request"
     elif any("doc" in label.lower() for label in issue.labels):
         category = "documentation"
+    
+    # Basic complexity assessment
+    content_length = len(issue.body) + sum(len(c.body) for c in issue.comments)
+    if content_length < 500:
+        complexity = "low"
+    elif content_length < 2000:
+        complexity = "medium"
+    else:
+        complexity = "high"
     
     processing_time = time.time() - start_time
     
@@ -100,7 +133,7 @@ async def _mock_summarization(request: SummarizationRequest, settings: Settings)
         processing_time=processing_time,
         provider_used=request.provider,
         model_used=request.model or settings.default_openai_model,
-        token_usage={"prompt_tokens": 150, "completion_tokens": 80, "total_tokens": 230}
+        token_usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     )
 
 
@@ -131,9 +164,8 @@ async def summarize_issue(
     await _validate_ai_provider(request.provider, settings)
     
     try:
-        # TODO: Implement actual AI summarization in Phase 1
-        # For now, return mock response
-        response = await _mock_summarization(request, settings)
+        # Use real AI summarization
+        response = await _real_summarization(request, settings)
         
         logger.info(
             f"Summarization completed for issue #{request.issue.number} "
@@ -190,7 +222,7 @@ async def summarize_issues_batch(
                 language=request.language
             )
             
-            result = await _mock_summarization(single_request, settings)
+            result = await _real_summarization(single_request, settings)
             results.append(result)
             
         except Exception as e:
