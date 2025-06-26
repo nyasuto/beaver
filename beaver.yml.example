@@ -1,0 +1,23 @@
+project:
+  name: "Beaver - AIエージェント知識ダム構築ツール"
+  repository: "nyasuto/beaver"
+
+sources:
+  github:
+    issues: true
+    commits: true
+    prs: true
+    # token: "your-github-token" # または環境変数 GITHUB_TOKEN を使用
+
+output:
+  wiki:
+    platform: "github"    # github, notion, confluence
+    templates: "default"  # default, academic, startup
+
+ai:
+  provider: "openai"      # openai, anthropic, local
+  model: "gpt-4"
+  features:
+    summarization: true   # 要約
+    categorization: true  # 分類
+    troubleshooting: true # トラブルシューティング
