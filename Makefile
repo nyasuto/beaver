@@ -1,7 +1,7 @@
 # Beaver - AIエージェント知識ダム構築ツール
 # Makefile for development and build automation
 
-.PHONY: help build clean test lint fmt deps install run dev quality
+.PHONY: help build clean test lint fmt sec deps install run dev quality
 
 # Variables
 BINARY_NAME=beaver
@@ -72,9 +72,19 @@ fmt:
 	@echo "📝 コードをフォーマット中..."
 	go fmt ./...
 
+## sec: Run security checks with gosec
+sec:
+	@echo "🔒 セキュリティチェックを実行中..."
+	@if command -v gosec >/dev/null 2>&1; then \
+		gosec ./...; \
+	else \
+		echo "📦 gosecをインストール中..."; \
+		go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest; \
+		gosec ./...; \
+	fi
 
-## quality: Run all quality checks (lint + format + test)
-quality: fmt lint test
+## quality: Run all quality checks (lint + format + security + test)
+quality: fmt lint sec test
 	@echo "✅ 品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible

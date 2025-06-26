@@ -151,7 +151,7 @@ ai:
 		return fmt.Errorf("設定ファイル %s は既に存在します", configPath)
 	}
 
-	if err := os.WriteFile(configPath, []byte(defaultConfig), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(defaultConfig), 0600); err != nil {
 		return fmt.Errorf("設定ファイル作成エラー: %w", err)
 	}
 
