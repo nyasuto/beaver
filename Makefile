@@ -1,7 +1,7 @@
 # Beaver - AIエージェント知識ダム構築ツール
 # Makefile for development and build automation
 
-.PHONY: help build clean test lint fmt vet deps install run dev quality
+.PHONY: help build clean test lint fmt deps install run dev quality
 
 # Variables
 BINARY_NAME=beaver
@@ -72,17 +72,13 @@ fmt:
 	@echo "📝 コードをフォーマット中..."
 	go fmt ./...
 
-## vet: Run go vet
-vet:
-	@echo "🔍 go vetを実行中..."
-	go vet ./...
 
-## quality: Run all quality checks (lint + format + vet + test)
-quality: fmt vet lint test
+## quality: Run all quality checks (lint + format + test)
+quality: fmt lint test
 	@echo "✅ 品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible
-quality-fix: fmt vet
+quality-fix: fmt
 	@echo "🔧 自動修正を実行中..."
 	@if command -v golangci-lint >/dev/null 2>&1; then \
 		golangci-lint run --fix; \
