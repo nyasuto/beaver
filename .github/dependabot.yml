@@ -8,6 +8,47 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "type: deps"
+      - "priority: medium"
+
+  # Python依存関係の自動更新 (Poetry)
+  - package-ecosystem: "pip"
+    directory: "/services/ai"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(python)"
+      include: "scope"
+    labels:
+      - "type: deps"
+      - "priority: medium"
+      - "component: ai-services"
+
+  # Docker依存関係の自動更新
+  - package-ecosystem: "docker"
+    directory: "/services/ai"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(docker)"
+      include: "scope"
+    labels:
+      - "type: deps"
+      - "priority: low"
+      - "component: ai-services"
 
   # GitHub Actions の自動更新
   - package-ecosystem: "github-actions"
@@ -15,5 +56,12 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
+      time: "10:30"
       timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "type: ci/cd"
+      - "priority: low"
