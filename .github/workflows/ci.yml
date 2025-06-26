@@ -15,7 +15,7 @@ jobs:
   # 品質チェック (Quality Checks)
   quality:
     name: 🔍 品質チェック
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: 📥 コードのチェックアウト
@@ -67,7 +67,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [self-hosted]
         go-version: ['stable']
         
     steps:
@@ -102,7 +102,7 @@ jobs:
   # セキュリティスキャン (Security Scan)
   security:
     name: 🔒 セキュリティスキャン
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: 📥 コードのチェックアウト
@@ -123,7 +123,7 @@ jobs:
   # 脆弱性チェック (Vulnerability Check)
   vulnerability:
     name: 🛡️ 脆弱性チェック
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: 📥 コードのチェックアウト
@@ -143,7 +143,7 @@ jobs:
   # 統合テスト (Integration Test)
   integration:
     name: 🔗 統合テスト
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [quality, build]
     
     steps:
@@ -183,7 +183,7 @@ jobs:
   # CI成功通知 (CI Success Notification)
   ci-success:
     name: ✅ CI成功
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [quality, build, security, vulnerability, integration]
     if: success()
     
