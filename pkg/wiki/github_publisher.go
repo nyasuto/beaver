@@ -18,6 +18,7 @@ type GitHubWikiPublisher struct {
 	gitClient     GitClient
 	generator     *Generator
 	authenticator *GitAuthenticator
+	fileManager   *WikiFileManager
 	workDir       string
 	isInitialized bool
 }
@@ -50,6 +51,7 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 		gitClient:     gitClient,
 		generator:     NewGenerator(),
 		authenticator: authenticator,
+		fileManager:   nil, // Will be initialized when workDir is created
 		workDir:       "",
 		isInitialized: false,
 	}, nil
@@ -70,6 +72,13 @@ func (p *GitHubWikiPublisher) Initialize(ctx context.Context) error {
 		return err
 	}
 	p.workDir = workDir
+
+	// Initialize file manager
+	p.fileManager = NewWikiFileManager(p.workDir)
+	if err := p.fileManager.CreateImagesDirectory(); err != nil {
+		log.Printf("WARN Failed to create images directory: %v", err)
+		// Not fatal, continue
+	}
 
 	// Setup authentication if available
 	if p.authenticator != nil {
@@ -177,26 +186,22 @@ func (p *GitHubWikiPublisher) CreatePage(ctx context.Context, page *WikiPage) er
 		return NewConfigurationError("create_page", "Publisher not initialized")
 	}
 
-	// Normalize filename for GitHub Wiki
-	filename := p.normalizeFilename(page.Filename)
-	filepath := filepath.Join(p.workDir, filename)
+	// Use file manager to create page with enhanced naming and conflict detection
+	// Configure file manager for strict conflict detection on create
+	originalConfig := p.fileManager.config.ConflictResolution
+	p.fileManager.config.ConflictResolution = ConflictError
 
-	// Check if page already exists
-	if _, err := os.Stat(filepath); err == nil {
-		return NewWikiError(ErrorTypeValidation, "create_page", nil,
-			fmt.Sprintf("ページ %s は既に存在します", page.Title), 0,
-			[]string{
-				"UpdatePage を使用してページを更新してください",
-				"または既存ページを削除してから作成してください",
-			})
-	}
+	fileInfo, err := p.fileManager.WritePageFile(page.Title, page.Content)
 
-	// Write page content
-	if err := p.writePageFile(filepath, page.Content); err != nil {
+	// Restore original conflict resolution
+	p.fileManager.config.ConflictResolution = originalConfig
+
+	if err != nil {
 		return err
 	}
 
-	log.Printf("INFO Page created successfully: %s", filename)
+	log.Printf("INFO Page created successfully: %s (normalized from: %s)",
+		fileInfo.NormalizedName, fileInfo.OriginalName)
 	return nil
 }
 
@@ -208,16 +213,22 @@ func (p *GitHubWikiPublisher) UpdatePage(ctx context.Context, page *WikiPage) er
 		return NewConfigurationError("update_page", "Publisher not initialized")
 	}
 
-	// Normalize filename for GitHub Wiki
-	filename := p.normalizeFilename(page.Filename)
-	filepath := filepath.Join(p.workDir, filename)
+	// Use file manager to update page with enhanced naming (allows overwrite)
+	// Configure file manager to allow overwrite for updates
+	originalConfig := p.fileManager.config.ConflictResolution
+	p.fileManager.config.ConflictResolution = ConflictOverwrite
 
-	// Write page content (overwrites if exists)
-	if err := p.writePageFile(filepath, page.Content); err != nil {
+	fileInfo, err := p.fileManager.WritePageFile(page.Title, page.Content)
+
+	// Restore original conflict resolution
+	p.fileManager.config.ConflictResolution = originalConfig
+
+	if err != nil {
 		return err
 	}
 
-	log.Printf("INFO Page updated successfully: %s", filename)
+	log.Printf("INFO Page updated successfully: %s (normalized from: %s)",
+		fileInfo.NormalizedName, fileInfo.OriginalName)
 	return nil
 }
 
@@ -229,8 +240,13 @@ func (p *GitHubWikiPublisher) DeletePage(ctx context.Context, pageName string) e
 		return NewConfigurationError("delete_page", "Publisher not initialized")
 	}
 
-	filename := p.normalizeFilename(pageName)
-	filepath := filepath.Join(p.workDir, filename)
+	// Use file manager to normalize filename and locate the file
+	normalizedName, err := p.fileManager.NormalizePageName(pageName)
+	if err != nil {
+		return err
+	}
+
+	filepath := filepath.Join(p.workDir, normalizedName)
 
 	// Check if page exists
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
@@ -252,7 +268,7 @@ func (p *GitHubWikiPublisher) DeletePage(ctx context.Context, pageName string) e
 			})
 	}
 
-	log.Printf("INFO Page deleted successfully: %s", filename)
+	log.Printf("INFO Page deleted successfully: %s (normalized from: %s)", normalizedName, pageName)
 	return nil
 }
 
@@ -262,10 +278,15 @@ func (p *GitHubWikiPublisher) PageExists(ctx context.Context, pageName string) (
 		return false, NewConfigurationError("page_exists", "Publisher not initialized")
 	}
 
-	filename := p.normalizeFilename(pageName)
-	filepath := filepath.Join(p.workDir, filename)
+	// Use file manager to normalize filename
+	normalizedName, err := p.fileManager.NormalizePageName(pageName)
+	if err != nil {
+		return false, err
+	}
 
-	_, err := os.Stat(filepath)
+	filepath := filepath.Join(p.workDir, normalizedName)
+
+	_, err = os.Stat(filepath)
 	if os.IsNotExist(err) {
 		return false, nil
 	}
@@ -294,9 +315,14 @@ func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPag
 	var filenames []string
 	for _, page := range pages {
 		if err := p.UpdatePage(ctx, page); err != nil {
-			return fmt.Errorf("failed to update page %s: %w", page.Filename, err)
+			return fmt.Errorf("failed to update page %s: %w", page.Title, err)
 		}
-		filenames = append(filenames, p.normalizeFilename(page.Filename))
+		// Get normalized filename from file manager
+		normalizedName, err := p.fileManager.NormalizePageName(page.Title)
+		if err != nil {
+			return fmt.Errorf("failed to normalize page name %s: %w", page.Title, err)
+		}
+		filenames = append(filenames, normalizedName)
 	}
 
 	// Add all files to git
@@ -516,43 +542,6 @@ func (p *GitHubWikiPublisher) createWorkingDirectory() (string, error) {
 
 	log.Printf("INFO Created working directory: %s", workDir)
 	return workDir, nil
-}
-
-// normalizeFilename normalizes a filename for GitHub Wiki
-func (p *GitHubWikiPublisher) normalizeFilename(filename string) string {
-	// Ensure .md extension
-	if !strings.HasSuffix(filename, ".md") {
-		filename += ".md"
-	}
-
-	// Replace spaces with hyphens for GitHub Wiki convention
-	filename = strings.ReplaceAll(filename, " ", "-")
-
-	// Handle special characters that GitHub Wiki doesn't like
-	filename = strings.ReplaceAll(filename, "/", "-")
-	filename = strings.ReplaceAll(filename, "\\", "-")
-	filename = strings.ReplaceAll(filename, ":", "-")
-	filename = strings.ReplaceAll(filename, "*", "-")
-	filename = strings.ReplaceAll(filename, "?", "-")
-	filename = strings.ReplaceAll(filename, "\"", "-")
-	filename = strings.ReplaceAll(filename, "<", "-")
-	filename = strings.ReplaceAll(filename, ">", "-")
-	filename = strings.ReplaceAll(filename, "|", "-")
-
-	return filename
-}
-
-// writePageFile writes page content to a file
-func (p *GitHubWikiPublisher) writePageFile(filepath, content string) error {
-	if err := os.WriteFile(filepath, []byte(content), 0600); err != nil { // #nosec G306 -- Wiki files need appropriate read permissions
-		return NewWikiError(ErrorTypeFileSystem, "write_page", err,
-			"ページファイルの書き込みに失敗しました", 0,
-			[]string{
-				"ディスクの空き容量を確認してください",
-				"ファイルへの書き込み権限を確認してください",
-			})
-	}
-	return nil
 }
 
 // configureGitUser configures git user settings for commits
