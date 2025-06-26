@@ -116,12 +116,12 @@ jobs:
         cache: true
         
     - name: 🔍 Gosecセキュリティスキャン
-      run: |
-        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
-        gosec -fmt sarif -out gosec-results.sarif ./... || true
+      uses: securego/gosec@master
+      with:
+        args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
         
     - name: 📤 セキュリティ結果のアップロード
-      if: always() && hashFiles('gosec-results.sarif') != ''
+      if: always()
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: gosec-results.sarif
