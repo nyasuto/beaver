@@ -162,7 +162,7 @@ func outputJSON(result *models.IssueResult, outputFile string) error {
 	}
 
 	if outputFile != "" {
-		err = os.WriteFile(outputFile, jsonData, 0644)
+		err = os.WriteFile(outputFile, jsonData, 0600)
 		if err != nil {
 			return fmt.Errorf("❌ ファイル書き込みエラー: %w", err)
 		}
@@ -262,7 +262,7 @@ func outputSummary(result *models.IssueResult, outputFile string) error {
 	summaryText := output.String()
 
 	if outputFile != "" {
-		err := os.WriteFile(outputFile, []byte(summaryText), 0644)
+		err := os.WriteFile(outputFile, []byte(summaryText), 0600)
 		if err != nil {
 			return fmt.Errorf("❌ ファイル書き込みエラー: %w", err)
 		}
