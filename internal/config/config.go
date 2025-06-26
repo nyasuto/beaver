@@ -29,10 +29,10 @@ type SourcesConfig struct {
 
 // GitHubConfig holds GitHub-specific settings
 type GitHubConfig struct {
-	Issues bool   `mapstructure:"issues"`
-	Commits bool  `mapstructure:"commits"`
-	PRs    bool   `mapstructure:"prs"`
-	Token  string `mapstructure:"token"`
+	Issues  bool   `mapstructure:"issues"`
+	Commits bool   `mapstructure:"commits"`
+	PRs     bool   `mapstructure:"prs"`
+	Token   string `mapstructure:"token"`
 }
 
 // OutputConfig defines output destinations
@@ -48,16 +48,16 @@ type WikiConfig struct {
 
 // AIConfig holds AI processing settings
 type AIConfig struct {
-	Provider string       `mapstructure:"provider"`
-	Model    string       `mapstructure:"model"`
-	Features AIFeatures   `mapstructure:"features"`
+	Provider string     `mapstructure:"provider"`
+	Model    string     `mapstructure:"model"`
+	Features AIFeatures `mapstructure:"features"`
 }
 
 // AIFeatures defines which AI features are enabled
 type AIFeatures struct {
-	Summarization    bool `mapstructure:"summarization"`
-	Categorization   bool `mapstructure:"categorization"`
-	Troubleshooting  bool `mapstructure:"troubleshooting"`
+	Summarization   bool `mapstructure:"summarization"`
+	Categorization  bool `mapstructure:"categorization"`
+	Troubleshooting bool `mapstructure:"troubleshooting"`
 }
 
 var globalConfig *Config
@@ -66,7 +66,7 @@ var globalConfig *Config
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("beaver")
 	viper.SetConfigType("yaml")
-	
+
 	// Add config search paths
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("$HOME/.beaver")
@@ -99,7 +99,8 @@ func LoadConfig() (*Config, error) {
 		config.Sources.GitHub.Token = token
 	}
 	if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey != "" {
-		// Will be used by AI service
+		// OpenAI API key will be handled by AI service directly
+		_ = apiKey
 	}
 
 	globalConfig = &config

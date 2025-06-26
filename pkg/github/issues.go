@@ -42,11 +42,11 @@ func (c *Client) FetchIssues(ctx context.Context, owner, repo string, opts *gith
 	}
 
 	var allIssues []*IssueData
-	
+
 	for {
 		issues, resp, err := c.client.Issues.ListByRepo(ctx, owner, repo, opts)
 		if err != nil {
-			return nil, fmt.Errorf("Issues取得エラー: %w", err)
+			return nil, fmt.Errorf("issues取得エラー: %w", err)
 		}
 
 		for _, issue := range issues {
