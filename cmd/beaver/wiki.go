@@ -152,6 +152,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	log.Printf("🔧 Generating Wiki pages...")
 
 	// Create output directory
+	// #nosec G301 -- CLI tool needs standard directory permissions
 	if err := os.MkdirAll(wikiOutput, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
@@ -260,7 +261,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 			break
 		}
 
-		content, err := os.ReadFile(wikiFile)
+		content, err := os.ReadFile(wikiFile) // #nosec G304 -- CLI tool reads user-specified files
 		if err != nil {
 			return fmt.Errorf("failed to read wiki file %s: %w", wikiFile, err)
 		}
@@ -339,7 +340,7 @@ func parseRepoPath(repoPath string) (owner, repo string, err error) {
 
 func saveWikiPage(page *wiki.WikiPage, outputDir string) error {
 	filename := filepath.Join(outputDir, page.Filename)
-	return os.WriteFile(filename, []byte(page.Content), 0644)
+	return os.WriteFile(filename, []byte(page.Content), 0644) // #nosec G306 -- CLI tool generates files with standard permissions
 }
 
 func splitString(s, sep string) []string {
