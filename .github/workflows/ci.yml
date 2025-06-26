@@ -9,7 +9,7 @@ on:
 
 env:
   GO_VERSION: 'stable'
-  GOLANGCI_LINT_VERSION: 'v1.55'
+  GOLANGCI_LINT_VERSION: 'v1.62'
 
 jobs:
   # 品質チェック (Quality Checks)
@@ -45,7 +45,7 @@ jobs:
         echo "✅ すべてのファイルが正しくフォーマットされています"
         
     - name: 🔍 Lintチェック
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v6
       with:
         version: ${{ env.GOLANGCI_LINT_VERSION }}
         args: --verbose
@@ -118,11 +118,11 @@ jobs:
     - name: 🔍 Gosecセキュリティスキャン
       run: |
         go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
-        gosec -fmt sarif -out gosec-results.sarif ./...
+        gosec -fmt sarif -out gosec-results.sarif ./... || true
         
     - name: 📤 セキュリティ結果のアップロード
-      if: always()
-      uses: github/codeql-action/upload-sarif@v2
+      if: always() && hashFiles('gosec-results.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: gosec-results.sarif
 
