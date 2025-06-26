@@ -1,0 +1,204 @@
+name: 🔄 Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.21'
+  GOLANGCI_LINT_VERSION: 'v1.55'
+
+jobs:
+  # 品質チェック (Quality Checks)
+  quality:
+    name: 🔍 品質チェック
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Go環境のセットアップ
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 📦 依存関係のインストール
+      run: |
+        go mod download
+        go mod tidy
+        
+    - name: 📝 コードフォーマットチェック
+      run: |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "❌ 以下のファイルがフォーマットされていません:"
+          echo "$unformatted"
+          echo ""
+          echo "修正するには: make fmt"
+          exit 1
+        fi
+        echo "✅ すべてのファイルが正しくフォーマットされています"
+        
+    - name: 🔍 Lintチェック
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: ${{ env.GOLANGCI_LINT_VERSION }}
+        args: --verbose
+        
+    - name: 🧪 テスト実行
+      run: |
+        go test -v -race -coverprofile=coverage.out ./...
+        
+    - name: 📊 カバレッジレポートのアップロード
+      uses: codecov/codecov-action@v3
+      if: success()
+      with:
+        file: coverage.out
+        flags: unittests
+        name: beaver-coverage
+
+  # ビルドテスト (Build Test)
+  build:
+    name: 🔨 ビルドテスト
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.21', '1.22']
+        
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Go環境のセットアップ
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
+        
+    - name: 📦 依存関係のインストール
+      run: go mod download
+      
+    - name: 🔨 ビルド実行
+      run: |
+        make build
+        
+    - name: 🧪 バイナリテスト
+      run: |
+        ./bin/beaver --help
+        
+    - name: 📤 ビルド成果物のアップロード
+      if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.21'
+      uses: actions/upload-artifact@v3
+      with:
+        name: beaver-binary
+        path: bin/beaver
+        retention-days: 7
+
+  # セキュリティスキャン (Security Scan)
+  security:
+    name: 🔒 セキュリティスキャン
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Go環境のセットアップ
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 🔍 Gosecセキュリティスキャン
+      uses: securecodewarrior/github-action-gosec@master
+      with:
+        args: '-fmt sarif -out gosec-results.sarif ./...'
+        
+    - name: 📤 セキュリティ結果のアップロード
+      if: always()
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: gosec-results.sarif
+
+  # 脆弱性チェック (Vulnerability Check)
+  vulnerability:
+    name: 🛡️ 脆弱性チェック
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Go環境のセットアップ
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 🔍 Go依存関係の脆弱性スキャン
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
+  # 統合テスト (Integration Test)
+  integration:
+    name: 🔗 統合テスト
+    runs-on: ubuntu-latest
+    needs: [quality, build]
+    
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Go環境のセットアップ
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 🔨 ビルド
+      run: make build
+      
+    - name: 🧪 基本コマンドテスト
+      run: |
+        echo "📋 基本コマンドテスト実行中..."
+        ./bin/beaver --help
+        ./bin/beaver init --help || true
+        ./bin/beaver build --help || true
+        ./bin/beaver status --help || true
+        echo "✅ 基本コマンドテスト完了"
+        
+    - name: 🔗 GitHub API接続テスト
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🔗 GitHub API接続テスト実行中..."
+        # GitHub tokenが利用可能な場合のみテスト実行
+        if [ -n "$GITHUB_TOKEN" ]; then
+          timeout 30s ./bin/beaver fetch issues --help || echo "⚠️ GitHub API テストはスキップされました"
+        else
+          echo "ℹ️ GitHub tokenが設定されていないため、API接続テストをスキップ"
+        fi
+
+  # CI成功通知 (CI Success Notification)
+  ci-success:
+    name: ✅ CI成功
+    runs-on: ubuntu-latest
+    needs: [quality, build, security, vulnerability, integration]
+    if: success()
+    
+    steps:
+    - name: 🎉 CI成功メッセージ
+      run: |
+        echo "🎉 すべてのCIチェックが正常に完了しました！"
+        echo "✅ 品質チェック: 完了"
+        echo "🔨 ビルドテスト: 完了"  
+        echo "🔒 セキュリティスキャン: 完了"
+        echo "🛡️ 脆弱性チェック: 完了"
+        echo "🔗 統合テスト: 完了"

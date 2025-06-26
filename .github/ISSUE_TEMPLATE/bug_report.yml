@@ -1,0 +1,95 @@
+name: 🐛 バグレポート
+description: Beaverのバグを報告
+title: "bug: [簡潔な説明]"
+labels: ["type: bug", "priority: medium"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 バグレポート
+        Beaverで発生したバグについて詳細を報告してください。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "📋 問題の説明"
+      description: "何が起こったか、何が期待されていたかを詳しく説明してください"
+      placeholder: "バグの詳細な説明..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "🔄 再現手順"
+      description: "バグを再現するための手順を記載してください"
+      placeholder: |
+        1. 
+        2. 
+        3. 
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "✅ 期待される動作"
+      description: "どのような動作が期待されていましたか？"
+      placeholder: "期待される動作の説明..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "❌ 実際の動作"
+      description: "実際にはどのような動作をしましたか？"
+      placeholder: "実際の動作の説明..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "🖥️ 環境情報"
+      description: "OSやGoのバージョンなど"
+      placeholder: |
+        - OS: 
+        - Goバージョン: 
+        - Beaverバージョン: 
+      value: |
+        - OS: 
+        - Goバージョン: 
+        - Beaverバージョン: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "📋 ログ出力"
+      description: "関連するログやエラーメッセージがあれば貼り付けてください"
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "📎 追加情報"
+      description: "その他の関連情報があれば記載してください"
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "🚨 優先度"
+      options:
+        - priority: low
+        - priority: medium
+        - priority: high
+        - priority: critical
+      default: 1
+    validations:
+      required: true
