@@ -17,6 +17,7 @@ type GitHubWikiPublisher struct {
 	config        *PublisherConfig
 	gitClient     GitClient
 	generator     *Generator
+	authenticator *GitAuthenticator
 	workDir       string
 	isInitialized bool
 }
@@ -34,10 +35,21 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 		return nil, err
 	}
 
+	// Initialize authenticator if token is provided
+	var authenticator *GitAuthenticator
+	if config.Token != "" {
+		authenticator = NewGitAuthenticator(config.Token)
+		if err := authenticator.ValidateToken(); err != nil {
+			return nil, err
+		}
+		log.Printf("INFO Authenticator initialized with token: %s", authenticator.SecureTokenString())
+	}
+
 	return &GitHubWikiPublisher{
 		config:        config,
 		gitClient:     gitClient,
 		generator:     NewGenerator(),
+		authenticator: authenticator,
 		workDir:       "",
 		isInitialized: false,
 	}, nil
@@ -59,6 +71,14 @@ func (p *GitHubWikiPublisher) Initialize(ctx context.Context) error {
 	}
 	p.workDir = workDir
 
+	// Setup authentication if available
+	if p.authenticator != nil {
+		if err := p.authenticator.SetupCredentials(p.workDir); err != nil {
+			return err
+		}
+		log.Printf("INFO Authentication credentials configured for workDir: %s", p.workDir)
+	}
+
 	p.isInitialized = true
 	log.Printf("INFO GitHubWikiPublisher initialized successfully: workDir=%s", p.workDir)
 	return nil
@@ -79,7 +99,13 @@ func (p *GitHubWikiPublisher) Clone(ctx context.Context) error {
 	}
 
 	// Clone the .wiki.git repository
-	repoURL := p.config.GetAuthenticatedURL()
+	repoURL := p.config.GetRepositoryURL()
+	if p.authenticator != nil {
+		repoURL = p.authenticator.BuildAuthURL(repoURL)
+		log.Printf("INFO Using authenticated URL: %s", p.authenticator.SanitizeURL(repoURL))
+	} else {
+		log.Printf("INFO Using repository URL: %s", repoURL)
+	}
 	cloneOptions := NewDefaultCloneOptions()
 	cloneOptions.Depth = p.config.CloneDepth
 	cloneOptions.SingleBranch = p.config.UseShallowClone
@@ -116,6 +142,13 @@ func (p *GitHubWikiPublisher) Cleanup() error {
 	if p.workDir == "" {
 		log.Printf("INFO No working directory to cleanup")
 		return nil
+	}
+
+	// Cleanup authentication credentials
+	if p.authenticator != nil {
+		if err := p.authenticator.Cleanup(p.workDir); err != nil {
+			log.Printf("WARN Failed to cleanup authentication credentials: %v", err)
+		}
 	}
 
 	// Remove working directory

@@ -29,6 +29,7 @@ type GitClient interface {
 	// Configuration
 	SetConfig(ctx context.Context, dir string, key, value string) error
 	GetConfig(ctx context.Context, dir string, key string) (string, error)
+	UnsetConfig(ctx context.Context, dir string, key string) error
 }
 
 // CloneOptions contains options for Git clone operations

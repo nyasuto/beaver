@@ -358,6 +358,26 @@ func (c *CmdGitClient) GetConfig(ctx context.Context, dir string, key string) (s
 	return strings.TrimSpace(string(output)), nil
 }
 
+// UnsetConfig removes a git configuration value
+func (c *CmdGitClient) UnsetConfig(ctx context.Context, dir string, key string) error {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "config", "--unset", key) // #nosec G204 -- gitPath is validated at initialization
+	cmd.Dir = dir
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Ignore errors if the config key doesn't exist
+		if strings.Contains(strings.ToLower(string(output)), "not found") {
+			return nil
+		}
+		return c.handleGitError("config unset", err, string(output))
+	}
+
+	return nil
+}
+
 // Helper methods
 
 // handleGitError converts git command errors to WikiError
