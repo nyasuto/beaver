@@ -1,0 +1,11 @@
+version: "2"
+
+# golangci-lint v2 configuration
+# All configurations are kept as default except for excluding test files
+
+run:
+  # Exclude test files from linting entirely
+  tests: false
+
+# All other configurations use defaults
+# The 'tests: false' setting above ensures test files are excluded from analysis
