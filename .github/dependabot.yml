@@ -9,11 +9,28 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
 
+  # Python依存関係の自動更新 (Poetry)
+  - package-ecosystem: "pip"
+    directory: "/services/ai"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Tokyo"
+  # Docker依存関係の自動更新
+  - package-ecosystem: "docker"
+    directory: "/services/ai"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+
   # GitHub Actions の自動更新
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
+      time: "10:30"
       timezone: "Asia/Tokyo"
