@@ -8,23 +8,6 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
-      prefix-development: "deps"
-      include: "scope"
-    labels:
-      - "type: deps"
-      - "priority: medium"
-    reviewers:
-      - "nyasuto"
-    # セキュリティアップデートを優先
-    allow:
-      - dependency-type: "all"
-    # マイナーバージョンアップデートを含める
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
 
   # GitHub Actions の自動更新
   - package-ecosystem: "github-actions"
@@ -34,13 +17,3 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "ci"
-      prefix-development: "ci"
-      include: "scope"
-    labels:
-      - "type: ci/cd"
-      - "priority: low"
-    reviewers:
-      - "nyasuto"
