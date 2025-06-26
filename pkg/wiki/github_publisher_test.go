@@ -575,6 +575,7 @@ func TestGitHubWikiPublisher_GetStatus(t *testing.T) {
 }
 
 func TestGitHubWikiPublisher_FilenameNormalization(t *testing.T) {
+	// Initialize publisher to access file manager
 	config := &PublisherConfig{
 		Owner:      "testowner",
 		Repository: "testrepo",
@@ -587,6 +588,14 @@ func TestGitHubWikiPublisher_FilenameNormalization(t *testing.T) {
 		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
 	}
 
+	// Initialize to set up file manager
+	ctx := context.Background()
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+	defer publisher.Cleanup()
+
 	tests := []struct {
 		input    string
 		expected string
@@ -596,15 +605,19 @@ func TestGitHubWikiPublisher_FilenameNormalization(t *testing.T) {
 		{"API/Reference", "API-Reference.md"},
 		{"Windows\\Path", "Windows-Path.md"},
 		{"File:with:colons", "File-with-colons.md"},
-		{"Special*?<>|\"|Chars", "Special-------Chars.md"},
+		{"Special*?<>|\"|Chars", "Special-Chars.md"},
 		{"Already.md", "Already.md"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := publisher.normalizeFilename(tt.input)
+			result, err := publisher.fileManager.NormalizePageName(tt.input)
+			if err != nil {
+				t.Errorf("NormalizePageName(%q) error = %v", tt.input, err)
+				return
+			}
 			if result != tt.expected {
-				t.Errorf("normalizeFilename(%q) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("NormalizePageName(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}

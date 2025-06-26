@@ -544,43 +544,6 @@ func (p *GitHubWikiPublisher) createWorkingDirectory() (string, error) {
 	return workDir, nil
 }
 
-// normalizeFilename normalizes a filename for GitHub Wiki
-func (p *GitHubWikiPublisher) normalizeFilename(filename string) string {
-	// Ensure .md extension
-	if !strings.HasSuffix(filename, ".md") {
-		filename += ".md"
-	}
-
-	// Replace spaces with hyphens for GitHub Wiki convention
-	filename = strings.ReplaceAll(filename, " ", "-")
-
-	// Handle special characters that GitHub Wiki doesn't like
-	filename = strings.ReplaceAll(filename, "/", "-")
-	filename = strings.ReplaceAll(filename, "\\", "-")
-	filename = strings.ReplaceAll(filename, ":", "-")
-	filename = strings.ReplaceAll(filename, "*", "-")
-	filename = strings.ReplaceAll(filename, "?", "-")
-	filename = strings.ReplaceAll(filename, "\"", "-")
-	filename = strings.ReplaceAll(filename, "<", "-")
-	filename = strings.ReplaceAll(filename, ">", "-")
-	filename = strings.ReplaceAll(filename, "|", "-")
-
-	return filename
-}
-
-// writePageFile writes page content to a file
-func (p *GitHubWikiPublisher) writePageFile(filepath, content string) error {
-	if err := os.WriteFile(filepath, []byte(content), 0600); err != nil { // #nosec G306 -- Wiki files need appropriate read permissions
-		return NewWikiError(ErrorTypeFileSystem, "write_page", err,
-			"ページファイルの書き込みに失敗しました", 0,
-			[]string{
-				"ディスクの空き容量を確認してください",
-				"ファイルへの書き込み権限を確認してください",
-			})
-	}
-	return nil
-}
-
 // configureGitUser configures git user settings for commits
 func (p *GitHubWikiPublisher) configureGitUser(ctx context.Context) error {
 	if err := p.gitClient.SetConfig(ctx, p.workDir, "user.name", p.config.AuthorName); err != nil {

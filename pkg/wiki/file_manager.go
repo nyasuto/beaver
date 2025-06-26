@@ -259,7 +259,7 @@ func (fm *WikiFileManager) WritePageFile(title, content string) (*FileInfo, erro
 	}
 
 	// Write file with appropriate permissions
-	if err := os.WriteFile(finalPath, contentBytes, 0644); err != nil { // #nosec G306 -- Wiki files need to be readable
+	if err := os.WriteFile(finalPath, contentBytes, 0600); err != nil { // #nosec G306 -- Wiki files need appropriate read permissions
 		return nil, NewWikiError(ErrorTypeFileSystem, "write_page", err,
 			"ページファイルの書き込みに失敗しました", 0,
 			[]string{
@@ -338,7 +338,7 @@ func (fm *WikiFileManager) CreateImagesDirectory() error {
 	}
 
 	imagesDir := filepath.Join(fm.workDir, fm.config.ImagesSubDir)
-	if err := os.MkdirAll(imagesDir, 0755); err != nil { // #nosec G301 -- Images directory needs to be accessible
+	if err := os.MkdirAll(imagesDir, 0750); err != nil { // #nosec G301 -- Images directory needs to be accessible
 		return NewWikiError(ErrorTypeFileSystem, "create_images_dir", err,
 			"画像ディレクトリの作成に失敗しました", 0,
 			[]string{
@@ -381,7 +381,7 @@ func (fm *WikiFileManager) WriteAssetFile(filename string, data []byte) (*FileIn
 	}
 
 	// Write asset file
-	if err := os.WriteFile(finalPath, data, 0644); err != nil { // #nosec G306 -- Asset files need to be readable
+	if err := os.WriteFile(finalPath, data, 0600); err != nil { // #nosec G306 -- Asset files need appropriate read permissions
 		return nil, NewWikiError(ErrorTypeFileSystem, "write_asset", err,
 			"アセットファイルの書き込みに失敗しました", 0,
 			[]string{
