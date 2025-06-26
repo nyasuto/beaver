@@ -129,13 +129,19 @@ watch:
 
 # Git hooks
 .PHONY: git-hooks
-## git-hooks: Setup git pre-commit hooks
+## git-hooks: Setup git pre-commit hooks from .git-hooks folder
 git-hooks:
 	@echo "🔗 Git pre-commit hookを設定中..."
 	@mkdir -p .git/hooks
-	@echo '#!/bin/sh\nmake quality' > .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
-	@echo "✅ Pre-commit hook設定完了"
+	@if [ -f .git-hooks/pre-commit ]; then \
+		cp .git-hooks/pre-commit .git/hooks/pre-commit; \
+		chmod +x .git/hooks/pre-commit; \
+		echo "✅ Pre-commit hook設定完了 (.git-hooks/pre-commit から)"; \
+	else \
+		echo '#!/bin/sh\nmake quality' > .git/hooks/pre-commit; \
+		chmod +x .git/hooks/pre-commit; \
+		echo "✅ Pre-commit hook設定完了 (フォールバック)"; \
+	fi
 
 # Release helpers
 .PHONY: release-dry-run release-patch release-minor release-major
