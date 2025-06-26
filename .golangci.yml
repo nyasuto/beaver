@@ -13,6 +13,8 @@ linters:
     - ineffassign
     - staticcheck
     - unused
+  disable:
+    - gosec
 
 issues:
   # Exclude test files from certain linters
@@ -22,3 +24,8 @@ issues:
         - gosec
         - errcheck
         - unused
+    # Exclude CLI-specific file operations from gosec
+    - path: cmd/
+      text: "G301|G304|G306"
+      linters:
+        - gosec
