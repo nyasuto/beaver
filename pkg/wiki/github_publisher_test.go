@@ -658,3 +658,282 @@ func TestGitHubWikiPublisher_GenerateAndPublishWiki(t *testing.T) {
 	// Cleanup
 	_ = publisher.Cleanup()
 }
+
+func TestGitHubWikiPublisher_DeletePage(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	mockGit := NewMockGitClient()
+	publisher.gitClient = mockGit
+
+	ctx := context.Background()
+
+	// Test delete without initialization
+	err = publisher.DeletePage(ctx, "test-page")
+	if err == nil {
+		t.Error("DeletePage() should error when not initialized")
+	}
+
+	// Initialize
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+
+	// Create a test page first
+	page := &WikiPage{
+		Title:     "Test Page",
+		Filename:  "Test-Page.md",
+		Content:   "# Test Content",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	err = publisher.CreatePage(ctx, page)
+	if err != nil {
+		t.Fatalf("CreatePage() error = %v", err)
+	}
+
+	// Test successful delete
+	err = publisher.DeletePage(ctx, "Test-Page.md")
+	if err != nil {
+		t.Errorf("DeletePage() error = %v", err)
+	}
+
+	// Test delete non-existent page
+	err = publisher.DeletePage(ctx, "non-existent.md")
+	if err == nil {
+		t.Error("DeletePage() should error for non-existent page")
+	}
+
+	// Cleanup
+	_ = publisher.Cleanup()
+}
+
+func TestGitHubWikiPublisher_PageExists(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	mockGit := NewMockGitClient()
+	publisher.gitClient = mockGit
+
+	ctx := context.Background()
+
+	// Test PageExists without initialization
+	_, err = publisher.PageExists(ctx, "test-page")
+	if err == nil {
+		t.Error("PageExists() should error when not initialized")
+	}
+
+	// Initialize
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+
+	// Test non-existent page
+	exists, err := publisher.PageExists(ctx, "non-existent.md")
+	if err != nil {
+		t.Errorf("PageExists() error = %v", err)
+	}
+	if exists {
+		t.Error("PageExists() should return false for non-existent page")
+	}
+
+	// Create a test page
+	page := &WikiPage{
+		Title:     "Test Page",
+		Filename:  "Test-Page.md",
+		Content:   "# Test Content",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	err = publisher.CreatePage(ctx, page)
+	if err != nil {
+		t.Fatalf("CreatePage() error = %v", err)
+	}
+
+	// Test existing page
+	exists, err = publisher.PageExists(ctx, "Test-Page.md")
+	if err != nil {
+		t.Errorf("PageExists() error = %v", err)
+	}
+	if !exists {
+		t.Error("PageExists() should return true for existing page")
+	}
+
+	// Cleanup
+	_ = publisher.Cleanup()
+}
+
+func TestGitHubWikiPublisher_ListPages(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	mockGit := NewMockGitClient()
+	publisher.gitClient = mockGit
+
+	ctx := context.Background()
+
+	// Test ListPages without initialization
+	_, err = publisher.ListPages(ctx)
+	if err == nil {
+		t.Error("ListPages() should error when not initialized")
+	}
+
+	// Initialize
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+
+	// Test empty repository
+	pages, err := publisher.ListPages(ctx)
+	if err != nil {
+		t.Errorf("ListPages() error = %v", err)
+	}
+	if len(pages) != 0 {
+		t.Errorf("ListPages() returned %d pages, want 0", len(pages))
+	}
+
+	// Create test pages
+	testPages := []*WikiPage{
+		{Title: "Home", Filename: "Home.md", Content: "# Home", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		{Title: "Setup", Filename: "Setup.md", Content: "# Setup", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		{Title: "FAQ", Filename: "FAQ.md", Content: "# FAQ", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	}
+
+	for _, page := range testPages {
+		err := publisher.CreatePage(ctx, page)
+		if err != nil {
+			t.Fatalf("CreatePage() error = %v", err)
+		}
+	}
+
+	// Create .git directory to simulate cloned repository
+	gitDir := filepath.Join(publisher.workDir, ".git")
+	err = os.MkdirAll(gitDir, 0750)
+	if err != nil {
+		t.Fatalf("Failed to create .git directory: %v", err)
+	}
+
+	// Test ListPages with pages
+	pages, err = publisher.ListPages(ctx)
+	if err != nil {
+		t.Errorf("ListPages() error = %v", err)
+	}
+	if len(pages) != 3 {
+		t.Errorf("ListPages() returned %d pages, want 3", len(pages))
+	}
+
+	// Verify page information
+	pageNames := make(map[string]bool)
+	for _, page := range pages {
+		pageNames[page.Title] = true
+		if page.Size <= 0 {
+			t.Errorf("Page %s has invalid size: %d", page.Title, page.Size)
+		}
+		if page.URL == "" {
+			t.Errorf("Page %s has empty URL", page.Title)
+		}
+	}
+
+	expectedPages := []string{"Home", "Setup", "FAQ"}
+	for _, expected := range expectedPages {
+		if !pageNames[expected] {
+			t.Errorf("Expected page %s not found in list", expected)
+		}
+	}
+
+	// Cleanup
+	_ = publisher.Cleanup()
+}
+
+func TestGitHubWikiPublisher_Commit(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:       "testowner",
+		Repository:  "testrepo",
+		Token:       "testtoken",
+		AuthorName:  "Test Author",
+		AuthorEmail: "test@example.com",
+		Timeout:     30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	mockGit := NewMockGitClient()
+	publisher.gitClient = mockGit
+
+	ctx := context.Background()
+
+	// Test Commit without initialization
+	err = publisher.Commit(ctx, "test commit")
+	if err == nil {
+		t.Error("Commit() should error when not initialized")
+	}
+
+	// Initialize
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+
+	// Test successful commit
+	err = publisher.Commit(ctx, "feat: add test page")
+	if err != nil {
+		t.Errorf("Commit() error = %v", err)
+	}
+
+	// Verify commit was executed
+	commands := mockGit.GetExecutedCommands()
+	found := false
+	for _, cmd := range commands {
+		if cmd == "commit" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Commit() did not execute git commit command")
+	}
+
+	// Verify commit message
+	messages := mockGit.GetCommitMessages()
+	if len(messages) == 0 {
+		t.Error("Commit() did not record commit message")
+	} else if messages[0] != "feat: add test page" {
+		t.Errorf("Commit() recorded wrong message: got %q, want %q", messages[0], "feat: add test page")
+	}
+
+	// Cleanup
+	_ = publisher.Cleanup()
+}
