@@ -21,6 +21,7 @@ go.work
 bin/
 build/
 dist/
+beaver
 
 # IDE files
 .vscode/
@@ -42,6 +43,9 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Beaver configuration (contains tokens)
+beaver.yml
 
 # Log files
 *.log
