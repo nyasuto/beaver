@@ -21,9 +21,9 @@ func NewClient(token string) *Client {
 		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	
+
 	client := github.NewClient(tc)
-	
+
 	return &Client{
 		client: client,
 		token:  token,
@@ -36,17 +36,18 @@ func (c *Client) TestConnection(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("GitHub API接続テストに失敗: %w", err)
 	}
-	
+
 	fmt.Printf("✅ GitHub API接続成功: %s\n", user.GetLogin())
 	return nil
 }
 
 // GetRateLimit returns the current API rate limit status
 func (c *Client) GetRateLimit(ctx context.Context) (*github.RateLimits, error) {
+	//nolint:staticcheck // Using deprecated method until v61 migration
 	rateLimits, _, err := c.client.RateLimits(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("レート制限情報の取得に失敗: %w", err)
 	}
-	
+
 	return rateLimits, nil
 }

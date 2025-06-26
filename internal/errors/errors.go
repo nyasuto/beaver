@@ -6,10 +6,10 @@ import (
 
 // BeaverError represents a structured error with additional context
 type BeaverError struct {
-	Code     string
-	Message  string
-	Details  map[string]interface{}
-	Cause    error
+	Code    string
+	Message string
+	Details map[string]interface{}
+	Cause   error
 }
 
 func (e *BeaverError) Error() string {
@@ -50,15 +50,15 @@ func (e *BeaverError) WithDetail(key string, value interface{}) *BeaverError {
 
 // Common error codes
 const (
-	ErrCodeConfig        = "CONFIG_ERROR"
-	ErrCodeGitHub        = "GITHUB_ERROR"
-	ErrCodeAI            = "AI_ERROR"
-	ErrCodeWiki          = "WIKI_ERROR"
-	ErrCodeValidation    = "VALIDATION_ERROR"
-	ErrCodeNetwork       = "NETWORK_ERROR"
-	ErrCodeFileSystem    = "FILESYSTEM_ERROR"
+	ErrCodeConfig         = "CONFIG_ERROR"
+	ErrCodeGitHub         = "GITHUB_ERROR"
+	ErrCodeAI             = "AI_ERROR"
+	ErrCodeWiki           = "WIKI_ERROR"
+	ErrCodeValidation     = "VALIDATION_ERROR"
+	ErrCodeNetwork        = "NETWORK_ERROR"
+	ErrCodeFileSystem     = "FILESYSTEM_ERROR"
 	ErrCodeAuthentication = "AUTH_ERROR"
-	ErrCodeRateLimit     = "RATE_LIMIT_ERROR"
+	ErrCodeRateLimit      = "RATE_LIMIT_ERROR"
 )
 
 // Predefined error constructors for common cases
