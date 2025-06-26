@@ -2,6 +2,7 @@ package wiki
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -247,11 +248,32 @@ func NewConfigurationError(operation string, message string) *WikiError {
 func extractRepoPath(repoURL string) string {
 	// Simple extraction - could be improved with proper URL parsing
 	if repoURL == "" {
-		return "owner/repo"
+		return ""
 	}
-	// This is a simplified implementation
-	// In practice, you'd use proper URL parsing
-	return "owner/repo"
+
+	// Handle HTTPS URLs like https://github.com/owner/repo.git
+	if strings.Contains(repoURL, "github.com/") {
+		parts := strings.Split(repoURL, "github.com/")
+		if len(parts) > 1 {
+			path := parts[1]
+			// Remove .git suffix if present
+			path = strings.TrimSuffix(path, ".git")
+			return path
+		}
+	}
+
+	// Handle SSH URLs like git@github.com:owner/repo.git
+	if strings.Contains(repoURL, "git@github.com:") {
+		parts := strings.Split(repoURL, "git@github.com:")
+		if len(parts) > 1 {
+			path := parts[1]
+			// Remove .git suffix if present
+			path = strings.TrimSuffix(path, ".git")
+			return path
+		}
+	}
+
+	return ""
 }
 
 // IsNetworkError checks if an error is network-related
@@ -284,4 +306,9 @@ func IsConflictError(err error) bool {
 		return wikiErr.Type == ErrorTypeConflict
 	}
 	return false
+}
+
+// Unwrap returns the underlying cause error
+func (e *WikiError) Unwrap() error {
+	return e.Cause
 }
