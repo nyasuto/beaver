@@ -157,6 +157,14 @@ func (m *MockGitClient) GetConfig(ctx context.Context, dir string, key string) (
 	return "test-value", nil
 }
 
+func (m *MockGitClient) UnsetConfig(ctx context.Context, dir string, key string) error {
+	m.commands = append(m.commands, "config unset")
+	if m.shouldErr {
+		return NewWikiError(m.errType, "config", nil, "Mock config unset error", 0, nil)
+	}
+	return nil
+}
+
 // Helper methods for testing
 func (m *MockGitClient) SetShouldError(shouldErr bool, errType ErrorType) {
 	m.shouldErr = shouldErr
