@@ -55,7 +55,9 @@ jobs:
         
     - name: 📊 カバレッジレポートのアップロード
       uses: codecov/codecov-action@v5
-    
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        
   # ビルドテスト (Build Test)
   build:
     name: 🔨 ビルドテスト
