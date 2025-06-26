@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -435,14 +436,7 @@ func TestGitHubWikiPublisher_PublishPages(t *testing.T) {
 	commands := mockGit.GetExecutedCommands()
 	expectedCommands := []string{"clone", "add", "commit", "push"}
 	for _, expected := range expectedCommands {
-		found := false
-		for _, cmd := range commands {
-			if cmd == expected {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(commands, expected) {
 			t.Errorf("PublishPages() did not execute %s command", expected)
 		}
 	}
@@ -451,14 +445,7 @@ func TestGitHubWikiPublisher_PublishPages(t *testing.T) {
 	addedFiles := mockGit.GetAddedFiles()
 	expectedFiles := []string{"Home.md", "Setup-Guide.md"}
 	for _, expected := range expectedFiles {
-		found := false
-		for _, file := range addedFiles {
-			if file == expected {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(addedFiles, expected) {
 			t.Errorf("PublishPages() did not add file %s", expected)
 		}
 	}

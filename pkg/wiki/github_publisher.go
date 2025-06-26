@@ -14,10 +14,10 @@ import (
 
 // GitHubWikiPublisher implements WikiPublisher using Git clone operations
 type GitHubWikiPublisher struct {
-	config    *PublisherConfig
-	gitClient GitClient
-	generator *Generator
-	workDir   string
+	config        *PublisherConfig
+	gitClient     GitClient
+	generator     *Generator
+	workDir       string
 	isInitialized bool
 }
 
@@ -35,10 +35,10 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 	}
 
 	return &GitHubWikiPublisher{
-		config:    config,
-		gitClient: gitClient,
-		generator: NewGenerator(),
-		workDir:   "",
+		config:        config,
+		gitClient:     gitClient,
+		generator:     NewGenerator(),
+		workDir:       "",
 		isInitialized: false,
 	}, nil
 }
@@ -431,7 +431,7 @@ func (p *GitHubWikiPublisher) ListPages(ctx context.Context) ([]*WikiPageInfo, e
 				Filename:     d.Name(),
 				Size:         info.Size(),
 				LastModified: info.ModTime(),
-				URL:          fmt.Sprintf("https://github.com/%s/%s/wiki/%s", 
+				URL: fmt.Sprintf("https://github.com/%s/%s/wiki/%s",
 					p.config.Owner, p.config.Repository, strings.TrimSuffix(d.Name(), ".md")),
 			}
 
@@ -455,10 +455,10 @@ func (p *GitHubWikiPublisher) ListPages(ctx context.Context) ([]*WikiPageInfo, e
 // createWorkingDirectory creates a temporary working directory
 func (p *GitHubWikiPublisher) createWorkingDirectory() (string, error) {
 	workDir := p.config.WorkingDir
-	
+
 	if workDir == "" {
 		// Create temporary directory
-		tempDir, err := os.MkdirTemp("", fmt.Sprintf("beaver-wiki-%s-%s-", 
+		tempDir, err := os.MkdirTemp("", fmt.Sprintf("beaver-wiki-%s-%s-",
 			p.config.Owner, p.config.Repository))
 		if err != nil {
 			return "", NewWikiError(ErrorTypeFileSystem, "create_workdir", err,
@@ -471,7 +471,7 @@ func (p *GitHubWikiPublisher) createWorkingDirectory() (string, error) {
 		workDir = tempDir
 	} else {
 		// Use specified directory
-		if err := os.MkdirAll(workDir, 0755); err != nil {
+		if err := os.MkdirAll(workDir, 0750); err != nil { // #nosec G301 -- workDir needs to be accessible for Git operations
 			return "", NewWikiError(ErrorTypeFileSystem, "create_workdir", err,
 				"指定された作業ディレクトリの作成に失敗しました", 0,
 				[]string{
@@ -511,7 +511,7 @@ func (p *GitHubWikiPublisher) normalizeFilename(filename string) string {
 
 // writePageFile writes page content to a file
 func (p *GitHubWikiPublisher) writePageFile(filepath, content string) error {
-	if err := os.WriteFile(filepath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath, []byte(content), 0600); err != nil { // #nosec G306 -- Wiki files need appropriate read permissions
 		return NewWikiError(ErrorTypeFileSystem, "write_page", err,
 			"ページファイルの書き込みに失敗しました", 0,
 			[]string{

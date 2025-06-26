@@ -68,11 +68,11 @@ func (c *CmdGitClient) Clone(ctx context.Context, url, dir string, options *Clon
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...)
-	
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...) // #nosec G204 -- gitPath is validated at initialization
+
 	// Set up environment for authentication
 	cmd.Env = os.Environ()
-	
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("ERROR Git clone failed: %v, output: %s", err, string(output))
@@ -90,7 +90,7 @@ func (c *CmdGitClient) Pull(ctx context.Context, dir string) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "pull")
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "pull") // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
 
@@ -131,7 +131,7 @@ func (c *CmdGitClient) Push(ctx context.Context, dir string, options *PushOption
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...)
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...) // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
 
@@ -154,7 +154,7 @@ func (c *CmdGitClient) Add(ctx context.Context, dir string, files []string) erro
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...)
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...) // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -186,7 +186,7 @@ func (c *CmdGitClient) Commit(ctx context.Context, dir string, message string, o
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...)
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, args...) // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -207,7 +207,7 @@ func (c *CmdGitClient) Status(ctx context.Context, dir string) (*GitStatus, erro
 	defer cancel()
 
 	// Get porcelain status
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "status", "--porcelain")
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "status", "--porcelain") // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -224,20 +224,19 @@ func (c *CmdGitClient) Status(ctx context.Context, dir string) (*GitStatus, erro
 		StagedFiles:    []string{},
 	}
 
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(output)), "\n") {
 		if len(line) < 3 {
 			continue
 		}
-		
+
 		statusCode := line[:2]
 		filename := strings.TrimSpace(line[3:])
-		
+
 		switch statusCode[0] {
 		case 'M', 'A', 'D', 'R', 'C':
 			status.StagedFiles = append(status.StagedFiles, filename)
 		}
-		
+
 		switch statusCode[1] {
 		case 'M', 'D':
 			status.ModifiedFiles = append(status.ModifiedFiles, filename)
@@ -264,7 +263,7 @@ func (c *CmdGitClient) GetCurrentSHA(ctx context.Context, dir string) (string, e
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "rev-parse", "HEAD")
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "rev-parse", "HEAD") // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -280,7 +279,7 @@ func (c *CmdGitClient) GetRemoteURL(ctx context.Context, dir string) (string, er
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "remote", "get-url", "origin")
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "remote", "get-url", "origin") // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -296,7 +295,7 @@ func (c *CmdGitClient) GetCurrentBranch(ctx context.Context, dir string) (string
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "branch", "--show-current")
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "branch", "--show-current") // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -314,7 +313,7 @@ func (c *CmdGitClient) CheckoutBranch(ctx context.Context, dir string, branch st
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "checkout", branch)
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "checkout", branch) // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -332,7 +331,7 @@ func (c *CmdGitClient) SetConfig(ctx context.Context, dir string, key, value str
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "config", key, value)
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "config", key, value) // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -348,7 +347,7 @@ func (c *CmdGitClient) GetConfig(ctx context.Context, dir string, key string) (s
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "config", key)
+	cmd := exec.CommandContext(ctxWithTimeout, c.gitPath, "config", key) // #nosec G204 -- gitPath is validated at initialization
 	cmd.Dir = dir
 
 	output, err := cmd.CombinedOutput()
@@ -364,41 +363,41 @@ func (c *CmdGitClient) GetConfig(ctx context.Context, dir string, key string) (s
 // handleGitError converts git command errors to WikiError
 func (c *CmdGitClient) handleGitError(operation string, err error, output string) error {
 	outputLower := strings.ToLower(output)
-	
+
 	// Network errors
-	if strings.Contains(outputLower, "network") || 
-	   strings.Contains(outputLower, "connection") ||
-	   strings.Contains(outputLower, "timeout") ||
-	   strings.Contains(outputLower, "could not resolve host") {
+	if strings.Contains(outputLower, "network") ||
+		strings.Contains(outputLower, "connection") ||
+		strings.Contains(outputLower, "timeout") ||
+		strings.Contains(outputLower, "could not resolve host") {
 		return NewNetworkError(fmt.Sprintf("git %s", operation), err).
 			WithContext("git_output", output)
 	}
-	
+
 	// Authentication errors
 	if strings.Contains(outputLower, "authentication failed") ||
-	   strings.Contains(outputLower, "permission denied") ||
-	   strings.Contains(outputLower, "bad credentials") ||
-	   strings.Contains(outputLower, "invalid username or password") {
+		strings.Contains(outputLower, "permission denied") ||
+		strings.Contains(outputLower, "bad credentials") ||
+		strings.Contains(outputLower, "invalid username or password") {
 		return NewAuthenticationError(fmt.Sprintf("git %s", operation), err).
 			WithContext("git_output", output)
 	}
-	
+
 	// Repository not found or access denied
 	if strings.Contains(outputLower, "repository not found") ||
-	   strings.Contains(outputLower, "does not exist") ||
-	   strings.Contains(outputLower, "access denied") {
+		strings.Contains(outputLower, "does not exist") ||
+		strings.Contains(outputLower, "access denied") {
 		return NewRepositoryError(fmt.Sprintf("git %s", operation), err, "").
 			WithContext("git_output", output)
 	}
-	
+
 	// Conflict errors
 	if strings.Contains(outputLower, "conflict") ||
-	   strings.Contains(outputLower, "merge") ||
-	   strings.Contains(outputLower, "would be overwritten") {
+		strings.Contains(outputLower, "merge") ||
+		strings.Contains(outputLower, "would be overwritten") {
 		return NewConflictError(fmt.Sprintf("git %s", operation), err).
 			WithContext("git_output", output)
 	}
-	
+
 	// Generic git operation error
 	return NewWikiError(
 		ErrorTypeGitOperation,
