@@ -55,12 +55,7 @@ jobs:
         
     - name: 📊 カバレッジレポートのアップロード
       uses: codecov/codecov-action@v5
-      if: success()
-      with:
-        file: coverage.out
-        flags: unittests
-        name: beaver-coverage
-
+    
   # ビルドテスト (Build Test)
   build:
     name: 🔨 ビルドテスト
