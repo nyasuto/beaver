@@ -9,7 +9,7 @@ on:
 
 env:
   GO_VERSION: 'stable'
-  GOLANGCI_LINT_VERSION: 'v1.62'
+  GOLANGCI_LINT_VERSION: 'latest'
 
 jobs:
   # 品質チェック (Quality Checks)
@@ -48,7 +48,6 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: ${{ env.GOLANGCI_LINT_VERSION }}
-        args: --verbose
         
     - name: 🧪 テスト実行
       run: |
