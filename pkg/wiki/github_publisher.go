@@ -31,40 +31,57 @@ type GitHubWikiPublisher struct {
 // NewGitHubWikiPublisher creates a new GitHub Wiki publisher
 func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, error) {
 	log.Printf("INFO Creating GitHubWikiPublisher: owner=%s, repo=%s", config.Owner, config.Repository)
+	log.Printf("DEBUG Publisher configuration: shallow_clone=%t, depth=%d, timeout=%v, conflict_resolution=%t",
+		config.UseShallowClone, config.CloneDepth, config.Timeout, config.EnableConflictResolution)
 
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
+	log.Printf("DEBUG Initializing Git client...")
 	gitClient, err := NewCmdGitClient()
 	if err != nil {
+		log.Printf("ERROR Failed to create Git client: %v", err)
 		return nil, err
 	}
+	log.Printf("DEBUG Git client initialized successfully")
 
 	// Initialize authenticator if token is provided
 	var authenticator *GitAuthenticator
 	if config.Token != "" {
+		log.Printf("DEBUG Initializing GitHub authenticator...")
 		authenticator = NewGitAuthenticator(config.Token)
 		if err := authenticator.ValidateToken(); err != nil {
+			log.Printf("ERROR Token validation failed: %v", err)
 			return nil, err
 		}
 		log.Printf("INFO Authenticator initialized with token: %s", authenticator.SecureTokenString())
+	} else {
+		log.Printf("WARN No GitHub token provided - using anonymous access")
 	}
 
 	// Initialize performance monitoring and temp management
+	log.Printf("DEBUG Initializing performance monitor (enabled=%t)", config.EnablePerformanceLogging)
 	perfMonitor := NewPerformanceMonitor(config.EnablePerformanceLogging)
+	log.Printf("DEBUG Initializing temp manager for repo %s/%s", config.Owner, config.Repository)
 	tempManager := NewTempManager("", fmt.Sprintf("beaver-wiki-%s-%s", config.Owner, config.Repository))
 
 	// Initialize conflict resolver with CI-optimized settings
+	log.Printf("DEBUG Initializing conflict resolver (enabled=%t)", config.EnableConflictResolution)
 	conflictResolverConfig := DefaultConflictResolverConfig()
 	if config.EnableConflictResolution {
 		// Use more aggressive settings in CI environments
 		conflictResolverConfig.MaxRetries = 8
 		conflictResolverConfig.BaseDelay = 500 * time.Millisecond
 		conflictResolverConfig.MaxDelay = 20 * time.Second
+		log.Printf("DEBUG ConflictResolver configured with CI-optimized settings: max_retries=%d, base_delay=%v, max_delay=%v",
+			conflictResolverConfig.MaxRetries, conflictResolverConfig.BaseDelay, conflictResolverConfig.MaxDelay)
+	} else {
+		log.Printf("DEBUG ConflictResolver configured with default settings")
 	}
 	conflictResolver := NewConflictResolver(gitClient, conflictResolverConfig)
 
+	log.Printf("DEBUG GitHubWikiPublisher created successfully")
 	return &GitHubWikiPublisher{
 		config:           config,
 		gitClient:        gitClient,
@@ -81,90 +98,125 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 
 // Initialize prepares the publisher for operations
 func (p *GitHubWikiPublisher) Initialize(ctx context.Context) error {
+	start := time.Now()
 	log.Printf("INFO GitHubWikiPublisher Initialize starting")
+	log.Printf("DEBUG Initialize context: timeout=%v, repo=%s/%s",
+		ctx.Value("timeout"), p.config.Owner, p.config.Repository)
 
 	if p.isInitialized {
-		log.Printf("INFO Publisher already initialized")
+		log.Printf("INFO Publisher already initialized - skipping")
 		return nil
 	}
 
 	// Start performance monitoring
+	log.Printf("DEBUG Starting performance monitoring...")
 	p.perfMonitor.Start(ctx)
 
 	// Create working directory
+	log.Printf("DEBUG Creating working directory...")
 	workDir, err := p.createWorkingDirectory()
 	if err != nil {
+		log.Printf("ERROR Failed to create working directory: %v", err)
 		return err
 	}
 	p.workDir = workDir
+	log.Printf("DEBUG Working directory created: %s", workDir)
 
 	// Initialize file manager (images directory will be created after clone)
+	log.Printf("DEBUG Initializing file manager for workDir: %s", workDir)
 	p.fileManager = NewWikiFileManager(p.workDir)
 
 	// Setup authentication if available
 	if p.authenticator != nil {
+		log.Printf("DEBUG Setting up authentication credentials...")
 		if err := p.authenticator.SetupCredentials(p.workDir); err != nil {
+			log.Printf("ERROR Failed to setup authentication: %v", err)
 			return err
 		}
 		log.Printf("INFO Authentication credentials configured for workDir: %s", p.workDir)
+	} else {
+		log.Printf("DEBUG No authenticator available - proceeding without authentication")
 	}
 
 	p.isInitialized = true
-	log.Printf("INFO GitHubWikiPublisher initialized successfully: workDir=%s", p.workDir)
+	duration := time.Since(start)
+	log.Printf("INFO GitHubWikiPublisher initialized successfully in %v: workDir=%s", duration, p.workDir)
 	return nil
 }
 
 // Clone clones the .wiki.git repository
 func (p *GitHubWikiPublisher) Clone(ctx context.Context) error {
+	start := time.Now()
 	log.Printf("INFO GitHubWikiPublisher Clone starting")
+	log.Printf("DEBUG Clone operation for repo: %s/%s", p.config.Owner, p.config.Repository)
 
 	if !p.isInitialized {
+		log.Printf("ERROR Clone failed: Publisher not initialized")
 		return NewConfigurationError("clone", "Publisher not initialized")
 	}
 
 	// Check if already cloned
+	log.Printf("DEBUG Checking if repository already exists at: %s", p.workDir)
 	if IsGitRepository(p.workDir) {
-		log.Printf("INFO Repository already cloned, pulling latest changes")
+		log.Printf("INFO Repository already cloned at %s, pulling latest changes", p.workDir)
 		return p.Pull(ctx)
 	}
 
 	// Clone the .wiki.git repository
 	repoURL := p.config.GetRepositoryURL()
+	log.Printf("DEBUG Base repository URL: %s", repoURL)
+
 	if p.authenticator != nil {
 		repoURL = p.authenticator.BuildAuthURL(repoURL)
 		log.Printf("INFO Using authenticated URL: %s", p.authenticator.SanitizeURL(repoURL))
 	} else {
-		log.Printf("INFO Using repository URL: %s", repoURL)
+		log.Printf("INFO Using repository URL without authentication: %s", repoURL)
 	}
+
 	cloneOptions := NewDefaultCloneOptions()
 	cloneOptions.Depth = p.config.CloneDepth
 	cloneOptions.SingleBranch = p.config.UseShallowClone
 	cloneOptions.Branch = p.config.BranchName
 	cloneOptions.Timeout = p.config.Timeout
 
+	log.Printf("DEBUG Clone options: depth=%d, single_branch=%t, branch=%s, timeout=%v",
+		cloneOptions.Depth, cloneOptions.SingleBranch, cloneOptions.Branch, cloneOptions.Timeout)
+
 	// Record git operation performance
+	log.Printf("DEBUG Starting git clone operation...")
 	gitStart := time.Now()
 	err := p.gitClient.Clone(ctx, repoURL, p.workDir, cloneOptions)
-	p.perfMonitor.RecordGitOperation(time.Since(gitStart))
+	gitDuration := time.Since(gitStart)
+	p.perfMonitor.RecordGitOperation(gitDuration)
+
 	if err != nil {
+		log.Printf("ERROR Git clone failed after %v: %v", gitDuration, err)
 		// Handle specific error cases
 		if IsAuthenticationError(err) {
+			log.Printf("ERROR Authentication error during clone")
 			return err // Already properly formatted
 		}
 		if IsRepositoryError(err) {
+			log.Printf("ERROR Repository error during clone")
 			return NewRepositoryError("clone", err, p.config.GetRepositoryURL()).
 				WithContext("repository", fmt.Sprintf("%s/%s", p.config.Owner, p.config.Repository))
 		}
 		return err
 	}
 
+	log.Printf("DEBUG Git clone completed successfully in %v", gitDuration)
+
 	// Configure git user for commits
+	log.Printf("DEBUG Configuring git user for commits...")
 	if err := p.configureGitUser(ctx); err != nil {
 		log.Printf("WARN Failed to configure git user: %v", err)
 		// Not fatal, continue
+	} else {
+		log.Printf("DEBUG Git user configured successfully")
 	}
 
-	log.Printf("INFO Repository cloned successfully")
+	totalDuration := time.Since(start)
+	log.Printf("INFO Repository cloned successfully in %v", totalDuration)
 	return nil
 }
 
@@ -328,19 +380,50 @@ func (p *GitHubWikiPublisher) PageExists(ctx context.Context, pageName string) (
 
 // PublishPages publishes multiple Wiki pages in a batch
 func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPage) error {
+	start := time.Now()
 	log.Printf("INFO Publishing %d pages", len(pages))
+	log.Printf("DEBUG PublishPages config: batch_operations=%t, conflict_resolution=%t",
+		p.config.EnableBatchOperations, p.config.EnableConflictResolution)
 
 	if !p.isInitialized {
+		log.Printf("ERROR PublishPages failed: Publisher not initialized")
 		return NewConfigurationError("publish_pages", "Publisher not initialized")
+	}
+
+	if len(pages) == 0 {
+		log.Printf("WARN No pages to publish - operation completed")
+		return nil
+	}
+
+	// Log page summary for debugging
+	log.Printf("DEBUG Pages to publish:")
+	for i, page := range pages {
+		if i < 5 { // Only log first 5 pages to avoid spam
+			log.Printf("  %d: %s (%d bytes)", i+1, page.Title, len(page.Content))
+		} else if i == 5 {
+			log.Printf("  ... and %d more pages", len(pages)-5)
+			break
+		}
 	}
 
 	// Check if batch processing is enabled and we have many pages
 	if p.config.EnableBatchOperations && len(pages) > 10 {
+		log.Printf("INFO Using batch processing for %d pages (threshold: 10)", len(pages))
 		return p.publishPagesInBatches(ctx, pages)
 	}
 
 	// Process all pages at once for smaller sets
-	return p.publishPagesBatch(ctx, pages)
+	log.Printf("INFO Processing all %d pages in single batch", len(pages))
+	err := p.publishPagesBatch(ctx, pages)
+
+	duration := time.Since(start)
+	if err != nil {
+		log.Printf("ERROR PublishPages failed after %v: %v", duration, err)
+		return err
+	}
+
+	log.Printf("INFO PublishPages completed successfully in %v", duration)
+	return nil
 }
 
 // publishPagesInBatches processes pages in optimized batches
@@ -388,33 +471,57 @@ func (p *GitHubWikiPublisher) publishPagesInBatches(ctx context.Context, pages [
 
 // publishPagesBatch processes a single batch of pages
 func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*WikiPage) error {
+	start := time.Now()
+	log.Printf("DEBUG Starting publishPagesBatch for %d pages", len(pages))
+
 	// Ensure repository is cloned
+	log.Printf("DEBUG Ensuring repository is cloned...")
 	if err := p.Clone(ctx); err != nil {
+		log.Printf("ERROR Failed to clone repository: %v", err)
 		return err
 	}
 
 	// Create/update each page with performance tracking
+	log.Printf("DEBUG Processing individual pages...")
 	var filenames []string
-	for _, page := range pages {
+	var totalFileSize int64
+
+	for i, page := range pages {
+		log.Printf("DEBUG Processing page %d/%d: %s", i+1, len(pages), page.Title)
 		fileStart := time.Now()
+
 		if err := p.UpdatePage(ctx, page); err != nil {
+			log.Printf("ERROR Failed to update page %s: %v", page.Title, err)
 			return fmt.Errorf("failed to update page %s: %w", page.Title, err)
 		}
-		p.perfMonitor.RecordFileOperation(time.Since(fileStart))
+
+		fileDuration := time.Since(fileStart)
+		p.perfMonitor.RecordFileOperation(fileDuration)
 		p.perfMonitor.RecordPageProcessed()
+		totalFileSize += int64(len(page.Content))
+
+		log.Printf("DEBUG Page %s processed in %v (%d bytes)", page.Title, fileDuration, len(page.Content))
 
 		// Get normalized filename from file manager
 		normalizedName, err := p.fileManager.NormalizePageName(page.Title)
 		if err != nil {
+			log.Printf("ERROR Failed to normalize page name %s: %v", page.Title, err)
 			return fmt.Errorf("failed to normalize page name %s: %w", page.Title, err)
 		}
 		filenames = append(filenames, normalizedName)
+		log.Printf("DEBUG Page filename normalized: %s -> %s", page.Title, normalizedName)
 	}
 
+	log.Printf("DEBUG All pages processed. Total content size: %d bytes", totalFileSize)
+
 	// Add all files to git
+	log.Printf("DEBUG Adding %d files to git staging area...", len(filenames))
+	gitStart := time.Now()
 	if err := p.gitClient.Add(ctx, p.workDir, filenames); err != nil {
+		log.Printf("ERROR Failed to add files to git: %v", err)
 		return err
 	}
+	log.Printf("DEBUG Git add completed in %v", time.Since(gitStart))
 
 	// Commit changes
 	commitMessage := fmt.Sprintf("feat: Update %d Wiki pages via Beaver\n\nUpdated pages:\n", len(pages))
@@ -423,33 +530,61 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 	}
 	commitMessage += "\n🤖 Generated with Beaver AI"
 
+	log.Printf("DEBUG Commit message prepared (%d characters)", len(commitMessage))
+
 	commitOptions := NewDefaultCommitOptions()
 	commitOptions.Author.Name = p.config.AuthorName
 	commitOptions.Author.Email = p.config.AuthorEmail
 
+	log.Printf("DEBUG Commit options: author=%s <%s>", commitOptions.Author.Name, commitOptions.Author.Email)
+
 	// Use ConflictResolver for safe push with automatic retry and conflict resolution
+	pushStart := time.Now()
 	if p.config.EnableConflictResolution && p.conflictResolver != nil {
 		log.Printf("INFO Using ConflictResolver for safe push operation")
+		log.Printf("DEBUG ConflictResolver config: max_retries=%d, enabled=%t",
+			p.conflictResolver.maxRetries, p.config.EnableConflictResolution)
+
 		if err := p.conflictResolver.SafeUpdate(ctx, p.workDir, commitMessage, filenames); err != nil {
+			pushDuration := time.Since(pushStart)
+			log.Printf("ERROR ConflictResolver failed after %v: %v", pushDuration, err)
 			return fmt.Errorf("ConflictResolver failed to publish changes: %w", err)
 		}
+
+		pushDuration := time.Since(pushStart)
+		log.Printf("INFO ConflictResolver completed successfully in %v", pushDuration)
 	} else {
 		// Fallback to original direct push approach
 		log.Printf("INFO Using direct push (ConflictResolver disabled)")
+		log.Printf("DEBUG Starting commit operation...")
+
+		commitStart := time.Now()
 		if err := p.gitClient.Commit(ctx, p.workDir, commitMessage, commitOptions); err != nil {
+			log.Printf("ERROR Git commit failed: %v", err)
 			return err
 		}
+		commitDuration := time.Since(commitStart)
+		log.Printf("DEBUG Git commit completed in %v", commitDuration)
 
 		pushOptions := NewDefaultPushOptions()
 		pushOptions.Branch = p.config.BranchName
 		pushOptions.Timeout = p.config.Timeout
 
+		log.Printf("DEBUG Push options: branch=%s, timeout=%v", pushOptions.Branch, pushOptions.Timeout)
+		log.Printf("DEBUG Starting git push operation...")
+
 		if err := p.gitClient.Push(ctx, p.workDir, pushOptions); err != nil {
+			pushDuration := time.Since(pushStart)
+			log.Printf("ERROR Git push failed after %v: %v", pushDuration, err)
 			return err
 		}
+
+		pushDuration := time.Since(pushStart)
+		log.Printf("DEBUG Git push completed in %v", pushDuration)
 	}
 
-	log.Printf("INFO Successfully published %d pages", len(pages))
+	totalDuration := time.Since(start)
+	log.Printf("INFO Successfully published %d pages in %v", len(pages), totalDuration)
 	return nil
 }
 
