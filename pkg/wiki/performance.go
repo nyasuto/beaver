@@ -17,16 +17,16 @@ type PerformanceMonitor struct {
 
 // PerformanceStats tracks performance metrics
 type PerformanceStats struct {
-	StartTime           time.Time
-	LastGCTime          time.Time
-	GCCount             int
-	PeakMemoryUsage     uint64
-	CurrentMemoryUsage  uint64
-	TotalAllocations    uint64
-	ProcessedPages      int
-	ProcessingDuration  time.Duration
-	GitOperationTime    time.Duration
-	FileOperationTime   time.Duration
+	StartTime          time.Time
+	LastGCTime         time.Time
+	GCCount            int
+	PeakMemoryUsage    uint64
+	CurrentMemoryUsage uint64
+	TotalAllocations   uint64
+	ProcessedPages     int
+	ProcessingDuration time.Duration
+	GitOperationTime   time.Duration
+	FileOperationTime  time.Duration
 }
 
 // NewPerformanceMonitor creates a new performance monitor
@@ -34,7 +34,7 @@ func NewPerformanceMonitor(enabled bool) *PerformanceMonitor {
 	return &PerformanceMonitor{
 		enabled:    enabled,
 		threshold:  100 * 1024 * 1024, // 100MB default threshold
-		gcInterval: 30 * time.Second,   // Force GC every 30 seconds
+		gcInterval: 30 * time.Second,  // Force GC every 30 seconds
 		stats: &PerformanceStats{
 			StartTime: time.Now(),
 		},
@@ -49,7 +49,7 @@ func (pm *PerformanceMonitor) Start(ctx context.Context) {
 
 	log.Printf("INFO Performance monitoring started")
 	pm.stats.StartTime = time.Now()
-	
+
 	// Start background memory monitoring
 	go pm.backgroundMonitoring(ctx)
 }
@@ -83,7 +83,7 @@ func (pm *PerformanceMonitor) checkMemoryUsage() {
 	}
 
 	// Check if we should force garbage collection
-	if int64(m.Alloc) > pm.threshold {
+	if pm.threshold > 0 && m.Alloc > uint64(pm.threshold) { // #nosec G115 -- pm.threshold is always positive
 		log.Printf("INFO Memory usage (%d MB) exceeds threshold (%d MB), triggering GC",
 			m.Alloc/(1024*1024), pm.threshold/(1024*1024))
 		pm.ForceGC()
@@ -100,10 +100,10 @@ func (pm *PerformanceMonitor) ForceGC() {
 	start := time.Now()
 	runtime.GC()
 	runtime.GC() // Double GC to ensure cleanup
-	
+
 	pm.stats.LastGCTime = time.Now()
 	pm.stats.GCCount++
-	
+
 	duration := time.Since(start)
 	log.Printf("INFO Forced GC completed in %v", duration)
 }
@@ -154,7 +154,7 @@ func (pm *PerformanceMonitor) LogSummary() {
 	log.Printf("  GC Cycles: %d", stats.GCCount)
 	log.Printf("  Git Operations Time: %v", stats.GitOperationTime)
 	log.Printf("  File Operations Time: %v", stats.FileOperationTime)
-	
+
 	if stats.ProcessedPages > 0 {
 		avgTime := stats.ProcessingDuration / time.Duration(stats.ProcessedPages)
 		log.Printf("  Average Time Per Page: %v", avgTime)

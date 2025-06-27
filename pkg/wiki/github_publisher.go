@@ -16,15 +16,15 @@ import (
 
 // GitHubWikiPublisher implements WikiPublisher using Git clone operations
 type GitHubWikiPublisher struct {
-	config          *PublisherConfig
-	gitClient       GitClient
-	generator       *Generator
-	authenticator   *GitAuthenticator
-	fileManager     *WikiFileManager
-	perfMonitor     *PerformanceMonitor
-	tempManager     *TempManager
-	workDir         string
-	isInitialized   bool
+	config        *PublisherConfig
+	gitClient     GitClient
+	generator     *Generator
+	authenticator *GitAuthenticator
+	fileManager   *WikiFileManager
+	perfMonitor   *PerformanceMonitor
+	tempManager   *TempManager
+	workDir       string
+	isInitialized bool
 }
 
 // NewGitHubWikiPublisher creates a new GitHub Wiki publisher
@@ -334,42 +334,42 @@ func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPag
 // publishPagesInBatches processes pages in optimized batches
 func (p *GitHubWikiPublisher) publishPagesInBatches(ctx context.Context, pages []*WikiPage) error {
 	log.Printf("INFO Using batch processing for %d pages", len(pages))
-	
+
 	// Calculate optimal batch size based on memory usage and page count
 	batchSize := p.calculateOptimalBatchSize(len(pages))
 	log.Printf("INFO Calculated optimal batch size: %d", batchSize)
-	
+
 	// Ensure repository is cloned once
 	if err := p.Clone(ctx); err != nil {
 		return err
 	}
-	
+
 	// Process pages in batches
 	for i := 0; i < len(pages); i += batchSize {
 		end := i + batchSize
 		if end > len(pages) {
 			end = len(pages)
 		}
-		
+
 		batch := pages[i:end]
-		log.Printf("INFO Processing batch %d/%d (%d pages)", i/batchSize+1, 
+		log.Printf("INFO Processing batch %d/%d (%d pages)", i/batchSize+1,
 			(len(pages)+batchSize-1)/batchSize, len(batch))
-		
+
 		if err := p.publishPagesBatch(ctx, batch); err != nil {
 			return fmt.Errorf("failed to process batch starting at page %d: %w", i, err)
 		}
-		
+
 		// Force garbage collection between batches for large datasets
 		if len(pages) > 50 {
 			p.perfMonitor.ForceGC()
 		}
-		
+
 		// Update temp directory size tracking
 		if err := p.tempManager.UpdateDirectorySize(p.workDir); err != nil {
 			log.Printf("WARN Failed to update directory size: %v", err)
 		}
 	}
-	
+
 	log.Printf("INFO Completed batch processing of %d pages", len(pages))
 	return nil
 }
@@ -390,7 +390,7 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 		}
 		p.perfMonitor.RecordFileOperation(time.Since(fileStart))
 		p.perfMonitor.RecordPageProcessed()
-		
+
 		// Get normalized filename from file manager
 		normalizedName, err := p.fileManager.NormalizePageName(page.Title)
 		if err != nil {
@@ -437,7 +437,7 @@ func (p *GitHubWikiPublisher) calculateOptimalBatchSize(totalPages int) int {
 	// Get current memory stats
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	// Base batch size depending on total pages
 	var baseBatchSize int
 	switch {
@@ -450,7 +450,7 @@ func (p *GitHubWikiPublisher) calculateOptimalBatchSize(totalPages int) int {
 	default:
 		baseBatchSize = 50
 	}
-	
+
 	// Adjust based on memory usage
 	currentMemMB := m.Alloc / (1024 * 1024)
 	if currentMemMB > 100 { // If using more than 100MB
@@ -459,10 +459,10 @@ func (p *GitHubWikiPublisher) calculateOptimalBatchSize(totalPages int) int {
 			baseBatchSize = 5 // Minimum batch size
 		}
 	}
-	
-	log.Printf("DEBUG Batch size calculation: total=%d, memory=%dMB, batchSize=%d", 
+
+	log.Printf("DEBUG Batch size calculation: total=%d, memory=%dMB, batchSize=%d",
 		totalPages, currentMemMB, baseBatchSize)
-	
+
 	return baseBatchSize
 }
 
@@ -625,13 +625,13 @@ func (p *GitHubWikiPublisher) createWorkingDirectory() (string, error) {
 
 	if workDir == "" {
 		// Create temporary directory using temp manager for better tracking
-		tempDir, err := p.tempManager.CreateTempDir(fmt.Sprintf("wiki-publish-%s-%s", 
+		tempDir, err := p.tempManager.CreateTempDir(fmt.Sprintf("wiki-publish-%s-%s",
 			p.config.Owner, p.config.Repository))
 		if err != nil {
 			return "", err // Error already formatted by temp manager
 		}
 		workDir = tempDir
-		
+
 		// Mark as in use
 		p.tempManager.MarkInUse(workDir, true)
 	} else {

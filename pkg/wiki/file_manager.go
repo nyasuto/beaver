@@ -60,7 +60,7 @@ func sanitizeUTF8Content(content string) string {
 	if utf8.ValidString(content) {
 		return content
 	}
-	
+
 	// Replace invalid UTF-8 sequences with replacement character
 	var buf strings.Builder
 	for _, r := range content {
