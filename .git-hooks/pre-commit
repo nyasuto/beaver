@@ -48,44 +48,7 @@ if [ -z "$(git diff --cached --name-only)" ]; then
     exit 1
 fi
 
-# Go ファイルの変更がある場合の品質チェック
-go_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
-if [ -n "$go_files" ]; then
-    echo "🔍 Go ファイルの品質チェック実行中..."
-    
-    # フォーマットチェック
-    echo "  ✨ フォーマットチェック..."
-    unformatted=$(echo "$go_files" | xargs gofmt -l)
-    if [ -n "$unformatted" ]; then
-        echo "❌ エラー: 以下のファイルがフォーマットされていません:"
-        echo "$unformatted"
-        echo "   修正するには: make fmt"
-        exit 1
-    fi
-    
-    
-    # 可能であればlintチェック
-    if command -v golangci-lint >/dev/null 2>&1; then
-        echo "  🔍 Lint チェック..."
-        if ! golangci-lint run --new-from-rev=HEAD~1; then
-            echo "❌ エラー: Lint チェックに失敗しました"
-            echo "   修正するには: make lint"
-            exit 1
-        fi
-    else
-        echo "  ⚠️  golangci-lint がインストールされていません（スキップ）"
-    fi
-    
-    # テスト実行（変更されたパッケージのみ）
-    echo "  🧪 テスト実行..."
-    packages=$(echo "$go_files" | xargs -I {} dirname {} | sort -u | xargs -I {} echo "./{}...")
-    if [ -n "$packages" ]; then
-        if ! go test $packages; then
-            echo "❌ エラー: テストに失敗しました"
-            exit 1
-        fi
-    fi
-fi
+make quality
 
 # Makefileの変更がある場合
 makefile_changed=$(git diff --cached --name-only | grep -E '^Makefile$' || true)
