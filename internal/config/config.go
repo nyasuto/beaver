@@ -176,6 +176,11 @@ func setDefaults() {
 
 // ValidateConfig validates the loaded configuration
 func (c *Config) Validate() error {
+	// Validate project name
+	if c.Project.Name == "" {
+		return fmt.Errorf("project.name は必須設定です")
+	}
+
 	// Allow placeholder repository values to pass validation
 	// The build command will check for proper repository configuration
 	if c.Project.Repository == "" {

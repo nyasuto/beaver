@@ -101,6 +101,11 @@ func runFetchIssues(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ per-page は 1-100 の範囲で指定してください")
 	}
 
+	// Validate output format early
+	if outputFormat != "json" && outputFormat != "summary" {
+		return fmt.Errorf("❌ 無効な出力形式: %s (json, summary のいずれかを指定してください)", outputFormat)
+	}
+
 	// Create query
 	query := models.IssueQuery{
 		Repository: repository,
