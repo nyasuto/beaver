@@ -100,9 +100,9 @@ jobs:
     - name: Run integration tests
       env:
         BEAVER_INTEGRATION_TESTS: true
-        GITHUB_TOKEN: ${{ secrets.INTEGRATION_GITHUB_TOKEN }}
-        BEAVER_TEST_REPO_OWNER: ${{ secrets.BEAVER_TEST_REPO_OWNER }}
-        BEAVER_TEST_REPO_NAME: ${{ secrets.BEAVER_TEST_REPO_NAME }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+        BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
         BEAVER_DEBUG: true
       run: |
         echo "🧪 Running integration tests..."
@@ -173,9 +173,9 @@ jobs:
     - name: Run performance integration tests
       env:
         BEAVER_INTEGRATION_TESTS: true
-        GITHUB_TOKEN: ${{ secrets.INTEGRATION_GITHUB_TOKEN }}
-        BEAVER_TEST_REPO_OWNER: ${{ secrets.BEAVER_TEST_REPO_OWNER }}
-        BEAVER_TEST_REPO_NAME: ${{ secrets.BEAVER_TEST_REPO_NAME }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+        BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
       run: |
         echo "🚀 Running performance tests..."
         ./scripts/run-integration-tests.sh --all --run
