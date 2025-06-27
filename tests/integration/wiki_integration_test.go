@@ -110,6 +110,12 @@ func TestFullWorkflowIntegration(t *testing.T) {
 		}
 		defer publisher.Cleanup()
 
+		// Initialize the publisher before use
+		err = publisher.Initialize(ctx)
+		if err != nil {
+			t.Fatalf("Failed to initialize publisher: %v", err)
+		}
+
 		t.Logf("✅ Wiki publisher initialized for %s", repoPath)
 
 		// Step 4: Generate wiki content
@@ -231,6 +237,12 @@ func TestJapaneseContent(t *testing.T) {
 		}
 		defer publisher.Cleanup()
 
+		// Initialize the publisher before use
+		err = publisher.Initialize(ctx)
+		if err != nil {
+			t.Fatalf("Failed to initialize Japanese test publisher: %v", err)
+		}
+
 		// Create Japanese content
 		japanesePages := []*wiki.WikiPage{
 			{
@@ -288,6 +300,12 @@ func TestPerformanceScenarios(t *testing.T) {
 			t.Fatalf("Failed to create publisher for performance test: %v", err)
 		}
 		defer publisher.Cleanup()
+
+		// Initialize the publisher before use
+		err = publisher.Initialize(ctx)
+		if err != nil {
+			t.Fatalf("Failed to initialize performance test publisher: %v", err)
+		}
 
 		// Generate large content
 		largePages := generateLargeContentPages(10) // 10 pages with substantial content

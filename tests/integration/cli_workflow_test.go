@@ -84,9 +84,9 @@ func TestCLIWorkflowIntegration(t *testing.T) {
 		// Step 4: Test beaver wiki generate
 		t.Logf("Step 4: Testing 'beaver wiki generate'")
 		wikiArgs := []string{
-			"wiki", "generate",
-			"--source", "issues.json",
+			"wiki", "generate", repoPath,
 			"--output", "wiki",
+			"--batch", "5", // Limit for testing
 		}
 
 		wikiOutput := runBeaverCommandWithEnv(t, beaverBinary, env, wikiArgs...)
@@ -101,10 +101,12 @@ func TestCLIWorkflowIntegration(t *testing.T) {
 
 		// Step 5: Test beaver wiki publish (if environment supports it)
 		t.Logf("Step 5: Testing 'beaver wiki publish'")
+
+		// Note: wiki publish reads from the default output directory "./wiki"
+		// which should match the directory we created in the previous step
 		publishArgs := []string{
-			"wiki", "publish",
-			"--source", "wiki",
-			"--repository", repoPath,
+			"wiki", "publish", repoPath,
+			"--batch", "3", // Limit for testing
 		}
 
 		publishOutput := runBeaverCommandWithEnv(t, beaverBinary, env, publishArgs...)
@@ -173,13 +175,13 @@ func TestCLIErrorHandling(t *testing.T) {
 	})
 
 	t.Run("Missing Configuration", func(t *testing.T) {
-		// Try to run commands without beaver.yml
+		// Try to run commands without proper repository argument
 		output := runBeaverCommandExpectError(t, beaverBinary, "wiki", "generate")
 
-		if !strings.Contains(output, "config") && !strings.Contains(output, "not found") {
-			t.Logf("⚠️ Missing config error: %s", output)
+		if !strings.Contains(output, "required") && !strings.Contains(output, "arg") {
+			t.Logf("⚠️ Missing arguments error: %s", output)
 		} else {
-			t.Logf("✅ Missing configuration properly handled: %s", output)
+			t.Logf("✅ Missing arguments properly handled: %s", output)
 		}
 	})
 }
