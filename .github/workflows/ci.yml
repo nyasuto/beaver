@@ -61,10 +61,7 @@ jobs:
     - name: 📊 Upload coverage
       id: coverage
       uses: codecov/codecov-action@v5
-      with:
-        files: ./coverage.out
-        flags: unittests
-        name: codecov-umbrella
+    
 
   # Build verification (runs in parallel with quality-checks)
   build-test:
