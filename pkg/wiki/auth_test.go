@@ -183,13 +183,13 @@ func TestGitAuthenticator_SecureTokenString(t *testing.T) {
 func TestGitAuthenticator_GetRequiredScopes(t *testing.T) {
 	auth := NewGitAuthenticator("test-token")
 	scopes := auth.GetRequiredScopes()
-	
+
 	expectedScopes := []string{"public_repo", "repo"}
 	if len(scopes) != len(expectedScopes) {
 		t.Errorf("Expected %d scopes, got %d", len(expectedScopes), len(scopes))
 		return
 	}
-	
+
 	for i, scope := range scopes {
 		if scope != expectedScopes[i] {
 			t.Errorf("Expected scope %s, got %s", expectedScopes[i], scope)
@@ -210,15 +210,15 @@ func TestGitAuthenticator_SetupCredentials_Errors(t *testing.T) {
 func TestGitAuthenticator_Cleanup(t *testing.T) {
 	// Create a temporary directory
 	tempDir := t.TempDir()
-	
+
 	auth := NewGitAuthenticator("test-token")
-	
+
 	// Test cleanup with valid directory
 	err := auth.Cleanup(tempDir)
 	if err != nil {
 		t.Errorf("Unexpected error during cleanup: %v", err)
 	}
-	
+
 	// Test cleanup with empty directory (should not error)
 	err = auth.Cleanup("")
 	if err != nil {
@@ -229,14 +229,14 @@ func TestGitAuthenticator_Cleanup(t *testing.T) {
 func TestGitAuthenticator_SetupCredentials_GitFailure(t *testing.T) {
 	// Test when git client creation fails
 	tempDir := t.TempDir()
-	
+
 	// Create an invalid git environment that might cause NewCmdGitClient to fail
 	originalPath := os.Getenv("PATH")
 	os.Setenv("PATH", "/nonexistent")
 	defer os.Setenv("PATH", originalPath)
-	
+
 	auth := NewGitAuthenticator("test-token")
-	
+
 	// This might succeed or fail depending on git availability
 	// The main goal is to test the error handling path
 	_ = auth.SetupCredentials(tempDir)

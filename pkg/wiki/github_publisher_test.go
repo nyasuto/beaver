@@ -1063,11 +1063,11 @@ func TestGitHubWikiPublisher_GetStatus_FullCoverage(t *testing.T) {
 
 func TestGitHubWikiPublisher_ConfigureGitUser_Error(t *testing.T) {
 	config := &PublisherConfig{
-		Owner:      "testowner",
-		Repository: "testrepo",
-		Token:      "testtoken",
-		Timeout:    30 * time.Second,
-		AuthorName: "Test Author",
+		Owner:       "testowner",
+		Repository:  "testrepo",
+		Token:       "testtoken",
+		Timeout:     30 * time.Second,
+		AuthorName:  "Test Author",
 		AuthorEmail: "test@example.com",
 	}
 
@@ -1093,11 +1093,11 @@ func TestGitHubWikiPublisher_ConfigureGitUser_Error(t *testing.T) {
 
 func TestGitHubWikiPublisher_CreateWorkingDirectory_Error(t *testing.T) {
 	config := &PublisherConfig{
-		Owner:       "testowner",
-		Repository:  "testrepo",
-		Token:       "testtoken",
-		Timeout:     30 * time.Second,
-		WorkingDir:  "/root/restricted/path", // Path that should fail
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+		WorkingDir: "/root/restricted/path", // Path that should fail
 	}
 
 	publisher, err := NewGitHubWikiPublisher(config)

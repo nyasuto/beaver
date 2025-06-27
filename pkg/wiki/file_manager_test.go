@@ -565,7 +565,7 @@ func TestValidateFilename(t *testing.T) {
 func TestWikiFileManager_SetConfig(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	newConfig := &FileManagerConfig{
 		UseUTF8Encoding:    false,
 		CreateImagesDir:    false,
@@ -575,9 +575,9 @@ func TestWikiFileManager_SetConfig(t *testing.T) {
 		SupportedImageExts: []string{".png"},
 		MaxAssetSize:       1024,
 	}
-	
+
 	fm.SetConfig(newConfig)
-	
+
 	if fm.config.UseUTF8Encoding {
 		t.Error("Expected UTF8 encoding to be disabled")
 	}
@@ -595,7 +595,7 @@ func TestWikiFileManager_SetConfig(t *testing.T) {
 func TestWikiFileManager_GetWorkingDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	result := fm.GetWorkingDirectory()
 	if result != tempDir {
 		t.Errorf("Expected working directory %s, got %s", tempDir, result)
@@ -605,14 +605,14 @@ func TestWikiFileManager_GetWorkingDirectory(t *testing.T) {
 func TestWikiFileManager_GetImageDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	// Test with images directory enabled
 	result := fm.GetImageDirectory()
 	expectedPath := filepath.Join(tempDir, "images")
 	if result != expectedPath {
 		t.Errorf("Expected image directory %s, got %s", expectedPath, result)
 	}
-	
+
 	// Test with images directory disabled
 	fm.config.CreateImagesDir = false
 	result = fm.GetImageDirectory()
@@ -624,7 +624,7 @@ func TestWikiFileManager_GetImageDirectory(t *testing.T) {
 func TestWikiFileManager_TruncateFilename_EdgeCases(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	tests := []struct {
 		name     string
 		input    string
@@ -656,12 +656,12 @@ func TestWikiFileManager_TruncateFilename_EdgeCases(t *testing.T) {
 			expected: "test-file",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := fm.truncateFilename(tt.input, tt.maxLen)
 			if result != tt.expected {
-				t.Errorf("truncateFilename(%q, %d) = %q, want %q", 
+				t.Errorf("truncateFilename(%q, %d) = %q, want %q",
 					tt.input, tt.maxLen, result, tt.expected)
 			}
 		})
@@ -671,22 +671,22 @@ func TestWikiFileManager_TruncateFilename_EdgeCases(t *testing.T) {
 func TestWikiFileManager_WritePageFile_Errors(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	t.Run("Invalid UTF-8 content", func(t *testing.T) {
 		title := "Test Page"
 		invalidUTF8 := string([]byte{0xff, 0xfe, 0xfd})
-		
+
 		_, err := fm.WritePageFile(title, invalidUTF8)
 		if err == nil {
 			t.Error("Expected error for invalid UTF-8 content")
 		}
 	})
-	
+
 	t.Run("Directory creation failure", func(t *testing.T) {
 		// Try to create a file in a non-existent path structure
 		// that would require directory creation but will fail
 		invalidFm := NewWikiFileManager("/root/nonexistent/readonly")
-		
+
 		_, err := invalidFm.WritePageFile("Test", "content")
 		if err == nil {
 			// This might succeed in some environments, so we just log
@@ -698,19 +698,19 @@ func TestWikiFileManager_WritePageFile_Errors(t *testing.T) {
 func TestWikiFileManager_FindAvailableFilename_Limit(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	// Create files up to the limit to test edge case
 	basePath := filepath.Join(tempDir, "test.md")
-	
+
 	// Create the base file
 	os.WriteFile(basePath, []byte("content"), 0644)
-	
+
 	// Create many numbered files to approach the limit
 	for i := 2; i <= 10; i++ {
 		numberedPath := filepath.Join(tempDir, fmt.Sprintf("test-%d.md", i))
 		os.WriteFile(numberedPath, []byte("content"), 0644)
 	}
-	
+
 	// This should still find an available filename
 	availablePath, conflictCount, err := fm.findAvailableFilename(basePath)
 	if err != nil {
@@ -728,12 +728,12 @@ func TestWikiFileManager_CreateImagesDirectory_Disabled(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
 	fm.config.CreateImagesDir = false
-	
+
 	err := fm.CreateImagesDirectory()
 	if err != nil {
 		t.Errorf("Should not error when images directory creation is disabled: %v", err)
 	}
-	
+
 	// Verify directory was not created
 	imagesPath := filepath.Join(tempDir, "images")
 	if _, err := os.Stat(imagesPath); !os.IsNotExist(err) {
@@ -744,35 +744,35 @@ func TestWikiFileManager_CreateImagesDirectory_Disabled(t *testing.T) {
 func TestWikiFileManager_WriteAssetFile_EdgeCases(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	t.Run("Non-image asset in root", func(t *testing.T) {
 		filename := "document.pdf"
 		data := []byte("fake pdf content")
-		
+
 		fileInfo, err := fm.WriteAssetFile(filename, data)
 		if err != nil {
 			t.Fatalf("Failed to write non-image asset: %v", err)
 		}
-		
+
 		expectedPath := filepath.Join(tempDir, filename)
 		if fileInfo.FilePath != expectedPath {
 			t.Errorf("Expected path %s, got %s", expectedPath, fileInfo.FilePath)
 		}
-		
+
 		if !fileInfo.IsAsset {
 			t.Error("Expected IsAsset to be true")
 		}
 	})
-	
+
 	t.Run("Empty data", func(t *testing.T) {
 		filename := "empty.png"
 		data := []byte{}
-		
+
 		fileInfo, err := fm.WriteAssetFile(filename, data)
 		if err != nil {
 			t.Fatalf("Failed to write empty asset: %v", err)
 		}
-		
+
 		if fileInfo.Size != 0 {
 			t.Errorf("Expected size 0, got %d", fileInfo.Size)
 		}
@@ -782,32 +782,32 @@ func TestWikiFileManager_WriteAssetFile_EdgeCases(t *testing.T) {
 func TestWikiFileManager_ListFiles_WithSubdirectories(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
-	
+
 	// Create test files and directories
 	os.WriteFile(filepath.Join(tempDir, "page1.md"), []byte("content1"), 0644)
 	os.WriteFile(filepath.Join(tempDir, "page2.md"), []byte("content2"), 0644)
-	
+
 	// Create images subdirectory and file
 	imagesDir := filepath.Join(tempDir, "images")
 	os.MkdirAll(imagesDir, 0755)
 	os.WriteFile(filepath.Join(imagesDir, "image1.png"), []byte("image data"), 0644)
-	
+
 	// Create .git directory (should be ignored)
 	gitDir := filepath.Join(tempDir, ".git")
 	os.MkdirAll(gitDir, 0755)
 	os.WriteFile(filepath.Join(gitDir, "config"), []byte("git config"), 0644)
-	
+
 	files, err := fm.ListFiles()
 	if err != nil {
 		t.Fatalf("Failed to list files: %v", err)
 	}
-	
+
 	// Should find 3 files (2 markdown + 1 image), .git should be ignored
 	// Note: the exact count may vary based on file creation order
 	if len(files) < 3 {
 		t.Errorf("Expected at least 3 files, got %d", len(files))
 	}
-	
+
 	// Verify file types
 	var markdownCount, assetCount int
 	for _, file := range files {
@@ -817,7 +817,7 @@ func TestWikiFileManager_ListFiles_WithSubdirectories(t *testing.T) {
 			markdownCount++
 		}
 	}
-	
+
 	if markdownCount < 2 {
 		t.Errorf("Expected at least 2 markdown files, got %d", markdownCount)
 	}
