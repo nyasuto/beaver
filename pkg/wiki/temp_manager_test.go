@@ -558,7 +558,7 @@ func TestCleanupBySize(t *testing.T) {
 
 	// Check stats before cleanup
 	statsBefore := tm.GetStats()
-	t.Logf("Before cleanup - Total dirs: %d, Total size: %d bytes", 
+	t.Logf("Before cleanup - Total dirs: %d, Total size: %d bytes",
 		statsBefore["total_directories"], statsBefore["total_size_mb"].(int64)*1024*1024)
 
 	// Manually trigger size-based cleanup
@@ -567,9 +567,9 @@ func TestCleanupBySize(t *testing.T) {
 	// Check stats after cleanup
 	stats := tm.GetStats()
 	totalSizeMB := stats["total_size_mb"].(int64)
-	t.Logf("After cleanup - Total dirs: %d, Total size: %d bytes", 
+	t.Logf("After cleanup - Total dirs: %d, Total size: %d bytes",
 		stats["total_directories"], totalSizeMB*1024*1024)
-	
+
 	// Check how many directories were cleaned up
 	remainingDirs := 0
 	for i, dir := range dirs {
