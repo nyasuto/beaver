@@ -14,7 +14,7 @@ jobs:
   # Fast checks that run on every push/PR
   quality-checks:
     name: 🔍 Quality & Security
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       coverage-file: ${{ steps.coverage.outputs.file }}
     
@@ -26,8 +26,8 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GO_VERSION }}
-        cache: true
-        
+        cache: false
+
     - name: 📦 Download dependencies
       run: go mod download
         
@@ -69,7 +69,7 @@ jobs:
   # Build verification (runs in parallel with quality-checks)
   build-test:
     name: 🔨 Build Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: 📥 Checkout code
@@ -79,8 +79,8 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GO_VERSION }}
-        cache: true
-        
+        cache: false
+
     - name: 📦 Download dependencies
       run: go mod download
       
@@ -101,7 +101,7 @@ jobs:
   # Integration tests (conditional)
   integration-tests:
     name: 🔗 Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [quality-checks, build-test]
     if: |
       github.event_name == 'workflow_dispatch' ||
@@ -118,7 +118,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GO_VERSION }}
-        cache: true
+        cache: false
         
     - name: 📦 Download dependencies
       run: go mod download
@@ -156,7 +156,7 @@ jobs:
   # Performance tests (main branch only)
   performance-tests:
     name: 🚀 Performance Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [quality-checks, build-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
@@ -170,7 +170,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GO_VERSION }}
-        cache: true
+        cache: false
         
     - name: 📦 Download dependencies
       run: go mod download
@@ -200,7 +200,7 @@ jobs:
   # Final status
   ci-complete:
     name: ✅ CI Complete
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [quality-checks, build-test, integration-tests, performance-tests]
     if: always()
     
