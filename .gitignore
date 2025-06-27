@@ -21,7 +21,7 @@ go.work
 bin/
 build/
 dist/
-beaver
+/beaver
 
 # IDE files
 .vscode/
