@@ -3,7 +3,7 @@ module github.com/nyasuto/beaver
 go 1.24.4
 
 require (
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/go-github/v60 v60.0.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
