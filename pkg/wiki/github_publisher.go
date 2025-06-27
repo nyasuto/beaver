@@ -7,7 +7,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/nyasuto/beaver/internal/models"
 )
@@ -19,6 +21,8 @@ type GitHubWikiPublisher struct {
 	generator     *Generator
 	authenticator *GitAuthenticator
 	fileManager   *WikiFileManager
+	perfMonitor   *PerformanceMonitor
+	tempManager   *TempManager
 	workDir       string
 	isInitialized bool
 }
@@ -46,12 +50,18 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 		log.Printf("INFO Authenticator initialized with token: %s", authenticator.SecureTokenString())
 	}
 
+	// Initialize performance monitoring and temp management
+	perfMonitor := NewPerformanceMonitor(config.EnablePerformanceLogging)
+	tempManager := NewTempManager("", fmt.Sprintf("beaver-wiki-%s-%s", config.Owner, config.Repository))
+
 	return &GitHubWikiPublisher{
 		config:        config,
 		gitClient:     gitClient,
 		generator:     NewGenerator(),
 		authenticator: authenticator,
 		fileManager:   nil, // Will be initialized when workDir is created
+		perfMonitor:   perfMonitor,
+		tempManager:   tempManager,
 		workDir:       "",
 		isInitialized: false,
 	}, nil
@@ -65,6 +75,9 @@ func (p *GitHubWikiPublisher) Initialize(ctx context.Context) error {
 		log.Printf("INFO Publisher already initialized")
 		return nil
 	}
+
+	// Start performance monitoring
+	p.perfMonitor.Start(ctx)
 
 	// Create working directory
 	workDir, err := p.createWorkingDirectory()
@@ -117,7 +130,10 @@ func (p *GitHubWikiPublisher) Clone(ctx context.Context) error {
 	cloneOptions.Branch = p.config.BranchName
 	cloneOptions.Timeout = p.config.Timeout
 
+	// Record git operation performance
+	gitStart := time.Now()
 	err := p.gitClient.Clone(ctx, repoURL, p.workDir, cloneOptions)
+	p.perfMonitor.RecordGitOperation(time.Since(gitStart))
 	if err != nil {
 		// Handle specific error cases
 		if IsAuthenticationError(err) {
@@ -156,8 +172,12 @@ func (p *GitHubWikiPublisher) Cleanup() error {
 		}
 	}
 
-	// Remove working directory
-	err := os.RemoveAll(p.workDir)
+	// Log performance summary before cleanup
+	p.perfMonitor.LogSummary()
+
+	// Mark temp directory as not in use and cleanup via temp manager
+	p.tempManager.MarkInUse(p.workDir, false)
+	err := p.tempManager.CleanupDirectory(p.workDir)
 	if err != nil {
 		log.Printf("ERROR Failed to cleanup working directory: %v", err)
 		return NewWikiError(ErrorTypeFileSystem, "cleanup", err,
@@ -302,17 +322,75 @@ func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPag
 		return NewConfigurationError("publish_pages", "Publisher not initialized")
 	}
 
+	// Check if batch processing is enabled and we have many pages
+	if p.config.EnableBatchOperations && len(pages) > 10 {
+		return p.publishPagesInBatches(ctx, pages)
+	}
+
+	// Process all pages at once for smaller sets
+	return p.publishPagesBatch(ctx, pages)
+}
+
+// publishPagesInBatches processes pages in optimized batches
+func (p *GitHubWikiPublisher) publishPagesInBatches(ctx context.Context, pages []*WikiPage) error {
+	log.Printf("INFO Using batch processing for %d pages", len(pages))
+
+	// Calculate optimal batch size based on memory usage and page count
+	batchSize := p.calculateOptimalBatchSize(len(pages))
+	log.Printf("INFO Calculated optimal batch size: %d", batchSize)
+
+	// Ensure repository is cloned once
+	if err := p.Clone(ctx); err != nil {
+		return err
+	}
+
+	// Process pages in batches
+	for i := 0; i < len(pages); i += batchSize {
+		end := i + batchSize
+		if end > len(pages) {
+			end = len(pages)
+		}
+
+		batch := pages[i:end]
+		log.Printf("INFO Processing batch %d/%d (%d pages)", i/batchSize+1,
+			(len(pages)+batchSize-1)/batchSize, len(batch))
+
+		if err := p.publishPagesBatch(ctx, batch); err != nil {
+			return fmt.Errorf("failed to process batch starting at page %d: %w", i, err)
+		}
+
+		// Force garbage collection between batches for large datasets
+		if len(pages) > 50 {
+			p.perfMonitor.ForceGC()
+		}
+
+		// Update temp directory size tracking
+		if err := p.tempManager.UpdateDirectorySize(p.workDir); err != nil {
+			log.Printf("WARN Failed to update directory size: %v", err)
+		}
+	}
+
+	log.Printf("INFO Completed batch processing of %d pages", len(pages))
+	return nil
+}
+
+// publishPagesBatch processes a single batch of pages
+func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*WikiPage) error {
 	// Ensure repository is cloned
 	if err := p.Clone(ctx); err != nil {
 		return err
 	}
 
-	// Create/update each page
+	// Create/update each page with performance tracking
 	var filenames []string
 	for _, page := range pages {
+		fileStart := time.Now()
 		if err := p.UpdatePage(ctx, page); err != nil {
 			return fmt.Errorf("failed to update page %s: %w", page.Title, err)
 		}
+		p.perfMonitor.RecordFileOperation(time.Since(fileStart))
+		p.perfMonitor.RecordPageProcessed()
+
 		// Get normalized filename from file manager
 		normalizedName, err := p.fileManager.NormalizePageName(page.Title)
 		if err != nil {
@@ -352,6 +430,40 @@ func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPag
 
 	log.Printf("INFO Successfully published %d pages", len(pages))
 	return nil
+}
+
+// calculateOptimalBatchSize determines the optimal batch size based on system resources
+func (p *GitHubWikiPublisher) calculateOptimalBatchSize(totalPages int) int {
+	// Get current memory stats
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	// Base batch size depending on total pages
+	var baseBatchSize int
+	switch {
+	case totalPages <= 20:
+		baseBatchSize = totalPages // Process all at once
+	case totalPages <= 100:
+		baseBatchSize = 10
+	case totalPages <= 500:
+		baseBatchSize = 25
+	default:
+		baseBatchSize = 50
+	}
+
+	// Adjust based on memory usage
+	currentMemMB := m.Alloc / (1024 * 1024)
+	if currentMemMB > 100 { // If using more than 100MB
+		baseBatchSize = baseBatchSize / 2
+		if baseBatchSize < 5 {
+			baseBatchSize = 5 // Minimum batch size
+		}
+	}
+
+	log.Printf("DEBUG Batch size calculation: total=%d, memory=%dMB, batchSize=%d",
+		totalPages, currentMemMB, baseBatchSize)
+
+	return baseBatchSize
 }
 
 // GenerateAndPublishWiki generates and publishes complete Wiki documentation
@@ -512,18 +624,16 @@ func (p *GitHubWikiPublisher) createWorkingDirectory() (string, error) {
 	workDir := p.config.WorkingDir
 
 	if workDir == "" {
-		// Create temporary directory
-		tempDir, err := os.MkdirTemp("", fmt.Sprintf("beaver-wiki-%s-%s-",
+		// Create temporary directory using temp manager for better tracking
+		tempDir, err := p.tempManager.CreateTempDir(fmt.Sprintf("wiki-publish-%s-%s",
 			p.config.Owner, p.config.Repository))
 		if err != nil {
-			return "", NewWikiError(ErrorTypeFileSystem, "create_workdir", err,
-				"作業ディレクトリの作成に失敗しました", 0,
-				[]string{
-					"ディスクの空き容量を確認してください",
-					"一時ディレクトリへの書き込み権限を確認してください",
-				})
+			return "", err // Error already formatted by temp manager
 		}
 		workDir = tempDir
+
+		// Mark as in use
+		p.tempManager.MarkInUse(workDir, true)
 	} else {
 		// Use specified directory
 		if err := os.MkdirAll(workDir, 0750); err != nil { // #nosec G301 -- workDir needs to be accessible for Git operations

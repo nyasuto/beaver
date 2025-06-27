@@ -55,6 +55,24 @@ type FileInfo struct {
 	ConflictCount  int
 }
 
+// sanitizeUTF8Content ensures content is valid UTF-8 by replacing invalid sequences
+func sanitizeUTF8Content(content string) string {
+	if utf8.ValidString(content) {
+		return content
+	}
+
+	// Replace invalid UTF-8 sequences with replacement character
+	var buf strings.Builder
+	for _, r := range content {
+		if r == utf8.RuneError {
+			buf.WriteRune('\uFFFD') // Unicode replacement character
+		} else {
+			buf.WriteRune(r)
+		}
+	}
+	return buf.String()
+}
+
 // NewWikiFileManager creates a new file manager instance
 func NewWikiFileManager(workDir string) *WikiFileManager {
 	return &WikiFileManager{
@@ -251,12 +269,10 @@ func (fm *WikiFileManager) WritePageFile(title, content string) (*FileInfo, erro
 	}
 
 	// Ensure UTF-8 encoding
-	contentBytes := []byte(content)
-	if fm.config.UseUTF8Encoding && !utf8.Valid(contentBytes) {
-		return nil, NewWikiError(ErrorTypeValidation, "write_page", nil,
-			"コンテンツがUTF-8エンコーディングではありません", 0,
-			[]string{"UTF-8エンコーディングでコンテンツを提供してください"})
+	if fm.config.UseUTF8Encoding {
+		content = sanitizeUTF8Content(content)
 	}
+	contentBytes := []byte(content)
 
 	// Write file with appropriate permissions
 	if err := os.WriteFile(finalPath, contentBytes, 0600); err != nil { // #nosec G306 -- Wiki files need appropriate read permissions
