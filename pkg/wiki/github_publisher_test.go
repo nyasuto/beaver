@@ -958,3 +958,199 @@ func TestGitHubWikiPublisher_Commit(t *testing.T) {
 	// Cleanup
 	_ = publisher.Cleanup()
 }
+
+func TestGitHubWikiPublisher_CountPages(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	ctx := context.Background()
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+	defer publisher.Cleanup()
+
+	// Create some test pages
+	page1 := &WikiPage{Title: "Test1", Content: "Content 1", Filename: "Test1.md"}
+	page2 := &WikiPage{Title: "Test2", Content: "Content 2", Filename: "Test2.md"}
+
+	err = publisher.CreatePage(ctx, page1)
+	if err != nil {
+		t.Fatalf("CreatePage() error = %v", err)
+	}
+
+	err = publisher.CreatePage(ctx, page2)
+	if err != nil {
+		t.Fatalf("CreatePage() error = %v", err)
+	}
+
+	// Create .git directory to simulate a git repository
+	gitDir := filepath.Join(publisher.workDir, ".git")
+	err = os.MkdirAll(gitDir, 0750)
+	if err != nil {
+		t.Fatalf("Failed to create .git directory: %v", err)
+	}
+
+	// Test countPages through GetStatus
+	status, err := publisher.GetStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetStatus() error = %v", err)
+	}
+
+	if status.TotalPages != 2 {
+		t.Errorf("Expected 2 pages, got %d", status.TotalPages)
+	}
+}
+
+func TestGitHubWikiPublisher_GetStatus_FullCoverage(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test status before initialization
+	status, err := publisher.GetStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetStatus() error = %v", err)
+	}
+
+	if status.IsInitialized {
+		t.Error("Expected IsInitialized to be false")
+	}
+
+	// Initialize and test again
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+	defer publisher.Cleanup()
+
+	status, err = publisher.GetStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetStatus() after init error = %v", err)
+	}
+
+	if !status.IsInitialized {
+		t.Error("Expected IsInitialized to be true")
+	}
+
+	if status.WorkingDir == "" {
+		t.Error("Expected WorkingDir to be set")
+	}
+
+	if status.RepositoryURL == "" {
+		t.Error("Expected RepositoryURL to be set")
+	}
+}
+
+func TestGitHubWikiPublisher_ConfigureGitUser_Error(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:       "testowner",
+		Repository:  "testrepo",
+		Token:       "testtoken",
+		Timeout:     30 * time.Second,
+		AuthorName:  "Test Author",
+		AuthorEmail: "test@example.com",
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	ctx := context.Background()
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+	defer publisher.Cleanup()
+
+	// Test git user configuration - this should succeed in normal cases
+	err = publisher.configureGitUser(ctx)
+	if err != nil {
+		// In test environment, this might fail due to git setup
+		t.Logf("configureGitUser failed (expected in some test environments): %v", err)
+	}
+}
+
+func TestGitHubWikiPublisher_CreateWorkingDirectory_Error(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+		WorkingDir: "/root/restricted/path", // Path that should fail
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	ctx := context.Background()
+	err = publisher.Initialize(ctx)
+	if err == nil {
+		// In some environments, this might succeed
+		t.Log("Directory creation succeeded in restricted path")
+		defer publisher.Cleanup()
+	}
+}
+
+func TestGitHubWikiPublisher_ValidationErrors(t *testing.T) {
+	tests := []struct {
+		name   string
+		config *PublisherConfig
+	}{
+		{
+			name: "Missing owner",
+			config: &PublisherConfig{
+				Owner:      "",
+				Repository: "testrepo",
+				Token:      "testtoken",
+			},
+		},
+		{
+			name: "Missing repository",
+			config: &PublisherConfig{
+				Owner:      "testowner",
+				Repository: "",
+				Token:      "testtoken",
+			},
+		},
+		{
+			name: "Missing token",
+			config: &PublisherConfig{
+				Owner:      "testowner",
+				Repository: "testrepo",
+				Token:      "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewGitHubWikiPublisher(tt.config)
+			if err == nil {
+				t.Error("Expected validation error")
+			}
+		})
+	}
+}

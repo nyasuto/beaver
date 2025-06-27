@@ -2,6 +2,8 @@ package wiki
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -225,4 +227,202 @@ func TestDefaultOptions(t *testing.T) {
 			t.Errorf("Default author email = %s, want noreply@beaver.ai", options.Author.Email)
 		}
 	})
+}
+
+func TestCmdGitClient_Pull(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	// Test with non-existent directory
+	ctx := context.Background()
+	err = client.Pull(ctx, "/nonexistent/directory")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_Push(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+	options := &PushOptions{
+		Remote:  "origin",
+		Branch:  "main",
+		Force:   false,
+		Timeout: 30 * time.Second,
+	}
+
+	// Test with non-existent directory
+	err = client.Push(ctx, "/nonexistent/directory", options)
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_Add(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+	files := []string{"test.txt", "test2.txt"}
+
+	// Test with non-existent directory
+	err = client.Add(ctx, "/nonexistent/directory", files)
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_Commit(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+	options := &CommitOptions{
+		Author: &GitAuthor{
+			Name:  "Test User",
+			Email: "test@example.com",
+		},
+		SignOff:    false,
+		AllowEmpty: false,
+	}
+
+	// Test with non-existent directory
+	err = client.Commit(ctx, "/nonexistent/directory", "test commit", options)
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_Status(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test with non-existent directory
+	_, err = client.Status(ctx, "/nonexistent/directory")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_GetCurrentSHA(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test with non-existent directory
+	_, err = client.GetCurrentSHA(ctx, "/nonexistent/directory")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_GetRemoteURL(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test with non-existent directory
+	_, err = client.GetRemoteURL(ctx, "/nonexistent/directory")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_GetCurrentBranch(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test with non-existent directory
+	_, err = client.GetCurrentBranch(ctx, "/nonexistent/directory")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_CheckoutBranch(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test with non-existent directory
+	err = client.CheckoutBranch(ctx, "/nonexistent/directory", "main")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_GetConfig(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Test with non-existent directory
+	_, err = client.GetConfig(ctx, "/nonexistent/directory", "user.name")
+	if err == nil {
+		t.Error("Expected error for non-existent directory")
+	}
+}
+
+func TestCmdGitClient_NewCmdGitClient_PathError(t *testing.T) {
+	// Test git client creation with invalid PATH
+	originalPath := os.Getenv("PATH")
+	os.Setenv("PATH", "/nonexistent")
+	defer os.Setenv("PATH", originalPath)
+
+	// This should fail since git cannot be found
+	_, err := NewCmdGitClient()
+	if err == nil {
+		t.Error("Expected error when git is not found in PATH")
+	}
+}
+
+func TestCmdGitClient_ContextCancellation(t *testing.T) {
+	client, err := NewCmdGitClient()
+	if err != nil {
+		t.Fatalf("NewCmdGitClient() error = %v", err)
+	}
+
+	// Create a context that's already cancelled
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	tempDir := t.TempDir()
+	targetDir := filepath.Join(tempDir, "clone-target")
+	options := NewDefaultCloneOptions()
+
+	// This should fail due to cancelled context or invalid URL
+	err = client.Clone(ctx, "https://github.com/nonexistent/repo.git", targetDir, options)
+	if err == nil {
+		t.Error("Expected error for cancelled context or invalid URL")
+	}
 }
