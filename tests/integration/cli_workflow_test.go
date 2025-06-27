@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -315,12 +316,24 @@ func runBeaverCommandWithEnvExpectError(t *testing.T, binaryPath string, env []s
 }
 
 func findProjectRoot() (string, error) {
+	// Start from the directory where this test file is located
+	_, filename, _, _ := runtime.Caller(0)
+	testDir := filepath.Dir(filename)
+
+	// Go up from tests/integration to the project root
+	projectRoot := filepath.Join(testDir, "..", "..")
+
+	// Verify go.mod exists
+	if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+		return filepath.Abs(projectRoot)
+	}
+
+	// Fallback: Walk up the directory tree looking for go.mod
 	dir, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
 
-	// Walk up the directory tree looking for go.mod
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 			return dir, nil
