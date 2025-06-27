@@ -519,7 +519,7 @@ func TestRunPublishWiki(t *testing.T) {
 				wikiOutput = "./test-wiki"
 				wikiBatch = 5
 			},
-			setupFiles: func(t *testing.T) string { return "" },
+			setupFiles:  func(t *testing.T) string { return "" },
 			expectError: true,
 			errorMsg:    "無効なリポジトリパス",
 		},
