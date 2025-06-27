@@ -1,6 +1,4 @@
-version: "2"
-
-# golangci-lint v2 configuration
+# golangci-lint v1 configuration
 # All configurations are kept as default except for excluding test files
 
 run:

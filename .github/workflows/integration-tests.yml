@@ -144,9 +144,10 @@ jobs:
         gosec ./...
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v4
+      uses: golangci/golangci-lint-action@v3
       with:
-        version: v2.0.1
+        version: latest
+        args: --timeout=5m
 
   # Performance regression tests (on main branch)
   performance-tests:
