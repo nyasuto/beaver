@@ -672,13 +672,26 @@ func TestWikiFileManager_WritePageFile_Errors(t *testing.T) {
 	tempDir := t.TempDir()
 	fm := NewWikiFileManager(tempDir)
 
-	t.Run("Invalid UTF-8 content", func(t *testing.T) {
+	t.Run("Invalid UTF-8 content sanitization", func(t *testing.T) {
 		title := "Test Page"
 		invalidUTF8 := string([]byte{0xff, 0xfe, 0xfd})
 
-		_, err := fm.WritePageFile(title, invalidUTF8)
-		if err == nil {
-			t.Error("Expected error for invalid UTF-8 content")
+		fileInfo, err := fm.WritePageFile(title, invalidUTF8)
+		if err != nil {
+			t.Errorf("Expected no error with UTF-8 sanitization, got: %v", err)
+		}
+		if fileInfo == nil {
+			t.Error("Expected file info to be returned")
+		}
+
+		// Verify the file was actually created with sanitized content
+		if fileInfo != nil && fileInfo.FilePath != "" {
+			content, readErr := os.ReadFile(fileInfo.FilePath)
+			if readErr != nil {
+				t.Errorf("Failed to read created file: %v", readErr)
+			} else if len(content) == 0 {
+				t.Error("Expected sanitized content to be written")
+			}
 		}
 	})
 
