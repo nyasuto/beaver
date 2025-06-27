@@ -661,13 +661,14 @@ func TestIssueNumbersParsing(t *testing.T) {
 						break
 					}
 					// For test purposes, assume all non-"invalid" strings are valid numbers
-					if trimmed == "1" {
+					switch trimmed {
+					case "1":
 						issueNumbers = append(issueNumbers, 1)
-					} else if trimmed == "2" {
+					case "2":
 						issueNumbers = append(issueNumbers, 2)
-					} else if trimmed == "3" {
+					case "3":
 						issueNumbers = append(issueNumbers, 3)
-					} else if trimmed == "4" {
+					case "4":
 						issueNumbers = append(issueNumbers, 4)
 					}
 				}
