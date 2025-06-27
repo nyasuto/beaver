@@ -101,7 +101,7 @@ func TestFullWorkflowIntegration(t *testing.T) {
 			Timeout:                  30 * time.Second,
 			RetryAttempts:            3,
 			RetryDelay:               time.Second,
-			EnableConflictResolution: false,
+			EnableConflictResolution: true,
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
