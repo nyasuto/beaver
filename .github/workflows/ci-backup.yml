@@ -98,7 +98,6 @@ jobs:
         path: bin/beaver
         retention-days: 7
 
-
   # Integration tests (conditional)
   integration-tests:
     name: 🔗 Integration Tests
