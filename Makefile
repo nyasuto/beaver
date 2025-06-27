@@ -1,7 +1,7 @@
 # Beaver - AIエージェント知識ダム構築ツール
 # Makefile for development and build automation
 
-.PHONY: help build clean test lint fmt sec deps install run dev quality
+.PHONY: help build clean test lint fmt sec deps install run dev quality test-integration
 
 # Variables
 BINARY_NAME=beaver
@@ -56,6 +56,34 @@ test-cov:
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "📊 カバレッジレポート: coverage.html"
+
+## test-integration: Run integration tests
+test-integration:
+	@echo "🔗 統合テストを実行中..."
+	@if [ -f "./scripts/run-integration-tests.sh" ]; then \
+		./scripts/run-integration-tests.sh --check && ./scripts/run-integration-tests.sh --run; \
+	else \
+		echo "⚠️ 統合テストスクリプトが見つかりません"; \
+		echo "手動実行: go test -v ./tests/integration/..."; \
+	fi
+
+## test-integration-setup: Setup integration test environment
+test-integration-setup:
+	@echo "⚙️ 統合テスト環境をセットアップ中..."
+	@if [ -f "./scripts/run-integration-tests.sh" ]; then \
+		./scripts/run-integration-tests.sh --setup; \
+	else \
+		echo "⚠️ 統合テストスクリプトが見つかりません"; \
+	fi
+
+## test-integration-quick: Run quick integration tests
+test-integration-quick:
+	@echo "⚡ クイック統合テストを実行中..."
+	@if [ -f "./scripts/run-integration-tests.sh" ]; then \
+		./scripts/run-integration-tests.sh --quick --run; \
+	else \
+		echo "⚠️ 統合テストスクリプトが見つかりません"; \
+	fi
 
 ## lint: Run golangci-lint
 lint:
