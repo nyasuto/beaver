@@ -126,7 +126,7 @@ func TestRunSummarizeIssue(t *testing.T) {
 
 			// Create command
 			cmd := &cobra.Command{}
-			
+
 			// Note: This test focuses on argument validation and basic flow
 			// For full integration, we'd need to mock config.LoadConfig and other dependencies
 			err := runSummarizeIssue(cmd, tt.args)
@@ -293,7 +293,7 @@ func TestSummarizeFetchSingleIssue(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &MockGitHubClient{}
-			
+
 			if tt.issues == nil {
 				// Simulate GitHub API error
 				mockClient.returnError = true
@@ -562,11 +562,11 @@ func TestSummarizeFlagDefaults(t *testing.T) {
 // Test argument parsing validation
 func TestSummarizeArgumentParsing(t *testing.T) {
 	tests := []struct {
-		name           string
-		repoInput      string
-		expectedOwner  string
-		expectedRepo   string
-		expectedError  bool
+		name          string
+		repoInput     string
+		expectedOwner string
+		expectedRepo  string
+		expectedError bool
 	}{
 		{
 			name:          "valid repository format",
@@ -732,9 +732,9 @@ func TestSummarizeCommandRegistration(t *testing.T) {
 	// Verify subcommands are properly registered
 	subcommands := summarizeCmd.Commands()
 	expectedSubcommands := []string{"issue", "issues", "all"}
-	
+
 	assert.Len(t, subcommands, len(expectedSubcommands))
-	
+
 	for _, expected := range expectedSubcommands {
 		found := false
 		for _, sub := range subcommands {
@@ -750,12 +750,12 @@ func TestSummarizeCommandRegistration(t *testing.T) {
 // Test JSON marshaling behavior
 func TestJSONOutput(t *testing.T) {
 	response := createTestSummarizationResponse()
-	
+
 	// Test that our response can be properly marshaled to JSON
 	data, err := json.Marshal(response)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, data)
-	
+
 	// Verify JSON contains expected fields
 	jsonStr := string(data)
 	assert.Contains(t, jsonStr, "summary")
