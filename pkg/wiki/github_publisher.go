@@ -31,7 +31,7 @@ type GitHubWikiPublisher struct {
 // NewGitHubWikiPublisher creates a new GitHub Wiki publisher
 func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, error) {
 	log.Printf("INFO Creating GitHubWikiPublisher: owner=%s, repo=%s", config.Owner, config.Repository)
-	log.Printf("DEBUG Publisher configuration: shallow_clone=%t, depth=%d, timeout=%v, conflict_resolution=%t", 
+	log.Printf("DEBUG Publisher configuration: shallow_clone=%t, depth=%d, timeout=%v, conflict_resolution=%t",
 		config.UseShallowClone, config.CloneDepth, config.Timeout, config.EnableConflictResolution)
 
 	if err := config.Validate(); err != nil {
@@ -74,7 +74,7 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 		conflictResolverConfig.MaxRetries = 8
 		conflictResolverConfig.BaseDelay = 500 * time.Millisecond
 		conflictResolverConfig.MaxDelay = 20 * time.Second
-		log.Printf("DEBUG ConflictResolver configured with CI-optimized settings: max_retries=%d, base_delay=%v, max_delay=%v", 
+		log.Printf("DEBUG ConflictResolver configured with CI-optimized settings: max_retries=%d, base_delay=%v, max_delay=%v",
 			conflictResolverConfig.MaxRetries, conflictResolverConfig.BaseDelay, conflictResolverConfig.MaxDelay)
 	} else {
 		log.Printf("DEBUG ConflictResolver configured with default settings")
@@ -100,7 +100,7 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 func (p *GitHubWikiPublisher) Initialize(ctx context.Context) error {
 	start := time.Now()
 	log.Printf("INFO GitHubWikiPublisher Initialize starting")
-	log.Printf("DEBUG Initialize context: timeout=%v, repo=%s/%s", 
+	log.Printf("DEBUG Initialize context: timeout=%v, repo=%s/%s",
 		ctx.Value("timeout"), p.config.Owner, p.config.Repository)
 
 	if p.isInitialized {
@@ -165,21 +165,21 @@ func (p *GitHubWikiPublisher) Clone(ctx context.Context) error {
 	// Clone the .wiki.git repository
 	repoURL := p.config.GetRepositoryURL()
 	log.Printf("DEBUG Base repository URL: %s", repoURL)
-	
+
 	if p.authenticator != nil {
 		repoURL = p.authenticator.BuildAuthURL(repoURL)
 		log.Printf("INFO Using authenticated URL: %s", p.authenticator.SanitizeURL(repoURL))
 	} else {
 		log.Printf("INFO Using repository URL without authentication: %s", repoURL)
 	}
-	
+
 	cloneOptions := NewDefaultCloneOptions()
 	cloneOptions.Depth = p.config.CloneDepth
 	cloneOptions.SingleBranch = p.config.UseShallowClone
 	cloneOptions.Branch = p.config.BranchName
 	cloneOptions.Timeout = p.config.Timeout
-	
-	log.Printf("DEBUG Clone options: depth=%d, single_branch=%t, branch=%s, timeout=%v", 
+
+	log.Printf("DEBUG Clone options: depth=%d, single_branch=%t, branch=%s, timeout=%v",
 		cloneOptions.Depth, cloneOptions.SingleBranch, cloneOptions.Branch, cloneOptions.Timeout)
 
 	// Record git operation performance
@@ -188,7 +188,7 @@ func (p *GitHubWikiPublisher) Clone(ctx context.Context) error {
 	err := p.gitClient.Clone(ctx, repoURL, p.workDir, cloneOptions)
 	gitDuration := time.Since(gitStart)
 	p.perfMonitor.RecordGitOperation(gitDuration)
-	
+
 	if err != nil {
 		log.Printf("ERROR Git clone failed after %v: %v", gitDuration, err)
 		// Handle specific error cases
@@ -203,7 +203,7 @@ func (p *GitHubWikiPublisher) Clone(ctx context.Context) error {
 		}
 		return err
 	}
-	
+
 	log.Printf("DEBUG Git clone completed successfully in %v", gitDuration)
 
 	// Configure git user for commits
@@ -382,7 +382,7 @@ func (p *GitHubWikiPublisher) PageExists(ctx context.Context, pageName string) (
 func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPage) error {
 	start := time.Now()
 	log.Printf("INFO Publishing %d pages", len(pages))
-	log.Printf("DEBUG PublishPages config: batch_operations=%t, conflict_resolution=%t", 
+	log.Printf("DEBUG PublishPages config: batch_operations=%t, conflict_resolution=%t",
 		p.config.EnableBatchOperations, p.config.EnableConflictResolution)
 
 	if !p.isInitialized {
@@ -415,13 +415,13 @@ func (p *GitHubWikiPublisher) PublishPages(ctx context.Context, pages []*WikiPag
 	// Process all pages at once for smaller sets
 	log.Printf("INFO Processing all %d pages in single batch", len(pages))
 	err := p.publishPagesBatch(ctx, pages)
-	
+
 	duration := time.Since(start)
 	if err != nil {
 		log.Printf("ERROR PublishPages failed after %v: %v", duration, err)
 		return err
 	}
-	
+
 	log.Printf("INFO PublishPages completed successfully in %v", duration)
 	return nil
 }
@@ -473,7 +473,7 @@ func (p *GitHubWikiPublisher) publishPagesInBatches(ctx context.Context, pages [
 func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*WikiPage) error {
 	start := time.Now()
 	log.Printf("DEBUG Starting publishPagesBatch for %d pages", len(pages))
-	
+
 	// Ensure repository is cloned
 	log.Printf("DEBUG Ensuring repository is cloned...")
 	if err := p.Clone(ctx); err != nil {
@@ -485,21 +485,21 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 	log.Printf("DEBUG Processing individual pages...")
 	var filenames []string
 	var totalFileSize int64
-	
+
 	for i, page := range pages {
 		log.Printf("DEBUG Processing page %d/%d: %s", i+1, len(pages), page.Title)
 		fileStart := time.Now()
-		
+
 		if err := p.UpdatePage(ctx, page); err != nil {
 			log.Printf("ERROR Failed to update page %s: %v", page.Title, err)
 			return fmt.Errorf("failed to update page %s: %w", page.Title, err)
 		}
-		
+
 		fileDuration := time.Since(fileStart)
 		p.perfMonitor.RecordFileOperation(fileDuration)
 		p.perfMonitor.RecordPageProcessed()
 		totalFileSize += int64(len(page.Content))
-		
+
 		log.Printf("DEBUG Page %s processed in %v (%d bytes)", page.Title, fileDuration, len(page.Content))
 
 		// Get normalized filename from file manager
@@ -511,7 +511,7 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 		filenames = append(filenames, normalizedName)
 		log.Printf("DEBUG Page filename normalized: %s -> %s", page.Title, normalizedName)
 	}
-	
+
 	log.Printf("DEBUG All pages processed. Total content size: %d bytes", totalFileSize)
 
 	// Add all files to git
@@ -529,35 +529,35 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 		commitMessage += fmt.Sprintf("- %s\n", page.Title)
 	}
 	commitMessage += "\n🤖 Generated with Beaver AI"
-	
+
 	log.Printf("DEBUG Commit message prepared (%d characters)", len(commitMessage))
 
 	commitOptions := NewDefaultCommitOptions()
 	commitOptions.Author.Name = p.config.AuthorName
 	commitOptions.Author.Email = p.config.AuthorEmail
-	
+
 	log.Printf("DEBUG Commit options: author=%s <%s>", commitOptions.Author.Name, commitOptions.Author.Email)
 
 	// Use ConflictResolver for safe push with automatic retry and conflict resolution
 	pushStart := time.Now()
 	if p.config.EnableConflictResolution && p.conflictResolver != nil {
 		log.Printf("INFO Using ConflictResolver for safe push operation")
-		log.Printf("DEBUG ConflictResolver config: max_retries=%d, enabled=%t", 
+		log.Printf("DEBUG ConflictResolver config: max_retries=%d, enabled=%t",
 			p.conflictResolver.maxRetries, p.config.EnableConflictResolution)
-		
+
 		if err := p.conflictResolver.SafeUpdate(ctx, p.workDir, commitMessage, filenames); err != nil {
 			pushDuration := time.Since(pushStart)
 			log.Printf("ERROR ConflictResolver failed after %v: %v", pushDuration, err)
 			return fmt.Errorf("ConflictResolver failed to publish changes: %w", err)
 		}
-		
+
 		pushDuration := time.Since(pushStart)
 		log.Printf("INFO ConflictResolver completed successfully in %v", pushDuration)
 	} else {
 		// Fallback to original direct push approach
 		log.Printf("INFO Using direct push (ConflictResolver disabled)")
 		log.Printf("DEBUG Starting commit operation...")
-		
+
 		commitStart := time.Now()
 		if err := p.gitClient.Commit(ctx, p.workDir, commitMessage, commitOptions); err != nil {
 			log.Printf("ERROR Git commit failed: %v", err)
@@ -569,7 +569,7 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 		pushOptions := NewDefaultPushOptions()
 		pushOptions.Branch = p.config.BranchName
 		pushOptions.Timeout = p.config.Timeout
-		
+
 		log.Printf("DEBUG Push options: branch=%s, timeout=%v", pushOptions.Branch, pushOptions.Timeout)
 		log.Printf("DEBUG Starting git push operation...")
 
@@ -578,7 +578,7 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 			log.Printf("ERROR Git push failed after %v: %v", pushDuration, err)
 			return err
 		}
-		
+
 		pushDuration := time.Since(pushStart)
 		log.Printf("DEBUG Git push completed in %v", pushDuration)
 	}
