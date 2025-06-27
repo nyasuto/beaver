@@ -16,15 +16,16 @@ import (
 
 // GitHubWikiPublisher implements WikiPublisher using Git clone operations
 type GitHubWikiPublisher struct {
-	config        *PublisherConfig
-	gitClient     GitClient
-	generator     *Generator
-	authenticator *GitAuthenticator
-	fileManager   *WikiFileManager
-	perfMonitor   *PerformanceMonitor
-	tempManager   *TempManager
-	workDir       string
-	isInitialized bool
+	config           *PublisherConfig
+	gitClient        GitClient
+	generator        *Generator
+	authenticator    *GitAuthenticator
+	fileManager      *WikiFileManager
+	perfMonitor      *PerformanceMonitor
+	tempManager      *TempManager
+	conflictResolver *ConflictResolver
+	workDir          string
+	isInitialized    bool
 }
 
 // NewGitHubWikiPublisher creates a new GitHub Wiki publisher
@@ -54,16 +55,27 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 	perfMonitor := NewPerformanceMonitor(config.EnablePerformanceLogging)
 	tempManager := NewTempManager("", fmt.Sprintf("beaver-wiki-%s-%s", config.Owner, config.Repository))
 
+	// Initialize conflict resolver with CI-optimized settings
+	conflictResolverConfig := DefaultConflictResolverConfig()
+	if config.EnableConflictResolution {
+		// Use more aggressive settings in CI environments
+		conflictResolverConfig.MaxRetries = 8
+		conflictResolverConfig.BaseDelay = 500 * time.Millisecond
+		conflictResolverConfig.MaxDelay = 20 * time.Second
+	}
+	conflictResolver := NewConflictResolver(gitClient, conflictResolverConfig)
+
 	return &GitHubWikiPublisher{
-		config:        config,
-		gitClient:     gitClient,
-		generator:     NewGenerator(),
-		authenticator: authenticator,
-		fileManager:   nil, // Will be initialized when workDir is created
-		perfMonitor:   perfMonitor,
-		tempManager:   tempManager,
-		workDir:       "",
-		isInitialized: false,
+		config:           config,
+		gitClient:        gitClient,
+		generator:        NewGenerator(),
+		authenticator:    authenticator,
+		fileManager:      nil, // Will be initialized when workDir is created
+		perfMonitor:      perfMonitor,
+		tempManager:      tempManager,
+		conflictResolver: conflictResolver,
+		workDir:          "",
+		isInitialized:    false,
 	}, nil
 }
 
@@ -415,17 +427,26 @@ func (p *GitHubWikiPublisher) publishPagesBatch(ctx context.Context, pages []*Wi
 	commitOptions.Author.Name = p.config.AuthorName
 	commitOptions.Author.Email = p.config.AuthorEmail
 
-	if err := p.gitClient.Commit(ctx, p.workDir, commitMessage, commitOptions); err != nil {
-		return err
-	}
+	// Use ConflictResolver for safe push with automatic retry and conflict resolution
+	if p.config.EnableConflictResolution && p.conflictResolver != nil {
+		log.Printf("INFO Using ConflictResolver for safe push operation")
+		if err := p.conflictResolver.SafeUpdate(ctx, p.workDir, commitMessage, filenames); err != nil {
+			return fmt.Errorf("ConflictResolver failed to publish changes: %w", err)
+		}
+	} else {
+		// Fallback to original direct push approach
+		log.Printf("INFO Using direct push (ConflictResolver disabled)")
+		if err := p.gitClient.Commit(ctx, p.workDir, commitMessage, commitOptions); err != nil {
+			return err
+		}
 
-	// Push changes
-	pushOptions := NewDefaultPushOptions()
-	pushOptions.Branch = p.config.BranchName
-	pushOptions.Timeout = p.config.Timeout
+		pushOptions := NewDefaultPushOptions()
+		pushOptions.Branch = p.config.BranchName
+		pushOptions.Timeout = p.config.Timeout
 
-	if err := p.gitClient.Push(ctx, p.workDir, pushOptions); err != nil {
-		return err
+		if err := p.gitClient.Push(ctx, p.workDir, pushOptions); err != nil {
+			return err
+		}
 	}
 
 	log.Printf("INFO Successfully published %d pages", len(pages))
