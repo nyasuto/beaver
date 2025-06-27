@@ -63,9 +63,10 @@ func (tm *TempManager) CreateTempDir(purpose string) (string, error) {
 	tm.mutex.Lock()
 	defer tm.mutex.Unlock()
 
-	// Generate unique directory name
+	// Generate unique directory name with higher precision
 	timestamp := time.Now().Format("20060102-150405")
-	dirname := fmt.Sprintf("%s-%s-%d", tm.prefix, timestamp, time.Now().UnixNano()%10000)
+	uniqueID := time.Now().UnixNano() // Use full nanosecond timestamp for uniqueness
+	dirname := fmt.Sprintf("%s-%s-%d", tm.prefix, timestamp, uniqueID)
 	dirPath := filepath.Join(tm.baseDir, dirname)
 
 	// Create directory
