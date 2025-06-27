@@ -94,7 +94,13 @@ func TestFullWorkflowIntegration(t *testing.T) {
 			Token:                    cfg.GitHubToken,
 			WorkingDir:               filepath.Join(cfg.TempDir, "wiki"),
 			BranchName:               "master",
+			AuthorName:               "Beaver Integration Test",
+			AuthorEmail:              "test@beaver.ai",
 			UseShallowClone:          true,
+			CloneDepth:               1,
+			Timeout:                  30 * time.Second,
+			RetryAttempts:            3,
+			RetryDelay:               time.Second,
 			EnableConflictResolution: false,
 		}
 
@@ -171,10 +177,19 @@ func TestErrorScenarios(t *testing.T) {
 	t.Run("Wiki Permission Test", func(t *testing.T) {
 		// Test wiki initialization with current permissions
 		wikiConfig := &wiki.PublisherConfig{
-			Owner:      cfg.TestRepoOwner,
-			Repository: cfg.TestRepoName,
-			Token:      cfg.GitHubToken,
-			WorkingDir: filepath.Join(cfg.TempDir, "wiki_perm_test"),
+			Owner:                    cfg.TestRepoOwner,
+			Repository:               cfg.TestRepoName,
+			Token:                    cfg.GitHubToken,
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_perm_test"),
+			BranchName:               "master",
+			AuthorName:               "Beaver Integration Test",
+			AuthorEmail:              "test@beaver.ai",
+			UseShallowClone:          true,
+			CloneDepth:               1,
+			Timeout:                  30 * time.Second,
+			RetryAttempts:            3,
+			RetryDelay:               time.Second,
+			EnableConflictResolution: false,
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -195,10 +210,19 @@ func TestJapaneseContent(t *testing.T) {
 
 	t.Run("Japanese Content Generation and Publishing", func(t *testing.T) {
 		wikiConfig := &wiki.PublisherConfig{
-			Owner:      cfg.TestRepoOwner,
-			Repository: cfg.TestRepoName,
-			Token:      cfg.GitHubToken,
-			WorkingDir: filepath.Join(cfg.TempDir, "wiki_japanese"),
+			Owner:                    cfg.TestRepoOwner,
+			Repository:               cfg.TestRepoName,
+			Token:                    cfg.GitHubToken,
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_japanese"),
+			BranchName:               "master",
+			AuthorName:               "Beaver Integration Test",
+			AuthorEmail:              "test@beaver.ai",
+			UseShallowClone:          true,
+			CloneDepth:               1,
+			Timeout:                  30 * time.Second,
+			RetryAttempts:            3,
+			RetryDelay:               time.Second,
+			EnableConflictResolution: false,
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -244,10 +268,19 @@ func TestPerformanceScenarios(t *testing.T) {
 		start := time.Now()
 
 		wikiConfig := &wiki.PublisherConfig{
-			Owner:      cfg.TestRepoOwner,
-			Repository: cfg.TestRepoName,
-			Token:      cfg.GitHubToken,
-			WorkingDir: filepath.Join(cfg.TempDir, "wiki_perf"),
+			Owner:                    cfg.TestRepoOwner,
+			Repository:               cfg.TestRepoName,
+			Token:                    cfg.GitHubToken,
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_perf"),
+			BranchName:               "master",
+			AuthorName:               "Beaver Integration Test",
+			AuthorEmail:              "test@beaver.ai",
+			UseShallowClone:          true,
+			CloneDepth:               1,
+			Timeout:                  30 * time.Second,
+			RetryAttempts:            3,
+			RetryDelay:               time.Second,
+			EnableConflictResolution: false,
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -286,7 +319,7 @@ func TestConfigurationIntegration(t *testing.T) {
 
 	t.Run("Configuration Loading and Validation", func(t *testing.T) {
 		// Create test configuration file
-		configPath := filepath.Join(cfg.TempDir, "beaver_test.yml")
+		configPath := filepath.Join(cfg.TempDir, "beaver.yml")
 		testConfig := fmt.Sprintf(`
 project:
   name: "Integration Test"
@@ -317,6 +350,11 @@ settings:
 		if err != nil {
 			t.Fatalf("Failed to create test config: %v", err)
 		}
+
+		// Change to test directory so config.LoadConfig() finds our test config
+		originalDir, _ := os.Getwd()
+		defer os.Chdir(originalDir)
+		os.Chdir(cfg.TempDir)
 
 		// Test configuration loading
 		testCfg, err := config.LoadConfig()
