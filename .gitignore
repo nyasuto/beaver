@@ -59,6 +59,12 @@ coverage.html
 tmp/
 temp/
 
+# Generated wiki content (beaver output)
+generated-wiki/
+generated-wiki-*/
+wiki-output/
+*.wiki/
+
 # Python AI services
 services/ai/.env
 services/ai/__pycache__/
