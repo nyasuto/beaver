@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/nyasuto/beaver/internal/ai"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/github"
 	"github.com/nyasuto/beaver/pkg/wiki"
 )
 
@@ -711,6 +714,438 @@ func TestOutputSummarization(t *testing.T) {
 			t.Error("Should contain provider")
 		}
 	})
+}
+
+func TestFetchSingleIssue(t *testing.T) {
+	// Mock GitHub issues for testing
+	mockIssues := []*github.IssueData{
+		{
+			ID:        123,
+			Number:    456,
+			Title:     "Test Issue 1",
+			Body:      "This is the first test issue",
+			State:     "open",
+			User:      "testuser1",
+			Labels:    []string{"bug", "priority:high"},
+			Comments:  []github.Comment{},
+			CreatedAt: time.Date(2023, 6, 15, 10, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 6, 15, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        124,
+			Number:    789,
+			Title:     "Test Issue 2",
+			Body:      "This is the second test issue",
+			State:     "closed",
+			User:      "testuser2",
+			Labels:    []string{"enhancement"},
+			Comments:  []github.Comment{},
+			CreatedAt: time.Date(2023, 6, 10, 15, 30, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 6, 10, 15, 30, 0, 0, time.UTC),
+		},
+		{
+			ID:        125,
+			Number:    100,
+			Title:     "Test Issue 3",
+			Body:      "This is the third test issue",
+			State:     "open",
+			User:      "testuser3",
+			Labels:    []string{"documentation"},
+			Comments:  []github.Comment{},
+			CreatedAt: time.Date(2023, 6, 12, 9, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 6, 12, 9, 0, 0, 0, time.UTC),
+		},
+	}
+
+	// Create a mock GitHub client that returns our test issues
+	mockClient := &MockGitHubClient{
+		issues: mockIssues,
+	}
+
+	t.Run("Find existing issue by number", func(t *testing.T) {
+		ctx := context.Background()
+		issue, err := testFetchSingleIssue(ctx, mockClient, "owner", "repo", 456)
+
+		if err != nil {
+			t.Fatalf("fetchSingleIssue() error = %v", err)
+		}
+
+		if issue == nil {
+			t.Fatal("Expected issue to be found, got nil")
+		}
+
+		if issue.Number != 456 {
+			t.Errorf("Expected issue number 456, got %d", issue.Number)
+		}
+
+		if issue.Title != "Test Issue 1" {
+			t.Errorf("Expected title 'Test Issue 1', got %s", issue.Title)
+		}
+
+		if issue.User != "testuser1" {
+			t.Errorf("Expected user 'testuser1', got %s", issue.User)
+		}
+	})
+
+	t.Run("Find different existing issue by number", func(t *testing.T) {
+		ctx := context.Background()
+		issue, err := testFetchSingleIssue(ctx, mockClient, "owner", "repo", 789)
+
+		if err != nil {
+			t.Fatalf("fetchSingleIssue() error = %v", err)
+		}
+
+		if issue == nil {
+			t.Fatal("Expected issue to be found, got nil")
+		}
+
+		if issue.Number != 789 {
+			t.Errorf("Expected issue number 789, got %d", issue.Number)
+		}
+
+		if issue.Title != "Test Issue 2" {
+			t.Errorf("Expected title 'Test Issue 2', got %s", issue.Title)
+		}
+
+		if issue.State != "closed" {
+			t.Errorf("Expected state 'closed', got %s", issue.State)
+		}
+	})
+
+	t.Run("Issue not found", func(t *testing.T) {
+		ctx := context.Background()
+		issue, err := testFetchSingleIssue(ctx, mockClient, "owner", "repo", 999)
+
+		if err == nil {
+			t.Error("Expected error for non-existent issue, got nil")
+		}
+
+		if issue != nil {
+			t.Error("Expected nil issue for non-existent issue")
+		}
+
+		expectedError := "issue #999 が見つかりません"
+		if !strings.Contains(err.Error(), expectedError) {
+			t.Errorf("Expected error message to contain '%s', got %s", expectedError, err.Error())
+		}
+	})
+
+	t.Run("GitHub client error", func(t *testing.T) {
+		// Create a mock client that returns an error
+		errorClient := &MockGitHubClient{
+			returnError: true,
+		}
+
+		ctx := context.Background()
+		issue, err := testFetchSingleIssue(ctx, errorClient, "owner", "repo", 456)
+
+		if err == nil {
+			t.Error("Expected error from GitHub client, got nil")
+		}
+
+		if issue != nil {
+			t.Error("Expected nil issue when GitHub client returns error")
+		}
+
+		expectedError := "mock error"
+		if !strings.Contains(err.Error(), expectedError) {
+			t.Errorf("Expected error message to contain '%s', got %s", expectedError, err.Error())
+		}
+	})
+
+	t.Run("Empty issue list", func(t *testing.T) {
+		// Create a mock client with no issues
+		emptyClient := &MockGitHubClient{
+			issues: []*github.IssueData{},
+		}
+
+		ctx := context.Background()
+		issue, err := testFetchSingleIssue(ctx, emptyClient, "owner", "repo", 456)
+
+		if err == nil {
+			t.Error("Expected error for empty issue list, got nil")
+		}
+
+		if issue != nil {
+			t.Error("Expected nil issue for empty issue list")
+		}
+	})
+}
+
+func TestOutputBatchSummarization(t *testing.T) {
+	// Create comprehensive test batch summarization response
+	response := &ai.BatchSummarizationResponse{
+		TotalProcessed: 2,
+		TotalFailed:    1,
+		ProcessingTime: 15.5,
+		Results: []ai.SummarizationResponse{
+			{
+				Summary:    "First issue summary: Critical authentication bug affecting login system",
+				Complexity: "high",
+				Category:   func() *string { s := "bug"; return &s }(),
+			},
+			{
+				Summary:    "Second issue summary: Feature request for dark mode implementation",
+				Complexity: "medium",
+				Category:   func() *string { s := "enhancement"; return &s }(),
+			},
+		},
+		FailedIssues: []ai.FailedIssue{
+			{
+				IssueNumber: 123,
+				Error:       "API rate limit exceeded",
+			},
+		},
+	}
+
+	t.Run("Output batch summarization in text format", func(t *testing.T) {
+		// Capture stdout
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputBatchSummarization(response, "text")
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		out, _ := io.ReadAll(r)
+
+		if err != nil {
+			t.Fatalf("outputBatchSummarization() error = %v", err)
+		}
+
+		stdout := string(out)
+
+		// Check text format output headers
+		if !strings.Contains(stdout, "バッチAI要約結果") {
+			t.Error("Should contain Japanese batch header")
+		}
+		if !strings.Contains(stdout, "処理統計:") {
+			t.Error("Should contain statistics header")
+		}
+
+		// Check statistics
+		if !strings.Contains(stdout, "成功: 2件") {
+			t.Error("Should contain success count")
+		}
+		if !strings.Contains(stdout, "失敗: 1件") {
+			t.Error("Should contain failure count")
+		}
+		if !strings.Contains(stdout, "合計時間: 15.50秒") {
+			t.Error("Should contain processing time")
+		}
+
+		// Check error details
+		if !strings.Contains(stdout, "エラー詳細:") {
+			t.Error("Should contain error details header")
+		}
+		if !strings.Contains(stdout, "Issue #123: API rate limit exceeded") {
+			t.Error("Should contain specific error message")
+		}
+
+		// Check summarization results
+		if !strings.Contains(stdout, "要約結果:") {
+			t.Error("Should contain results header")
+		}
+		if !strings.Contains(stdout, "Critical authentication bug affecting login system") {
+			t.Error("Should contain first issue summary")
+		}
+		if !strings.Contains(stdout, "Feature request for dark mode implementation") {
+			t.Error("Should contain second issue summary")
+		}
+		if !strings.Contains(stdout, "複雑度: high") {
+			t.Error("Should contain complexity info")
+		}
+		if !strings.Contains(stdout, "カテゴリ: bug") {
+			t.Error("Should contain category info")
+		}
+
+		// Check separators
+		if !strings.Contains(stdout, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") {
+			t.Error("Should contain separator line")
+		}
+	})
+
+	t.Run("Output batch summarization in JSON format", func(t *testing.T) {
+		// Capture stdout
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputBatchSummarization(response, "json")
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		out, _ := io.ReadAll(r)
+
+		if err != nil {
+			t.Fatalf("outputBatchSummarization() error = %v", err)
+		}
+
+		stdout := string(out)
+
+		// Check JSON format output
+		if !strings.Contains(stdout, `"total_processed": 2`) {
+			t.Error("Should contain total processed in JSON format")
+		}
+		if !strings.Contains(stdout, `"total_failed": 1`) {
+			t.Error("Should contain total failed in JSON format")
+		}
+		if !strings.Contains(stdout, `"processing_time": 15.50`) {
+			t.Error("Should contain processing time in JSON format")
+		}
+		if !strings.Contains(stdout, `"results": [...]`) {
+			t.Error("Should contain results placeholder in JSON format")
+		}
+
+		// Should be valid JSON structure
+		if !strings.Contains(stdout, "{") || !strings.Contains(stdout, "}") {
+			t.Error("Should contain JSON braces")
+		}
+	})
+
+	t.Run("Output batch summarization with no failures", func(t *testing.T) {
+		responseNoFailures := &ai.BatchSummarizationResponse{
+			TotalProcessed: 3,
+			TotalFailed:    0,
+			ProcessingTime: 8.2,
+			Results: []ai.SummarizationResponse{
+				{
+					Summary:    "Test summary",
+					Complexity: "low",
+					Category:   nil, // No category
+				},
+			},
+			FailedIssues: []ai.FailedIssue{}, // No failures
+		}
+
+		// Test text format
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputBatchSummarization(responseNoFailures, "text")
+
+		w.Close()
+		os.Stdout = old
+		out, _ := io.ReadAll(r)
+
+		if err != nil {
+			t.Fatalf("outputBatchSummarization() error = %v", err)
+		}
+
+		stdout := string(out)
+
+		// Should show zero failures
+		if !strings.Contains(stdout, "失敗: 0件") {
+			t.Error("Should show zero failures")
+		}
+		// Should not contain error details section when no failures
+		if strings.Contains(stdout, "エラー詳細:") {
+			t.Error("Should not contain error details when no failures")
+		}
+		// Should contain summary
+		if !strings.Contains(stdout, "Test summary") {
+			t.Error("Should contain summary text")
+		}
+		// Should handle missing category gracefully
+		if strings.Contains(stdout, "カテゴリ:") {
+			t.Error("Should not show category when not provided")
+		}
+	})
+
+	t.Run("Output batch summarization with no results", func(t *testing.T) {
+		responseNoResults := &ai.BatchSummarizationResponse{
+			TotalProcessed: 0,
+			TotalFailed:    2,
+			ProcessingTime: 2.1,
+			Results:        []ai.SummarizationResponse{}, // No results
+			FailedIssues: []ai.FailedIssue{
+				{
+					IssueNumber: 456,
+					Error:       "Network timeout",
+				},
+				{
+					IssueNumber: 789,
+					Error:       "Invalid response",
+				},
+			},
+		}
+
+		// Test text format
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputBatchSummarization(responseNoResults, "text")
+
+		w.Close()
+		os.Stdout = old
+		out, _ := io.ReadAll(r)
+
+		if err != nil {
+			t.Fatalf("outputBatchSummarization() error = %v", err)
+		}
+
+		stdout := string(out)
+
+		// Should show zero successes
+		if !strings.Contains(stdout, "成功: 0件") {
+			t.Error("Should show zero successes")
+		}
+		// Should show two failures
+		if !strings.Contains(stdout, "失敗: 2件") {
+			t.Error("Should show two failures")
+		}
+		// Should contain error details for both failures
+		if !strings.Contains(stdout, "Issue #456: Network timeout") {
+			t.Error("Should contain first error message")
+		}
+		if !strings.Contains(stdout, "Issue #789: Invalid response") {
+			t.Error("Should contain second error message")
+		}
+		// Should still show results header even with no results
+		if !strings.Contains(stdout, "要約結果:") {
+			t.Error("Should contain results header even with no results")
+		}
+	})
+}
+
+// GitHubClientInterface defines the interface for GitHub client in tests
+type GitHubClientInterface interface {
+	FetchIssues(ctx context.Context, owner, repo string, opts interface{}) ([]*github.IssueData, error)
+}
+
+// MockGitHubClient is a test helper for mocking GitHub API calls
+type MockGitHubClient struct {
+	issues      []*github.IssueData
+	returnError bool
+}
+
+// FetchIssues mocks the GitHub client's FetchIssues method
+func (m *MockGitHubClient) FetchIssues(ctx context.Context, owner, repo string, options interface{}) ([]*github.IssueData, error) {
+	if m.returnError {
+		return nil, fmt.Errorf("mock error")
+	}
+	return m.issues, nil
+}
+
+// Helper function to create a wrapped fetchSingleIssue for testing
+func testFetchSingleIssue(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+	issues, err := client.FetchIssues(ctx, owner, repo, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, issue := range issues {
+		if issue.Number == issueNum {
+			return issue, nil
+		}
+	}
+
+	return nil, fmt.Errorf("issue #%d が見つかりません", issueNum)
 }
 
 func TestOutputSummary(t *testing.T) {
