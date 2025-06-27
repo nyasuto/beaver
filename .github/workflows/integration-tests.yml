@@ -1,0 +1,131 @@
+name: 🔗 Integration Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, labeled]
+
+env:
+  GO_VERSION: 'stable'
+
+jobs:
+  # Integration tests only - no redundant quality checks
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests'))
+    
+    environment: integration-testing
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 📦 Download dependencies
+      run: go mod download
+      
+    - name: 🔨 Build
+      run: make build
+      
+    - name: 🧪 Setup integration environment
+      run: |
+        chmod +x ./scripts/run-integration-tests.sh
+        
+    - name: 🔗 Run integration tests
+      env:
+        BEAVER_INTEGRATION_TESTS: true
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+        BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
+        BEAVER_DEBUG: true
+      run: |
+        echo "🧪 Running integration tests..."
+        ./scripts/run-integration-tests.sh --check
+        ./scripts/run-integration-tests.sh --quick --run
+      timeout-minutes: 15
+      
+    - name: 📤 Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-test-results
+        path: |
+          *.log
+          .env.integration
+        retention-days: 7
+
+  # Performance tests (main branch only)
+  performance-tests:
+    name: 🚀 Performance Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment: integration-testing
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 📦 Download dependencies
+      run: go mod download
+      
+    - name: 🚀 Run performance tests
+      env:
+        BEAVER_INTEGRATION_TESTS: true
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+        BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
+      run: |
+        echo "🚀 Running performance tests..."
+        chmod +x ./scripts/run-integration-tests.sh
+        ./scripts/run-integration-tests.sh --all --run
+      timeout-minutes: 30
+      
+    - name: 📤 Upload performance results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-test-results
+        path: |
+          *.log
+          performance-*.json
+        retention-days: 30
+
+  # Notification for integration test results
+  notify:
+    name: 📢 Notify Results
+    runs-on: ubuntu-latest
+    needs: [integration-tests, performance-tests]
+    if: always()
+    
+    steps:
+    - name: 📊 Report integration status
+      run: |
+        echo "📊 Integration Test Results:"
+        echo "🔗 Integration Tests: ${{ needs.integration-tests.result }}"
+        echo "🚀 Performance Tests: ${{ needs.performance-tests.result }}"
+        
+        if [[ "${{ needs.integration-tests.result }}" == "failure" ]]; then
+          echo "❌ Integration tests failed!"
+          exit 1
+        fi
+        
+        echo "✅ Integration testing completed!"
