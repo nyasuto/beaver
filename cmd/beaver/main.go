@@ -163,8 +163,42 @@ var buildCmd = &cobra.Command{
 			fmt.Printf("🚀 GitHub Wikiに投稿中...\n")
 			owner, repoName := parseOwnerRepo(repo)
 			log.Printf("INFO Parsed repository: owner=%s, repo=%s", owner, repoName)
-			wikiService := wiki.NewWikiService(cfg.Sources.GitHub.Token, owner, repoName)
-			if err := wikiService.GenerateAndPublishWiki(ctx, result.Issues, cfg.Project.Name); err != nil {
+
+			// Use Git clone approach (Issue #49) instead of REST API
+			publisherConfig := &wiki.PublisherConfig{
+				Owner:                    owner,
+				Repository:               repoName,
+				Token:                    cfg.Sources.GitHub.Token,
+				BranchName:               "master",
+				AuthorName:               "Beaver AI",
+				AuthorEmail:              "noreply@beaver.ai",
+				UseShallowClone:          true,
+				CloneDepth:               1,
+				Timeout:                  30 * time.Second,
+				RetryAttempts:            3,
+				RetryDelay:               time.Second,
+				EnableConflictResolution: true,
+			}
+
+			publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+			if err != nil {
+				log.Printf("ERROR Failed to create publisher: %v", err)
+				fmt.Printf("❌ Publisher作成エラー: %v\n", err)
+				os.Exit(1)
+			}
+			defer func() {
+				if err := publisher.Cleanup(); err != nil {
+					log.Printf("WARN Failed to cleanup publisher: %v", err)
+				}
+			}()
+
+			if err := publisher.Initialize(ctx); err != nil {
+				log.Printf("ERROR Failed to initialize publisher: %v", err)
+				fmt.Printf("❌ Publisher初期化エラー: %v\n", err)
+				os.Exit(1)
+			}
+
+			if err := publisher.PublishPages(ctx, pages); err != nil {
 				log.Printf("ERROR Wiki publication failed: %v", err)
 				fmt.Printf("❌ Wiki投稿エラー: %v\n", err)
 				os.Exit(1)

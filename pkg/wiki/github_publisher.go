@@ -73,12 +73,8 @@ func (p *GitHubWikiPublisher) Initialize(ctx context.Context) error {
 	}
 	p.workDir = workDir
 
-	// Initialize file manager
+	// Initialize file manager (images directory will be created after clone)
 	p.fileManager = NewWikiFileManager(p.workDir)
-	if err := p.fileManager.CreateImagesDirectory(); err != nil {
-		log.Printf("WARN Failed to create images directory: %v", err)
-		// Not fatal, continue
-	}
 
 	// Setup authentication if available
 	if p.authenticator != nil {
