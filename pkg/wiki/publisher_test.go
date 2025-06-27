@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/stretchr/testify/assert"
 )
 
 // MockWikiPublisher implements WikiPublisher interface for testing
@@ -366,5 +367,164 @@ func TestMockWikiPublisher_BatchOperations(t *testing.T) {
 
 	if len(pageInfos) != 3 {
 		t.Errorf("ListPages() returned %d pages, want 3", len(pageInfos))
+	}
+}
+
+func TestNewPublisherConfig(t *testing.T) {
+	tests := []struct {
+		name       string
+		owner      string
+		repository string
+		token      string
+		validate   func(*testing.T, *PublisherConfig)
+	}{
+		{
+			name:       "valid basic configuration",
+			owner:      "testowner",
+			repository: "testrepo",
+			token:      "ghp_testtoken123",
+			validate: func(t *testing.T, config *PublisherConfig) {
+				assert.Equal(t, "testowner", config.Owner)
+				assert.Equal(t, "testrepo", config.Repository)
+				assert.Equal(t, "ghp_testtoken123", config.Token)
+			},
+		},
+		{
+			name:       "configuration with special characters",
+			owner:      "owner-with-dashes",
+			repository: "repo_with_underscores",
+			token:      "ghp_complex-token_123",
+			validate: func(t *testing.T, config *PublisherConfig) {
+				assert.Equal(t, "owner-with-dashes", config.Owner)
+				assert.Equal(t, "repo_with_underscores", config.Repository)
+				assert.Equal(t, "ghp_complex-token_123", config.Token)
+			},
+		},
+		{
+			name:       "empty values should be accepted by constructor",
+			owner:      "",
+			repository: "",
+			token:      "",
+			validate: func(t *testing.T, config *PublisherConfig) {
+				assert.Equal(t, "", config.Owner)
+				assert.Equal(t, "", config.Repository)
+				assert.Equal(t, "", config.Token)
+				// Validation should fail, but constructor should not
+				err := config.Validate()
+				assert.Error(t, err)
+			},
+		},
+		{
+			name:       "unicode characters in repository info",
+			owner:      "ユーザー",
+			repository: "リポジトリ",
+			token:      "token-with-🦫-emoji",
+			validate: func(t *testing.T, config *PublisherConfig) {
+				assert.Equal(t, "ユーザー", config.Owner)
+				assert.Equal(t, "リポジトリ", config.Repository)
+				assert.Equal(t, "token-with-🦫-emoji", config.Token)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := NewPublisherConfig(tt.owner, tt.repository, tt.token)
+
+			// Verify basic parameters
+			tt.validate(t, config)
+
+			// Verify default values are set correctly
+			assert.Equal(t, "master", config.BranchName)
+			assert.Equal(t, "Beaver AI", config.AuthorName)
+			assert.Equal(t, "noreply@beaver.ai", config.AuthorEmail)
+			assert.True(t, config.UseShallowClone)
+			assert.Equal(t, 1, config.CloneDepth)
+			assert.Equal(t, 30*time.Second, config.Timeout)
+			assert.Equal(t, 3, config.RetryAttempts)
+			assert.Equal(t, time.Second, config.RetryDelay)
+			assert.True(t, config.EnableConflictResolution)
+			assert.True(t, config.EnableBatchOperations)
+			assert.False(t, config.EnablePerformanceLogging)
+
+			// Verify working directory is empty by default (should be set later)
+			assert.Empty(t, config.WorkingDir)
+		})
+	}
+}
+
+func TestNewPublisherConfig_DefaultValues(t *testing.T) {
+	// Test that default values are consistent and sensible
+	config := NewPublisherConfig("owner", "repo", "token")
+
+	// Performance settings should be optimized for speed
+	assert.True(t, config.UseShallowClone, "Should use shallow clone for performance")
+	assert.Equal(t, 1, config.CloneDepth, "Shallow clone depth should be 1")
+
+	// Timeout should be reasonable
+	assert.Greater(t, config.Timeout, time.Duration(0), "Timeout should be positive")
+	assert.LessOrEqual(t, config.Timeout, 5*time.Minute, "Timeout should not be excessive")
+
+	// Retry settings should be reasonable
+	assert.Greater(t, config.RetryAttempts, 0, "Should have at least 1 retry attempt")
+	assert.LessOrEqual(t, config.RetryAttempts, 10, "Should not have excessive retry attempts")
+	assert.Greater(t, config.RetryDelay, time.Duration(0), "Retry delay should be positive")
+
+	// Feature flags should have sensible defaults
+	assert.True(t, config.EnableConflictResolution, "Conflict resolution should be enabled by default")
+	assert.True(t, config.EnableBatchOperations, "Batch operations should be enabled by default")
+	assert.False(t, config.EnablePerformanceLogging, "Performance logging should be disabled by default")
+
+	// Git settings should be valid
+	assert.NotEmpty(t, config.BranchName, "Branch name should not be empty")
+	assert.NotEmpty(t, config.AuthorName, "Author name should not be empty")
+	assert.NotEmpty(t, config.AuthorEmail, "Author email should not be empty")
+	assert.Contains(t, config.AuthorEmail, "@", "Author email should contain @")
+}
+
+func TestNewPublisherConfig_URLGeneration(t *testing.T) {
+	config := NewPublisherConfig("testowner", "testrepo", "testtoken")
+
+	// Test repository URL generation
+	repoURL := config.GetRepositoryURL()
+	expectedURL := "https://github.com/testowner/testrepo.wiki.git"
+	assert.Equal(t, expectedURL, repoURL)
+
+	// Test authenticated URL generation
+	authURL := config.GetAuthenticatedURL()
+	expectedAuthURL := "https://testtoken@github.com/testowner/testrepo.wiki.git"
+	assert.Equal(t, expectedAuthURL, authURL)
+}
+
+func TestNewPublisherConfig_ValidationIntegration(t *testing.T) {
+	// Test that NewPublisherConfig creates a configuration that validates successfully
+	config := NewPublisherConfig("owner", "repo", "token")
+	err := config.Validate()
+	assert.NoError(t, err, "NewPublisherConfig should create a valid configuration")
+
+	// Test that empty values fail validation
+	invalidConfig := NewPublisherConfig("", "", "")
+	err = invalidConfig.Validate()
+	assert.Error(t, err, "Configuration with empty values should fail validation")
+}
+
+func TestNewPublisherConfig_Immutability(t *testing.T) {
+	// Test that NewPublisherConfig returns a new instance each time
+	config1 := NewPublisherConfig("owner1", "repo1", "token1")
+	config2 := NewPublisherConfig("owner2", "repo2", "token2")
+
+	// Should be different instances
+	assert.NotSame(t, config1, config2, "NewPublisherConfig should return new instances")
+
+	// Modifying one should not affect the other
+	config1.BranchName = "custom-branch"
+	assert.Equal(t, "custom-branch", config1.BranchName)
+	assert.Equal(t, "master", config2.BranchName, "Modifying one config should not affect another")
+}
+
+// BenchmarkNewPublisherConfig tests the performance of config creation
+func BenchmarkNewPublisherConfig(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = NewPublisherConfig("owner", "repo", "token")
 	}
 }
