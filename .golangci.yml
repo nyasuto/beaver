@@ -1,9 +1,22 @@
-# golangci-lint v1 configuration
-# All configurations are kept as default except for excluding test files
-
+version: "2"
 run:
-  # Exclude test files from linting entirely
   tests: false
-
-# All other configurations use defaults
-# The 'tests: false' setting above ensures test files are excluded from analysis
+linters:
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
