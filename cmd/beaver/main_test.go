@@ -1310,27 +1310,27 @@ func TestInitCommand(t *testing.T) {
 	t.Run("Create new config file successfully", func(t *testing.T) {
 		// Create temporary directory
 		tmpDir := t.TempDir()
-		
+
 		// Change to temporary directory
 		oldWd, _ := os.Getwd()
 		defer os.Chdir(oldWd)
 		os.Chdir(tmpDir)
-		
+
 		// Capture stdout
 		var buf bytes.Buffer
-		
+
 		// Create command
 		cmd := &cobra.Command{}
 		cmd.SetOut(&buf)
 		cmd.SetErr(&buf)
-		
+
 		// Execute init command logic
 		configPath := filepath.Join(tmpDir, "beaver.yml")
-		
+
 		// Verify config file doesn't exist initially
 		_, err := os.Stat(configPath)
 		assert.True(t, os.IsNotExist(err), "Config file should not exist initially")
-		
+
 		// Test successful creation (simulate what initCmd.Run does)
 		content := `# Beaver Configuration File
 project:
@@ -1353,34 +1353,34 @@ output:
     platform: "github"
     repository: "username/my-repo"
 `
-		
+
 		err = os.WriteFile(configPath, []byte(content), 0644)
 		require.NoError(t, err)
-		
+
 		// Verify file was created
 		_, err = os.Stat(configPath)
 		assert.NoError(t, err, "Config file should be created")
-		
+
 		// Read and verify content
 		fileContent, err := os.ReadFile(configPath)
 		require.NoError(t, err)
 		assert.Contains(t, string(fileContent), "Beaver Configuration File")
 		assert.Contains(t, string(fileContent), "username/my-repo")
 	})
-	
+
 	t.Run("Config file already exists", func(t *testing.T) {
 		// Create temporary directory with existing config
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "beaver.yml")
-		
+
 		// Create existing config file
 		err := os.WriteFile(configPath, []byte("existing config"), 0644)
 		require.NoError(t, err)
-		
+
 		// Verify file exists
 		_, err = os.Stat(configPath)
 		assert.NoError(t, err, "Config file should exist")
-		
+
 		// Test behavior when config already exists
 		// (In real implementation, this would return early with warning message)
 		fileContent, err := os.ReadFile(configPath)
@@ -1396,12 +1396,12 @@ func TestBuildCommand_ValidationErrors(t *testing.T) {
 		oldWd, _ := os.Getwd()
 		defer os.Chdir(oldWd)
 		os.Chdir(tmpDir)
-		
+
 		// Test config loading error case
 		_, err := os.Stat("beaver.yml")
 		assert.True(t, os.IsNotExist(err), "Should not find config file")
 	})
-	
+
 	t.Run("Invalid repository configuration", func(t *testing.T) {
 		// Test invalid repository formats
 		invalidRepos := []string{
@@ -1410,7 +1410,7 @@ func TestBuildCommand_ValidationErrors(t *testing.T) {
 			"invalid-format",
 			"too/many/slashes",
 		}
-		
+
 		for _, repo := range invalidRepos {
 			t.Run(fmt.Sprintf("repo=%s", repo), func(t *testing.T) {
 				if repo == "" || repo == "username/my-repo" {
@@ -1420,7 +1420,7 @@ func TestBuildCommand_ValidationErrors(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("Valid repository parsing", func(t *testing.T) {
 		validRepos := []struct {
 			input    string
@@ -1431,7 +1431,7 @@ func TestBuildCommand_ValidationErrors(t *testing.T) {
 			{"facebook/react", "facebook", "react"},
 			{"microsoft/vscode", "microsoft", "vscode"},
 		}
-		
+
 		for _, tc := range validRepos {
 			t.Run(tc.input, func(t *testing.T) {
 				owner, repo := parseOwnerRepo(tc.input)
@@ -1449,17 +1449,17 @@ func TestStatusCommand_ConfigValidation(t *testing.T) {
 		oldWd, _ := os.Getwd()
 		defer os.Chdir(oldWd)
 		os.Chdir(tmpDir)
-		
+
 		// Test config path detection
 		_, err := os.Stat("beaver.yml")
 		assert.True(t, os.IsNotExist(err), "Config file should not exist")
 	})
-	
+
 	t.Run("Valid configuration loaded", func(t *testing.T) {
 		// Create temporary directory with valid config
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "beaver.yml")
-		
+
 		// Create minimal valid config
 		configContent := `project:
   name: "test-project"
@@ -1474,21 +1474,21 @@ output:
   wiki:
     platform: "github"
 `
-		
+
 		err := os.WriteFile(configPath, []byte(configContent), 0644)
 		require.NoError(t, err)
-		
+
 		// Verify file was created
 		_, err = os.Stat(configPath)
 		assert.NoError(t, err)
-		
+
 		// Read and verify config can be loaded
 		content, err := os.ReadFile(configPath)
 		require.NoError(t, err)
 		assert.Contains(t, string(content), "test-project")
 		assert.Contains(t, string(content), "test/repo")
 	})
-	
+
 	t.Run("GitHub token validation", func(t *testing.T) {
 		// Test different token scenarios
 		testCases := []struct {
@@ -1500,7 +1500,7 @@ output:
 			{"Valid token", "ghp_1234567890abcdef", true},
 			{"Short token", "abc", true}, // Any non-empty token is considered valid for basic validation
 		}
-		
+
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				hasToken := tc.token != ""
@@ -1514,16 +1514,16 @@ func TestCommandHelpers(t *testing.T) {
 	t.Run("Test parseOwnerRepo with logging", func(t *testing.T) {
 		// Capture log output for debug information
 		tests := []struct {
-			input    string
-			owner    string
-			repo     string
+			input string
+			owner string
+			repo  string
 		}{
 			{"owner/repo", "owner", "repo"},
 			{"invalid", "", ""},
 			{"", "", ""},
 			{"owner/repo/extra", "", ""},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.input, func(t *testing.T) {
 				owner, repo := parseOwnerRepo(tt.input)
@@ -1532,7 +1532,7 @@ func TestCommandHelpers(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("Test splitString comprehensive cases", func(t *testing.T) {
 		// Additional edge cases for splitString
 		tests := []struct {
@@ -1543,7 +1543,7 @@ func TestCommandHelpers(t *testing.T) {
 			{"a/b/c", "/", []string{"a", "b", "c"}},
 			{"multiple::separators", "::", []string{"multiple", "separators"}},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("%s|%s", tt.input, tt.separator), func(t *testing.T) {
 				result := splitString(tt.input, tt.separator)
@@ -1565,7 +1565,7 @@ func TestCommandExecution(t *testing.T) {
 		assert.Contains(t, cmd.Short, "Beaver")
 		assert.Contains(t, cmd.Long, "AI エージェント")
 	})
-	
+
 	t.Run("Command structure", func(t *testing.T) {
 		// Verify commands are properly registered
 		commands := rootCmd.Commands()
@@ -1573,12 +1573,12 @@ func TestCommandExecution(t *testing.T) {
 		for i, cmd := range commands {
 			commandNames[i] = cmd.Use
 		}
-		
+
 		assert.Contains(t, commandNames, "init")
-		assert.Contains(t, commandNames, "build") 
+		assert.Contains(t, commandNames, "build")
 		assert.Contains(t, commandNames, "status")
 	})
-	
+
 	t.Run("Build command configuration", func(t *testing.T) {
 		// Test build command setup
 		cmd := buildCmd
@@ -1586,7 +1586,7 @@ func TestCommandExecution(t *testing.T) {
 		assert.Contains(t, cmd.Short, "Issues")
 		assert.Contains(t, cmd.Long, "GitHub Issues")
 	})
-	
+
 	t.Run("Status command configuration", func(t *testing.T) {
 		// Test status command setup
 		cmd := statusCmd
@@ -1594,7 +1594,7 @@ func TestCommandExecution(t *testing.T) {
 		assert.Contains(t, cmd.Short, "処理状況")
 		assert.Contains(t, cmd.Long, "処理状況")
 	})
-	
+
 	t.Run("Init command configuration", func(t *testing.T) {
 		// Test init command setup
 		cmd := initCmd
