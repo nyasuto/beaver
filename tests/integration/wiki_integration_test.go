@@ -591,17 +591,21 @@ This content mixes Japanese and English to ensure proper handling of multilingua
 func generateLargeContentPages(count int) []*wiki.WikiPage {
 	var pages []*wiki.WikiPage
 
+	// Add timestamp to ensure unique content each run
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
 	for i := 1; i <= count; i++ {
 		content := fmt.Sprintf(`# Large Content Page %d
 
 ## Overview
 
 This is a large content page generated for performance testing.
+**Generated at:** %s
 
-`, i)
+`, i, timestamp)
 
-		// Add substantial content
-		for j := 1; j <= 50; j++ {
+		// Add substantial content (reduced from 50 to 10 sections for GitHub Wiki size limits)
+		for j := 1; j <= 10; j++ {
 			content += fmt.Sprintf(`### Section %d.%d
 
 This section contains substantial content to test the performance of wiki publishing 
@@ -624,11 +628,11 @@ architecto beatae vitae dicta sunt explicabo.
 `, j, i, j, i, j, i)
 		}
 
-		content += `
+		content += fmt.Sprintf(`
 
 ---
-*Generated with Beaver for performance testing*
-`
+*Generated with Beaver for performance testing at %s*
+`, timestamp)
 
 		pages = append(pages, &wiki.WikiPage{
 			Title:    fmt.Sprintf("Large Content Page %d", i),
