@@ -14,7 +14,7 @@ on:
         type: boolean
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: 'stable'
 
 jobs:
   # Unit tests run on every push/PR
@@ -144,7 +144,7 @@ jobs:
         gosec ./...
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v8
       with:
         version: latest
         args: --timeout=5m
