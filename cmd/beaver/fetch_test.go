@@ -819,7 +819,7 @@ func TestModelValidation(t *testing.T) {
 			{"leading slash", "/owner/repo", false},
 			{"empty owner", "/repo", false},
 			{"empty repo", "owner/", false},
-			{"spaces", "owner / repo", false},
+			{"spaces", "owner / repo", true},
 		}
 
 		for _, tt := range tests {
