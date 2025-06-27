@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -209,8 +210,36 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	// Auto-publish if requested
 	if wikiPublish {
 		log.Printf("🚀 Publishing to GitHub Wiki...")
-		wikiClient := wiki.NewGitHubWikiClient(token, owner, repo)
-		if err := wikiClient.PublishPages(ctx, pages); err != nil {
+		publisherConfig := &wiki.PublisherConfig{
+			Owner:                    owner,
+			Repository:               repo,
+			Token:                    token,
+			BranchName:               "master",
+			AuthorName:               "Beaver AI",
+			AuthorEmail:              "noreply@beaver.ai",
+			UseShallowClone:          true,
+			CloneDepth:               1,
+			Timeout:                  30 * time.Second,
+			RetryAttempts:            3,
+			RetryDelay:               time.Second,
+			EnableConflictResolution: true,
+		}
+
+		publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+		if err != nil {
+			return fmt.Errorf("failed to create publisher: %w", err)
+		}
+		defer func() {
+			if err := publisher.Cleanup(); err != nil {
+				log.Printf("WARN Failed to cleanup publisher: %v", err)
+			}
+		}()
+
+		if err := publisher.Initialize(ctx); err != nil {
+			return fmt.Errorf("failed to initialize publisher: %w", err)
+		}
+
+		if err := publisher.PublishPages(ctx, pages); err != nil {
 			return fmt.Errorf("failed to publish wiki: %w", err)
 		}
 		log.Printf("✅ Successfully published to GitHub Wiki!")
@@ -250,11 +279,9 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no wiki files found in %s. Run 'beaver wiki generate' first", wikiOutput)
 	}
 
-	// Create Wiki client
-	wikiClient := wiki.NewGitHubWikiClient(token, owner, repo)
-
-	// Publish each file
-	log.Printf("📤 Publishing %d wiki pages...", len(wikiFiles))
+	// Create WikiPages from files
+	var pages []*wiki.WikiPage
+	log.Printf("📤 Loading %d wiki pages...", len(wikiFiles))
 	for i, wikiFile := range wikiFiles {
 		if wikiBatch > 0 && i >= wikiBatch {
 			log.Printf("⏸️ Reached batch limit of %d pages", wikiBatch)
@@ -274,12 +301,42 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 			Content:  string(content),
 			Filename: filename,
 		}
+		pages = append(pages, page)
+	}
 
-		log.Printf("  📄 Publishing %s...", filename)
-		if err := wikiClient.CreateWikiPage(ctx, page); err != nil {
-			log.Printf("⚠️ Failed to publish %s: %v", filename, err)
-			continue
+	// Create publisher and publish pages
+	publisherConfig := &wiki.PublisherConfig{
+		Owner:                    owner,
+		Repository:               repo,
+		Token:                    token,
+		BranchName:               "master",
+		AuthorName:               "Beaver AI",
+		AuthorEmail:              "noreply@beaver.ai",
+		UseShallowClone:          true,
+		CloneDepth:               1,
+		Timeout:                  30 * time.Second,
+		RetryAttempts:            3,
+		RetryDelay:               time.Second,
+		EnableConflictResolution: true,
+	}
+
+	publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create publisher: %w", err)
+	}
+	defer func() {
+		if err := publisher.Cleanup(); err != nil {
+			log.Printf("WARN Failed to cleanup publisher: %v", err)
 		}
+	}()
+
+	if err := publisher.Initialize(ctx); err != nil {
+		return fmt.Errorf("failed to initialize publisher: %w", err)
+	}
+
+	log.Printf("📤 Publishing %d wiki pages...", len(pages))
+	if err := publisher.PublishPages(ctx, pages); err != nil {
+		return fmt.Errorf("failed to publish wiki pages: %w", err)
 	}
 
 	log.Printf("✅ Wiki publishing completed!")
@@ -305,12 +362,44 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("GitHub token not found. Set GITHUB_TOKEN environment variable or configure in beaver.yml")
 	}
 
-	// Create Wiki client
-	wikiClient := wiki.NewGitHubWikiClient(token, owner, repo)
+	// Create publisher to access existing Wiki
+	publisherConfig := &wiki.PublisherConfig{
+		Owner:                    owner,
+		Repository:               repo,
+		Token:                    token,
+		BranchName:               "master",
+		AuthorName:               "Beaver AI",
+		AuthorEmail:              "noreply@beaver.ai",
+		UseShallowClone:          true,
+		CloneDepth:               1,
+		Timeout:                  30 * time.Second,
+		RetryAttempts:            3,
+		RetryDelay:               time.Second,
+		EnableConflictResolution: true,
+	}
+
+	publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create publisher: %w", err)
+	}
+	defer func() {
+		if err := publisher.Cleanup(); err != nil {
+			log.Printf("WARN Failed to cleanup publisher: %v", err)
+		}
+	}()
+
+	if err := publisher.Initialize(ctx); err != nil {
+		return fmt.Errorf("failed to initialize publisher: %w", err)
+	}
+
+	// Clone to access existing Wiki content
+	if err := publisher.Clone(ctx); err != nil {
+		return fmt.Errorf("failed to clone wiki repository: %w", err)
+	}
 
 	// List pages
 	log.Printf("📋 Listing Wiki pages for %s/%s", owner, repo)
-	pages, err := wikiClient.ListWikiPages(ctx)
+	pages, err := publisher.ListPages(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list wiki pages: %w", err)
 	}
@@ -322,7 +411,7 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 
 	log.Printf("📄 Found %d Wiki pages:", len(pages))
 	for _, page := range pages {
-		log.Printf("  - %s (%s)", page.Title, page.Path)
+		log.Printf("  - %s (%s)", page.Title, page.Filename)
 	}
 
 	return nil
