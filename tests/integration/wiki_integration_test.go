@@ -101,7 +101,7 @@ func TestFullWorkflowIntegration(t *testing.T) {
 			Timeout:                  30 * time.Second,
 			RetryAttempts:            3,
 			RetryDelay:               time.Second,
-			EnableConflictResolution: false,
+			EnableConflictResolution: true, // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -195,7 +195,7 @@ func TestErrorScenarios(t *testing.T) {
 			Timeout:                  30 * time.Second,
 			RetryAttempts:            3,
 			RetryDelay:               time.Second,
-			EnableConflictResolution: false,
+			EnableConflictResolution: true, // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -228,7 +228,7 @@ func TestJapaneseContent(t *testing.T) {
 			Timeout:                  30 * time.Second,
 			RetryAttempts:            3,
 			RetryDelay:               time.Second,
-			EnableConflictResolution: false,
+			EnableConflictResolution: true, // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -292,7 +292,7 @@ func TestPerformanceScenarios(t *testing.T) {
 			Timeout:                  30 * time.Second,
 			RetryAttempts:            3,
 			RetryDelay:               time.Second,
-			EnableConflictResolution: false,
+			EnableConflictResolution: true, // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
