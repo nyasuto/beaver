@@ -101,7 +101,7 @@ func TestCLIWorkflowIntegration(t *testing.T) {
 
 		// Step 5: Test beaver wiki publish (if environment supports it)
 		t.Logf("Step 5: Testing 'beaver wiki publish'")
-		
+
 		// Note: wiki publish reads from the default output directory "./wiki"
 		// which should match the directory we created in the previous step
 		publishArgs := []string{
