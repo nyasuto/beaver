@@ -32,11 +32,11 @@ func NewMockGitHubService() *MockGitHubService {
 			Issues: []models.Issue{
 				{
 					ID:      123,
-					Number:  1,
+					Number:  123, // Changed to match test expectations
 					Title:   "Test Issue",
 					Body:    "Test issue body",
 					State:   "open",
-					HTMLURL: "https://github.com/owner/repo/issues/1",
+					HTMLURL: "https://github.com/owner/repo/issues/123",
 					User: models.User{
 						ID:    456,
 						Login: "testuser",

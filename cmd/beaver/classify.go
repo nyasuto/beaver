@@ -18,6 +18,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Service factory functions for dependency injection in tests
+var (
+	classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+		return github.NewService(token)
+	}
+	classifyClassifierFactory = func(cfg *config.Config) (*classification.HybridClassifier, error) {
+		return createClassifier(cfg)
+	}
+	classifyConfigLoader = func() (*config.Config, error) {
+		return config.LoadConfig()
+	}
+)
+
 var classifyCmd = &cobra.Command{
 	Use:   "classify",
 	Short: "GitHub Issues自動分類機能",
@@ -138,7 +151,7 @@ func runClassifyIssue(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ Issue番号が無効です: %s", issueNumberStr)
 	}
 
-	cfg, err := config.LoadConfig()
+	cfg, err := classifyConfigLoader()
 	if err != nil {
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
@@ -147,8 +160,8 @@ func runClassifyIssue(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ GitHub tokenが設定されていません")
 	}
 
-	githubService := github.NewService(cfg.Sources.GitHub.Token)
-	classifier, err := createClassifier(cfg)
+	githubService := classifyGitHubServiceFactory(cfg.Sources.GitHub.Token)
+	classifier, err := classifyClassifierFactory(cfg)
 	if err != nil {
 		return fmt.Errorf("❌ 分類器作成エラー: %w", err)
 	}
@@ -203,7 +216,7 @@ func runClassifyIssues(cmd *cobra.Command, args []string) error {
 		issueNums = append(issueNums, num)
 	}
 
-	cfg, err := config.LoadConfig()
+	cfg, err := classifyConfigLoader()
 	if err != nil {
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
@@ -212,8 +225,8 @@ func runClassifyIssues(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ GitHub tokenが設定されていません")
 	}
 
-	githubService := github.NewService(cfg.Sources.GitHub.Token)
-	classifier, err := createClassifier(cfg)
+	githubService := classifyGitHubServiceFactory(cfg.Sources.GitHub.Token)
+	classifier, err := classifyClassifierFactory(cfg)
 	if err != nil {
 		return fmt.Errorf("❌ 分類器作成エラー: %w", err)
 	}
@@ -244,7 +257,7 @@ func runClassifyAll(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ parallel は 1-10 の範囲で指定してください")
 	}
 
-	cfg, err := config.LoadConfig()
+	cfg, err := classifyConfigLoader()
 	if err != nil {
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
@@ -253,8 +266,8 @@ func runClassifyAll(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ GitHub tokenが設定されていません")
 	}
 
-	githubService := github.NewService(cfg.Sources.GitHub.Token)
-	classifier, err := createClassifier(cfg)
+	githubService := classifyGitHubServiceFactory(cfg.Sources.GitHub.Token)
+	classifier, err := classifyClassifierFactory(cfg)
 	if err != nil {
 		return fmt.Errorf("❌ 分類器作成エラー: %w", err)
 	}

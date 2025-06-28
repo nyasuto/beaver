@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -2711,5 +2712,401 @@ func TestBoundaryConditions(t *testing.T) {
 		for _, page := range pages {
 			assert.Greater(t, len(page.Content), 10, "Generated page should contain content")
 		}
+	})
+}
+
+// Tests for runClassifyIssue function
+func TestRunClassifyIssue(t *testing.T) {
+	// Save original factories
+	originalGitHubFactory := classifyGitHubServiceFactory
+	originalClassifierFactory := classifyClassifierFactory
+	originalConfigLoader := classifyConfigLoader
+	defer func() {
+		classifyGitHubServiceFactory = originalGitHubFactory
+		classifyClassifierFactory = originalClassifierFactory
+		classifyConfigLoader = originalConfigLoader
+	}()
+
+	t.Run("Successful classification", func(t *testing.T) {
+		// Set up mocks
+		mockGitHub := NewMockGitHubService()
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		// Capture stdout
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"owner/repo", "123"})
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		assert.Contains(t, string(output), "Issue #123 を取得中")
+		assert.Contains(t, string(output), "Issue #123 を分類中")
+		assert.True(t, mockGitHub.AssertFetchIssuesCalled(1))
+	})
+
+	t.Run("Invalid repository format", func(t *testing.T) {
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"invalid-repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
+	})
+
+	t.Run("Invalid issue number", func(t *testing.T) {
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"owner/repo", "invalid"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Issue番号が無効です")
+	})
+
+	t.Run("Config load error", func(t *testing.T) {
+		classifyConfigLoader = mockConfigLoaderError
+		
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"owner/repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "設定読み込みエラー")
+	})
+
+	t.Run("Missing GitHub token", func(t *testing.T) {
+		classifyConfigLoader = func() (*config.Config, error) {
+			return &config.Config{
+				Sources: config.SourcesConfig{
+					GitHub: config.GitHubConfig{
+						Token: "",
+					},
+				},
+			}, nil
+		}
+		
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"owner/repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub tokenが設定されていません")
+	})
+
+	t.Run("Classifier creation error", func(t *testing.T) {
+		classifyConfigLoader = mockConfigLoader
+		classifyClassifierFactory = mockClassifierFactoryError
+		
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"owner/repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "分類器作成エラー")
+	})
+
+	t.Run("GitHub service error", func(t *testing.T) {
+		mockGitHub := NewMockGitHubService()
+		mockGitHub.FetchIssuesError = errors.New("GitHub API error")
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		cmd := &cobra.Command{}
+		err := runClassifyIssue(cmd, []string{"owner/repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Issue取得エラー")
+	})
+}
+
+// Tests for runClassifyIssues function
+func TestRunClassifyIssues(t *testing.T) {
+	// Save original factories
+	originalGitHubFactory := classifyGitHubServiceFactory
+	originalClassifierFactory := classifyClassifierFactory
+	originalConfigLoader := classifyConfigLoader
+	defer func() {
+		classifyGitHubServiceFactory = originalGitHubFactory
+		classifyClassifierFactory = originalClassifierFactory
+		classifyConfigLoader = originalConfigLoader
+	}()
+
+	t.Run("Successful classification of multiple issues", func(t *testing.T) {
+		// Set up mocks
+		mockGitHub := NewMockGitHubService()
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		// Capture stdout to suppress output during testing
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		err := runClassifyIssues(cmd, []string{"owner/repo", "123", "456", "789"})
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		assert.Contains(t, string(output), "3個のIssuesを取得・分類中")
+		assert.Contains(t, string(output), "並列実行数: 3")
+	})
+
+	t.Run("Invalid repository format", func(t *testing.T) {
+		cmd := &cobra.Command{}
+		err := runClassifyIssues(cmd, []string{"invalid-repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
+	})
+
+	t.Run("Invalid parallel parameter", func(t *testing.T) {
+		classifyParallel = 15 // Out of range
+		defer func() { classifyParallel = 3 }() // Reset
+		
+		cmd := &cobra.Command{}
+		err := runClassifyIssues(cmd, []string{"owner/repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "parallel は 1-10 の範囲で指定してください")
+	})
+
+	t.Run("Invalid issue number in list", func(t *testing.T) {
+		cmd := &cobra.Command{}
+		err := runClassifyIssues(cmd, []string{"owner/repo", "123", "invalid", "456"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Issue番号が無効です: invalid")
+	})
+
+	t.Run("Config load error", func(t *testing.T) {
+		classifyConfigLoader = mockConfigLoaderError
+		
+		cmd := &cobra.Command{}
+		err := runClassifyIssues(cmd, []string{"owner/repo", "123", "456"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "設定読み込みエラー")
+	})
+
+	t.Run("Missing GitHub token", func(t *testing.T) {
+		classifyConfigLoader = func() (*config.Config, error) {
+			return &config.Config{
+				Sources: config.SourcesConfig{
+					GitHub: config.GitHubConfig{
+						Token: "",
+					},
+				},
+			}, nil
+		}
+		
+		cmd := &cobra.Command{}
+		err := runClassifyIssues(cmd, []string{"owner/repo", "123"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub tokenが設定されていません")
+	})
+}
+
+// Tests for runClassifyAll function  
+func TestRunClassifyAll(t *testing.T) {
+	// Save original factories
+	originalGitHubFactory := classifyGitHubServiceFactory
+	originalClassifierFactory := classifyClassifierFactory
+	originalConfigLoader := classifyConfigLoader
+	defer func() {
+		classifyGitHubServiceFactory = originalGitHubFactory
+		classifyClassifierFactory = originalClassifierFactory
+		classifyConfigLoader = originalConfigLoader
+	}()
+
+	t.Run("Successful classification of all issues", func(t *testing.T) {
+		// Set up mocks
+		mockGitHub := NewMockGitHubService()
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		// Capture stdout to suppress output during testing
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		assert.Contains(t, string(output), "全Issuesを取得中")
+		assert.Contains(t, string(output), "取得したIssues")
+		// Should have at least 2 calls: 1 for getting all issues + 1 for processing the single issue
+		assert.True(t, mockGitHub.AssertFetchIssuesCalled(2))
+	})
+
+	t.Run("Invalid repository format", func(t *testing.T) {
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"invalid-repo"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
+	})
+
+	t.Run("Invalid parallel parameter", func(t *testing.T) {
+		classifyParallel = 0 // Out of range
+		defer func() { classifyParallel = 3 }() // Reset
+		
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "parallel は 1-10 の範囲で指定してください")
+	})
+
+	t.Run("Config load error", func(t *testing.T) {
+		classifyConfigLoader = mockConfigLoaderError
+		
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "設定読み込みエラー")
+	})
+
+	t.Run("Missing GitHub token", func(t *testing.T) {
+		classifyConfigLoader = func() (*config.Config, error) {
+			return &config.Config{
+				Sources: config.SourcesConfig{
+					GitHub: config.GitHubConfig{
+						Token: "",
+					},
+				},
+			}, nil
+		}
+		
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub tokenが設定されていません")
+	})
+
+	t.Run("Classifier creation error", func(t *testing.T) {
+		classifyConfigLoader = mockConfigLoader
+		classifyClassifierFactory = mockClassifierFactoryError
+		
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "分類器作成エラー")
+	})
+
+	t.Run("GitHub Issues fetch error", func(t *testing.T) {
+		mockGitHub := NewMockGitHubService()
+		mockGitHub.FetchIssuesError = errors.New("GitHub API error")
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Issues取得エラー")
+	})
+
+	t.Run("No issues to process", func(t *testing.T) {
+		// Mock GitHub service with empty issues
+		mockGitHub := NewMockGitHubService()
+		mockGitHub.FetchIssuesResponse = &models.IssueResult{
+			Repository:   "owner/repo",
+			FetchedAt:    time.Now(),
+			FetchedCount: 0,
+			TotalCount:   0,
+			Issues:       []models.Issue{}, // Empty issues
+			RateLimit: &models.RateLimitInfo{
+				Limit:     5000,
+				Remaining: 4999,
+				ResetTime: time.Now().Add(time.Hour),
+				Used:      1,
+			},
+		}
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		// Capture stdout
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		assert.Contains(t, string(output), "処理するIssuesがありません")
+	})
+
+	t.Run("Max issues parameter", func(t *testing.T) {
+		classifyMaxIssues = 1 // Limit to 1 issue
+		defer func() { classifyMaxIssues = 0 }() // Reset
+
+		mockGitHub := NewMockGitHubService()
+		classifyGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		classifyClassifierFactory = mockClassifierFactory
+		classifyConfigLoader = mockConfigLoader
+
+		// Capture stdout to suppress output during testing
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		err := runClassifyAll(cmd, []string{"owner/repo"})
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = old
+		_, _ = io.ReadAll(r) // Consume output
+
+		assert.NoError(t, err)
+		// Verify that GitHub was called with maxIssues limit - should be at least 2 calls:
+		// 1) Initial fetch with PerPage=1, then 2) fetchSingleIssueForClassify with PerPage=100
+		assert.True(t, len(mockGitHub.FetchIssuesCalls) >= 2)
+		
+		// The first call should have PerPage=1 due to maxIssues setting
+		firstQuery := mockGitHub.FetchIssuesCalls[0]
+		assert.Equal(t, 1, firstQuery.PerPage)
 	})
 }
