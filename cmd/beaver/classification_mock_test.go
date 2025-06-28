@@ -20,15 +20,15 @@ type MockClassifier struct {
 func NewMockClassifier() *MockClassifier {
 	return &MockClassifier{
 		ClassifyIssueResponse: &classification.HybridClassificationResult{
-			Category:   "feature",
-			Confidence: 0.85,
-			Method:     "hybrid",
+			Category:       "feature",
+			Confidence:     0.85,
+			Method:         "hybrid",
 			ProcessingTime: 0.15,
-			Timestamp:  time.Now(),
+			Timestamp:      time.Now(),
 			Details: classification.HybridClassificationDetails{
 				AICategory:        "feature",
 				AIConfidence:      0.82,
-				RuleCategory:      "feature", 
+				RuleCategory:      "feature",
 				RuleConfidence:    0.88,
 				WeightedAIScore:   0.574,
 				WeightedRuleScore: 0.264,
@@ -41,11 +41,11 @@ func NewMockClassifier() *MockClassifier {
 // ClassifyIssue implements the classifier interface for testing
 func (m *MockClassifier) ClassifyIssue(ctx context.Context, issue classification.Issue) (*classification.HybridClassificationResult, error) {
 	m.CallLog = append(m.CallLog, issue)
-	
+
 	if m.ClassifyIssueError != nil {
 		return nil, m.ClassifyIssueError
 	}
-	
+
 	return m.ClassifyIssueResponse, nil
 }
 
@@ -73,10 +73,10 @@ func mockClassifierFactory(cfg *config.Config) (*classification.HybridClassifier
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Create a mock AI client to avoid nil pointer issues
 	aiClient := classification.NewAIClient("http://mock-ai-service", 10*time.Second)
-	
+
 	hybridConfig := classification.GetDefaultHybridConfig()
 	return classification.NewHybridClassifier(ruleEngine, aiClient, hybridConfig), nil
 }
