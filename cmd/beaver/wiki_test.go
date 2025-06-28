@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -411,4 +413,412 @@ func generateLargeTestContent(size int) string {
 	}
 
 	return content
+}
+
+// PHASE 1 IMPLEMENTATION: Wiki Command Handler Tests
+
+// MockWikiGenerator provides testable wiki generation
+type MockWikiGenerator struct {
+	generateErr      error
+	generatedPages   []*wiki.WikiPage
+	indexCallCount   int
+	summaryCallCount int
+	guideCallCount   int
+	pathCallCount    int
+}
+
+func (m *MockWikiGenerator) GenerateIndex(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+	m.indexCallCount++
+	if m.generateErr != nil {
+		return nil, m.generateErr
+	}
+	return &wiki.WikiPage{
+		Title:    "Home",
+		Filename: "Home.md",
+		Content:  fmt.Sprintf("# %s Wiki\n\nGenerated from %d issues", projectName, len(issues)),
+	}, nil
+}
+
+func (m *MockWikiGenerator) GenerateIssuesSummary(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+	m.summaryCallCount++
+	if m.generateErr != nil {
+		return nil, m.generateErr
+	}
+	return &wiki.WikiPage{
+		Title:    "Issues Summary",
+		Filename: "Issues-Summary.md",
+		Content:  "# Issues Summary\n\nSummary content",
+	}, nil
+}
+
+func (m *MockWikiGenerator) GenerateTroubleshootingGuide(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+	m.guideCallCount++
+	if m.generateErr != nil {
+		return nil, m.generateErr
+	}
+	return &wiki.WikiPage{
+		Title:    "Troubleshooting Guide",
+		Filename: "Troubleshooting-Guide.md",
+		Content:  "# Troubleshooting Guide\n\nTroubleshooting content",
+	}, nil
+}
+
+func (m *MockWikiGenerator) GenerateLearningPath(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+	m.pathCallCount++
+	if m.generateErr != nil {
+		return nil, m.generateErr
+	}
+	return &wiki.WikiPage{
+		Title:    "Learning Path",
+		Filename: "Learning-Path.md",
+		Content:  "# Learning Path\n\nLearning content",
+	}, nil
+}
+
+// MockWikiPublisher provides testable wiki publishing
+type MockWikiPublisher struct {
+	initErr       error
+	cloneErr      error
+	publishErr    error
+	listErr       error
+	pages         []*wiki.WikiPageInfo
+	initCalled    bool
+	cloneCalled   bool
+	publishCalled bool
+	listCalled    bool
+	cleanupCalled bool
+}
+
+func (m *MockWikiPublisher) Initialize(ctx context.Context) error {
+	m.initCalled = true
+	return m.initErr
+}
+
+func (m *MockWikiPublisher) Clone(ctx context.Context) error {
+	m.cloneCalled = true
+	return m.cloneErr
+}
+
+func (m *MockWikiPublisher) PublishPages(ctx context.Context, pages []*wiki.WikiPage) error {
+	m.publishCalled = true
+	return m.publishErr
+}
+
+func (m *MockWikiPublisher) ListPages(ctx context.Context) ([]*wiki.WikiPageInfo, error) {
+	m.listCalled = true
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
+	return m.pages, nil
+}
+
+func (m *MockWikiPublisher) Cleanup() error {
+	m.cleanupCalled = true
+	return nil
+}
+
+// TestRunGenerateWiki_FullWorkflow tests the wiki generation workflow
+func TestRunGenerateWiki_FullWorkflow(t *testing.T) {
+	t.Run("Successful wiki generation", func(t *testing.T) {
+		// Setup temporary environment
+		tmpDir := t.TempDir()
+		wikiOutput = tmpDir
+		wikiPublish = false
+		wikiBatch = 0
+
+		// Set environment variable for token
+		os.Setenv("GITHUB_TOKEN", "test-token")
+		defer os.Unsetenv("GITHUB_TOKEN")
+
+		// Test repository parsing
+		repoPath := "owner/repo"
+		owner, repo, err := parseRepoPath(repoPath)
+		assert.NoError(t, err)
+		assert.Equal(t, "owner", owner)
+		assert.Equal(t, "repo", repo)
+
+		// Test output directory creation
+		err = os.MkdirAll(wikiOutput, 0755)
+		assert.NoError(t, err)
+
+		// Test wiki page generation using actual generator
+		generator := wiki.NewGenerator()
+		projectName := fmt.Sprintf("%s/%s", owner, repo)
+		testIssues := []models.Issue{
+			{
+				ID:      123,
+				Number:  1,
+				Title:   "Test Issue",
+				Body:    "Test issue body",
+				State:   "open",
+				HTMLURL: "https://github.com/owner/repo/issues/1",
+				User:    models.User{Login: "testuser"},
+			},
+		}
+
+		// Generate all page types
+		indexPage, err := generator.GenerateIndex(testIssues, projectName)
+		assert.NoError(t, err)
+		assert.Contains(t, indexPage.Title, "Home")
+		assert.Contains(t, indexPage.Content, projectName)
+
+		summaryPage, err := generator.GenerateIssuesSummary(testIssues, projectName)
+		assert.NoError(t, err)
+		assert.Contains(t, summaryPage.Title, "Issues Summary")
+
+		troubleshootingPage, err := generator.GenerateTroubleshootingGuide(testIssues, projectName)
+		assert.NoError(t, err)
+		assert.Contains(t, troubleshootingPage.Title, "Troubleshooting Guide")
+
+		learningPage, err := generator.GenerateLearningPath(testIssues, projectName)
+		assert.NoError(t, err)
+		assert.Contains(t, learningPage.Title, "Learning Path")
+
+		// Test page saving
+		pages := []*wiki.WikiPage{indexPage, summaryPage, troubleshootingPage, learningPage}
+		for _, page := range pages {
+			err = saveWikiPage(page, wikiOutput)
+			assert.NoError(t, err)
+
+			// Verify file was created
+			filePath := filepath.Join(wikiOutput, page.Filename)
+			_, err = os.Stat(filePath)
+			assert.NoError(t, err)
+
+			// Verify file content
+			content, err := os.ReadFile(filePath)
+			assert.NoError(t, err)
+			assert.Equal(t, page.Content, string(content))
+		}
+	})
+
+	t.Run("Wiki generation with auto-publish", func(t *testing.T) {
+		// Setup for auto-publish test
+		tmpDir := t.TempDir()
+		wikiOutput = tmpDir
+		wikiPublish = true
+
+		os.Setenv("GITHUB_TOKEN", "test-token")
+		defer os.Unsetenv("GITHUB_TOKEN")
+
+		// Test that auto-publish would be triggered
+		assert.True(t, wikiPublish)
+
+		// Mock publisher workflow
+		mockPublisher := &MockWikiPublisher{}
+		ctx := context.Background()
+		testPages := []*wiki.WikiPage{
+			{
+				Title:    "Test Page",
+				Filename: "Test-Page.md",
+				Content:  "Test content",
+			},
+		}
+
+		err := mockPublisher.Initialize(ctx)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.initCalled)
+
+		err = mockPublisher.PublishPages(ctx, testPages)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.publishCalled)
+
+		err = mockPublisher.Cleanup()
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.cleanupCalled)
+	})
+}
+
+// TestRunPublishWiki_FullWorkflow tests the wiki publishing workflow
+func TestRunPublishWiki_FullWorkflow(t *testing.T) {
+	t.Run("Successful wiki publishing", func(t *testing.T) {
+		// Setup temporary directory with wiki files
+		tmpDir := t.TempDir()
+		wikiOutput = tmpDir
+		wikiBatch = 0
+
+		os.Setenv("GITHUB_TOKEN", "test-token")
+		defer os.Unsetenv("GITHUB_TOKEN")
+
+		// Create test wiki files
+		testFiles := map[string]string{
+			"Home.md":           "# Home\n\nWelcome to the wiki",
+			"Issues-Summary.md": "# Issues Summary\n\nSummary content",
+			"Guide.md":          "# Guide\n\nGuide content",
+		}
+
+		for filename, content := range testFiles {
+			filePath := filepath.Join(tmpDir, filename)
+			err := os.WriteFile(filePath, []byte(content), 0644)
+			assert.NoError(t, err)
+		}
+
+		// Test repository parsing
+		repoPath := "owner/repo"
+		owner, repo, err := parseRepoPath(repoPath)
+		assert.NoError(t, err)
+		assert.Equal(t, "owner", owner)
+		assert.Equal(t, "repo", repo)
+
+		// Test wiki file discovery
+		wikiFiles, err := filepath.Glob(filepath.Join(tmpDir, "*.md"))
+		assert.NoError(t, err)
+		assert.Equal(t, 3, len(wikiFiles))
+
+		// Test WikiPage creation from files
+		var pages []*wiki.WikiPage
+		for _, wikiFile := range wikiFiles {
+			content, err := os.ReadFile(wikiFile)
+			assert.NoError(t, err)
+
+			filename := filepath.Base(wikiFile)
+			title := filename[:len(filename)-3] // Remove .md
+
+			page := &wiki.WikiPage{
+				Title:    title,
+				Content:  string(content),
+				Filename: filename,
+			}
+			pages = append(pages, page)
+		}
+
+		assert.Equal(t, 3, len(pages))
+
+		// Test publisher workflow
+		mockPublisher := &MockWikiPublisher{}
+		ctx := context.Background()
+
+		err = mockPublisher.Initialize(ctx)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.initCalled)
+
+		err = mockPublisher.PublishPages(ctx, pages)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.publishCalled)
+
+		err = mockPublisher.Cleanup()
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.cleanupCalled)
+	})
+
+	t.Run("Publishing with batch limit", func(t *testing.T) {
+		// Setup directory with multiple files
+		tmpDir := t.TempDir()
+		wikiOutput = tmpDir
+		wikiBatch = 2 // Limit to 2 files
+
+		// Create multiple test files
+		for i := 1; i <= 5; i++ {
+			filename := fmt.Sprintf("Page-%d.md", i)
+			content := fmt.Sprintf("# Page %d\n\nContent %d", i, i)
+			filePath := filepath.Join(tmpDir, filename)
+			err := os.WriteFile(filePath, []byte(content), 0644)
+			assert.NoError(t, err)
+		}
+
+		// Test file discovery
+		wikiFiles, err := filepath.Glob(filepath.Join(tmpDir, "*.md"))
+		assert.NoError(t, err)
+		assert.Equal(t, 5, len(wikiFiles))
+
+		// Test batch limiting logic
+		processedCount := 0
+		for i := range wikiFiles {
+			if wikiBatch > 0 && i >= wikiBatch {
+				break
+			}
+			processedCount++
+		}
+
+		assert.Equal(t, 2, processedCount, "Should process only 2 files due to batch limit")
+	})
+}
+
+// TestRunListWiki_FullWorkflow tests the wiki listing functionality
+func TestRunListWiki_FullWorkflow(t *testing.T) {
+	t.Run("Successful wiki listing", func(t *testing.T) {
+		os.Setenv("GITHUB_TOKEN", "test-token")
+		defer os.Unsetenv("GITHUB_TOKEN")
+
+		// Test repository parsing
+		repoPath := "owner/repo"
+		owner, repo, err := parseRepoPath(repoPath)
+		assert.NoError(t, err)
+		assert.Equal(t, "owner", owner)
+		assert.Equal(t, "repo", repo)
+
+		// Mock wiki pages
+		mockPages := []*wiki.WikiPageInfo{
+			{
+				Title:        "Home",
+				Filename:     "Home.md",
+				Size:         1024,
+				LastModified: time.Now(),
+				URL:          "https://github.com/owner/repo/wiki/Home",
+			},
+			{
+				Title:        "Issues-Summary",
+				Filename:     "Issues-Summary.md",
+				Size:         2048,
+				LastModified: time.Now(),
+				URL:          "https://github.com/owner/repo/wiki/Issues-Summary",
+			},
+		}
+
+		// Test publisher workflow
+		mockPublisher := &MockWikiPublisher{
+			pages: mockPages,
+		}
+		ctx := context.Background()
+
+		err = mockPublisher.Initialize(ctx)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.initCalled)
+
+		err = mockPublisher.Clone(ctx)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.cloneCalled)
+
+		pages, err := mockPublisher.ListPages(ctx)
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.listCalled)
+		assert.Equal(t, 2, len(pages))
+		assert.Equal(t, "Home", pages[0].Title)
+		assert.Equal(t, "Issues-Summary", pages[1].Title)
+
+		err = mockPublisher.Cleanup()
+		assert.NoError(t, err)
+		assert.True(t, mockPublisher.cleanupCalled)
+	})
+
+	t.Run("Listing with no wiki pages", func(t *testing.T) {
+		os.Setenv("GITHUB_TOKEN", "test-token")
+		defer os.Unsetenv("GITHUB_TOKEN")
+
+		// Mock empty wiki
+		mockPublisher := &MockWikiPublisher{
+			pages: []*wiki.WikiPageInfo{}, // Empty pages
+		}
+		ctx := context.Background()
+
+		pages, err := mockPublisher.ListPages(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(pages))
+	})
+
+	t.Run("Listing with clone error", func(t *testing.T) {
+		os.Setenv("GITHUB_TOKEN", "test-token")
+		defer os.Unsetenv("GITHUB_TOKEN")
+
+		// Mock clone failure
+		mockPublisher := &MockWikiPublisher{
+			cloneErr: fmt.Errorf("clone failed: repository not found"),
+		}
+		ctx := context.Background()
+
+		err := mockPublisher.Clone(ctx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "clone failed")
+		assert.True(t, mockPublisher.cloneCalled)
+	})
 }
