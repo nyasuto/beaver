@@ -15,8 +15,6 @@ jobs:
   quality-checks:
     name: 🔍 Quality & Security
     runs-on: ubuntu-latest
-    outputs:
-      coverage-file: ${{ steps.coverage.outputs.file }}
     
     steps:
     - name: 📥 Checkout code
@@ -61,7 +59,8 @@ jobs:
     - name: 📊 Upload coverage
       id: coverage
       uses: codecov/codecov-action@v5
-    
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   # Build verification (runs in parallel with quality-checks)
   build-test:
