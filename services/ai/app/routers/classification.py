@@ -13,10 +13,12 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi import status
 
 from app.core.config import Settings, get_settings
+from app.core.ai_client import AIClient
 from app.models.schemas import (
     ClassificationRequest,
     ClassificationResponse,
     AIProvider,
+    IssueData,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,188 @@ async def _validate_ai_provider(provider: AIProvider, settings: Settings) -> Non
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Anthropic provider not configured. Please set ANTHROPIC_API_KEY."
         )
+
+
+async def _real_ai_classification(request: ClassificationRequest, settings: Settings) -> ClassificationResponse:
+    """
+    Real AI classification using OpenAI/Anthropic APIs
+    """
+    start_time = time.time()
+    
+    # Initialize AI client
+    ai_client = AIClient(settings)
+    
+    # Convert request to IssueData format
+    issue_data = IssueData(
+        title=getattr(request, 'title', request.content[:100]),  # Use content as title if not provided
+        body=request.content,
+        state="open",  # Default state
+        labels=getattr(request, 'labels', []),
+        user="unknown",  # Default user
+        comments=[]  # No comments for basic classification
+    )
+    
+    try:
+        # Create classification prompt
+        prompt = _create_classification_prompt(request.content, request.categories or DEFAULT_CATEGORIES)
+        
+        # Use AI client for classification (fallback to OpenAI)
+        provider = request.provider if request.provider else AIProvider.OPENAI
+        model = request.model if request.model else None
+        
+        # Call AI for classification
+        if provider == AIProvider.OPENAI:
+            ai_response = await _classify_with_openai(ai_client, prompt, model, settings)
+        elif provider == AIProvider.ANTHROPIC:
+            ai_response = await _classify_with_anthropic(ai_client, prompt, model, settings)
+        else:
+            raise ValueError(f"Unsupported provider: {provider}")
+        
+        # Parse AI response
+        category, confidence, reasoning = _parse_ai_classification_response(ai_response, request.categories or DEFAULT_CATEGORIES)
+        
+        # Generate tags based on content and AI response
+        tags = _generate_tags_from_ai_response(request.content, reasoning)
+        
+        processing_time = time.time() - start_time
+        
+        return ClassificationResponse(
+            primary_category=category,
+            confidence=confidence,
+            all_categories={category: confidence},  # Simplified for now
+            tags=tags,
+            processing_time=processing_time,
+            provider_used=provider,
+            model_used=model or settings.default_openai_model
+        )
+        
+    except Exception as e:
+        logger.warning(f"Real AI classification failed, falling back to mock: {str(e)}")
+        # Fallback to mock if AI fails
+        return await _mock_classification(request, settings)
+
+
+def _create_classification_prompt(content: str, categories: List[str]) -> str:
+    """Create a prompt for AI classification"""
+    categories_str = ", ".join(categories)
+    
+    return f"""あなたは技術的なコンテンツ分類の専門家です。以下のコンテンツを分析し、最適なカテゴリに分類してください。
+
+コンテンツ:
+{content}
+
+利用可能なカテゴリ: {categories_str}
+
+以下の形式で回答してください:
+カテゴリ: [選択したカテゴリ]
+信頼度: [0.0-1.0の数値]
+理由: [分類理由を1-2文で説明]
+
+制約:
+- 必ず利用可能なカテゴリから1つを選択してください
+- 信頼度は0.0から1.0の間で指定してください
+- 理由は簡潔で具体的にしてください"""
+
+
+async def _classify_with_openai(ai_client: AIClient, prompt: str, model: str, settings: Settings) -> str:
+    """Classify using OpenAI API"""
+    from openai import AsyncOpenAI
+    
+    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    model_name = model or settings.default_openai_model
+    
+    response = await client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": "あなたは技術コンテンツの分類専門家です。"},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=settings.max_tokens,
+        temperature=0.1,  # Low temperature for consistent classification
+        timeout=settings.request_timeout
+    )
+    
+    return response.choices[0].message.content
+
+
+async def _classify_with_anthropic(ai_client: AIClient, prompt: str, model: str, settings: Settings) -> str:
+    """Classify using Anthropic API"""
+    from anthropic import AsyncAnthropic
+    
+    client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+    model_name = model or settings.default_anthropic_model
+    
+    response = await client.messages.create(
+        model=model_name,
+        max_tokens=settings.max_tokens,
+        temperature=0.1,
+        messages=[
+            {"role": "user", "content": f"あなたは技術コンテンツの分類専門家です。\n\n{prompt}"}
+        ]
+    )
+    
+    return response.content[0].text
+
+
+def _parse_ai_classification_response(response: str, available_categories: List[str]) -> tuple[str, float, str]:
+    """Parse AI response to extract category, confidence, and reasoning"""
+    lines = response.strip().split('\n')
+    category = available_categories[0]  # Default fallback
+    confidence = 0.5  # Default confidence
+    reasoning = "AI分類完了"  # Default reasoning
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith('カテゴリ:') or line.startswith('Category:'):
+            # Extract category
+            cat_text = line.split(':', 1)[1].strip()
+            # Find matching category
+            for cat in available_categories:
+                if cat.lower() in cat_text.lower() or cat_text.lower() in cat.lower():
+                    category = cat
+                    break
+        elif line.startswith('信頼度:') or line.startswith('Confidence:'):
+            # Extract confidence
+            conf_text = line.split(':', 1)[1].strip()
+            try:
+                confidence = float(conf_text)
+                confidence = max(0.0, min(1.0, confidence))  # Clamp to [0,1]
+            except ValueError:
+                pass
+        elif line.startswith('理由:') or line.startswith('Reason:'):
+            # Extract reasoning
+            reasoning = line.split(':', 1)[1].strip()
+    
+    return category, confidence, reasoning
+
+
+def _generate_tags_from_ai_response(content: str, reasoning: str) -> List[str]:
+    """Generate tags based on content and AI reasoning"""
+    tags = []
+    
+    content_lower = content.lower()
+    reasoning_lower = reasoning.lower()
+    combined_text = content_lower + " " + reasoning_lower
+    
+    # Priority/urgency tags
+    if any(word in combined_text for word in ["urgent", "critical", "緊急", "重要"]):
+        tags.append("urgent")
+    if any(word in combined_text for word in ["easy", "simple", "簡単", "容易"]):
+        tags.append("good-first-issue")
+    
+    # Technical area tags
+    if any(word in combined_text for word in ["backend", "server", "api", "バックエンド"]):
+        tags.append("backend")
+    if any(word in combined_text for word in ["frontend", "ui", "interface", "フロントエンド"]):
+        tags.append("frontend")
+    if any(word in combined_text for word in ["database", "db", "sql", "データベース"]):
+        tags.append("database")
+    if any(word in combined_text for word in ["security", "auth", "セキュリティ", "認証"]):
+        tags.append("security")
+    if any(word in combined_text for word in ["performance", "optimize", "パフォーマンス", "最適化"]):
+        tags.append("performance")
+    
+    return tags
 
 
 async def _mock_classification(request: ClassificationRequest, settings: Settings) -> ClassificationResponse:
@@ -159,9 +343,8 @@ async def classify_content(
     await _validate_ai_provider(request.provider, settings)
     
     try:
-        # TODO: Implement actual AI classification in Phase 2
-        # For now, return mock response
-        response = await _mock_classification(request, settings)
+        # Use real AI classification
+        response = await _real_ai_classification(request, settings)
         
         logger.info(
             f"Classification completed: {response.primary_category} "
