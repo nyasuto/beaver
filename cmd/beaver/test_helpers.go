@@ -26,7 +26,7 @@ type TestHelpers struct {
 func NewTestHelpers(t *testing.T) *TestHelpers {
 	tempDir, err := os.MkdirTemp("", "beaver-test-*")
 	require.NoError(t, err)
-	
+
 	return &TestHelpers{
 		t:       t,
 		tempDir: tempDir,
@@ -49,51 +49,53 @@ func (h *TestHelpers) TempDir() string {
 func (h *TestHelpers) CaptureOutput(fn func()) (stdout, stderr string) {
 	// Capture stdout
 	oldStdout := os.Stdout
-	rOut, wOut, _ := os.Pipe()
+	rOut, wOut, err := os.Pipe()
+	require.NoError(h.t, err)
 	os.Stdout = wOut
-	
+
 	// Capture stderr
 	oldStderr := os.Stderr
-	rErr, wErr, _ := os.Pipe()
+	rErr, wErr, err := os.Pipe()
+	require.NoError(h.t, err)
 	os.Stderr = wErr
-	
+
 	// Create channels to capture output
 	stdoutCh := make(chan string)
 	stderrCh := make(chan string)
-	
+
 	// Start goroutines to read the output
 	go func() {
 		var buf bytes.Buffer
 		io.Copy(&buf, rOut)
 		stdoutCh <- buf.String()
 	}()
-	
+
 	go func() {
 		var buf bytes.Buffer
 		io.Copy(&buf, rErr)
 		stderrCh <- buf.String()
 	}()
-	
+
 	// Execute the function
 	fn()
-	
+
 	// Close writers and restore original stdout/stderr
 	wOut.Close()
 	wErr.Close()
 	os.Stdout = oldStdout
 	os.Stderr = oldStderr
-	
+
 	// Get captured output
 	stdout = <-stdoutCh
 	stderr = <-stderrCh
-	
+
 	return stdout, stderr
 }
 
 // CreateTempFile creates a temporary file with content
 func (h *TestHelpers) CreateTempFile(filename, content string) string {
 	filePath := filepath.Join(h.tempDir, filename)
-	err := os.WriteFile(filePath, []byte(content), 0644)
+	err := os.WriteFile(filePath, []byte(content), 0600)
 	require.NoError(h.t, err)
 	return filePath
 }
@@ -126,7 +128,7 @@ output:
     repository: "%s"
     auto_publish: false
 `, repoPath, repoPath)
-	
+
 	return h.CreateTempFile("beaver.yml", configContent)
 }
 
@@ -134,12 +136,13 @@ output:
 func (h *TestHelpers) ChangeToTempDir() func() {
 	originalDir, err := os.Getwd()
 	require.NoError(h.t, err)
-	
+
 	err = os.Chdir(h.tempDir)
 	require.NoError(h.t, err)
-	
+
 	return func() {
-		os.Chdir(originalDir)
+		// Best effort cleanup - ignore errors in cleanup functions
+		_ = os.Chdir(originalDir) //nolint:errcheck
 	}
 }
 
@@ -163,7 +166,7 @@ func (f *TestFixtures) CreateTestIssue(id int64, number int, title, body string)
 		User:      "testuser",
 		CreatedAt: now,
 		UpdatedAt: now,
-		Labels: []string{"bug", "feature"},
+		Labels:    []string{"bug", "feature"},
 		Comments: []github.Comment{
 			{
 				ID:        1001,
@@ -194,7 +197,7 @@ func (f *TestFixtures) CreateTestIssueResult(issueCount int) *models.IssueResult
 			},
 		}
 	}
-	
+
 	return &models.IssueResult{
 		Issues:       issues,
 		FetchedCount: issueCount,
@@ -233,7 +236,7 @@ func (f *TestFixtures) CreateTestBatchAIResponse(resultCount int) *ai.BatchSumma
 		response.Summary = fmt.Sprintf("Summary for issue %d", i+1)
 		results[i] = *response
 	}
-	
+
 	return &ai.BatchSummarizationResponse{
 		TotalProcessed: resultCount,
 		TotalFailed:    0,
@@ -267,4 +270,3 @@ func (f *TestFixtures) CreateTestConfig(repoPath string) *config.Config {
 		},
 	}
 }
-

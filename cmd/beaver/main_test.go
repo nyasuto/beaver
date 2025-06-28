@@ -22,9 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
-
 func TestOutputJSON(t *testing.T) {
 	// Create test data
 	result := &models.IssueResult{
