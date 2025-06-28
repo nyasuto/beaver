@@ -133,7 +133,7 @@ jobs:
         # Create beaver.yml if it doesn't exist
         if [ ! -f "$BEAVER_CONFIG_FILE" ]; then
           echo "📝 Creating Beaver configuration..."
-          ./bin/beaver init --non-interactive
+          ./bin/beaver init
         fi
         
         # Update configuration for current repository
