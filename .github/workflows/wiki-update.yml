@@ -86,8 +86,8 @@ jobs:
     needs: pre-checks
     if: needs.pre-checks.outputs.should_update == 'true'
     
-    # Use environment for sensitive operations
-    environment: wiki-automation
+    # Use environment for sensitive operations (configure 'wiki-automation' environment in repository settings)
+    # environment: wiki-automation
     
     steps:
     - name: 📥 Checkout code
