@@ -29,7 +29,7 @@ func TestAIClient_ClassifyIssue(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "POST", r.Method)
-		assert.Equal(t, "/classify/enhanced", r.URL.Path)
+		assert.Equal(t, "/api/v1/classify/enhanced", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
 		response := AIClassificationResponse{
