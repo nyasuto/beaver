@@ -16,6 +16,37 @@ import (
 	"github.com/nyasuto/beaver/pkg/wiki"
 )
 
+// Service factory functions for dependency injection in tests
+var (
+	wikiGitHubServiceFactory = func(token string) github.ServiceInterface {
+		return github.NewService(token)
+	}
+	wikiGeneratorFactory = func() *wiki.Generator {
+		return wiki.NewGenerator()
+	}
+	wikiPublisherFactory = func(config *wiki.PublisherConfig) (wiki.WikiPublisher, error) {
+		return wiki.NewGitHubWikiPublisher(config)
+	}
+	wikiViperGetString = func(key string) string {
+		return viper.GetString(key)
+	}
+	wikiOsGetenv = func(key string) string {
+		return os.Getenv(key)
+	}
+	wikiOsMkdirAll = func(path string, perm os.FileMode) error {
+		return os.MkdirAll(path, perm)
+	}
+	wikiOsWriteFile = func(filename string, data []byte, perm os.FileMode) error {
+		return os.WriteFile(filename, data, perm)
+	}
+	wikiOsReadFile = func(filename string) ([]byte, error) {
+		return os.ReadFile(filename)
+	}
+	wikiFilepathGlob = func(pattern string) ([]string, error) {
+		return filepath.Glob(pattern)
+	}
+)
+
 var (
 	wikiOutput   string
 	wikiTemplate string
@@ -113,16 +144,16 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get GitHub token
-	token := viper.GetString("github.token")
+	token := wikiViperGetString("github.token")
 	if token == "" {
-		token = os.Getenv("GITHUB_TOKEN")
+		token = wikiOsGetenv("GITHUB_TOKEN")
 	}
 	if token == "" {
 		return fmt.Errorf("GitHub token not found. Set GITHUB_TOKEN environment variable or configure in beaver.yml")
 	}
 
 	// Create GitHub service
-	githubService := github.NewService(token)
+	githubService := wikiGitHubServiceFactory(token)
 
 	// Create query
 	query := models.DefaultIssueQuery(fmt.Sprintf("%s/%s", owner, repo))
@@ -146,7 +177,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create Wiki generator
-	generator := wiki.NewGenerator()
+	generator := wikiGeneratorFactory()
 	projectName := fmt.Sprintf("%s/%s", owner, repo)
 
 	// Generate Wiki pages
@@ -154,7 +185,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 
 	// Create output directory
 	// #nosec G301 -- CLI tool needs standard directory permissions
-	if err := os.MkdirAll(wikiOutput, 0755); err != nil {
+	if err := wikiOsMkdirAll(wikiOutput, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
@@ -225,7 +256,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 			EnableConflictResolution: true,
 		}
 
-		publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+		publisher, err := wikiPublisherFactory(publisherConfig)
 		if err != nil {
 			return fmt.Errorf("failed to create publisher: %w", err)
 		}
@@ -261,16 +292,16 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get GitHub token
-	token := viper.GetString("github.token")
+	token := wikiViperGetString("github.token")
 	if token == "" {
-		token = os.Getenv("GITHUB_TOKEN")
+		token = wikiOsGetenv("GITHUB_TOKEN")
 	}
 	if token == "" {
 		return fmt.Errorf("GitHub token not found. Set GITHUB_TOKEN environment variable or configure in beaver.yml")
 	}
 
 	// Load Wiki pages from output directory
-	wikiFiles, err := filepath.Glob(filepath.Join(wikiOutput, "*.md"))
+	wikiFiles, err := wikiFilepathGlob(filepath.Join(wikiOutput, "*.md"))
 	if err != nil {
 		return fmt.Errorf("failed to find wiki files: %w", err)
 	}
@@ -288,7 +319,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 			break
 		}
 
-		content, err := os.ReadFile(wikiFile) // #nosec G304 -- CLI tool reads user-specified files
+		content, err := wikiOsReadFile(wikiFile) // #nosec G304 -- CLI tool reads user-specified files
 		if err != nil {
 			return fmt.Errorf("failed to read wiki file %s: %w", wikiFile, err)
 		}
@@ -320,7 +351,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 		EnableConflictResolution: true,
 	}
 
-	publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+	publisher, err := wikiPublisherFactory(publisherConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create publisher: %w", err)
 	}
@@ -354,9 +385,9 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get GitHub token
-	token := viper.GetString("github.token")
+	token := wikiViperGetString("github.token")
 	if token == "" {
-		token = os.Getenv("GITHUB_TOKEN")
+		token = wikiOsGetenv("GITHUB_TOKEN")
 	}
 	if token == "" {
 		return fmt.Errorf("GitHub token not found. Set GITHUB_TOKEN environment variable or configure in beaver.yml")
@@ -378,7 +409,7 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 		EnableConflictResolution: true,
 	}
 
-	publisher, err := wiki.NewGitHubWikiPublisher(publisherConfig)
+	publisher, err := wikiPublisherFactory(publisherConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create publisher: %w", err)
 	}
@@ -429,5 +460,5 @@ func parseRepoPath(repoPath string) (owner, repo string, err error) {
 
 func saveWikiPage(page *wiki.WikiPage, outputDir string) error {
 	filename := filepath.Join(outputDir, page.Filename)
-	return os.WriteFile(filename, []byte(page.Content), 0644) // #nosec G306 -- CLI tool generates files with standard permissions
+	return wikiOsWriteFile(filename, []byte(page.Content), 0644) // #nosec G306 -- CLI tool generates files with standard permissions
 }

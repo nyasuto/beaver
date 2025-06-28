@@ -1119,11 +1119,6 @@ func TestOutputBatchSummarization(t *testing.T) {
 	})
 }
 
-// GitHubClientInterface defines the interface for GitHub client in tests
-type GitHubClientInterface interface {
-	FetchIssues(ctx context.Context, owner, repo string, opts interface{}) ([]*github.IssueData, error)
-}
-
 // MockGitHubClient is a test helper for mocking GitHub API calls
 type MockGitHubClient struct {
 	issues      []*github.IssueData
@@ -3108,5 +3103,230 @@ func TestRunClassifyAll(t *testing.T) {
 		// The first call should have PerPage=1 due to maxIssues setting
 		firstQuery := mockGitHub.FetchIssuesCalls[0]
 		assert.Equal(t, 1, firstQuery.PerPage)
+	})
+}
+
+// Tests for runGenerateWiki function
+func TestRunGenerateWiki(t *testing.T) {
+	// Save original factories
+	originalGitHubFactory := wikiGitHubServiceFactory
+	originalGeneratorFactory := wikiGeneratorFactory
+	originalPublisherFactory := wikiPublisherFactory
+	originalViperGetString := wikiViperGetString
+	originalOsGetenv := wikiOsGetenv
+	originalOsMkdirAll := wikiOsMkdirAll
+	originalOsWriteFile := wikiOsWriteFile
+
+	defer func() {
+		wikiGitHubServiceFactory = originalGitHubFactory
+		wikiGeneratorFactory = originalGeneratorFactory
+		wikiPublisherFactory = originalPublisherFactory
+		wikiViperGetString = originalViperGetString
+		wikiOsGetenv = originalOsGetenv
+		wikiOsMkdirAll = originalOsMkdirAll
+		wikiOsWriteFile = originalOsWriteFile
+	}()
+
+	t.Run("Successful wiki generation", func(t *testing.T) {
+		// Setup mocks
+		mockGitHub := NewMockGitHubService()
+
+		wikiGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		wikiViperGetString = func(key string) string {
+			if key == "github.token" {
+				return "test-viper-token"
+			}
+			return ""
+		}
+		wikiOsGetenv = func(key string) string {
+			if key == "GITHUB_TOKEN" {
+				return "test-env-token"
+			}
+			return ""
+		}
+		wikiOsMkdirAll = func(path string, perm os.FileMode) error {
+			return nil
+		}
+		wikiOsWriteFile = func(filename string, data []byte, perm os.FileMode) error {
+			return nil
+		}
+
+		// Set global variables
+		wikiOutput = "./test-wiki"
+		wikiPublish = false
+
+		err := runGenerateWiki(nil, []string{"owner/repo"})
+
+		require.NoError(t, err)
+		assert.True(t, mockGitHub.AssertFetchIssuesCalled(1))
+	})
+
+	t.Run("Invalid repository path", func(t *testing.T) {
+		err := runGenerateWiki(nil, []string{"invalid-repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "無効なリポジトリパス")
+	})
+
+	t.Run("Missing GitHub token", func(t *testing.T) {
+		wikiViperGetString = func(key string) string {
+			return ""
+		}
+		wikiOsGetenv = func(key string) string {
+			return ""
+		}
+
+		err := runGenerateWiki(nil, []string{"owner/repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub token not found")
+	})
+
+	t.Run("GitHub fetch error", func(t *testing.T) {
+		mockGitHub := NewMockGitHubService()
+		mockGitHub.FetchIssuesError = errors.New("GitHub API error")
+
+		wikiGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		wikiViperGetString = func(key string) string {
+			return "test-token"
+		}
+		wikiOsGetenv = func(key string) string {
+			return "test-token"
+		}
+
+		err := runGenerateWiki(nil, []string{"owner/repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to fetch issues")
+	})
+
+	t.Run("Directory creation error", func(t *testing.T) {
+		mockGitHub := NewMockGitHubService()
+
+		wikiGitHubServiceFactory = func(token string) github.ServiceInterface {
+			return mockGitHub
+		}
+		wikiViperGetString = func(key string) string {
+			return "test-token"
+		}
+		wikiOsGetenv = func(key string) string {
+			return "test-token"
+		}
+		wikiOsMkdirAll = func(path string, perm os.FileMode) error {
+			return errors.New("permission denied")
+		}
+
+		err := runGenerateWiki(nil, []string{"owner/repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to create output directory")
+	})
+
+}
+
+// Tests for runPublishWiki function
+func TestRunPublishWiki(t *testing.T) {
+	t.Run("Invalid repository path", func(t *testing.T) {
+		err := runPublishWiki(nil, []string{"invalid-repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "無効なリポジトリパス")
+	})
+
+	t.Run("Missing GitHub token", func(t *testing.T) {
+		// Save original factories
+		originalViperGetString := wikiViperGetString
+		originalOsGetenv := wikiOsGetenv
+		defer func() {
+			wikiViperGetString = originalViperGetString
+			wikiOsGetenv = originalOsGetenv
+		}()
+
+		wikiViperGetString = func(key string) string {
+			return ""
+		}
+		wikiOsGetenv = func(key string) string {
+			return ""
+		}
+
+		err := runPublishWiki(nil, []string{"owner/repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub token not found")
+	})
+}
+
+// Tests for runListWiki function
+func TestRunListWiki(t *testing.T) {
+	t.Run("Invalid repository path", func(t *testing.T) {
+		err := runListWiki(nil, []string{"invalid-repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "無効なリポジトリパス")
+	})
+
+	t.Run("Missing GitHub token", func(t *testing.T) {
+		// Save original factories
+		originalViperGetString := wikiViperGetString
+		originalOsGetenv := wikiOsGetenv
+		defer func() {
+			wikiViperGetString = originalViperGetString
+			wikiOsGetenv = originalOsGetenv
+		}()
+
+		wikiViperGetString = func(key string) string {
+			return ""
+		}
+		wikiOsGetenv = func(key string) string {
+			return ""
+		}
+
+		err := runListWiki(nil, []string{"owner/repo"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub token not found")
+	})
+}
+
+// Basic tests for summarize command functions - interface compatibility simplified
+func TestSummarizeCommands(t *testing.T) {
+	t.Run("runSummarizeIssue invalid repository path", func(t *testing.T) {
+		err := runSummarizeIssue(nil, []string{"invalid-repo", "123"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
+	})
+
+	t.Run("runSummarizeIssue invalid issue number", func(t *testing.T) {
+		err := runSummarizeIssue(nil, []string{"owner/repo", "invalid"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "issue番号が正しくありません")
+	})
+
+	t.Run("runSummarizeIssues invalid repository path", func(t *testing.T) {
+		err := runSummarizeIssues(nil, []string{"invalid-repo", "1,2,3"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
+	})
+
+	t.Run("runSummarizeIssues missing issue numbers", func(t *testing.T) {
+		err := runSummarizeIssues(nil, []string{"owner/repo"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "issue番号を指定してください")
+	})
+
+	t.Run("runSummarizeIssues invalid issue number in list", func(t *testing.T) {
+		err := runSummarizeIssues(nil, []string{"owner/repo", "1,invalid,3"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "issue番号が正しくありません")
+	})
+
+	t.Run("runSummarizeAll invalid repository path", func(t *testing.T) {
+		err := runSummarizeAll(nil, []string{"invalid-repo"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
 	})
 }
