@@ -293,10 +293,10 @@ func TestHandleRateLimitError(t *testing.T) {
 	}
 
 	t.Run("with reset header", func(t *testing.T) {
-		// Set reset time to 200ms in the future, and use Unix() which truncates to seconds
-		// We need to account for this truncation in our test
+		// Set reset time to 2 seconds in the future to ensure it's properly in the future
+		// even after Unix() truncation
 		now := time.Now()
-		resetTime := now.Add(200 * time.Millisecond)
+		resetTime := now.Add(2 * time.Second)
 		resetUnix := resetTime.Unix()
 
 		resp := &github.Response{
@@ -307,24 +307,18 @@ func TestHandleRateLimitError(t *testing.T) {
 			},
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		// Use shorter timeout to avoid test hanging
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 		defer cancel()
 
 		start := time.Now()
 		err := service.handleRateLimitError(ctx, resp)
 		duration := time.Since(start)
 
-		// If resetUnix is in the future, it should wait; if it's now or past, it defaults to 1 minute and times out
-		if resetUnix > now.Unix() {
-			assert.NoError(t, err)
-			assert.True(t, duration >= 100*time.Millisecond) // Should wait some time
-		} else {
-			// If reset time is in the past/now, it uses 1 minute default and times out
-			beaverErr, ok := err.(*errors.BeaverError)
-			require.True(t, ok, "Expected BeaverError")
-			assert.Equal(t, errors.ErrCodeRateLimit, beaverErr.Code)
-			assert.True(t, beaverErr.Details["context_canceled"].(bool))
-		}
+		// The context should timeout before the 2-second wait completes
+		assert.Error(t, err, "Should timeout waiting for rate limit reset")
+		assert.True(t, duration >= 250*time.Millisecond, "Should wait until context timeout")
+		assert.True(t, duration <= 350*time.Millisecond, "Should not wait longer than context timeout")
 	})
 
 	t.Run("context cancellation", func(t *testing.T) {

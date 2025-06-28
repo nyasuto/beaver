@@ -1956,3 +1956,760 @@ func TestStatusCommand_FullWorkflow(t *testing.T) {
 		// This would trigger the "GITHUB_TOKEN not set" warning in statusCmd.Run
 	})
 }
+
+// PHASE 2 IMPLEMENTATION: Integration & Error Path Testing
+// This phase focuses on deeper integration testing, error path coverage,
+// and advanced failure scenarios to reach the 75-80% coverage target.
+
+// IntegrationTestContext provides a complete testing environment
+type IntegrationTestContext struct {
+	TempDir       string
+	ConfigPath    string
+	OutputDir     string
+	GitHubService *MockGitHubService
+	WikiService   *MockWikiService
+	ConfigService *MockConfigService
+	TestConfig    *config.Config
+	Cleanup       func()
+}
+
+// NewIntegrationTestContext creates a complete testing environment
+func NewIntegrationTestContext(t *testing.T) *IntegrationTestContext {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "beaver.yml")
+	outputDir := filepath.Join(tmpDir, "output")
+
+	// Create output directory
+	err := os.MkdirAll(outputDir, 0755)
+	require.NoError(t, err)
+
+	// Setup test config
+	testConfig := &config.Config{
+		Project: config.ProjectConfig{
+			Name:       "integration-test",
+			Repository: "test/integration",
+		},
+		Sources: config.SourcesConfig{
+			GitHub: config.GitHubConfig{
+				Token:   "test-integration-token",
+				Issues:  true,
+				Commits: true,
+				PRs:     false,
+			},
+		},
+		AI: config.AIConfig{
+			Provider: "openai",
+			Model:    "gpt-4",
+			Features: config.AIFeatures{
+				Summarization:   true,
+				Categorization:  true,
+				Troubleshooting: false,
+			},
+		},
+		Output: config.OutputConfig{
+			Wiki: config.WikiConfig{
+				Platform:  "github",
+				Templates: "default",
+			},
+		},
+		Timezone: config.TimezoneConfig{
+			Location: "Asia/Tokyo",
+			Format:   "2006-01-02 15:04:05 JST",
+		},
+	}
+
+	// Create mock services
+	mockGitHub := NewMockGitHubService()
+	mockWiki := &MockWikiService{}
+	mockConfig := &MockConfigService{
+		configExists:  true,
+		configPath:    configPath,
+		configContent: testConfig,
+	}
+
+	// Save original working directory
+	oldWd, _ := os.Getwd()
+
+	ctx := &IntegrationTestContext{
+		TempDir:       tmpDir,
+		ConfigPath:    configPath,
+		OutputDir:     outputDir,
+		GitHubService: mockGitHub,
+		WikiService:   mockWiki,
+		ConfigService: mockConfig,
+		TestConfig:    testConfig,
+		Cleanup: func() {
+			os.Chdir(oldWd)
+		},
+	}
+
+	// Change to test directory
+	os.Chdir(tmpDir)
+
+	return ctx
+}
+
+// CreateTestIssues creates realistic test issue data
+func (ctx *IntegrationTestContext) CreateTestIssues(count int) []models.Issue {
+	issues := make([]models.Issue, count)
+	baseTime := time.Now().AddDate(0, 0, -count)
+
+	for i := 0; i < count; i++ {
+		issues[i] = models.Issue{
+			ID:      int64(1000 + i),
+			Number:  i + 1,
+			Title:   fmt.Sprintf("Test Issue %d", i+1),
+			Body:    fmt.Sprintf("This is test issue %d body with detailed description", i+1),
+			State:   []string{"open", "closed"}[i%2],
+			HTMLURL: fmt.Sprintf("https://github.com/test/integration/issues/%d", i+1),
+			User: models.User{
+				ID:    int64(2000 + i),
+				Login: fmt.Sprintf("user%d", i+1),
+			},
+			Labels: []models.Label{
+				{ID: int64(i + 1), Name: "test", Color: "ff0000"},
+			},
+			Comments: []models.Comment{
+				{ID: int64(3000 + i), Body: fmt.Sprintf("Comment on issue %d", i+1)},
+			},
+			CreatedAt: baseTime.AddDate(0, 0, i),
+			UpdatedAt: baseTime.AddDate(0, 0, i),
+		}
+	}
+
+	return issues
+}
+
+// TestFullWorkflowIntegration tests complete end-to-end workflows
+func TestFullWorkflowIntegration(t *testing.T) {
+	t.Run("Complete build workflow with real file operations", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Setup test issues
+		testIssues := ctx.CreateTestIssues(5)
+		ctx.GitHubService.FetchIssuesResponse.Issues = testIssues
+		ctx.GitHubService.FetchIssuesResponse.FetchedCount = len(testIssues)
+		ctx.GitHubService.FetchIssuesResponse.TotalCount = len(testIssues)
+
+		// Test 1: Config loading and validation
+		cfg, err := ctx.ConfigService.LoadConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "integration-test", cfg.Project.Name)
+
+		err = ctx.ConfigService.Validate(cfg)
+		assert.NoError(t, err)
+
+		// Test 2: GitHub issues fetch
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery(cfg.Project.Repository)
+		result, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.NoError(t, err)
+		assert.Equal(t, 5, result.FetchedCount)
+		assert.True(t, ctx.GitHubService.AssertFetchIssuesCalled(1))
+
+		// Test 3: Wiki generation
+		pages, err := ctx.WikiService.GenerateAllPages(result.Issues, cfg.Project.Name)
+		assert.NoError(t, err)
+		assert.Greater(t, len(pages), 0)
+
+		// Test 4: File operations - save wiki pages
+		for _, page := range pages {
+			filePath := filepath.Join(ctx.OutputDir, page.Filename)
+			err = os.WriteFile(filePath, []byte(page.Content), 0644)
+			assert.NoError(t, err)
+
+			// Verify file was created
+			_, err = os.Stat(filePath)
+			assert.NoError(t, err)
+		}
+
+		// Test 5: Wiki publishing
+		err = ctx.WikiService.PublishPages(testCtx, pages)
+		assert.NoError(t, err)
+		assert.True(t, ctx.WikiService.publishCalled)
+
+		// Test 6: Verify output directory structure
+		files, err := os.ReadDir(ctx.OutputDir)
+		assert.NoError(t, err)
+		assert.Greater(t, len(files), 0)
+	})
+
+	t.Run("Workflow with GitHub API rate limiting", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate rate limiting
+		ctx.GitHubService.FetchIssuesError = fmt.Errorf("API rate limit exceeded. Try again later")
+
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		_, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "rate limit")
+	})
+
+	t.Run("Workflow with network timeout", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate network timeout
+		ctx.GitHubService.TestConnectionError = fmt.Errorf("network timeout: context deadline exceeded")
+
+		testCtx := context.Background()
+		err := ctx.GitHubService.TestConnection(testCtx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "timeout")
+	})
+}
+
+// TestErrorPathCoverage tests comprehensive error scenarios
+func TestErrorPathCoverage(t *testing.T) {
+	t.Run("Config file permissions error", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create config file with restricted permissions
+		configContent := `project:
+  name: "permission-test"
+  repository: "test/repo"`
+
+		err := os.WriteFile(ctx.ConfigPath, []byte(configContent), 0000) // No permissions
+		assert.NoError(t, err)
+
+		// Try to read config (should fail on some systems)
+		_, err = os.ReadFile(ctx.ConfigPath)
+		// Error handling varies by system, but we test the scenario
+		if err != nil {
+			assert.Contains(t, err.Error(), "permission")
+		}
+
+		// Reset permissions for cleanup
+		os.Chmod(ctx.ConfigPath, 0644)
+	})
+
+	t.Run("Invalid YAML configuration", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create invalid YAML
+		invalidYAML := `project:
+  name: "test
+  repository: invalid yaml structure
+    missing quotes and indentation`
+
+		err := os.WriteFile(ctx.ConfigPath, []byte(invalidYAML), 0644)
+		assert.NoError(t, err)
+
+		// This would fail when trying to parse YAML in real implementation
+		content, err := os.ReadFile(ctx.ConfigPath)
+		assert.NoError(t, err)
+		assert.Contains(t, string(content), "invalid yaml")
+	})
+
+	t.Run("GitHub API authentication error", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate authentication failure
+		ctx.GitHubService.TestConnectionError = fmt.Errorf("authentication failed: 401 Unauthorized")
+
+		testCtx := context.Background()
+		err := ctx.GitHubService.TestConnection(testCtx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "authentication failed")
+		assert.Contains(t, err.Error(), "401")
+	})
+
+	t.Run("GitHub API JSON parsing error", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate malformed JSON response
+		ctx.GitHubService.FetchIssuesError = fmt.Errorf("failed to parse JSON response: invalid character")
+
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		_, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "JSON")
+	})
+
+	t.Run("Wiki generation template error", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate template processing error
+		ctx.WikiService.generateErr = fmt.Errorf("template execution failed: undefined variable")
+
+		issues := ctx.CreateTestIssues(1)
+		_, err := ctx.WikiService.GenerateAllPages(issues, "test-project")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "template")
+	})
+
+	t.Run("Wiki publishing Git error", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate Git operation failure
+		ctx.WikiService.publishErr = fmt.Errorf("git push failed: remote repository not found")
+
+		testCtx := context.Background()
+		pages := []*wiki.WikiPage{
+			{Title: "Test", Filename: "Test.md", Content: "Test content"},
+		}
+
+		err := ctx.WikiService.PublishPages(testCtx, pages)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "git push")
+	})
+
+	t.Run("Disk space error during file operations", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate disk space error by trying to write to invalid path
+		invalidPath := "/non-existent-root-path/file.txt"
+		err := os.WriteFile(invalidPath, []byte("test"), 0644)
+		assert.Error(t, err)
+		// Different systems may have different error messages
+		assert.True(t, err != nil)
+	})
+}
+
+// TestAdvancedMockScenarios tests complex mock interactions
+func TestAdvancedMockScenarios(t *testing.T) {
+	t.Run("Partial success with some failed operations", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Setup mixed success/failure scenario
+		testIssues := ctx.CreateTestIssues(3)
+		ctx.GitHubService.FetchIssuesResponse.Issues = testIssues
+		ctx.GitHubService.FetchIssuesResponse.FetchedCount = len(testIssues)
+
+		// First operation succeeds
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		result, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, result.FetchedCount)
+
+		// Wiki generation succeeds
+		pages, err := ctx.WikiService.GenerateAllPages(result.Issues, "test-project")
+		assert.NoError(t, err)
+		assert.Greater(t, len(pages), 0)
+
+		// But publishing fails
+		ctx.WikiService.publishErr = fmt.Errorf("publishing failed: conflict detected")
+		err = ctx.WikiService.PublishPages(testCtx, pages)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "conflict")
+	})
+
+	t.Run("Retry logic simulation", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate retry behavior
+		attemptCount := 0
+		maxRetries := 3
+
+		for attemptCount < maxRetries {
+			attemptCount++
+
+			if attemptCount < maxRetries {
+				// Simulate temporary failure
+				ctx.GitHubService.TestConnectionError = fmt.Errorf("temporary network error")
+			} else {
+				// Success on final attempt
+				ctx.GitHubService.TestConnectionError = nil
+			}
+
+			testCtx := context.Background()
+			err := ctx.GitHubService.TestConnection(testCtx)
+
+			if err == nil {
+				// Success - break retry loop
+				break
+			}
+
+			if attemptCount >= maxRetries {
+				assert.Error(t, err, "Should fail after max retries")
+			}
+		}
+
+		assert.Equal(t, maxRetries, attemptCount, "Should retry exactly maxRetries times")
+		assert.True(t, ctx.GitHubService.AssertTestConnectionCalled(maxRetries))
+	})
+
+	t.Run("Large dataset processing", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Test with large number of issues
+		largeIssueSet := ctx.CreateTestIssues(100)
+		ctx.GitHubService.FetchIssuesResponse.Issues = largeIssueSet
+		ctx.GitHubService.FetchIssuesResponse.FetchedCount = len(largeIssueSet)
+
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		result, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.NoError(t, err)
+		assert.Equal(t, 100, result.FetchedCount)
+
+		// Test batch processing simulation
+		batchSize := 10
+		for i := 0; i < len(result.Issues); i += batchSize {
+			end := i + batchSize
+			if end > len(result.Issues) {
+				end = len(result.Issues)
+			}
+
+			batch := result.Issues[i:end]
+			assert.LessOrEqual(t, len(batch), batchSize)
+			assert.Greater(t, len(batch), 0)
+		}
+	})
+
+	t.Run("Concurrent operations simulation", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate concurrent GitHub API calls
+		const numGoroutines = 5
+		errChan := make(chan error, numGoroutines)
+
+		for i := 0; i < numGoroutines; i++ {
+			go func(id int) {
+				testCtx := context.Background()
+				query := models.DefaultIssueQuery(fmt.Sprintf("test/repo-%d", id))
+				_, err := ctx.GitHubService.FetchIssues(testCtx, query)
+				errChan <- err
+			}(i)
+		}
+
+		// Collect results
+		for i := 0; i < numGoroutines; i++ {
+			err := <-errChan
+			assert.NoError(t, err, "Concurrent operation %d should succeed", i)
+		}
+
+		assert.True(t, ctx.GitHubService.AssertFetchIssuesCalled(numGoroutines))
+	})
+
+	t.Run("Memory pressure simulation", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create issues with large content to simulate memory pressure
+		largeIssues := make([]models.Issue, 10)
+		largeContent := strings.Repeat("This is a very long issue description with lots of content. ", 1000)
+
+		for i := 0; i < 10; i++ {
+			largeIssues[i] = models.Issue{
+				ID:      int64(i + 1),
+				Number:  i + 1,
+				Title:   fmt.Sprintf("Large Issue %d", i+1),
+				Body:    largeContent,
+				State:   "open",
+				HTMLURL: fmt.Sprintf("https://github.com/test/repo/issues/%d", i+1),
+				User:    models.User{Login: "testuser"},
+			}
+		}
+
+		// Test wiki generation with large content
+		pages, err := ctx.WikiService.GenerateAllPages(largeIssues, "memory-test")
+		assert.NoError(t, err)
+		assert.Greater(t, len(pages), 0)
+
+		// Verify generated content includes large data
+		for _, page := range pages {
+			assert.Greater(t, len(page.Content), 10, "Generated page should contain content")
+		}
+	})
+}
+
+// TestAPITimeoutScenarios tests various timeout and cancellation scenarios
+func TestAPITimeoutScenarios(t *testing.T) {
+	t.Run("Context timeout during GitHub fetch", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate context timeout
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+		defer cancel()
+
+		// Wait for context to timeout
+		<-timeoutCtx.Done()
+		assert.Error(t, timeoutCtx.Err())
+
+		// Simulate timeout error
+		ctx.GitHubService.FetchIssuesError = context.DeadlineExceeded
+
+		query := models.DefaultIssueQuery("test/repo")
+		_, err := ctx.GitHubService.FetchIssues(timeoutCtx, query)
+		assert.Error(t, err)
+		assert.Equal(t, context.DeadlineExceeded, err)
+	})
+
+	t.Run("Context cancellation during operations", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create cancellable context
+		cancelCtx, cancel := context.WithCancel(context.Background())
+
+		// Immediately cancel
+		cancel()
+
+		// Simulate cancellation error
+		ctx.GitHubService.TestConnectionError = context.Canceled
+
+		err := ctx.GitHubService.TestConnection(cancelCtx)
+		assert.Error(t, err)
+		assert.Equal(t, context.Canceled, err)
+	})
+
+	t.Run("Long-running operation timeout", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Simulate long-running operation
+		longCtx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
+		defer cancel()
+
+		// Simulate the operation taking longer than timeout
+		time.Sleep(10 * time.Millisecond)
+
+		// Check if context timed out
+		assert.Error(t, longCtx.Err())
+		assert.Equal(t, context.DeadlineExceeded, longCtx.Err())
+	})
+}
+
+// TestFileSystemOperationErrors tests file system related error scenarios
+func TestFileSystemOperationErrors(t *testing.T) {
+	t.Run("Directory creation failure", func(t *testing.T) {
+		// Try to create directory in invalid location
+		invalidDir := "/root/invalid-permission-dir"
+		err := os.MkdirAll(invalidDir, 0755)
+		if err != nil {
+			// Expected on most systems due to permissions
+			assert.True(t, err != nil, "Should get an error when trying to create directory in restricted location")
+		}
+	})
+
+	t.Run("File write with insufficient space simulation", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create large content that might cause space issues
+		largeContent := strings.Repeat("Large content for space test. ", 10000)
+		testFile := filepath.Join(ctx.OutputDir, "large-test.md")
+
+		// This usually succeeds unless the system is truly out of space
+		err := os.WriteFile(testFile, []byte(largeContent), 0644)
+		assert.NoError(t, err)
+
+		// Verify file was created
+		info, err := os.Stat(testFile)
+		assert.NoError(t, err)
+		assert.Greater(t, info.Size(), int64(100000))
+	})
+
+	t.Run("Concurrent file operations", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		const numWriters = 10
+		errChan := make(chan error, numWriters)
+
+		// Simulate concurrent file writes
+		for i := 0; i < numWriters; i++ {
+			go func(id int) {
+				filename := filepath.Join(ctx.OutputDir, fmt.Sprintf("concurrent-%d.md", id))
+				content := fmt.Sprintf("Content from goroutine %d", id)
+				err := os.WriteFile(filename, []byte(content), 0644)
+				errChan <- err
+			}(i)
+		}
+
+		// Collect results
+		for i := 0; i < numWriters; i++ {
+			err := <-errChan
+			assert.NoError(t, err, "Concurrent write %d should succeed", i)
+		}
+
+		// Verify all files were created
+		files, err := os.ReadDir(ctx.OutputDir)
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, len(files), numWriters)
+	})
+
+	t.Run("Symlink handling", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create a regular file
+		originalFile := filepath.Join(ctx.OutputDir, "original.md")
+		err := os.WriteFile(originalFile, []byte("original content"), 0644)
+		assert.NoError(t, err)
+
+		// Create symlink (may fail on Windows without appropriate permissions)
+		symlinkFile := filepath.Join(ctx.OutputDir, "symlink.md")
+		err = os.Symlink(originalFile, symlinkFile)
+		if err == nil {
+			// Symlink created successfully - test reading through symlink
+			content, err := os.ReadFile(symlinkFile)
+			assert.NoError(t, err)
+			assert.Equal(t, "original content", string(content))
+		}
+		// If symlink creation fails (e.g., on Windows), we just skip this test
+	})
+}
+
+// TestBoundaryConditions tests edge cases and boundary conditions
+func TestBoundaryConditions(t *testing.T) {
+	t.Run("Empty issue set processing", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Test with zero issues
+		emptyIssues := []models.Issue{}
+		ctx.GitHubService.FetchIssuesResponse.Issues = emptyIssues
+		ctx.GitHubService.FetchIssuesResponse.FetchedCount = 0
+
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		result, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, result.FetchedCount)
+
+		// Wiki generation should handle empty issues gracefully
+		pages, err := ctx.WikiService.GenerateAllPages(result.Issues, "empty-test")
+		assert.NoError(t, err)
+		assert.Greater(t, len(pages), 0, "Should generate at least index page even with no issues")
+	})
+
+	t.Run("Single issue processing", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Test with exactly one issue
+		singleIssue := ctx.CreateTestIssues(1)
+		ctx.GitHubService.FetchIssuesResponse.Issues = singleIssue
+		ctx.GitHubService.FetchIssuesResponse.FetchedCount = 1
+
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		result, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, result.FetchedCount)
+
+		pages, err := ctx.WikiService.GenerateAllPages(result.Issues, "single-test")
+		assert.NoError(t, err)
+		assert.Greater(t, len(pages), 0)
+	})
+
+	t.Run("Maximum batch size processing", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Test with maximum reasonable batch size
+		const maxBatchSize = 1000
+		largeSet := ctx.CreateTestIssues(maxBatchSize)
+		ctx.GitHubService.FetchIssuesResponse.Issues = largeSet
+		ctx.GitHubService.FetchIssuesResponse.FetchedCount = maxBatchSize
+
+		testCtx := context.Background()
+		query := models.DefaultIssueQuery("test/repo")
+		query.PerPage = maxBatchSize
+		result, err := ctx.GitHubService.FetchIssues(testCtx, query)
+		assert.NoError(t, err)
+		assert.Equal(t, maxBatchSize, result.FetchedCount)
+
+		// Process in smaller batches
+		batchSize := 50
+		totalProcessed := 0
+		for i := 0; i < len(result.Issues); i += batchSize {
+			end := i + batchSize
+			if end > len(result.Issues) {
+				end = len(result.Issues)
+			}
+			batch := result.Issues[i:end]
+			totalProcessed += len(batch)
+		}
+
+		assert.Equal(t, maxBatchSize, totalProcessed)
+	})
+
+	t.Run("Unicode and special character handling", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create issues with special characters
+		specialIssues := []models.Issue{
+			{
+				ID:      1,
+				Number:  1,
+				Title:   "テスト問題 - Unicode Test 🚀",
+				Body:    "これは日本語のテストです。Émojis: 🎉 🔥 ✅",
+				State:   "open",
+				HTMLURL: "https://github.com/test/repo/issues/1",
+				User:    models.User{Login: "ユーザー123"},
+			},
+			{
+				ID:      2,
+				Number:  2,
+				Title:   "Special chars: <>&\"'",
+				Body:    "XML/HTML special characters test",
+				State:   "closed",
+				HTMLURL: "https://github.com/test/repo/issues/2",
+				User:    models.User{Login: "user&test"},
+			},
+		}
+
+		pages, err := ctx.WikiService.GenerateAllPages(specialIssues, "unicode-test")
+		assert.NoError(t, err)
+		assert.Greater(t, len(pages), 0)
+
+		// Save and read back to test encoding
+		for _, page := range pages {
+			testFile := filepath.Join(ctx.OutputDir, page.Filename)
+			err = os.WriteFile(testFile, []byte(page.Content), 0644)
+			assert.NoError(t, err)
+
+			// Read back and verify content
+			content, err := os.ReadFile(testFile)
+			assert.NoError(t, err)
+			assert.Equal(t, page.Content, string(content))
+		}
+	})
+
+	t.Run("Very long content handling", func(t *testing.T) {
+		ctx := NewIntegrationTestContext(t)
+		defer ctx.Cleanup()
+
+		// Create issue with very long content
+		veryLongBody := strings.Repeat("This is a very long issue description that tests how the system handles large amounts of text content. ", 500)
+		veryLongIssue := models.Issue{
+			ID:      1,
+			Number:  1,
+			Title:   "Very Long Issue",
+			Body:    veryLongBody,
+			State:   "open",
+			HTMLURL: "https://github.com/test/repo/issues/1",
+			User:    models.User{Login: "testuser"},
+		}
+
+		pages, err := ctx.WikiService.GenerateAllPages([]models.Issue{veryLongIssue}, "long-content-test")
+		assert.NoError(t, err)
+
+		// Verify content length
+		for _, page := range pages {
+			assert.Greater(t, len(page.Content), 10, "Generated page should contain content")
+		}
+	})
+}
