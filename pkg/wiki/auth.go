@@ -118,11 +118,11 @@ func (a *GitAuthenticator) Cleanup(workDir string) error {
 	ctx := context.Background()
 
 	// Remove credential helper configuration
-	_ = gitClient.UnsetConfig(ctx, workDir, "credential.helper")
+	_ = gitClient.UnsetConfig(ctx, workDir, "credential.helper") //nolint:errcheck // Cleanup is best-effort
 
 	// Remove URL-specific credential configuration
-	credentialURL := "https://github.com" // #nosec G101 -- URL constant, not credentials
-	_ = gitClient.UnsetConfig(ctx, workDir, fmt.Sprintf("credential.%s.username", credentialURL))
+	credentialURL := "https://github.com"                                                         // #nosec G101 -- URL constant, not credentials
+	_ = gitClient.UnsetConfig(ctx, workDir, fmt.Sprintf("credential.%s.username", credentialURL)) //nolint:errcheck // Cleanup is best-effort
 
 	// Remove any credential files that might have been created
 	credentialFile := filepath.Join(workDir, ".git-credentials")

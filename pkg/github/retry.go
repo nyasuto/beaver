@@ -207,7 +207,7 @@ func (s *Service) handleRateLimitError(ctx context.Context, resp *github.Respons
 	case <-time.After(waitTime):
 		return nil
 	case <-ctx.Done():
-		return errors.NewRateLimitError(resetTime).WithDetail("context_cancelled", true)
+		return errors.NewRateLimitError(resetTime).WithDetail("context_canceled", true)
 	}
 }
 

@@ -130,7 +130,7 @@ func (s *Service) FetchIssues(ctx context.Context, query models.IssueQuery) (*mo
 	}
 
 	// Get final rate limit info
-	finalRateLimit, _ := s.checkRateLimit(ctx)
+	finalRateLimit, _ := s.checkRateLimit(ctx) //nolint:errcheck // Rate limit info is non-critical
 
 	result := &models.IssueResult{
 		Issues:       allIssues,

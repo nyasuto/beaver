@@ -85,9 +85,9 @@ var buildCmd = &cobra.Command{
 
 		// Validate configuration
 		log.Printf("INFO Validating configuration")
-		if err := cfg.Validate(); err != nil {
-			log.Printf("ERROR Configuration validation failed: %v", err)
-			fmt.Printf("❌ 設定エラー: %v\n", err)
+		if validationErr := cfg.Validate(); validationErr != nil {
+			log.Printf("ERROR Configuration validation failed: %v", validationErr)
+			fmt.Printf("❌ 設定エラー: %v\n", validationErr)
 			fmt.Println("💡 beaver.yml と環境変数を確認してください")
 			os.Exit(1)
 		}
