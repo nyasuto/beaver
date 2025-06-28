@@ -293,10 +293,9 @@ func TestHandleRateLimitError(t *testing.T) {
 	}
 
 	t.Run("with reset header", func(t *testing.T) {
-		// Set reset time to 2 seconds in the future to ensure it's properly in the future
-		// even after Unix() truncation
+		// Set reset time to 100ms in the future for faster testing
 		now := time.Now()
-		resetTime := now.Add(2 * time.Second)
+		resetTime := now.Add(100 * time.Millisecond)
 		resetUnix := resetTime.Unix()
 
 		resp := &github.Response{
@@ -307,18 +306,18 @@ func TestHandleRateLimitError(t *testing.T) {
 			},
 		}
 
-		// Use shorter timeout to avoid test hanging
-		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		// Use even shorter timeout to avoid test hanging
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
 
 		start := time.Now()
 		err := service.handleRateLimitError(ctx, resp)
 		duration := time.Since(start)
 
-		// The context should timeout before the 2-second wait completes
+		// The context should timeout before the 100ms wait completes
 		assert.Error(t, err, "Should timeout waiting for rate limit reset")
-		assert.True(t, duration >= 250*time.Millisecond, "Should wait until context timeout")
-		assert.True(t, duration <= 350*time.Millisecond, "Should not wait longer than context timeout")
+		assert.True(t, duration >= 40*time.Millisecond, "Should wait until context timeout")
+		assert.True(t, duration <= 70*time.Millisecond, "Should not wait longer than context timeout")
 	})
 
 	t.Run("context cancellation", func(t *testing.T) {
@@ -332,7 +331,7 @@ func TestHandleRateLimitError(t *testing.T) {
 			},
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 		defer cancel()
 
 		err := service.handleRateLimitError(ctx, resp)
@@ -350,7 +349,7 @@ func TestHandleRateLimitError(t *testing.T) {
 			},
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
 		defer cancel()
 
 		start := time.Now()
@@ -363,8 +362,8 @@ func TestHandleRateLimitError(t *testing.T) {
 		require.True(t, ok, "Expected BeaverError")
 		assert.Equal(t, errors.ErrCodeRateLimit, beaverErr.Code)
 		assert.True(t, beaverErr.Details["context_canceled"].(bool))
-		assert.True(t, duration >= 190*time.Millisecond) // Should wait close to timeout
-		assert.True(t, duration < 250*time.Millisecond)  // Should not exceed timeout significantly
+		assert.True(t, duration >= 25*time.Millisecond) // Should wait close to timeout
+		assert.True(t, duration < 50*time.Millisecond)  // Should not exceed timeout significantly
 	})
 }
 
@@ -536,6 +535,16 @@ func TestExecuteWithRetry(t *testing.T) {
 		}
 		mock := NewMockOperation(3)
 
+		// Use fast retry config for testing to avoid long delays
+		fastConfig := &RetryConfig{
+			MaxRetries:   5,
+			BaseDelay:    5 * time.Millisecond,  // Reduced from 1 second
+			MaxDelay:     50 * time.Millisecond, // Reduced from 30 seconds
+			Multiplier:   2.0,
+			JitterFactor: 0, // Remove jitter for predictable timing
+		}
+		service.retryConfig = fastConfig
+
 		// Fail first two attempts, succeed on third
 		mock.SetErrorOnAttempt(1, fmt.Errorf("server error"), &github.Response{
 			Response: &http.Response{StatusCode: http.StatusInternalServerError},
@@ -545,11 +554,14 @@ func TestExecuteWithRetry(t *testing.T) {
 		})
 
 		ctx := context.Background()
+		start := time.Now()
 		resp, err := service.ExecuteWithRetry(ctx, mock.Execute)
+		duration := time.Since(start)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, 3, mock.attempts)
+		assert.True(t, duration < 50*time.Millisecond, "Test should complete quickly")
 	})
 
 	t.Run("non-retryable error fails immediately", func(t *testing.T) {
@@ -577,19 +589,32 @@ func TestExecuteWithRetry(t *testing.T) {
 		}
 		mock := NewMockOperation(10)
 
+		// Use fast retry config for testing to avoid 13+ second delays
+		fastConfig := &RetryConfig{
+			MaxRetries:   3,                      // Reduced from 5 to minimize test time
+			BaseDelay:    10 * time.Millisecond,  // Reduced from 1 second
+			MaxDelay:     100 * time.Millisecond, // Reduced from 30 seconds
+			Multiplier:   2.0,
+			JitterFactor: 0, // Remove jitter for predictable timing
+		}
+		service.retryConfig = fastConfig
+
 		// Always fail with retryable error
-		for i := 1; i <= 6; i++ { // DefaultRetryConfig has MaxRetries = 5
+		for i := 1; i <= 4; i++ { // fastConfig has MaxRetries = 3
 			mock.SetErrorOnAttempt(i, fmt.Errorf("server error"), &github.Response{
 				Response: &http.Response{StatusCode: http.StatusInternalServerError},
 			})
 		}
 
 		ctx := context.Background()
+		start := time.Now()
 		resp, err := service.ExecuteWithRetry(ctx, mock.Execute)
+		duration := time.Since(start)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed after")
-		assert.Equal(t, 5, mock.attempts) // Should stop at MaxRetries
-		_ = resp                          // Avoid unused variable warning
+		assert.Equal(t, 3, mock.attempts)                                               // Should stop at MaxRetries
+		assert.True(t, duration < 100*time.Millisecond, "Test should complete quickly") // Should complete much faster
+		_ = resp                                                                        // Avoid unused variable warning
 	})
 }
