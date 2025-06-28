@@ -23,10 +23,10 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
         cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
 
-    - name: 📦 Download dependencies
-      run: go mod download
-        
     - name: 📝 Format check
       run: |
         unformatted=$(gofmt -l .)
@@ -42,12 +42,12 @@ jobs:
         args: --timeout=5m --verbose
         
     - name: 🛡️ Vulnerability check
-      run: |
-        go install golang.org/x/vuln/cmd/govulncheck@latest
-        govulncheck ./...
+      uses: golang/govulncheck-action@v1
         
     - name: 🧪 Unit tests
       run: go test -v -race -coverprofile=coverage.out ./...
+      env:
+        GOPROXY: https://proxy.golang.org,direct
       
     - name: 📊 Upload coverage
       id: coverage
@@ -69,12 +69,14 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
         cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
 
-    - name: 📦 Download dependencies
-      run: go mod download
-      
     - name: 🔨 Build
       run: make build
+      env:
+        GOPROXY: https://proxy.golang.org,direct
       
     - name: 🧪 Binary test
       run: ./bin/beaver --help
@@ -107,12 +109,14 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
         cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
         
-    - name: 📦 Download dependencies
-      run: go mod download
-      
     - name: 🔨 Build
       run: make build
+      env:
+        GOPROXY: https://proxy.golang.org,direct
       
     - name: 🧪 Setup integration environment
       run: |
@@ -159,10 +163,10 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
         cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
         
-    - name: 📦 Download dependencies
-      run: go mod download
-      
     - name: 🚀 Run performance tests
       env:
         BEAVER_INTEGRATION_TESTS: true
