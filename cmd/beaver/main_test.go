@@ -3610,3 +3610,259 @@ func TestMainLogic(t *testing.T) {
 		assert.Contains(t, captured, "Available Commands:")
 	})
 }
+
+func TestRunBuildCommand(t *testing.T) {
+	t.Run("missing configuration file", func(t *testing.T) {
+		// Create temporary directory without config
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create mock command
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		err := runBuildCommand(cmd, args)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "設定が無効です")
+	})
+
+	t.Run("invalid repository configuration", func(t *testing.T) {
+		// Create temporary directory with invalid config
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create invalid config file
+		configContent := `project:
+  name: "Test Project"
+  repository: "invalid-format"
+sources:
+  github:
+    token: "test-token"
+output:
+  wiki:
+    platform: "github"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		err = runBuildCommand(cmd, args)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
+	})
+
+	t.Run("missing GitHub token", func(t *testing.T) {
+		// Create temporary directory with config missing token
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create config without token
+		configContent := `project:
+  name: "Test Project"
+  repository: "owner/repo"
+sources:
+  github:
+    token: ""
+output:
+  wiki:
+    platform: "github"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		err = runBuildCommand(cmd, args)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "GitHub token が設定されていません")
+	})
+}
+
+func TestRunInitCommand(t *testing.T) {
+	t.Run("create new config file successfully", func(t *testing.T) {
+		// Create temporary directory
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		runInitCommand(cmd, args)
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify config file was created
+		_, err := os.Stat("beaver.yml")
+		assert.NoError(t, err, "beaver.yml should be created")
+
+		// Verify success message
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "Beaverプロジェクトの初期化完了")
+	})
+
+	t.Run("config file already exists", func(t *testing.T) {
+		// Create temporary directory with existing config
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create existing config file
+		err := os.WriteFile("beaver.yml", []byte("existing config"), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		runInitCommand(cmd, args)
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify warning message
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "設定ファイル beaver.yml は既に存在します")
+	})
+}
+
+func TestRunStatusCommand(t *testing.T) {
+	t.Run("configuration file not found", func(t *testing.T) {
+		// Create temporary directory without config
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		runStatusCommand(cmd, args)
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify no config message
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "設定ファイルなし")
+		assert.Contains(t, outputStr, "beaver init で初期化してください")
+	})
+
+	t.Run("valid configuration loaded", func(t *testing.T) {
+		// Create temporary directory with valid config
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create valid config file
+		configContent := `project:
+  name: "Test Project"
+  repository: "owner/repo"
+sources:
+  github:
+    token: "test-token"
+output:
+  wiki:
+    platform: "github"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		runStatusCommand(cmd, args)
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify status information
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "Test Project")
+		assert.Contains(t, outputStr, "owner/repo")
+		assert.Contains(t, outputStr, "openai")
+		assert.Contains(t, outputStr, "GITHUB_TOKEN 設定済み")
+	})
+
+	t.Run("missing GitHub token", func(t *testing.T) {
+		// Create temporary directory with config missing token
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create config without token
+		configContent := `project:
+  name: "Test Project"
+  repository: "owner/repo"
+sources:
+  github:
+    token: ""
+output:
+  wiki:
+    platform: "github"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		args := []string{}
+
+		runStatusCommand(cmd, args)
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify warning for missing token
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "GITHUB_TOKEN が設定されていません")
+	})
+}
