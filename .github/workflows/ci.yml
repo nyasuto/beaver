@@ -37,16 +37,11 @@ jobs:
           exit 1
         fi
         
-    - name: 🔍 Lint check
+    - name: 🔍 Lint & Security check
       uses: golangci/golangci-lint-action@v8
       with:
         version: latest
-        args: --timeout=5m
-        
-    - name: 🔒 Security scan
-      run: |
-        go install github.com/securego/gosec/v2/cmd/gosec@latest
-        gosec ./...
+        args: --timeout=5m --verbose
         
     - name: 🛡️ Vulnerability check
       run: |

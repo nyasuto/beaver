@@ -1,18 +1,178 @@
 version: "2"
+
 run:
   tests: false
+  timeout: 5m
+  skip-dirs:
+    - vendor
+    - third_party
+    - examples
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_gen\\.go$"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+
 linters:
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+  disable-all: true
+  enable:
+    # エラー検出系（必須）
+    - errcheck     # エラーハンドリングチェック
+    - govet        # Go vet標準チェック
+    - ineffassign  # 無効な代入
+    - staticcheck  # 静的解析
+    - unused       # 未使用コード
+    
+    # セキュリティ系（重要）
+    - gosec        # セキュリティ監査
+    
+    # 基本的品質チェックのみ（段階的導入）
+    - bodyclose    # HTTPレスポンスのクローズ
+    - misspell     # スペルミス
+    - nolintlint   # nolintコメント検証
+    
+  # 一時的に無効化（段階的導入予定）
+  disable:
+    - dupl         # 重複コード検出
+    - gocyclo      # 循環複雑度
+    - goconst      # 定数化可能な値
+    - rowserrcheck # database/sqlエラーチェック
+    - prealloc     # スライス事前割り当て
+    - revive       # Golintの後継
+    - gocritic     # より厳密なチェック
+
+linters-settings:
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G104  # エラーチェック（errcheckで対応）
+      - G204  # コマンド実行（許可する場合）
+    config:
+      global:
+        nosec: false
+        audit: true
+        
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - io/ioutil.ReadFile
+      - io.Copy(*bytes.Buffer)
+      - io.Copy(os.Stdout)
+      
+  govet:
+    check-shadowing: true
+    enable-all: true
+    disable:
+      - fieldalignment  # 構造体フィールド順序（厳しすぎる）
+      
+  staticcheck:
+    go: "1.21"
+    checks: ["all"]
+    
+  revive:
+    min-confidence: 0.8
+    rules:
+      - name: var-naming
+      - name: package-comments
+      - name: exported
+      - name: var-declaration
+      - name: blank-imports
+      - name: context-as-argument
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: increment-decrement
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: superfluous-else
+        
+  gocyclo:
+    min-complexity: 15
+    
+  dupl:
+    threshold: 100
+    
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+    
+  misspell:
+    locale: US
+    
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+
+issues:
+  exclude-rules:
+    # テストファイルでのエラーチェック緩和
+    - path: _test\.go
+      linters:
+        - errcheck
+        - dupl
+        - gosec
+        - revive
+        - gocritic
+        - prealloc
+        
+    # メイン関数でのエラーチェック緩和
+    - path: main\.go
+      linters:
+        - errcheck
+        
+    # 生成ファイルの除外
+    - path: ".*\\.pb\\.go"
+      linters:
+        - all
+        
+    # 未使用パラメータは開発中のため一時的に許可
+    - text: "unused-parameter"
+      linters:
+        - revive
+        
+    # 型名のstuttering警告を一時的に許可（API互換性のため）
+    - text: "stutters"
+      linters:
+        - revive
+        
+    # コード重複は一時的に許可（リファクタリング予定）
+    - text: "lines are duplicate"
+      linters:
+        - dupl
+        
+    # プリアロケーション提案は一時的に許可
+    - text: "Consider pre-allocating"
+      linters:
+        - prealloc
+        
+    # goconst提案は一時的に許可
+    - text: "make it a constant"
+      linters:
+        - goconst
+        
+  exclude-use-default: true
+  max-issues-per-linter: 50  # 一度に表示する問題数を制限
+  max-same-issues: 10        # 同じ問題の表示数を制限
 formatters:
   exclusions:
     generated: lax

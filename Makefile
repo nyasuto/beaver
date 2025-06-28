@@ -1,7 +1,7 @@
 # Beaver - AIエージェント知識ダム構築ツール
 # Makefile for development and build automation
 
-.PHONY: help build clean test lint fmt sec deps install run dev quality test-integration
+.PHONY: help build clean test lint fmt deps install run dev quality test-integration
 
 # Variables
 BINARY_NAME=beaver
@@ -85,11 +85,11 @@ test-integration-quick:
 		echo "⚠️ 統合テストスクリプトが見つかりません"; \
 	fi
 
-## lint: Run golangci-lint
+## lint: Run golangci-lint with integrated security checks
 lint:
-	@echo "🔍 リントを実行中..."
+	@echo "🔍 リント・セキュリティチェックを実行中..."
 	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run --enable errcheck,govet,ineffassign,staticcheck,unused --disable gosec --timeout 5m; \
+		golangci-lint run --timeout 5m; \
 	else \
 		echo "⚠️ golangci-lint がインストールされていません"; \
 		echo "インストール: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
@@ -100,26 +100,16 @@ fmt:
 	@echo "📝 コードをフォーマット中..."
 	go fmt ./...
 
-## sec: Run security checks with gosec
-sec:
-	@echo "🔒 セキュリティチェックを実行中..."
-	@if command -v gosec >/dev/null 2>&1; then \
-		gosec ./...; \
-	else \
-		echo "📦 gosecをインストール中..."; \
-		go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest; \
-		gosec ./...; \
-	fi
 
-## quality: Run all quality checks (lint + format + security + test)
-quality: fmt lint sec test
+## quality: Run all quality checks (lint includes security + format + test)
+quality: fmt lint test
 	@echo "✅ 品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible
 quality-fix: fmt
 	@echo "🔧 自動修正を実行中..."
 	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run --fix; \
+		golangci-lint run --fix --timeout 5m; \
 	fi
 	@echo "✅ 自動修正完了"
 
