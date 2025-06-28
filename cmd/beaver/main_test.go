@@ -3329,6 +3329,598 @@ func TestSummarizeCommands(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
 	})
+
+	t.Run("runSummarizeAll config load error", func(t *testing.T) {
+		// Save original and replace with error-returning mock
+		originalConfigLoader := summarizeConfigLoader
+		summarizeConfigLoader = mockSummarizeConfigLoaderError
+		defer func() { summarizeConfigLoader = originalConfigLoader }()
+
+		err := runSummarizeAll(nil, []string{"owner/repo"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "設定読み込みエラー")
+	})
+
+	t.Run("runSummarizeAll GitHub fetch error", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client that returns error
+		mockClient := &MockGitHubClient{
+			issues:      nil,
+			returnError: true,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		err := runSummarizeAll(nil, []string{"owner/repo"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "全Issue取得エラー")
+	})
+
+	t.Run("runSummarizeAll no issues found", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client with empty results
+		mockClient := &MockGitHubClient{
+			issues:      []*github.IssueData{}, // Empty list
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := runSummarizeAll(nil, []string{"owner/repo"})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err) // Should succeed but with no processing
+		assert.Contains(t, string(output), "処理可能なIssueがありません")
+	})
+
+	t.Run("runSummarizeAll successful batch processing", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalAIFactory := summarizeAIClientFactory
+		originalTimeSleep := summarizeTimeSleep
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeAIClientFactory = originalAIFactory
+			summarizeTimeSleep = originalTimeSleep
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client with test issues
+		mockClient := &MockGitHubClient{
+			issues: []*github.IssueData{
+				{
+					ID:        123,
+					Number:    1,
+					Title:     "Test Issue 1",
+					Body:      "Test issue body 1",
+					State:     "open",
+					User:      "testuser",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				{
+					ID:        124,
+					Number:    2,
+					Title:     "Test Issue 2",
+					Body:      "Test issue body 2",
+					State:     "closed",
+					User:      "testuser",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+			},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock AI client with successful batch response
+		mockAIClient := NewMockAIClient()
+		category := "feature"
+		mockAIClient.SummarizeIssuesBatchResponse = &ai.BatchSummarizationResponse{
+			TotalProcessed: 2,
+			TotalFailed:    0,
+			ProcessingTime: 3.5,
+			Results: []ai.SummarizationResponse{
+				{
+					Summary:        "Test summary 1",
+					KeyPoints:      []string{"Point 1"},
+					Category:       &category,
+					Complexity:     "medium",
+					ProcessingTime: 1.5,
+				},
+				{
+					Summary:        "Test summary 2",
+					KeyPoints:      []string{"Point 2"},
+					Category:       &category,
+					Complexity:     "low",
+					ProcessingTime: 2.0,
+				},
+			},
+			FailedIssues: []ai.FailedIssue{},
+		}
+
+		summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+			return mockAIClient
+		}
+
+		// Mock time.Sleep to avoid delays in tests
+		summarizeTimeSleep = mockSummarizeTimeSleep
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := runSummarizeAll(nil, []string{"owner/repo"})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "2個のIssueを発見")
+		assert.Contains(t, outputStr, "バッチ処理を開始")
+		assert.Contains(t, outputStr, "処理完了: 2成功, 0失敗")
+		assert.Contains(t, outputStr, "Test summary 1")
+		assert.Contains(t, outputStr, "Test summary 2")
+	})
+
+	t.Run("runSummarizeAll JSON output format", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalAIFactory := summarizeAIClientFactory
+		originalTimeSleep := summarizeTimeSleep
+		originalOutputFormat := aiOutputFormat
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeAIClientFactory = originalAIFactory
+			summarizeTimeSleep = originalTimeSleep
+			aiOutputFormat = originalOutputFormat
+		}()
+
+		// Set JSON output format
+		aiOutputFormat = "json"
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client with one issue
+		mockClient := &MockGitHubClient{
+			issues: []*github.IssueData{
+				{
+					ID:        123,
+					Number:    1,
+					Title:     "Test Issue",
+					Body:      "Test issue body",
+					State:     "open",
+					User:      "testuser",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+			},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock AI client
+		mockAIClient := NewMockAIClient()
+		category := "bug"
+		mockAIClient.SummarizeIssuesBatchResponse = &ai.BatchSummarizationResponse{
+			TotalProcessed: 1,
+			TotalFailed:    0,
+			ProcessingTime: 1.5,
+			Results: []ai.SummarizationResponse{
+				{
+					Summary:    "JSON test summary",
+					Complexity: "high",
+					Category:   &category,
+				},
+			},
+			FailedIssues: []ai.FailedIssue{},
+		}
+
+		summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+			return mockAIClient
+		}
+
+		// Mock time.Sleep
+		summarizeTimeSleep = mockSummarizeTimeSleep
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := runSummarizeAll(nil, []string{"owner/repo"})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "[") // JSON array start
+		assert.Contains(t, outputStr, "JSON test summary")
+		assert.Contains(t, outputStr, "high")
+		assert.Contains(t, outputStr, "]") // JSON array end
+	})
+
+	t.Run("runSummarizeAll batch error handling", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalAIFactory := summarizeAIClientFactory
+		originalTimeSleep := summarizeTimeSleep
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeAIClientFactory = originalAIFactory
+			summarizeTimeSleep = originalTimeSleep
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client with test issues
+		mockClient := &MockGitHubClient{
+			issues: []*github.IssueData{
+				{
+					ID:        123,
+					Number:    1,
+					Title:     "Test Issue",
+					Body:      "Test issue body",
+					State:     "open",
+					User:      "testuser",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+			},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock AI client that returns batch error
+		mockAIClient := NewMockAIClient()
+		mockAIClient.SummarizeIssuesBatchError = fmt.Errorf("AI service unavailable")
+
+		summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+			return mockAIClient
+		}
+
+		// Mock time.Sleep
+		summarizeTimeSleep = mockSummarizeTimeSleep
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := runSummarizeAll(nil, []string{"owner/repo"})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err) // Function succeeds even with batch errors
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "バッチ 1-1 エラー")
+		assert.Contains(t, outputStr, "AI service unavailable")
+		assert.Contains(t, outputStr, "処理完了: 0成功, 1失敗")
+	})
+
+	t.Run("runSummarizeIssues successful processing", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalAIFactory := summarizeAIClientFactory
+		originalFetchSingleIssue := summarizeFetchSingleIssue
+		originalOutputBatch := summarizeOutputBatchSummarization
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeAIClientFactory = originalAIFactory
+			summarizeFetchSingleIssue = originalFetchSingleIssue
+			summarizeOutputBatchSummarization = originalOutputBatch
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client
+		mockClient := &MockGitHubClient{
+			issues:      []*github.IssueData{},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock AI client
+		mockAIClient := NewMockAIClient()
+		category := "feature"
+		mockAIClient.SummarizeIssuesBatchResponse = &ai.BatchSummarizationResponse{
+			TotalProcessed: 2,
+			TotalFailed:    0,
+			ProcessingTime: 2.5,
+			Results: []ai.SummarizationResponse{
+				{
+					Summary:    "Issue 1 summary",
+					Complexity: "medium",
+					Category:   &category,
+				},
+				{
+					Summary:    "Issue 2 summary",
+					Complexity: "low",
+					Category:   &category,
+				},
+			},
+			FailedIssues: []ai.FailedIssue{},
+		}
+
+		summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+			return mockAIClient
+		}
+
+		// Mock successful issue fetching
+		summarizeFetchSingleIssue = func(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+			return &github.IssueData{
+				ID:        int64(issueNum),
+				Number:    issueNum,
+				Title:     fmt.Sprintf("Test Issue %d", issueNum),
+				Body:      "Test issue body",
+				State:     "open",
+				User:      "testuser",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}, nil
+		}
+
+		// Mock output
+		summarizeOutputBatchSummarization = func(response *ai.BatchSummarizationResponse, format string) error {
+			return nil
+		}
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := runSummarizeIssues(nil, []string{"owner/repo", "1,2"})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err)
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "2個のIssueを取得中")
+		assert.Contains(t, outputStr, "2個のIssueをAI要約中")
+	})
+
+	t.Run("runSummarizeIssues partial fetch failure", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalAIFactory := summarizeAIClientFactory
+		originalFetchSingleIssue := summarizeFetchSingleIssue
+		originalOutputBatch := summarizeOutputBatchSummarization
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeAIClientFactory = originalAIFactory
+			summarizeFetchSingleIssue = originalFetchSingleIssue
+			summarizeOutputBatchSummarization = originalOutputBatch
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client
+		mockClient := &MockGitHubClient{
+			issues:      []*github.IssueData{},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock AI client
+		mockAIClient := NewMockAIClient()
+		category := "bug"
+		mockAIClient.SummarizeIssuesBatchResponse = &ai.BatchSummarizationResponse{
+			TotalProcessed: 1,
+			TotalFailed:    0,
+			ProcessingTime: 1.5,
+			Results: []ai.SummarizationResponse{
+				{
+					Summary:    "Successful issue summary",
+					Complexity: "high",
+					Category:   &category,
+				},
+			},
+			FailedIssues: []ai.FailedIssue{},
+		}
+
+		summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+			return mockAIClient
+		}
+
+		// Mock fetch that fails for issue #2 but succeeds for issue #1
+		summarizeFetchSingleIssue = func(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+			if issueNum == 2 {
+				return nil, fmt.Errorf("issue #2 not found")
+			}
+			return &github.IssueData{
+				ID:        int64(issueNum),
+				Number:    issueNum,
+				Title:     fmt.Sprintf("Test Issue %d", issueNum),
+				Body:      "Test issue body",
+				State:     "open",
+				User:      "testuser",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}, nil
+		}
+
+		// Mock output
+		summarizeOutputBatchSummarization = func(response *ai.BatchSummarizationResponse, format string) error {
+			return nil
+		}
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := runSummarizeIssues(nil, []string{"owner/repo", "1,2"})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		assert.NoError(t, err) // Should succeed with partial results
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "Issue #2 取得エラー")
+		assert.Contains(t, outputStr, "1個のIssueをAI要約中")
+	})
+
+	t.Run("runSummarizeIssues all fetch failures", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalFetchSingleIssue := summarizeFetchSingleIssue
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeFetchSingleIssue = originalFetchSingleIssue
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client
+		mockClient := &MockGitHubClient{
+			issues:      []*github.IssueData{},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock fetch that always fails
+		summarizeFetchSingleIssue = func(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+			return nil, fmt.Errorf("issue #%d not found", issueNum)
+		}
+
+		err := runSummarizeIssues(nil, []string{"owner/repo", "1,2"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "処理可能なIssueがありません")
+	})
+
+	t.Run("runSummarizeIssues AI batch error", func(t *testing.T) {
+		// Save original functions
+		originalConfigLoader := summarizeConfigLoader
+		originalGitHubFactory := summarizeGitHubClientFactory
+		originalAIFactory := summarizeAIClientFactory
+		originalFetchSingleIssue := summarizeFetchSingleIssue
+		defer func() {
+			summarizeConfigLoader = originalConfigLoader
+			summarizeGitHubClientFactory = originalGitHubFactory
+			summarizeAIClientFactory = originalAIFactory
+			summarizeFetchSingleIssue = originalFetchSingleIssue
+		}()
+
+		// Mock config loader
+		summarizeConfigLoader = mockSummarizeConfigLoader
+
+		// Mock GitHub client
+		mockClient := &MockGitHubClient{
+			issues:      []*github.IssueData{},
+			returnError: false,
+		}
+
+		summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+			return mockClient
+		}
+
+		// Mock AI client that returns error
+		mockAIClient := NewMockAIClient()
+		mockAIClient.SummarizeIssuesBatchError = fmt.Errorf("AI service overloaded")
+
+		summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+			return mockAIClient
+		}
+
+		// Mock successful issue fetching
+		summarizeFetchSingleIssue = func(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+			return &github.IssueData{
+				ID:        int64(issueNum),
+				Number:    issueNum,
+				Title:     fmt.Sprintf("Test Issue %d", issueNum),
+				Body:      "Test issue body",
+				State:     "open",
+				User:      "testuser",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}, nil
+		}
+
+		err := runSummarizeIssues(nil, []string{"owner/repo", "1"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "バッチAI要約エラー")
+		assert.Contains(t, err.Error(), "AI service overloaded")
+	})
 }
 
 // Test main() function and command execution
