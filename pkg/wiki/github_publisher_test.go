@@ -914,7 +914,7 @@ func TestGitHubWikiPublisher_publishPagesInBatches(t *testing.T) {
 	publisher.gitClient = mockGit
 
 	ctx := context.Background()
-	
+
 	// Initialize publisher
 	err = publisher.Initialize(ctx)
 	if err != nil {
@@ -993,8 +993,8 @@ func TestGitHubWikiPublisher_calculateOptimalBatchSize(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		totalPages int
+		name        string
+		totalPages  int
 		minExpected int
 		maxExpected int
 	}{
@@ -1033,19 +1033,19 @@ func TestGitHubWikiPublisher_calculateOptimalBatchSize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			batchSize := publisher.calculateOptimalBatchSize(tt.totalPages)
-			
+
 			if batchSize < tt.minExpected {
-				t.Errorf("calculateOptimalBatchSize(%d) = %d, want >= %d", 
+				t.Errorf("calculateOptimalBatchSize(%d) = %d, want >= %d",
 					tt.totalPages, batchSize, tt.minExpected)
 			}
 			if batchSize > tt.maxExpected {
-				t.Errorf("calculateOptimalBatchSize(%d) = %d, want <= %d", 
+				t.Errorf("calculateOptimalBatchSize(%d) = %d, want <= %d",
 					tt.totalPages, batchSize, tt.maxExpected)
 			}
-			
+
 			// Ensure batch size is reasonable for the total pages
 			if batchSize > tt.totalPages {
-				t.Errorf("calculateOptimalBatchSize(%d) = %d, batch size should not exceed total pages", 
+				t.Errorf("calculateOptimalBatchSize(%d) = %d, batch size should not exceed total pages",
 					tt.totalPages, batchSize)
 			}
 		})
