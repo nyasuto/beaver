@@ -201,10 +201,10 @@ jobs:
         # Create wiki content based on issues
         if [ "$FORCE_REBUILD" = "true" ]; then
           echo "🔄 Force rebuild requested - regenerating all wiki content"
-          ./bin/beaver build --force --verbose
+          ./bin/beaver build
         else
           echo "⚡ Incremental update - processing recent changes"
-          ./bin/beaver build --verbose
+          ./bin/beaver build
         fi
         
     - name: 📤 Clone wiki repository
