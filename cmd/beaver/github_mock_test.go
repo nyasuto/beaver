@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/models"
@@ -14,7 +15,8 @@ type MockGitHubService struct {
 	FetchIssuesError    error
 	TestConnectionError error
 
-	// Call tracking
+	// Call tracking with thread safety
+	mu                  sync.Mutex
 	FetchIssuesCalls    []models.IssueQuery
 	TestConnectionCalls int
 }
@@ -54,7 +56,9 @@ func NewMockGitHubService() *MockGitHubService {
 
 // FetchIssues implements the github.ServiceInterface
 func (m *MockGitHubService) FetchIssues(ctx context.Context, query models.IssueQuery) (*models.IssueResult, error) {
+	m.mu.Lock()
 	m.FetchIssuesCalls = append(m.FetchIssuesCalls, query)
+	m.mu.Unlock()
 
 	if m.FetchIssuesError != nil {
 		return nil, m.FetchIssuesError
@@ -65,7 +69,9 @@ func (m *MockGitHubService) FetchIssues(ctx context.Context, query models.IssueQ
 
 // TestConnection implements the github.ServiceInterface
 func (m *MockGitHubService) TestConnection(ctx context.Context) error {
+	m.mu.Lock()
 	m.TestConnectionCalls++
+	m.mu.Unlock()
 	return m.TestConnectionError
 }
 
@@ -78,16 +84,22 @@ func (m *MockGitHubService) GetRateLimit(ctx context.Context) (*models.RateLimit
 
 // AssertFetchIssuesCalled checks if FetchIssues was called the expected number of times
 func (m *MockGitHubService) AssertFetchIssuesCalled(expectedCalls int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return len(m.FetchIssuesCalls) == expectedCalls
 }
 
 // AssertTestConnectionCalled checks if TestConnection was called the expected number of times
 func (m *MockGitHubService) AssertTestConnectionCalled(expectedCalls int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.TestConnectionCalls == expectedCalls
 }
 
 // GetLastFetchQuery returns the last query used in FetchIssues call
 func (m *MockGitHubService) GetLastFetchQuery() *models.IssueQuery {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if len(m.FetchIssuesCalls) == 0 {
 		return nil
 	}
@@ -97,6 +109,8 @@ func (m *MockGitHubService) GetLastFetchQuery() *models.IssueQuery {
 
 // Reset clears all call tracking
 func (m *MockGitHubService) Reset() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.FetchIssuesCalls = nil
 	m.TestConnectionCalls = 0
 }
