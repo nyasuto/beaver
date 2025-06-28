@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/nyasuto/beaver/internal/errors"
 )
 
 func TestNewCmdGitClient(t *testing.T) {
@@ -108,14 +110,20 @@ func TestCmdGitClient_HandleGitError(t *testing.T) {
 				return
 			}
 
-			wikiErr, ok := err.(*WikiError)
+			beaverErr, ok := err.(*errors.BeaverError)
 			if !ok {
-				t.Errorf("handleGitError() should return WikiError, got %T", err)
+				t.Errorf("handleGitError() should return BeaverError, got %T", err)
 				return
 			}
 
-			if wikiErr.Type != tt.wantErrorType {
-				t.Errorf("handleGitError() error type = %v, want %v", wikiErr.Type, tt.wantErrorType)
+			// Verify it's a Git error
+			if beaverErr.Code != errors.ErrCodeGit {
+				t.Errorf("handleGitError() error code = %v, want %v", beaverErr.Code, errors.ErrCodeGit)
+			}
+
+			// Verify the operation is mentioned in the message
+			if beaverErr.Message == "" {
+				t.Error("handleGitError() should have a message")
 			}
 		})
 	}
