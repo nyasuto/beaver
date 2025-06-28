@@ -178,11 +178,11 @@ jobs:
         echo "📊 Analyzing repository issues for wiki content..."
         
         # Get recent issues for wiki update
-        ./bin/beaver fetch ${{ github.repository }} \
+        ./bin/beaver fetch issues ${{ github.repository }} \
           --state=all \
           --sort=updated \
           --per-page=50 \
-          --output=json > issues.json
+          --output=issues.json
         
         issue_count=$(jq '.fetched_count' issues.json)
         echo "📋 Found $issue_count issues to process"
