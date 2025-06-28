@@ -38,16 +38,16 @@ func (tm *TemplateManager) GetTemplate(name string) (*template.Template, bool) {
 // loadDefaultTemplates loads built-in templates
 func (tm *TemplateManager) loadDefaultTemplates() {
 	// Issues Summary Template
-	_ = tm.LoadTemplate("issues-summary", issuesSummaryTemplate)
+	_ = tm.LoadTemplate("issues-summary", issuesSummaryTemplate) //nolint:errcheck // Default templates
 
 	// Troubleshooting Guide Template
-	_ = tm.LoadTemplate("troubleshooting", troubleshootingTemplate)
+	_ = tm.LoadTemplate("troubleshooting", troubleshootingTemplate) //nolint:errcheck // Default templates
 
 	// Learning Path Template
-	_ = tm.LoadTemplate("learning-path", learningPathTemplate)
+	_ = tm.LoadTemplate("learning-path", learningPathTemplate) //nolint:errcheck // Default templates
 
 	// Index Template
-	_ = tm.LoadTemplate("index", indexTemplate)
+	_ = tm.LoadTemplate("index", indexTemplate) //nolint:errcheck // Default templates
 }
 
 // RegisterTemplate registers a custom template

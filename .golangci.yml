@@ -2,6 +2,83 @@ version: "2"
 run:
   tests: false
 linters:
+  default: none
+  enable:
+    - bodyclose
+    - errcheck
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nolintlint
+    - staticcheck
+    - unused
+  settings:
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - io/ioutil.ReadFile
+        - io.Copy(*bytes.Buffer)
+        - io.Copy(os.Stdout)
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    gosec:
+      excludes:
+        - G104
+        - G204
+      severity: medium
+      confidence: medium
+      config:
+        global:
+          audit: true
+          nosec: false
+    govet:
+      disable:
+        - fieldalignment
+        - shadow  # 段階的導入のため一時的に無効化
+      enable-all: true
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: var-naming
+        - name: package-comments
+        - name: exported
+        - name: var-declaration
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: increment-decrement
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: superfluous-else
+    staticcheck:
+      checks:
+        - all
   exclusions:
     generated: lax
     presets:
@@ -9,10 +86,43 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - errcheck
+          - gocritic
+          - gosec
+          - prealloc
+          - revive
+        path: _test\.go
+      - linters:
+          - errcheck
+        path: main\.go
+      - linters:
+          - all
+        path: .*\.pb\.go
+      - linters:
+          - revive
+        text: unused-parameter
+      - linters:
+          - revive
+        text: stutters
+      - linters:
+          - dupl
+        text: lines are duplicate
+      - linters:
+          - prealloc
+        text: Consider pre-allocating
+      - linters:
+          - goconst
+        text: make it a constant
     paths:
       - third_party$
       - builtin$
       - examples$
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 10
 formatters:
   exclusions:
     generated: lax

@@ -323,7 +323,7 @@ func TestHandleRateLimitError(t *testing.T) {
 			beaverErr, ok := err.(*errors.BeaverError)
 			require.True(t, ok, "Expected BeaverError")
 			assert.Equal(t, errors.ErrCodeRateLimit, beaverErr.Code)
-			assert.True(t, beaverErr.Details["context_cancelled"].(bool))
+			assert.True(t, beaverErr.Details["context_canceled"].(bool))
 		}
 	})
 
@@ -346,7 +346,7 @@ func TestHandleRateLimitError(t *testing.T) {
 		beaverErr, ok := err.(*errors.BeaverError)
 		require.True(t, ok, "Expected BeaverError")
 		assert.Equal(t, errors.ErrCodeRateLimit, beaverErr.Code)
-		assert.True(t, beaverErr.Details["context_cancelled"].(bool))
+		assert.True(t, beaverErr.Details["context_canceled"].(bool))
 	})
 
 	t.Run("without reset header", func(t *testing.T) {
@@ -364,11 +364,11 @@ func TestHandleRateLimitError(t *testing.T) {
 		duration := time.Since(start)
 
 		// When no reset header, it defaults to 1 minute wait, but context times out
-		// So we expect a rate limit error with context_cancelled
+		// So we expect a rate limit error with context_canceled
 		beaverErr, ok := err.(*errors.BeaverError)
 		require.True(t, ok, "Expected BeaverError")
 		assert.Equal(t, errors.ErrCodeRateLimit, beaverErr.Code)
-		assert.True(t, beaverErr.Details["context_cancelled"].(bool))
+		assert.True(t, beaverErr.Details["context_canceled"].(bool))
 		assert.True(t, duration >= 190*time.Millisecond) // Should wait close to timeout
 		assert.True(t, duration < 250*time.Millisecond)  // Should not exceed timeout significantly
 	})
