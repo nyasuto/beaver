@@ -73,7 +73,7 @@ jobs:
     - name: 🔍 Check if wiki exists
       id: check_wiki
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
       run: |
         # Check if wiki is enabled for this repository
         wiki_url="https://api.github.com/repos/${{ github.repository }}/pages"
@@ -127,7 +127,7 @@ jobs:
         
     - name: ⚙️ Setup Beaver configuration
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
         TARGET_REPO: ${{ github.event.inputs.target_repository || github.repository }}
       run: |
         # Create beaver.yml if it doesn't exist
@@ -173,7 +173,7 @@ jobs:
         
     - name: 🔍 Analyze repository issues
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
       run: |
         echo "📊 Analyzing repository issues for wiki content..."
         
@@ -193,7 +193,7 @@ jobs:
         
     - name: 📖 Generate wiki content
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
         FORCE_REBUILD: ${{ github.event.inputs.force_rebuild || 'false' }}
       run: |
         echo "📝 Generating wiki content..."
@@ -209,7 +209,7 @@ jobs:
         
     - name: 📤 Clone wiki repository
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
       run: |
         echo "📁 Cloning wiki repository..."
         
@@ -268,7 +268,7 @@ jobs:
     - name: 📝 Update wiki pages
       working-directory: wiki-repo
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
       run: |
         echo "📝 Updating wiki pages..."
         
@@ -422,7 +422,7 @@ jobs:
     - name: 🚨 Create failure issue
       uses: actions/github-script@v7
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.BEAVER_GITHUB_TOKEN }}
         script: |
           const issue = await github.rest.issues.create({
             owner: context.repo.owner,
