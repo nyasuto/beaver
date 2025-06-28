@@ -366,12 +366,20 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-func main() {
+// mainLogic contains the core logic of main() without os.Exit for testing
+func mainLogic() error {
 	log.Printf("INFO Starting beaver CLI application")
 	if err := rootCmd.Execute(); err != nil {
 		log.Printf("ERROR Command execution failed: %v", err)
 		fmt.Fprintf(os.Stderr, "エラー: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	log.Printf("INFO Beaver CLI application completed successfully")
+	return nil
+}
+
+func main() {
+	if err := mainLogic(); err != nil {
+		os.Exit(1)
+	}
 }
