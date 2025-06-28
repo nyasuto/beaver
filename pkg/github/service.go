@@ -14,8 +14,9 @@ import (
 
 // Service provides high-level GitHub operations using internal models
 type Service struct {
-	client *Client
-	logger *slog.Logger
+	client      *Client
+	logger      *slog.Logger
+	retryConfig *RetryConfig // Configurable for testing
 }
 
 // Ensure Service implements ServiceInterface
@@ -24,8 +25,9 @@ var _ ServiceInterface = (*Service)(nil)
 // NewService creates a new GitHub service
 func NewService(token string) *Service {
 	return &Service{
-		client: NewClient(token),
-		logger: slog.With("component", "github-service"),
+		client:      NewClient(token),
+		logger:      slog.With("component", "github-service"),
+		retryConfig: DefaultRetryConfig(), // Use default config
 	}
 }
 

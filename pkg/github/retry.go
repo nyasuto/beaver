@@ -38,7 +38,10 @@ type RetryableOperation func(ctx context.Context) (*github.Response, error)
 
 // ExecuteWithRetry executes a GitHub API operation with automatic retry and rate limit handling
 func (s *Service) ExecuteWithRetry(ctx context.Context, operation RetryableOperation) (*github.Response, error) {
-	config := DefaultRetryConfig()
+	config := s.retryConfig
+	if config == nil {
+		config = DefaultRetryConfig()
+	}
 
 	for attempt := 0; attempt < config.MaxRetries; attempt++ {
 		// Check rate limit before making request (skip if no client for testing)
