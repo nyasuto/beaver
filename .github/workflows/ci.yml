@@ -3,8 +3,6 @@ name: 🔄 Continuous Integration
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -96,8 +94,7 @@ jobs:
     needs: [quality-checks, build-test]
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests'))
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     
     environment: integration-testing
     
