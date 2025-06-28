@@ -13,7 +13,7 @@ type MockGitHubService struct {
 	FetchIssuesResponse *models.IssueResult
 	FetchIssuesError    error
 	TestConnectionError error
-	
+
 	// Call tracking
 	FetchIssuesCalls    []models.IssueQuery
 	TestConnectionCalls int
@@ -55,11 +55,11 @@ func NewMockGitHubService() *MockGitHubService {
 // FetchIssues implements the github.ServiceInterface
 func (m *MockGitHubService) FetchIssues(ctx context.Context, query models.IssueQuery) (*models.IssueResult, error) {
 	m.FetchIssuesCalls = append(m.FetchIssuesCalls, query)
-	
+
 	if m.FetchIssuesError != nil {
 		return nil, m.FetchIssuesError
 	}
-	
+
 	return m.FetchIssuesResponse, nil
 }
 

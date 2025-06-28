@@ -18,6 +18,9 @@ type Service struct {
 	logger *slog.Logger
 }
 
+// Ensure Service implements ServiceInterface
+var _ ServiceInterface = (*Service)(nil)
+
 // NewService creates a new GitHub service
 func NewService(token string) *Service {
 	return &Service{

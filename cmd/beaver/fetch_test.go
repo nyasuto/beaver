@@ -416,8 +416,8 @@ func TestFetchWithMockService(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "successful fetch with default settings",
-			flags: map[string]any{},
+			name:           "successful fetch with default settings",
+			flags:          map[string]any{},
 			expectError:    false,
 			expectContains: []string{"repository", "fetched_count"},
 			description:    "Should successfully fetch issues with mock service",
@@ -536,7 +536,7 @@ sources:
 
 			// Create mock service
 			mockService := NewMockGitHubService()
-			
+
 			// Save original factory and replace with mock
 			originalFactory := githubServiceFactory
 			githubServiceFactory = func(token string) github.ServiceInterface {

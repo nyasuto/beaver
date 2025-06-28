@@ -104,12 +104,12 @@ func (cr *ConflictResolver) SafeUpdate(ctx context.Context, workDir string, comm
 				// Handle the conflict based on strategy
 				if err := cr.handlePushConflict(ctx, workDir, attempt); err != nil {
 					log.Printf("ERROR ConflictResolver conflict handling failed: %v", err)
-					
+
 					// For abort strategy, fail immediately without retrying
 					if cr.strategy == StrategyAbort {
 						return fmt.Errorf("conflict detected and strategy is set to abort: %w", err)
 					}
-					
+
 					if attempt == cr.maxRetries-1 {
 						return fmt.Errorf("failed to resolve conflict after %d attempts: %w", cr.maxRetries, err)
 					}

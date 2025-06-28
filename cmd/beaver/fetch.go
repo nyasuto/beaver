@@ -67,6 +67,11 @@ func init() {
 	fetchIssuesCmd.Flags().BoolVar(&includeComments, "include-comments", true, "コメントも取得するか")
 }
 
+// Service factory for dependency injection in tests
+var githubServiceFactory = func(token string) github.ServiceInterface {
+	return github.NewService(token)
+}
+
 func runFetchIssues(cmd *cobra.Command, args []string) error {
 	repository := args[0]
 
@@ -85,6 +90,15 @@ func runFetchIssues(cmd *cobra.Command, args []string) error {
 	if cfg.Sources.GitHub.Token == "" {
 		return fmt.Errorf("❌ GitHub tokenが設定されていません。GITHUB_TOKEN環境変数または設定ファイルで指定してください")
 	}
+
+	// Create GitHub service using factory (allows injection in tests)
+	githubService := githubServiceFactory(cfg.Sources.GitHub.Token)
+
+	return runFetchIssuesWithGitHubService(githubService, args)
+}
+
+func runFetchIssuesWithGitHubService(githubService github.ServiceInterface, args []string) error {
+	repository := args[0]
 
 	// Parse since parameter if provided
 	var sinceTime *time.Time
@@ -112,9 +126,6 @@ func runFetchIssues(cmd *cobra.Command, args []string) error {
 		PerPage:    issuePerPage,
 		MaxPages:   issueMaxPages,
 	}
-
-	// Create GitHub service
-	githubService := github.NewService(cfg.Sources.GitHub.Token)
 
 	fmt.Printf("🔍 GitHub Issuesを取得中: %s\n", repository)
 	fmt.Printf("   状態: %s, ソート: %s (%s)\n", query.State, query.Sort, query.Direction)
