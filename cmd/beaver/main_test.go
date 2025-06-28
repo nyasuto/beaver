@@ -1119,11 +1119,6 @@ func TestOutputBatchSummarization(t *testing.T) {
 	})
 }
 
-// GitHubClientInterface defines the interface for GitHub client in tests
-type GitHubClientInterface interface {
-	FetchIssues(ctx context.Context, owner, repo string, opts interface{}) ([]*github.IssueData, error)
-}
-
 // MockGitHubClient is a test helper for mocking GitHub API calls
 type MockGitHubClient struct {
 	issues      []*github.IssueData
@@ -3294,5 +3289,44 @@ func TestRunListWiki(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "GitHub token not found")
+	})
+}
+
+// Basic tests for summarize command functions - interface compatibility simplified
+func TestSummarizeCommands(t *testing.T) {
+	t.Run("runSummarizeIssue invalid repository path", func(t *testing.T) {
+		err := runSummarizeIssue(nil, []string{"invalid-repo", "123"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
+	})
+
+	t.Run("runSummarizeIssue invalid issue number", func(t *testing.T) {
+		err := runSummarizeIssue(nil, []string{"owner/repo", "invalid"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "issue番号が正しくありません")
+	})
+
+	t.Run("runSummarizeIssues invalid repository path", func(t *testing.T) {
+		err := runSummarizeIssues(nil, []string{"invalid-repo", "1,2,3"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
+	})
+
+	t.Run("runSummarizeIssues missing issue numbers", func(t *testing.T) {
+		err := runSummarizeIssues(nil, []string{"owner/repo"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "issue番号を指定してください")
+	})
+
+	t.Run("runSummarizeIssues invalid issue number in list", func(t *testing.T) {
+		err := runSummarizeIssues(nil, []string{"owner/repo", "1,invalid,3"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "issue番号が正しくありません")
+	})
+
+	t.Run("runSummarizeAll invalid repository path", func(t *testing.T) {
+		err := runSummarizeAll(nil, []string{"invalid-repo"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が正しくありません")
 	})
 }

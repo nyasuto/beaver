@@ -13,6 +13,52 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// AIClientInterface defines the interface for AI client operations
+type AIClientInterface interface {
+	SummarizeIssue(ctx context.Context, req *ai.SummarizationRequest) (*ai.SummarizationResponse, error)
+	SummarizeIssuesBatch(ctx context.Context, req *ai.BatchSummarizationRequest) (*ai.BatchSummarizationResponse, error)
+}
+
+// GitHubClientInterface defines the interface for GitHub client operations - matches existing interface in main_test.go
+type GitHubClientInterface interface {
+	FetchIssues(ctx context.Context, owner, repo string, opts interface{}) ([]*github.IssueData, error)
+}
+
+// GitHubClientWrapper wraps the real GitHub client to implement the test interface
+type GitHubClientWrapper struct {
+	client *github.Client
+}
+
+func (w *GitHubClientWrapper) FetchIssues(ctx context.Context, owner, repo string, opts interface{}) ([]*github.IssueData, error) {
+	// Convert interface{} to the proper type for the real client
+	return w.client.FetchIssues(ctx, owner, repo, nil) // Use nil for simplicity in testing
+}
+
+// Service factory functions for dependency injection in tests
+var (
+	summarizeConfigLoader = func() (*config.Config, error) {
+		return config.LoadConfig()
+	}
+	summarizeGitHubClientFactory = func(token string) GitHubClientInterface {
+		return &GitHubClientWrapper{client: github.NewClient(token)}
+	}
+	summarizeAIClientFactory = func(url string, timeout time.Duration) AIClientInterface {
+		return ai.NewClient(url, timeout)
+	}
+	summarizeFetchSingleIssue = func(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+		return fetchSingleIssueFromInterface(ctx, client, owner, repo, issueNum)
+	}
+	summarizeOutputSummarization = func(response *ai.SummarizationResponse, format string) error {
+		return outputSummarization(response, format)
+	}
+	summarizeOutputBatchSummarization = func(response *ai.BatchSummarizationResponse, format string) error {
+		return outputBatchSummarization(response, format)
+	}
+	summarizeTimeSleep = func(d time.Duration) {
+		time.Sleep(d)
+	}
+)
+
 var (
 	aiServiceURL      string
 	aiProvider        string
@@ -107,21 +153,21 @@ func runSummarizeIssue(cmd *cobra.Command, args []string) error {
 	fmt.Printf("🔍 Issue #%d を取得中... (%s/%s)\n", issueNum, owner, repo)
 
 	// Initialize GitHub client
-	cfg, err := config.LoadConfig()
+	cfg, err := summarizeConfigLoader()
 	if err != nil {
 		return fmt.Errorf("設定読み込みエラー: %v", err)
 	}
 
-	ghClient := github.NewClient(cfg.Sources.GitHub.Token)
+	ghClient := summarizeGitHubClientFactory(cfg.Sources.GitHub.Token)
 
 	// Fetch single issue (we need to implement this method)
-	issue, err := fetchSingleIssue(ctx, ghClient, owner, repo, issueNum)
+	issue, err := summarizeFetchSingleIssue(ctx, ghClient, owner, repo, issueNum)
 	if err != nil {
 		return fmt.Errorf("issue取得エラー: %v", err)
 	}
 
 	// Initialize AI client
-	aiClient := ai.NewClient(aiServiceURL, 30*time.Second)
+	aiClient := summarizeAIClientFactory(aiServiceURL, 30*time.Second)
 
 	// Convert to AI format
 	aiIssue := ai.ConvertGitHubIssueToAI(issue)
@@ -151,7 +197,7 @@ func runSummarizeIssue(cmd *cobra.Command, args []string) error {
 	}
 
 	// Output results
-	return outputSummarization(response, aiOutputFormat)
+	return summarizeOutputSummarization(response, aiOutputFormat)
 }
 
 func runSummarizeIssues(cmd *cobra.Command, args []string) error {
@@ -183,18 +229,18 @@ func runSummarizeIssues(cmd *cobra.Command, args []string) error {
 	fmt.Printf("🔍 %d個のIssueを取得中... (%s/%s)\n", len(issueNumbers), owner, repo)
 
 	// Initialize clients
-	cfg, err := config.LoadConfig()
+	cfg, err := summarizeConfigLoader()
 	if err != nil {
 		return fmt.Errorf("設定読み込みエラー: %v", err)
 	}
 
-	ghClient := github.NewClient(cfg.Sources.GitHub.Token)
-	aiClient := ai.NewClient(aiServiceURL, 30*time.Second)
+	ghClient := summarizeGitHubClientFactory(cfg.Sources.GitHub.Token)
+	aiClient := summarizeAIClientFactory(aiServiceURL, 30*time.Second)
 
 	// Fetch issues
 	var issues []ai.IssueData
 	for _, issueNum := range issueNumbers {
-		issue, err := fetchSingleIssue(ctx, ghClient, owner, repo, issueNum)
+		issue, err := summarizeFetchSingleIssue(ctx, ghClient, owner, repo, issueNum)
 		if err != nil {
 			fmt.Printf("⚠️ Issue #%d 取得エラー: %v\n", issueNum, err)
 			continue
@@ -231,7 +277,7 @@ func runSummarizeIssues(cmd *cobra.Command, args []string) error {
 	}
 
 	// Output results
-	return outputBatchSummarization(response, aiOutputFormat)
+	return summarizeOutputBatchSummarization(response, aiOutputFormat)
 }
 
 func runSummarizeAll(cmd *cobra.Command, args []string) error {
@@ -247,12 +293,12 @@ func runSummarizeAll(cmd *cobra.Command, args []string) error {
 	fmt.Printf("🔍 全Issueを取得中... (%s/%s)\n", owner, repo)
 
 	// Initialize clients
-	cfg, err := config.LoadConfig()
+	cfg, err := summarizeConfigLoader()
 	if err != nil {
 		return fmt.Errorf("設定読み込みエラー: %v", err)
 	}
 
-	ghClient := github.NewClient(cfg.Sources.GitHub.Token)
+	ghClient := summarizeGitHubClientFactory(cfg.Sources.GitHub.Token)
 
 	// Fetch all issues
 	ghIssues, err := ghClient.FetchIssues(ctx, owner, repo, nil)
@@ -269,7 +315,7 @@ func runSummarizeAll(cmd *cobra.Command, args []string) error {
 
 	// Convert to AI format
 	issues := ai.ConvertGitHubIssuesToAI(ghIssues)
-	aiClient := ai.NewClient(aiServiceURL, 60*time.Second) // Longer timeout for batch
+	aiClient := summarizeAIClientFactory(aiServiceURL, 60*time.Second) // Longer timeout for batch
 
 	// Process in batches
 	var allResults []*ai.SummarizationResponse
@@ -318,7 +364,7 @@ func runSummarizeAll(cmd *cobra.Command, args []string) error {
 		totalErrors += response.TotalFailed
 
 		// Brief delay between batches
-		time.Sleep(1 * time.Second)
+		summarizeTimeSleep(1 * time.Second)
 	}
 
 	fmt.Printf("\n📊 処理完了: %d成功, %d失敗\n", totalProcessed, totalErrors)
@@ -351,10 +397,9 @@ func runSummarizeAll(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// Helper function to fetch a single issue
-func fetchSingleIssue(ctx context.Context, client *github.Client, owner, repo string, issueNum int) (*github.IssueData, error) {
-	// This is a simplified implementation - in practice, you'd want to add this method to the GitHub client
-	issues, err := client.FetchIssues(ctx, owner, repo, nil) // This fetches all, we need to filter
+// Helper function to fetch a single issue using interface
+func fetchSingleIssueFromInterface(ctx context.Context, client GitHubClientInterface, owner, repo string, issueNum int) (*github.IssueData, error) {
+	issues, err := client.FetchIssues(ctx, owner, repo, nil)
 	if err != nil {
 		return nil, err
 	}
