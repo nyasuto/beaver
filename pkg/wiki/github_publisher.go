@@ -71,11 +71,12 @@ func NewGitHubWikiPublisher(config *PublisherConfig) (*GitHubWikiPublisher, erro
 	conflictResolverConfig := DefaultConflictResolverConfig()
 	if config.EnableConflictResolution {
 		// Use more aggressive settings in CI environments
-		conflictResolverConfig.MaxRetries = 8
-		conflictResolverConfig.BaseDelay = 500 * time.Millisecond
-		conflictResolverConfig.MaxDelay = 20 * time.Second
-		log.Printf("DEBUG ConflictResolver configured with CI-optimized settings: max_retries=%d, base_delay=%v, max_delay=%v",
-			conflictResolverConfig.MaxRetries, conflictResolverConfig.BaseDelay, conflictResolverConfig.MaxDelay)
+		conflictResolverConfig.MaxRetries = 12                    // Increased for integration tests
+		conflictResolverConfig.BaseDelay = 300 * time.Millisecond // Shorter initial delay
+		conflictResolverConfig.MaxDelay = 15 * time.Second        // Reasonable max delay
+		conflictResolverConfig.JitterFactor = 0.3                 // Increased jitter to reduce thundering herd
+		log.Printf("DEBUG ConflictResolver configured with CI-optimized settings: max_retries=%d, base_delay=%v, max_delay=%v, jitter=%.1f",
+			conflictResolverConfig.MaxRetries, conflictResolverConfig.BaseDelay, conflictResolverConfig.MaxDelay, conflictResolverConfig.JitterFactor)
 	} else {
 		log.Printf("DEBUG ConflictResolver configured with default settings")
 	}
