@@ -73,11 +73,6 @@ jobs:
           go.sum
           go.mod
 
-    - name: 📦 Download dependencies
-      run: go mod download
-      env:
-        GOPROXY: https://proxy.golang.org,direct
-      
     - name: 🔨 Build
       run: make build
       env:
@@ -118,11 +113,6 @@ jobs:
           go.sum
           go.mod
         
-    - name: 📦 Download dependencies
-      run: go mod download
-      env:
-        GOPROXY: https://proxy.golang.org,direct
-      
     - name: 🔨 Build
       run: make build
       env:
@@ -177,11 +167,6 @@ jobs:
           go.sum
           go.mod
         
-    - name: 📦 Download dependencies
-      run: go mod download
-      env:
-        GOPROXY: https://proxy.golang.org,direct
-      
     - name: 🚀 Run performance tests
       env:
         BEAVER_INTEGRATION_TESTS: true
