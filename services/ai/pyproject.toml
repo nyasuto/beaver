@@ -25,7 +25,7 @@ dependencies = [
     "fastapi==0.104.1",
     "uvicorn[standard]==0.24.0",
     "langchain==0.2.5",
-    "langchain-openai==0.0.2",
+    "langchain-openai==0.3.27",
     "openai>=1.6.1,<2.0.0",
     "httpx==0.25.2",
     "requests==2.32.4",
