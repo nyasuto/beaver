@@ -27,11 +27,6 @@ jobs:
           go.sum
           go.mod
 
-    - name: 📦 Download dependencies
-      run: go mod download
-      env:
-        GOPROXY: https://proxy.golang.org,direct
-        
     - name: 📝 Format check
       run: |
         unformatted=$(gofmt -l .)
@@ -51,6 +46,8 @@ jobs:
         
     - name: 🧪 Unit tests
       run: go test -v -race -coverprofile=coverage.out ./...
+      env:
+        GOPROXY: https://proxy.golang.org,direct
       
     - name: 📊 Upload coverage
       id: coverage
@@ -83,6 +80,8 @@ jobs:
       
     - name: 🔨 Build
       run: make build
+      env:
+        GOPROXY: https://proxy.golang.org,direct
       
     - name: 🧪 Binary test
       run: ./bin/beaver --help
@@ -126,6 +125,8 @@ jobs:
       
     - name: 🔨 Build
       run: make build
+      env:
+        GOPROXY: https://proxy.golang.org,direct
       
     - name: 🧪 Setup integration environment
       run: |
