@@ -286,3 +286,246 @@ func TestOutputClassificationJSON(t *testing.T) {
 		assert.Contains(t, err.Error(), "ファイル書き込みエラー")
 	})
 }
+
+func TestOutputClassificationWiki(t *testing.T) {
+	// Create test data
+	testSummary := &ClassificationSummary{
+		Repository:  "test/repo",
+		ProcessedAt: time.Date(2025, 1, 15, 14, 30, 0, 0, time.UTC),
+		TotalIssues: 3,
+		Successful:  2,
+		Failed:      1,
+		Categories: map[string]int{
+			"bug":     1,
+			"feature": 1,
+		},
+		AverageTime: 2.5,
+		Method:      "hybrid",
+		Results: []IssueClassificationResult{
+			{
+				IssueNumber:    100,
+				IssueTitle:     "Fix critical bug",
+				Category:       "bug",
+				Confidence:     0.95,
+				ProcessingTime: 2.1,
+			},
+			{
+				IssueNumber:    101,
+				IssueTitle:     "Add new feature with | pipe character in title",
+				Category:       "feature",
+				Confidence:     0.87,
+				ProcessingTime: 2.9,
+			},
+		},
+		Errors: []ClassificationError{
+			{
+				IssueNumber: 102,
+				Error:       "classification timeout",
+			},
+		},
+	}
+
+	t.Run("output to stdout", func(t *testing.T) {
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationWiki(testSummary, "")
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+		outputStr := string(output)
+
+		// Verify Wiki header format
+		assert.Contains(t, outputStr, "# Issues 分類結果 - test/repo")
+		assert.Contains(t, outputStr, "**処理日時**: 2025-01-15 14:30:00")
+		assert.Contains(t, outputStr, "**分類手法**: hybrid")
+		assert.Contains(t, outputStr, "**処理件数**: 3件 (成功: 2, 失敗: 1)")
+		assert.Contains(t, outputStr, "**平均処理時間**: 2.500s")
+
+		// Verify category statistics table
+		assert.Contains(t, outputStr, "## 📊 カテゴリ別統計")
+		assert.Contains(t, outputStr, "| カテゴリ | 件数 | 割合 |")
+		assert.Contains(t, outputStr, "| bug | 1 | 50.0% |")
+		assert.Contains(t, outputStr, "| feature | 1 | 50.0% |")
+
+		// Verify results table
+		assert.Contains(t, outputStr, "## 📝 分類結果詳細")
+		assert.Contains(t, outputStr, "| Issue# | タイトル | カテゴリ | 信頼度 | 処理時間 |")
+		assert.Contains(t, outputStr, "| #100 | Fix critical bug | bug | 0.95 | 2.100s |")
+		assert.Contains(t, outputStr, "| #101 | Add new feature with \\| pipe character in title | feature | 0.87 | 2.900s |")
+
+		// Verify error section
+		assert.Contains(t, outputStr, "## ❌ エラー一覧")
+		assert.Contains(t, outputStr, "- **Issue #102**: classification timeout")
+	})
+
+	t.Run("output to file", func(t *testing.T) {
+		// Create temporary file
+		tmpDir := t.TempDir()
+		outputFile := filepath.Join(tmpDir, "wiki-output.md")
+
+		// Capture stdout for the success message
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationWiki(testSummary, outputFile)
+
+		w.Close()
+		os.Stdout = oldStdout
+		capturedOutput, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+		assert.Contains(t, string(capturedOutput), "✅ 分類結果をWikiファイルに保存しました")
+		assert.Contains(t, string(capturedOutput), outputFile)
+
+		// Verify file was created and contains correct content
+		data, err := os.ReadFile(outputFile)
+		require.NoError(t, err)
+
+		content := string(data)
+		assert.Contains(t, content, "# Issues 分類結果 - test/repo")
+		assert.Contains(t, content, "**分類手法**: hybrid")
+		assert.Contains(t, content, "| bug | 1 | 50.0% |")
+		assert.Contains(t, content, "| #100 | Fix critical bug | bug | 0.95 | 2.100s |")
+	})
+
+	t.Run("title truncation", func(t *testing.T) {
+		// Create summary with very long title
+		longTitleSummary := &ClassificationSummary{
+			Repository:  "test/repo",
+			ProcessedAt: time.Date(2025, 1, 15, 14, 30, 0, 0, time.UTC),
+			TotalIssues: 1,
+			Successful:  1,
+			Failed:      0,
+			Categories: map[string]int{
+				"feature": 1,
+			},
+			AverageTime: 1.0,
+			Method:      "hybrid",
+			Results: []IssueClassificationResult{
+				{
+					IssueNumber:    200,
+					IssueTitle:     "This is a very long title that should be truncated because it exceeds the 50 character limit for display",
+					Category:       "feature",
+					Confidence:     0.80,
+					ProcessingTime: 1.0,
+				},
+			},
+		}
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationWiki(longTitleSummary, "")
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+		outputStr := string(output)
+
+		// Verify title is truncated with "..."
+		assert.Contains(t, outputStr, "This is a very long title that should be trunca...")
+		assert.NotContains(t, outputStr, "because it exceeds the 50 character limit")
+	})
+
+	t.Run("pipe character escaping", func(t *testing.T) {
+		pipeSummary := &ClassificationSummary{
+			Repository:  "test/repo",
+			ProcessedAt: time.Date(2025, 1, 15, 14, 30, 0, 0, time.UTC),
+			TotalIssues: 1,
+			Successful:  1,
+			Failed:      0,
+			Categories: map[string]int{
+				"bug": 1,
+			},
+			AverageTime: 1.0,
+			Method:      "hybrid",
+			Results: []IssueClassificationResult{
+				{
+					IssueNumber:    300,
+					IssueTitle:     "Fix issue with | pipe | characters",
+					Category:       "bug",
+					Confidence:     0.90,
+					ProcessingTime: 1.5,
+				},
+			},
+		}
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationWiki(pipeSummary, "")
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+		outputStr := string(output)
+
+		// Verify pipe characters are escaped
+		assert.Contains(t, outputStr, "Fix issue with \\| pipe \\| characters")
+		assert.NotContains(t, outputStr, "Fix issue with | pipe | characters")
+	})
+
+	t.Run("no errors section when empty", func(t *testing.T) {
+		noErrorSummary := &ClassificationSummary{
+			Repository:  "test/repo",
+			ProcessedAt: time.Date(2025, 1, 15, 14, 30, 0, 0, time.UTC),
+			TotalIssues: 1,
+			Successful:  1,
+			Failed:      0,
+			Categories: map[string]int{
+				"feature": 1,
+			},
+			AverageTime: 1.0,
+			Method:      "ai",
+			Results: []IssueClassificationResult{
+				{
+					IssueNumber:    400,
+					IssueTitle:     "Add feature",
+					Category:       "feature",
+					Confidence:     0.88,
+					ProcessingTime: 1.0,
+				},
+			},
+			Errors: []ClassificationError{}, // Empty errors
+		}
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationWiki(noErrorSummary, "")
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+		outputStr := string(output)
+
+		// Verify no error section is present
+		assert.NotContains(t, outputStr, "## ❌ エラー一覧")
+	})
+
+	t.Run("invalid file path", func(t *testing.T) {
+		// Try to write to invalid path
+		err := outputClassificationWiki(testSummary, "/invalid/nonexistent/path/output.md")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "ファイル書き込みエラー")
+	})
+}
