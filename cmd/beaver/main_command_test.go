@@ -1298,7 +1298,117 @@ output:
 
 		err = runBuildCommand(cmd, args)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "GitHub token が設定されていません")
+		assert.Contains(t, err.Error(), "設定が無効です")
+	})
+
+	t.Run("empty repository name", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		configContent := `project:
+  name: "Test Project"
+  repository: ""
+sources:
+  github:
+    token: "test-token"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		err = runBuildCommand(cmd, []string{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "設定が無効です")
+	})
+
+	t.Run("default repository name", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		configContent := `project:
+  name: "Test Project"
+  repository: "username/my-repo"
+sources:
+  github:
+    token: "test-token"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		err = runBuildCommand(cmd, []string{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリが設定されていません")
+	})
+
+	t.Run("repository with multiple slashes", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		configContent := `project:
+  name: "Test Project"
+  repository: "owner/repo/extra/path"
+sources:
+  github:
+    token: "test-token"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		err = runBuildCommand(cmd, []string{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
+	})
+
+	t.Run("repository with only slash", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		configContent := `project:
+  name: "Test Project"
+  repository: "/"
+sources:
+  github:
+    token: "test-token"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		err = runBuildCommand(cmd, []string{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
+	})
+
+	t.Run("repository with no slash", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		configContent := `project:
+  name: "Test Project"
+  repository: "invalidrepo"
+sources:
+  github:
+    token: "test-token"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		cmd := &cobra.Command{}
+		err = runBuildCommand(cmd, []string{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 }
 
@@ -1479,5 +1589,160 @@ ai:
 		// Verify warning for missing token
 		outputStr := string(output)
 		assert.Contains(t, outputStr, "GITHUB_TOKEN が設定されていません")
+	})
+
+	t.Run("configuration load error", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create invalid config file
+		configContent := `invalid yaml content: [unclosed`
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		runStatusCommand(cmd, []string{})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify configuration load error
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "設定読み込みエラー")
+	})
+
+	t.Run("GitHub connection failure", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create config with invalid token that will fail connection
+		configContent := `project:
+  name: "Test Project"
+  repository: "owner/repo"
+sources:
+  github:
+    token: "invalid-token-that-will-fail"
+output:
+  wiki:
+    platform: "github"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		runStatusCommand(cmd, []string{})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify GitHub connection error
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "GitHub接続をテスト中")
+		// Connection will fail with invalid token
+		assert.Contains(t, outputStr, "GitHub接続エラー")
+	})
+
+	t.Run("repository not configured properly", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create config with default repository value
+		configContent := `project:
+  name: "Test Project"
+  repository: "username/my-repo"
+sources:
+  github:
+    token: "test-token"
+output:
+  wiki:
+    platform: "github"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		runStatusCommand(cmd, []string{})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify status information shows but repository is not tested
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "Test Project")
+		assert.Contains(t, outputStr, "username/my-repo")
+		// Should not test Issues fetch for default repository
+		assert.NotContains(t, outputStr, "Issues取得テスト")
+	})
+
+	t.Run("empty repository configuration", func(t *testing.T) {
+		tempDir := t.TempDir()
+		originalWd, _ := os.Getwd()
+		defer os.Chdir(originalWd)
+		os.Chdir(tempDir)
+
+		// Create config with empty repository
+		configContent := `project:
+  name: "Test Project"
+  repository: ""
+sources:
+  github:
+    token: "test-token"
+output:
+  wiki:
+    platform: "github"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"`
+
+		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		cmd := &cobra.Command{}
+		runStatusCommand(cmd, []string{})
+
+		w.Close()
+		os.Stdout = oldStdout
+		output, _ := io.ReadAll(r)
+
+		// Verify status information shows but repository is not tested
+		outputStr := string(output)
+		assert.Contains(t, outputStr, "Test Project")
+		// Should not test Issues fetch for empty repository
+		assert.NotContains(t, outputStr, "Issues取得テスト")
 	})
 }
