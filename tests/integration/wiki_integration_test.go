@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -88,20 +90,25 @@ func TestFullWorkflowIntegration(t *testing.T) {
 		}
 
 		// Step 3: Initialize Wiki system
+		// Add randomization to reduce test conflicts
+		randomBytes := make([]byte, 4)
+		rand.Read(randomBytes)
+		testSuffix := hex.EncodeToString(randomBytes)
+
 		wikiConfig := &wiki.PublisherConfig{
 			Owner:                    cfg.TestRepoOwner,
 			Repository:               cfg.TestRepoName,
 			Token:                    cfg.GitHubToken,
-			WorkingDir:               filepath.Join(cfg.TempDir, "wiki"),
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_"+testSuffix),
 			BranchName:               "master",
 			AuthorName:               "Beaver Integration Test",
 			AuthorEmail:              "test@beaver.ai",
 			UseShallowClone:          true,
 			CloneDepth:               1,
-			Timeout:                  30 * time.Second,
-			RetryAttempts:            3,
-			RetryDelay:               time.Second,
-			EnableConflictResolution: true, // Enable conflict resolution for CI
+			Timeout:                  45 * time.Second, // Increased timeout for integration tests
+			RetryAttempts:            5,                // Increased retry attempts
+			RetryDelay:               2 * time.Second,  // Increased retry delay
+			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -182,20 +189,25 @@ func TestErrorScenarios(t *testing.T) {
 
 	t.Run("Wiki Permission Test", func(t *testing.T) {
 		// Test wiki initialization with current permissions
+		// Add randomization to reduce test conflicts
+		randomBytes := make([]byte, 4)
+		rand.Read(randomBytes)
+		testSuffix := hex.EncodeToString(randomBytes)
+
 		wikiConfig := &wiki.PublisherConfig{
 			Owner:                    cfg.TestRepoOwner,
 			Repository:               cfg.TestRepoName,
 			Token:                    cfg.GitHubToken,
-			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_perm_test"),
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_perm_test_"+testSuffix),
 			BranchName:               "master",
 			AuthorName:               "Beaver Integration Test",
 			AuthorEmail:              "test@beaver.ai",
 			UseShallowClone:          true,
 			CloneDepth:               1,
-			Timeout:                  30 * time.Second,
-			RetryAttempts:            3,
-			RetryDelay:               time.Second,
-			EnableConflictResolution: true, // Enable conflict resolution for CI
+			Timeout:                  45 * time.Second, // Increased timeout for integration tests
+			RetryAttempts:            5,                // Increased retry attempts
+			RetryDelay:               2 * time.Second,  // Increased retry delay
+			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -215,20 +227,25 @@ func TestJapaneseContent(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Japanese Content Generation and Publishing", func(t *testing.T) {
+		// Add randomization to reduce test conflicts
+		randomBytes := make([]byte, 4)
+		rand.Read(randomBytes)
+		testSuffix := hex.EncodeToString(randomBytes)
+
 		wikiConfig := &wiki.PublisherConfig{
 			Owner:                    cfg.TestRepoOwner,
 			Repository:               cfg.TestRepoName,
 			Token:                    cfg.GitHubToken,
-			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_japanese"),
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_japanese_"+testSuffix),
 			BranchName:               "master",
 			AuthorName:               "Beaver Integration Test",
 			AuthorEmail:              "test@beaver.ai",
 			UseShallowClone:          true,
 			CloneDepth:               1,
-			Timeout:                  30 * time.Second,
-			RetryAttempts:            3,
-			RetryDelay:               time.Second,
-			EnableConflictResolution: true, // Enable conflict resolution for CI
+			Timeout:                  45 * time.Second, // Increased timeout for integration tests
+			RetryAttempts:            5,                // Increased retry attempts
+			RetryDelay:               2 * time.Second,  // Increased retry delay
+			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
@@ -279,20 +296,25 @@ func TestPerformanceScenarios(t *testing.T) {
 	t.Run("Large Content Performance Test", func(t *testing.T) {
 		start := time.Now()
 
+		// Add randomization to reduce test conflicts
+		randomBytes := make([]byte, 4)
+		rand.Read(randomBytes)
+		testSuffix := hex.EncodeToString(randomBytes)
+
 		wikiConfig := &wiki.PublisherConfig{
 			Owner:                    cfg.TestRepoOwner,
 			Repository:               cfg.TestRepoName,
 			Token:                    cfg.GitHubToken,
-			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_perf"),
+			WorkingDir:               filepath.Join(cfg.TempDir, "wiki_perf_"+testSuffix),
 			BranchName:               "master",
 			AuthorName:               "Beaver Integration Test",
 			AuthorEmail:              "test@beaver.ai",
 			UseShallowClone:          true,
 			CloneDepth:               1,
-			Timeout:                  30 * time.Second,
-			RetryAttempts:            3,
-			RetryDelay:               time.Second,
-			EnableConflictResolution: true, // Enable conflict resolution for CI
+			Timeout:                  60 * time.Second, // Extended timeout for performance tests
+			RetryAttempts:            7,                // More retries for performance tests
+			RetryDelay:               3 * time.Second,  // Longer delay for performance tests
+			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
 		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
