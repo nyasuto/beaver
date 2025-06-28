@@ -1,9 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"io"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/nyasuto/beaver/internal/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateRepository(t *testing.T) {
@@ -141,4 +148,141 @@ func TestMinFunction(t *testing.T) {
 			assert.Equal(t, tt.expected, result, "min(%d, %d) = %d, want %d", tt.a, tt.b, result, tt.expected)
 		})
 	}
+}
+
+func TestCreateClassifier(t *testing.T) {
+	t.Run("createClassifier with nil config", func(t *testing.T) {
+		classifier, err := createClassifier(nil)
+
+		require.NoError(t, err)
+		assert.NotNil(t, classifier)
+	})
+
+	t.Run("createClassifier with valid config", func(t *testing.T) {
+		cfg := &config.Config{}
+		classifier, err := createClassifier(cfg)
+
+		require.NoError(t, err)
+		assert.NotNil(t, classifier)
+	})
+
+	t.Run("createClassifier for different classify methods", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			method string
+		}{
+			{"rule-based method", "rule"},
+			{"hybrid method", "hybrid"},
+			{"ai method", "ai"},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Set the global classifyMethod variable
+				originalMethod := classifyMethod
+				classifyMethod = tc.method
+				defer func() { classifyMethod = originalMethod }()
+
+				classifier, err := createClassifier(nil)
+				require.NoError(t, err)
+				assert.NotNil(t, classifier)
+			})
+		}
+	})
+}
+
+func TestOutputClassificationJSON(t *testing.T) {
+	// Create test data
+	testSummary := &ClassificationSummary{
+		Repository:  "test/repo",
+		ProcessedAt: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC),
+		TotalIssues: 2,
+		Successful:  1,
+		Failed:      1,
+		Categories: map[string]int{
+			"bug":     1,
+			"feature": 0,
+		},
+		AverageTime: 1.5,
+		Method:      "hybrid",
+		Results: []IssueClassificationResult{
+			{
+				IssueNumber:    123,
+				IssueTitle:     "Test Issue",
+				Category:       "bug",
+				Confidence:     0.85,
+				Method:         "hybrid",
+				ProcessingTime: 1.5,
+			},
+		},
+		Errors: []ClassificationError{
+			{
+				IssueNumber: 124,
+				Error:       "classification failed",
+			},
+		},
+	}
+
+	t.Run("output to stdout", func(t *testing.T) {
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationJSON(testSummary, "")
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		output, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+
+		// Verify JSON is valid and contains expected data
+		var result ClassificationSummary
+		err = json.Unmarshal(output, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "test/repo", result.Repository)
+		assert.Equal(t, 2, result.TotalIssues)
+		assert.Equal(t, "hybrid", result.Method)
+	})
+
+	t.Run("output to file", func(t *testing.T) {
+		// Create temporary file
+		tmpDir := t.TempDir()
+		outputFile := filepath.Join(tmpDir, "test-output.json")
+
+		// Capture stdout for the success message
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := outputClassificationJSON(testSummary, outputFile)
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		output, _ := io.ReadAll(r)
+
+		require.NoError(t, err)
+		assert.Contains(t, string(output), "✅ 分類結果をJSONファイルに保存しました")
+		assert.Contains(t, string(output), outputFile)
+
+		// Verify file was created and contains correct JSON
+		data, err := os.ReadFile(outputFile)
+		require.NoError(t, err)
+
+		var result ClassificationSummary
+		err = json.Unmarshal(data, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "test/repo", result.Repository)
+		assert.Equal(t, 2, result.TotalIssues)
+	})
+
+	t.Run("invalid file path", func(t *testing.T) {
+		// Try to write to invalid path
+		err := outputClassificationJSON(testSummary, "/invalid/path/output.json")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "ファイル書き込みエラー")
+	})
 }
