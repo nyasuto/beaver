@@ -15,7 +15,7 @@ requests==2.32.4
 
 # Configuration
 pydantic==2.5.1
-python-dotenv==1.0.0
+python-dotenv==1.1.1
 
 # System monitoring
 psutil==5.9.6
