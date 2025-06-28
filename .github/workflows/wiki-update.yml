@@ -1,5 +1,11 @@
 name: 📖 Wiki Auto-Update
 
+# Required permissions for GitHub Actions
+permissions:
+  contents: read        # Read repository contents
+  issues: write        # Create issues on failure
+  actions: read        # Read workflow information
+
 on:
   # Issues closed - triggers wiki update
   issues:
@@ -113,8 +119,11 @@ jobs:
         
     - name: ✅ Verify build
       run: |
-        ./bin/beaver --version
+        # Verify beaver binary is executable and shows help
         ./bin/beaver --help
+        
+        # Verify beaver can show available commands
+        ./bin/beaver help
         
     - name: ⚙️ Setup Beaver configuration
       env:
