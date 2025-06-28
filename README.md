@@ -59,6 +59,16 @@ graph LR
 - **連携**: GoとPythonサービス間のREST API通信
 - **ストレージ**: GitHub Wiki、Notion、Confluence（設定可能）
 
+**GitHub Wiki更新方式:**
+- **Git Clone方式**: `git clone https://github.com/owner/repo.wiki.git`
+- **利点**: ローカル編集、競合回避、一括更新、トランザクション的処理
+- **要件**: Wiki事前初期化（GitHub Web UI経由）
+
+**GitHub API制限:**
+- **認証済み**: 5,000 requests/hour（Personal Access Token使用）
+- **未認証**: 60 requests/hour
+- **Beaver消費**: 通常10-50 requests per build
+
 ## 📋 開発フェーズ
 
 ### **✅ フェーズ1: 基盤ダム（MVP - 完了）**
@@ -182,10 +192,23 @@ Beaverは自身の作成プロセスを文書化します:
 ### **前提条件**
 - Go 1.21+
 - Python 3.9+
-- GitHub Personal Access Token
+- GitHub Personal Access Token ([設定ガイド](docs/github-token-guide.md))
 - OpenAI APIキー（または他のLLMプロバイダー）
 
 ### **クイックスタート**
+
+#### **📋 事前準備（初回のみ）**
+```bash
+# 1. GitHub Wikiの初期化
+# リポジトリページ → Wiki → "Create the first page" をクリック
+# 適当な内容でHomepageを作成（自動で上書きされます）
+
+# 2. Personal Access Token作成
+# GitHub Settings → Developer settings → Personal access tokens
+# 権限: repo, read:org
+```
+
+#### **⚡ インストール & 実行**
 ```bash
 # Beaverインストール
 go install github.com/getbeaver/beaver@latest
@@ -195,12 +218,19 @@ beaver init
 
 # 設定ファイル(beaver.yml)を編集してリポジトリとGITHUB_TOKENを設定
 
-# 初回知識ダム構築
-beaver build
+# GitHub Wikiにknowledge dam構築 
+beaver build    # Git clone方式でWikiを自動更新
 
 # 処理状況確認
 beaver status
 ```
+
+> 💡 **Wiki初期化が必要な理由**: BeaverはGit clone方式でWiki更新を行うため、事前にGitHub Web UIでWikiを有効化する必要があります。
+
+### **📚 詳細ガイド**
+- 📖 [Wiki Setup Guide](docs/wiki-setup.md) - GitHub Wiki初期化の詳細手順
+- 🔑 [GitHub Token Guide](docs/github-token-guide.md) - Personal Access Token作成・管理
+- 🛠️ [Troubleshooting Guide](docs/troubleshooting.md) - よくある問題と解決方法
 
 ### **設定例**
 ```yaml
