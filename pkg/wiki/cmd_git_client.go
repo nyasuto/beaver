@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/nyasuto/beaver/internal/errors"
 )
 
 // CmdGitClient implements GitClient using command-line git
@@ -380,57 +382,10 @@ func (c *CmdGitClient) UnsetConfig(ctx context.Context, dir string, key string) 
 
 // Helper methods
 
-// handleGitError converts git command errors to WikiError
+// handleGitError converts git command errors to enhanced BeaverError
 func (c *CmdGitClient) handleGitError(operation string, err error, output string) error {
-	outputLower := strings.ToLower(output)
-
-	// Network errors
-	if strings.Contains(outputLower, "network") ||
-		strings.Contains(outputLower, "connection") ||
-		strings.Contains(outputLower, "timeout") ||
-		strings.Contains(outputLower, "could not resolve host") {
-		return NewNetworkError(fmt.Sprintf("git %s", operation), err).
-			WithContext("git_output", output)
-	}
-
-	// Authentication errors
-	if strings.Contains(outputLower, "authentication failed") ||
-		strings.Contains(outputLower, "permission denied") ||
-		strings.Contains(outputLower, "bad credentials") ||
-		strings.Contains(outputLower, "invalid username or password") {
-		return NewAuthenticationError(fmt.Sprintf("git %s", operation), err).
-			WithContext("git_output", output)
-	}
-
-	// Repository not found or access denied
-	if strings.Contains(outputLower, "repository not found") ||
-		strings.Contains(outputLower, "does not exist") ||
-		strings.Contains(outputLower, "access denied") {
-		return NewRepositoryError(fmt.Sprintf("git %s", operation), err, "").
-			WithContext("git_output", output)
-	}
-
-	// Conflict errors
-	if strings.Contains(outputLower, "conflict") ||
-		strings.Contains(outputLower, "merge") ||
-		strings.Contains(outputLower, "would be overwritten") {
-		return NewConflictError(fmt.Sprintf("git %s", operation), err).
-			WithContext("git_output", output)
-	}
-
-	// Generic git operation error
-	return NewWikiError(
-		ErrorTypeGitOperation,
-		fmt.Sprintf("git %s", operation),
-		err,
-		fmt.Sprintf("Git操作が失敗しました: %s", operation),
-		0,
-		[]string{
-			"Gitリポジトリの状態を確認してください",
-			"作業ディレクトリの権限を確認してください",
-			"ネットワーク接続を確認してください",
-		},
-	).WithContext("git_output", output)
+	// Use the new enhanced error constructor with built-in suggestions
+	return errors.NewGitOperationError(operation, err, output)
 }
 
 // sanitizeURL removes tokens from URLs for logging

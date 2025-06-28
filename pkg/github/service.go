@@ -89,10 +89,16 @@ func (s *Service) FetchIssues(ctx context.Context, query models.IssueQuery) (*mo
 			s.logger.Warn("Approaching rate limit", "remaining", rateLimit.Remaining)
 		}
 
-		// Fetch issues for current page
-		issues, resp, err := s.client.client.Issues.ListByRepo(ctx, owner, repo, opts)
+		// Fetch issues for current page with retry logic
+		var issues []*github.Issue
+		var resp *github.Response
+		resp, err = s.ExecuteWithRetry(ctx, func(ctx context.Context) (*github.Response, error) {
+			var fetchErr error
+			issues, resp, fetchErr = s.client.client.Issues.ListByRepo(ctx, owner, repo, opts)
+			return resp, fetchErr
+		})
 		if err != nil {
-			return nil, errors.WrapGitHubError(err, fmt.Sprintf("Failed to fetch issues from %s", query.Repository))
+			return nil, fmt.Errorf("failed to fetch issues from %s: %w", query.Repository, err)
 		}
 
 		s.logger.Debug("Fetched issues page",
