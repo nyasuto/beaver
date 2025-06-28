@@ -17,7 +17,7 @@ on:
   
   # Weekly scheduled updates - sync any missed updates
   schedule:
-    - cron: '0 2 * * 0'  # Every Sunday at 2 AM UTC
+    - cron: '0 17 * * 6'  # Every Saturday at 5 PM UTC (2 AM JST Sunday)
   
   # Manual trigger for on-demand updates
   workflow_dispatch:
@@ -248,7 +248,7 @@ jobs:
         
         ## Last Updated
         
-        This wiki was last updated automatically on $(date -u '+%Y-%m-%d %H:%M:%S UTC').
+        This wiki was last updated automatically on $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST').
         
         ---
         *This wiki is maintained automatically. For manual updates, please create issues or update the source documentation.*
@@ -283,7 +283,7 @@ jobs:
         cat > Home.md << EOF
         # ${{ github.repository }} Wiki
         
-        **Last Updated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
+        **Last Updated:** $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST')  
         **Update Trigger:** ${{ github.event_name }}
         
         ## Project Overview
@@ -344,7 +344,7 @@ jobs:
         
         ## Statistics
         
-        **Last Updated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        **Last Updated:** $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST')
         
         EOF
           
@@ -402,7 +402,7 @@ jobs:
       run: |
         echo "📊 Wiki Update Summary:"
         echo "🎯 Trigger: ${{ github.event_name }}"
-        echo "⏰ Completed: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "⏰ Completed: $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M:%S JST')"
         echo "🔗 Repository: ${{ github.repository }}"
         
         if [ "${{ job.status }}" = "success" ]; then
