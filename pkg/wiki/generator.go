@@ -5,19 +5,27 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
 )
 
 // Generator generates Wiki content from GitHub Issues
 type Generator struct {
 	templateManager *TemplateManager
+	config          *config.Config
 }
 
 // NewGenerator creates a new Wiki generator
 func NewGenerator() *Generator {
 	return &Generator{
 		templateManager: NewTemplateManager(),
+		config:          config.GetConfig(),
 	}
+}
+
+// now returns the current time in the configured timezone
+func (g *Generator) now() time.Time {
+	return g.config.Now()
 }
 
 // WikiPage represents a generated Wiki page
@@ -117,7 +125,7 @@ type IndexData struct {
 func (g *Generator) GenerateIssuesSummary(issues []models.Issue, projectName string) (*WikiPage, error) {
 	data := IssuesSummaryData{
 		ProjectName:   projectName,
-		GeneratedAt:   time.Now(),
+		GeneratedAt:   g.now(),
 		TotalIssues:   len(issues),
 		Issues:        issues,
 		AIProcessor:   "OpenAI/Anthropic",
@@ -142,8 +150,8 @@ func (g *Generator) GenerateIssuesSummary(issues []models.Issue, projectName str
 		Title:     fmt.Sprintf("%s - Issues Summary", projectName),
 		Content:   content,
 		Filename:  "Issues-Summary.md",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
 		Summary:   fmt.Sprintf("Summary of %d GitHub Issues processed by Beaver AI", len(issues)),
 		Category:  "Summary",
 		Tags:      []string{"issues", "summary", "ai-processed"},
@@ -162,7 +170,7 @@ func (g *Generator) GenerateTroubleshootingGuide(issues []models.Issue, projectN
 
 	data := TroubleshootingData{
 		ProjectName:  projectName,
-		GeneratedAt:  time.Now(),
+		GeneratedAt:  g.now(),
 		SolvedIssues: solvedIssues,
 		CommonErrors: g.extractErrorPatterns(solvedIssues),
 		Solutions:    g.extractSolutions(solvedIssues),
@@ -177,8 +185,8 @@ func (g *Generator) GenerateTroubleshootingGuide(issues []models.Issue, projectN
 		Title:     fmt.Sprintf("%s - Troubleshooting Guide", projectName),
 		Content:   content,
 		Filename:  "Troubleshooting-Guide.md",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
 		Summary:   fmt.Sprintf("Troubleshooting guide based on %d solved issues", len(solvedIssues)),
 		Category:  "Guide",
 		Tags:      []string{"troubleshooting", "solutions", "closed-issues"},
@@ -189,7 +197,7 @@ func (g *Generator) GenerateTroubleshootingGuide(issues []models.Issue, projectN
 func (g *Generator) GenerateLearningPath(issues []models.Issue, projectName string) (*WikiPage, error) {
 	data := LearningPathData{
 		ProjectName:   projectName,
-		GeneratedAt:   time.Now(),
+		GeneratedAt:   g.now(),
 		Milestones:    g.extractMilestones(issues),
 		Technologies:  g.extractTechnologies(issues),
 		LearningGoals: g.extractLearningGoals(issues),
@@ -204,8 +212,8 @@ func (g *Generator) GenerateLearningPath(issues []models.Issue, projectName stri
 		Title:     fmt.Sprintf("%s - Learning Path", projectName),
 		Content:   content,
 		Filename:  "Learning-Path.md",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
 		Summary:   "Development learning path extracted from project evolution",
 		Category:  "Learning",
 		Tags:      []string{"learning", "milestones", "technologies"},
@@ -485,10 +493,10 @@ func (g *Generator) GenerateAllPages(issues []models.Issue, projectName string) 
 func (g *Generator) GenerateIndex(issues []models.Issue, projectName string) (*WikiPage, error) {
 	data := IndexData{
 		ProjectName: projectName,
-		GeneratedAt: time.Now(),
+		GeneratedAt: g.now(),
 		TotalIssues: len(issues),
 		Status:      "Active",
-		LastUpdate:  time.Now(),
+		LastUpdate:  g.now(),
 	}
 
 	content, err := g.renderTemplate("index", data)
@@ -500,8 +508,8 @@ func (g *Generator) GenerateIndex(issues []models.Issue, projectName string) (*W
 		Title:     fmt.Sprintf("%s - Home", projectName),
 		Content:   content,
 		Filename:  "Home.md",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
 		Summary:   fmt.Sprintf("Main index page for %s knowledge base", projectName),
 		Category:  "Index",
 		Tags:      []string{"index", "home", "navigation"},

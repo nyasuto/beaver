@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/viper"
 )
 
 // Config represents the Beaver configuration structure
 type Config struct {
-	Project ProjectConfig `mapstructure:"project"`
-	Sources SourcesConfig `mapstructure:"sources"`
-	Output  OutputConfig  `mapstructure:"output"`
-	AI      AIConfig      `mapstructure:"ai"`
+	Project  ProjectConfig  `mapstructure:"project"`
+	Sources  SourcesConfig  `mapstructure:"sources"`
+	Output   OutputConfig   `mapstructure:"output"`
+	AI       AIConfig       `mapstructure:"ai"`
+	Timezone TimezoneConfig `mapstructure:"timezone"`
 }
 
 // ProjectConfig holds project-specific settings
@@ -58,6 +60,12 @@ type AIFeatures struct {
 	Summarization   bool `mapstructure:"summarization"`
 	Categorization  bool `mapstructure:"categorization"`
 	Troubleshooting bool `mapstructure:"troubleshooting"`
+}
+
+// TimezoneConfig holds timezone settings
+type TimezoneConfig struct {
+	Location string `mapstructure:"location"`
+	Format   string `mapstructure:"format"`
 }
 
 var globalConfig *Config
@@ -144,6 +152,10 @@ ai:
     summarization: true   # 要約
     categorization: true  # 分類
     troubleshooting: true # トラブルシューティング
+
+timezone:
+  location: "Asia/Tokyo"  # タイムゾーン設定 (JST)
+  format: "2006-01-02 15:04:05 JST"  # 時刻フォーマット
 `
 
 	configPath := "beaver.yml"
@@ -172,6 +184,8 @@ func setDefaults() {
 	viper.SetDefault("ai.features.summarization", true)
 	viper.SetDefault("ai.features.categorization", false)
 	viper.SetDefault("ai.features.troubleshooting", false)
+	viper.SetDefault("timezone.location", "Asia/Tokyo")
+	viper.SetDefault("timezone.format", "2006-01-02 15:04:05 JST")
 }
 
 // ValidateConfig validates the loaded configuration
@@ -202,6 +216,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("無効な AI provider: %s", c.AI.Provider)
 	}
 
+	// Validate timezone
+	if _, err := time.LoadLocation(c.Timezone.Location); err != nil {
+		return fmt.Errorf("無効なタイムゾーン: %s (%w)", c.Timezone.Location, err)
+	}
+
 	return nil
 }
 
@@ -217,4 +236,30 @@ func GetConfigPath() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("設定ファイルが見つかりません")
+}
+
+// GetTimezone returns the configured timezone location
+func (c *Config) GetTimezone() (*time.Location, error) {
+	return time.LoadLocation(c.Timezone.Location)
+}
+
+// FormatTime formats time according to the configured timezone and format
+func (c *Config) FormatTime(t time.Time) (string, error) {
+	location, err := c.GetTimezone()
+	if err != nil {
+		return "", err
+	}
+
+	localTime := t.In(location)
+	return localTime.Format(c.Timezone.Format), nil
+}
+
+// Now returns the current time in the configured timezone
+func (c *Config) Now() time.Time {
+	location, err := c.GetTimezone()
+	if err != nil {
+		// Fallback to UTC if timezone loading fails
+		return time.Now().UTC()
+	}
+	return time.Now().In(location)
 }

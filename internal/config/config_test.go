@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -524,4 +525,133 @@ func containsAt(s, substr string, start int) bool {
 		}
 	}
 	return false
+}
+
+func TestTimezoneConfig(t *testing.T) {
+	t.Run("Valid timezone configuration", func(t *testing.T) {
+		config := Config{
+			Project: ProjectConfig{
+				Repository: "owner/repo",
+			},
+			Sources: SourcesConfig{
+				GitHub: GitHubConfig{
+					Token: "test-token",
+				},
+			},
+			Output: OutputConfig{
+				Wiki: WikiConfig{
+					Platform: "github",
+				},
+			},
+			AI: AIConfig{
+				Provider: "openai",
+			},
+			Timezone: TimezoneConfig{
+				Location: "Asia/Tokyo",
+				Format:   "2006-01-02 15:04:05 JST",
+			},
+		}
+
+		err := config.Validate()
+		if err != nil {
+			t.Errorf("Validate() with valid timezone error = %v", err)
+		}
+
+		// Test GetTimezone
+		location, err := config.GetTimezone()
+		if err != nil {
+			t.Errorf("GetTimezone() error = %v", err)
+			return
+		}
+
+		if location.String() != "Asia/Tokyo" {
+			t.Errorf("Expected timezone 'Asia/Tokyo', got %s", location.String())
+		}
+	})
+
+	t.Run("Invalid timezone configuration", func(t *testing.T) {
+		config := Config{
+			Project: ProjectConfig{
+				Repository: "owner/repo",
+			},
+			Sources: SourcesConfig{
+				GitHub: GitHubConfig{
+					Token: "test-token",
+				},
+			},
+			Output: OutputConfig{
+				Wiki: WikiConfig{
+					Platform: "github",
+				},
+			},
+			AI: AIConfig{
+				Provider: "openai",
+			},
+			Timezone: TimezoneConfig{
+				Location: "Invalid/Timezone",
+				Format:   "2006-01-02 15:04:05 JST",
+			},
+		}
+
+		err := config.Validate()
+		if err == nil {
+			t.Error("Validate() should return error for invalid timezone")
+		}
+	})
+
+	t.Run("FormatTime with Tokyo timezone", func(t *testing.T) {
+		config := Config{
+			Timezone: TimezoneConfig{
+				Location: "Asia/Tokyo",
+				Format:   "2006-01-02 15:04:05 JST",
+			},
+		}
+
+		// Use a fixed time for consistent testing
+		testTime := time.Date(2024, 6, 28, 12, 0, 0, 0, time.UTC)
+		formatted, err := config.FormatTime(testTime)
+		if err != nil {
+			t.Errorf("FormatTime() error = %v", err)
+			return
+		}
+
+		// In JST, UTC 12:00 becomes 21:00
+		expected := "2024-06-28 21:00:00 JST"
+		if formatted != expected {
+			t.Errorf("FormatTime() expected '%s', got '%s'", expected, formatted)
+		}
+	})
+
+	t.Run("Now returns time in configured timezone", func(t *testing.T) {
+		config := Config{
+			Timezone: TimezoneConfig{
+				Location: "Asia/Tokyo",
+				Format:   "2006-01-02 15:04:05 JST",
+			},
+		}
+
+		now := config.Now()
+		location := now.Location()
+
+		if location.String() != "Asia/Tokyo" {
+			t.Errorf("Now() should return time in Asia/Tokyo timezone, got %s", location.String())
+		}
+	})
+
+	t.Run("Default timezone values", func(t *testing.T) {
+		// Clear viper to get defaults
+		viper.Reset()
+		setDefaults()
+
+		location := viper.GetString("timezone.location")
+		format := viper.GetString("timezone.format")
+
+		if location != "Asia/Tokyo" {
+			t.Errorf("Default timezone location should be 'Asia/Tokyo', got %s", location)
+		}
+
+		if format != "2006-01-02 15:04:05 JST" {
+			t.Errorf("Default timezone format should be '2006-01-02 15:04:05 JST', got %s", format)
+		}
+	})
 }
