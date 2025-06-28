@@ -89,7 +89,11 @@ func TestGetStats(t *testing.T) {
 			pm := NewPerformanceMonitor(tt.enabled)
 
 			// Small delay to ensure processing duration is measurable
-			time.Sleep(time.Millisecond)
+			// Using busy wait instead of sleep for deterministic testing
+			start := time.Now()
+			for time.Since(start) < time.Millisecond {
+				// Busy wait
+			}
 
 			if tt.setupStats != nil {
 				tt.setupStats(pm)
@@ -269,8 +273,13 @@ func TestForceGC_MultipleRuns(t *testing.T) {
 		stats := pm.GetStats()
 		gcTimes = append(gcTimes, stats.LastGCTime)
 
-		// Small delay between GC runs
-		time.Sleep(time.Millisecond)
+		// Small delay between GC runs - using deterministic timing
+		if i > 0 {
+			start := time.Now()
+			for time.Since(start) < time.Millisecond {
+				// Busy wait
+			}
+		}
 	}
 
 	// Verify GC count
@@ -411,7 +420,10 @@ func TestBackgroundMonitoring(t *testing.T) {
 			<-ctx.Done()
 
 			// Give a small buffer for goroutine cleanup
-			time.Sleep(5 * time.Millisecond)
+			start := time.Now()
+			for time.Since(start) < 5*time.Millisecond {
+				// Busy wait for cleanup
+			}
 
 			finalStats := pm.GetStats()
 
@@ -566,13 +578,19 @@ func TestBackgroundMonitoring_ContextCancellation(t *testing.T) {
 	pm.Start(ctx)
 
 	// Let it run briefly
-	time.Sleep(15 * time.Millisecond)
+	start := time.Now()
+	for time.Since(start) < 15*time.Millisecond {
+		// Busy wait
+	}
 
 	// Cancel the context
 	cancel()
 
 	// Give time for goroutine to cleanup
-	time.Sleep(5 * time.Millisecond)
+	start = time.Now()
+	for time.Since(start) < 5*time.Millisecond {
+		// Busy wait for cleanup
+	}
 
 	// The test passes if no goroutines are leaked (verified by test runner)
 	// This is a regression test for proper context handling
@@ -614,7 +632,10 @@ func TestPerformanceMonitor_StartMultipleTimes(t *testing.T) {
 	<-ctx2.Done()
 
 	// Give time for cleanup
-	time.Sleep(10 * time.Millisecond)
+	start := time.Now()
+	for time.Since(start) < 10*time.Millisecond {
+		// Busy wait for cleanup
+	}
 
 	// Test should pass without hanging or panicking
 	assert.True(t, true, "Multiple Start calls should be handled gracefully")

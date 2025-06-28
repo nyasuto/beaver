@@ -24,9 +24,20 @@ func TestNewService(t *testing.T) {
 }
 
 func TestService_FetchIssues(t *testing.T) {
-	service := NewService("invalid_token")
-	ctx := context.Background()
+	// Setup mock HTTP server for testing API calls
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate GitHub API rate limit error
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"message": "Bad credentials", "documentation_url": "https://docs.github.com/rest"}`))
+	}))
+	defer server.Close()
 
+	// Create service with custom HTTP client pointing to mock server
+	service := NewService("invalid_token")
+	service.client.client.BaseURL, _ = url.Parse(server.URL + "/api/v3/")
+
+	ctx := context.Background()
 	query := models.IssueQuery{
 		Repository: "testowner/testrepo",
 		State:      "open",
@@ -46,7 +57,16 @@ func TestService_FetchIssues(t *testing.T) {
 }
 
 func TestService_TestConnection(t *testing.T) {
+	// Setup mock HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "Bad credentials"}`))
+	}))
+	defer server.Close()
+
 	service := NewService("invalid_token")
+	service.client.client.BaseURL, _ = url.Parse(server.URL + "/api/v3/")
 	ctx := context.Background()
 
 	err := service.TestConnection(ctx)
@@ -56,7 +76,16 @@ func TestService_TestConnection(t *testing.T) {
 }
 
 func TestService_GetRateLimit(t *testing.T) {
+	// Setup mock HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "Bad credentials"}`))
+	}))
+	defer server.Close()
+
 	service := NewService("invalid_token")
+	service.client.client.BaseURL, _ = url.Parse(server.URL + "/api/v3/")
 	ctx := context.Background()
 
 	rateLimit, err := service.GetRateLimit(ctx)

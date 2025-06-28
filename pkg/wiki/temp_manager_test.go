@@ -167,14 +167,16 @@ func TestCleanupAll(t *testing.T) {
 			// Create test directories
 			var createdDirs []string
 			for i := 0; i < tt.numDirs; i++ {
-				// Add small delay to ensure unique timestamps
-				if i > 0 {
-					time.Sleep(time.Millisecond)
-				}
-
 				dir, err := tm.CreateTempDir("cleanup-test")
 				require.NoError(t, err)
 				createdDirs = append(createdDirs, dir)
+
+				// Set deterministic timestamp instead of using sleep
+				if i > 0 {
+					tm.mutex.Lock()
+					tm.directories[dir].LastUsed = time.Now().Add(-time.Duration(i) * time.Minute)
+					tm.mutex.Unlock()
+				}
 
 				// Create a test file in each directory
 				testFile := filepath.Join(dir, "test.txt")
