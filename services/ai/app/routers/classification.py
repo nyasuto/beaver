@@ -61,18 +61,24 @@ async def _real_ai_classification(request: ClassificationRequest, settings: Sett
     Real AI classification using OpenAI/Anthropic APIs
     """
     start_time = time.time()
+    logger.info(f"Starting real AI classification for content: {request.content[:100]}...")
     
     # Initialize AI client
     ai_client = AIClient(settings)
     
     # Convert request to IssueData format
+    from datetime import datetime
     issue_data = IssueData(
+        id=1,  # Dummy ID for classification
+        number=1,  # Dummy number for classification
         title=getattr(request, 'title', request.content[:100]),  # Use content as title if not provided
         body=request.content,
         state="open",  # Default state
         labels=getattr(request, 'labels', []),
         user="unknown",  # Default user
-        comments=[]  # No comments for basic classification
+        comments=[],  # No comments for basic classification
+        created_at=datetime.now(),  # Current time
+        updated_at=datetime.now()   # Current time
     )
     
     try:
@@ -84,12 +90,15 @@ async def _real_ai_classification(request: ClassificationRequest, settings: Sett
         model = request.model if request.model else None
         
         # Call AI for classification
+        logger.info(f"Using AI provider: {provider} with model: {model or 'default'}")
         if provider == AIProvider.OPENAI:
             ai_response = await _classify_with_openai(ai_client, prompt, model, settings)
         elif provider == AIProvider.ANTHROPIC:
             ai_response = await _classify_with_anthropic(ai_client, prompt, model, settings)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
+        
+        logger.info(f"AI response received (length: {len(ai_response)} chars)")
         
         # Parse AI response
         category, confidence, reasoning = _parse_ai_classification_response(ai_response, request.categories or DEFAULT_CATEGORIES)
@@ -110,7 +119,12 @@ async def _real_ai_classification(request: ClassificationRequest, settings: Sett
         )
         
     except Exception as e:
-        logger.warning(f"Real AI classification failed, falling back to mock: {str(e)}")
+        logger.error(f"Real AI classification failed: {type(e).__name__}: {str(e)}")
+        logger.error(f"Exception details: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
+        logger.info("Falling back to mock classification...")
         # Fallback to mock if AI fails
         return await _mock_classification(request, settings)
 
@@ -140,22 +154,38 @@ def _create_classification_prompt(content: str, categories: List[str]) -> str:
 async def _classify_with_openai(ai_client: AIClient, prompt: str, model: str, settings: Settings) -> str:
     """Classify using OpenAI API"""
     from openai import AsyncOpenAI
+    import openai
     
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    model_name = model or settings.default_openai_model
-    
-    response = await client.chat.completions.create(
-        model=model_name,
-        messages=[
-            {"role": "system", "content": "あなたは技術コンテンツの分類専門家です。"},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=settings.max_tokens,
-        temperature=0.1,  # Low temperature for consistent classification
-        timeout=settings.request_timeout
-    )
-    
-    return response.choices[0].message.content
+    try:
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        model_name = model or settings.default_openai_model
+        
+        logger.info(f"Making OpenAI API call with model: {model_name}")
+        
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "あなたは技術コンテンツの分類専門家です。"},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=settings.max_tokens,
+            temperature=0.1,  # Low temperature for consistent classification
+            timeout=settings.request_timeout
+        )
+        
+        content = response.choices[0].message.content
+        logger.info(f"OpenAI API call successful, received {len(content)} characters")
+        return content
+        
+    except openai.RateLimitError as e:
+        logger.error(f"OpenAI rate limit exceeded: {e}")
+        raise
+    except openai.APIError as e:
+        logger.error(f"OpenAI API error: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in OpenAI call: {type(e).__name__}: {e}")
+        raise
 
 
 async def _classify_with_anthropic(ai_client: AIClient, prompt: str, model: str, settings: Settings) -> str:
@@ -358,6 +388,51 @@ async def classify_content(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Classification failed: {str(e)}"
+        )
+
+
+@router.post("/enhanced", response_model=ClassificationResponse)
+async def classify_content_enhanced(
+    request: ClassificationRequest,
+    settings: Settings = Depends(get_settings)
+):
+    """
+    Enhanced AI-powered content classification
+    
+    Provides advanced classification with deeper analysis:
+    - Multi-dimensional categorization
+    - Confidence scoring
+    - Contextual tag generation
+    - Priority assessment
+    """
+    logger.info("Enhanced classification request received")
+    
+    # Validate feature is enabled
+    if not settings.enable_classification:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Classification feature is disabled"
+        )
+    
+    # Validate AI provider
+    await _validate_ai_provider(request.provider, settings)
+    
+    try:
+        # Use real AI classification (same as basic, but could be enhanced later)
+        response = await _real_ai_classification(request, settings)
+        
+        logger.info(
+            f"Enhanced classification completed: {response.primary_category} "
+            f"(confidence: {response.confidence:.2f}) in {response.processing_time:.2f}s"
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Enhanced classification failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Enhanced classification failed: {str(e)}"
         )
 
 

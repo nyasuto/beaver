@@ -93,7 +93,7 @@ func (c *AIClient) ClassifyIssue(ctx context.Context, req *AIClassificationReque
 	}
 
 	// Build URL
-	endpoint, err := url.JoinPath(c.baseURL, "/classify/enhanced")
+	endpoint, err := url.JoinPath(c.baseURL, "/api/v1/classify/enhanced")
 	if err != nil {
 		return nil, fmt.Errorf("failed to build URL: %w", err)
 	}
@@ -238,7 +238,7 @@ func (hc *HybridClassifier) calculateWeightedScores(ruleResult ClassificationRes
 }
 
 // determineFinalClassification determines the final category and confidence
-func (hc *HybridClassifier) determineFinalClassification(details HybridClassificationDetails, ruleResult ClassificationResult, aiResult AIClassificationResponse) (Category, float64) {
+func (hc *HybridClassifier) determineFinalClassification(details HybridClassificationDetails, ruleResult ClassificationResult, _ AIClassificationResponse) (Category, float64) {
 	// If AI and rules agree, use that category with high confidence
 	if details.AICategory == details.RuleCategory {
 		confidence := (details.AIConfidence + details.RuleConfidence) / 2.0
