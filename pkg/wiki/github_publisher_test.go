@@ -2,6 +2,7 @@ package wiki
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -894,6 +895,161 @@ func TestGitHubWikiPublisher_ListPages(t *testing.T) {
 
 	// Cleanup
 	_ = publisher.Cleanup()
+}
+
+func TestGitHubWikiPublisher_publishPagesInBatches(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	mockGit := NewMockGitClient()
+	publisher.gitClient = mockGit
+
+	ctx := context.Background()
+	
+	// Initialize publisher
+	err = publisher.Initialize(ctx)
+	if err != nil {
+		t.Fatalf("Initialize() error = %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		pages     []*WikiPage
+		expectErr bool
+	}{
+		{
+			name:      "empty pages",
+			pages:     []*WikiPage{},
+			expectErr: false,
+		},
+		{
+			name: "single page",
+			pages: []*WikiPage{
+				{Title: "Test", Filename: "Test.md", Content: "# Test", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			},
+			expectErr: false,
+		},
+		{
+			name: "multiple pages",
+			pages: []*WikiPage{
+				{Title: "Page1", Filename: "Page1.md", Content: "# Page 1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+				{Title: "Page2", Filename: "Page2.md", Content: "# Page 2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+				{Title: "Page3", Filename: "Page3.md", Content: "# Page 3", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			},
+			expectErr: false,
+		},
+		{
+			name: "large batch (50+ pages)",
+			pages: func() []*WikiPage {
+				pages := make([]*WikiPage, 55)
+				for i := 0; i < 55; i++ {
+					pages[i] = &WikiPage{
+						Title:     fmt.Sprintf("Page%d", i+1),
+						Filename:  fmt.Sprintf("Page%d.md", i+1),
+						Content:   fmt.Sprintf("# Page %d", i+1),
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					}
+				}
+				return pages
+			}(),
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := publisher.publishPagesInBatches(ctx, tt.pages)
+			if (err != nil) != tt.expectErr {
+				t.Errorf("publishPagesInBatches() error = %v, expectErr %v", err, tt.expectErr)
+			}
+		})
+	}
+
+	// Cleanup
+	_ = publisher.Cleanup()
+}
+
+func TestGitHubWikiPublisher_calculateOptimalBatchSize(t *testing.T) {
+	config := &PublisherConfig{
+		Owner:      "testowner",
+		Repository: "testrepo",
+		Token:      "testtoken",
+		Timeout:    30 * time.Second,
+	}
+
+	publisher, err := NewGitHubWikiPublisher(config)
+	if err != nil {
+		t.Fatalf("NewGitHubWikiPublisher() error = %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		totalPages int
+		minExpected int
+		maxExpected int
+	}{
+		{
+			name:        "small set (10 pages)",
+			totalPages:  10,
+			minExpected: 5,
+			maxExpected: 10,
+		},
+		{
+			name:        "medium set (50 pages)",
+			totalPages:  50,
+			minExpected: 5,
+			maxExpected: 10,
+		},
+		{
+			name:        "large set (200 pages)",
+			totalPages:  200,
+			minExpected: 5,
+			maxExpected: 25,
+		},
+		{
+			name:        "very large set (1000 pages)",
+			totalPages:  1000,
+			minExpected: 5,
+			maxExpected: 50,
+		},
+		{
+			name:        "edge case (1 page)",
+			totalPages:  1,
+			minExpected: 1,
+			maxExpected: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			batchSize := publisher.calculateOptimalBatchSize(tt.totalPages)
+			
+			if batchSize < tt.minExpected {
+				t.Errorf("calculateOptimalBatchSize(%d) = %d, want >= %d", 
+					tt.totalPages, batchSize, tt.minExpected)
+			}
+			if batchSize > tt.maxExpected {
+				t.Errorf("calculateOptimalBatchSize(%d) = %d, want <= %d", 
+					tt.totalPages, batchSize, tt.maxExpected)
+			}
+			
+			// Ensure batch size is reasonable for the total pages
+			if batchSize > tt.totalPages {
+				t.Errorf("calculateOptimalBatchSize(%d) = %d, batch size should not exceed total pages", 
+					tt.totalPages, batchSize)
+			}
+		})
+	}
 }
 
 func TestGitHubWikiPublisher_Commit(t *testing.T) {
