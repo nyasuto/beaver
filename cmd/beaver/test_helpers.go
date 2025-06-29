@@ -181,7 +181,7 @@ func (f *TestFixtures) CreateTestIssue(id int64, number int, title, body string)
 // CreateTestIssueResult creates a standard test issue result
 func (f *TestFixtures) CreateTestIssueResult(issueCount int) *models.IssueResult {
 	issues := make([]models.Issue, issueCount)
-	for i := 0; i < issueCount; i++ {
+	for i := range issueCount {
 		issues[i] = models.Issue{
 			ID:        int64(i + 1),
 			Number:    i + 1,
@@ -217,7 +217,7 @@ func (f *TestFixtures) CreateTestAIResponse() *ai.SummarizationResponse {
 		KeyPoints:      []string{"Key point 1", "Key point 2"},
 		Category:       &category,
 		Complexity:     "medium",
-		ProviderUsed:   "openai",
+		ProviderUsed:   ai.ProviderOpenAI,
 		ModelUsed:      "gpt-4",
 		ProcessingTime: 1.5,
 		TokenUsage: map[string]int{
@@ -231,7 +231,7 @@ func (f *TestFixtures) CreateTestAIResponse() *ai.SummarizationResponse {
 // CreateTestBatchAIResponse creates a standard batch AI response
 func (f *TestFixtures) CreateTestBatchAIResponse(resultCount int) *ai.BatchSummarizationResponse {
 	results := make([]ai.SummarizationResponse, resultCount)
-	for i := 0; i < resultCount; i++ {
+	for i := range resultCount {
 		response := f.CreateTestAIResponse()
 		response.Summary = fmt.Sprintf("Summary for issue %d", i+1)
 		results[i] = *response
