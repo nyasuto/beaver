@@ -73,7 +73,7 @@ jobs:
     - name: 🔍 Check if wiki exists
       id: check_wiki
       env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       run: |
         # Check if wiki is enabled for this repository
         wiki_url="https://api.github.com/repos/${{ github.repository }}/pages"
@@ -109,8 +109,13 @@ jobs:
 
     - name: 📦 Install dependencies
       run: |
+        # Install Go dependencies
         go mod download
         go mod tidy
+        
+        # Install required system tools
+        sudo apt-get update
+        sudo apt-get install -y jq
         
     - name: 🔨 Build Beaver
       run: |
@@ -127,9 +132,16 @@ jobs:
         
     - name: ⚙️ Setup Beaver configuration
       env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         TARGET_REPO: ${{ github.event.inputs.target_repository || github.repository }}
       run: |
+        # Verify GitHub token is available
+        if [ -z "$GITHUB_TOKEN" ]; then
+          echo "❌ No GitHub token available"
+          echo "Please set BEAVER_GITHUB_TOKEN or GITHUB_TOKEN secret"
+          exit 1
+        fi
+        echo "✅ GitHub token is configured"
         # Create beaver.yml if it doesn't exist
         if [ ! -f "$BEAVER_CONFIG_FILE" ]; then
           echo "📝 Creating Beaver configuration..."
@@ -145,28 +157,24 @@ jobs:
           description: "AI agent knowledge dam construction tool"
           version: "$(git describe --tags --always)"
         
-        source:
+        sources:
           github:
-            repository: "$TARGET_REPO"
-            token_env: "GITHUB_TOKEN"
-            include_closed_issues: true
-            include_pull_requests: true
-            max_issues: 100
+            issues: true
+            commits: true
+            prs: true
             
         output:
-          github_wiki:
-            repository: "$TARGET_REPO"
-            auto_commit: true
-            commit_message: "docs: automated wiki update [skip-wiki]"
-            branch: "main"
+          wiki:
+            platform: "github"
+            templates: "default"
             
-        processing:
-          ai_enhancement: false  # Disable AI for automated updates
-          template_engine: "default"
-          
-        logging:
-          level: "info"
-          format: "text"
+        ai:
+          provider: "openai"
+          model: "gpt-4"
+          features:
+            summarization: false  # Disable AI for automated updates
+            categorization: false
+            troubleshooting: false
         EOF
         
         echo "✅ Configuration created successfully"
@@ -174,27 +182,37 @@ jobs:
         
     - name: 🔍 Analyze repository issues
       env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       run: |
         echo "📊 Analyzing repository issues for wiki content..."
         
         # Get recent issues for wiki update
-        ./bin/beaver fetch issues ${{ github.repository }} \
+        if ./bin/beaver fetch issues ${{ github.repository }} \
           --state=all \
           --sort=updated \
           --per-page=50 \
-          --output=issues.json
-        
-        issue_count=$(jq '.fetched_count' issues.json)
-        echo "📋 Found $issue_count issues to process"
-        
-        if [ "$issue_count" -eq 0 ]; then
-          echo "⚠️ No issues found - creating minimal wiki"
+          --format=json \
+          --output=issues.json; then
+          
+          if [ -f "issues.json" ]; then
+            issue_count=$(jq -r '.fetched_count // 0' issues.json)
+            echo "📋 Found $issue_count issues to process"
+            
+            if [ "$issue_count" -eq 0 ]; then
+              echo "⚠️ No issues found - creating minimal wiki"
+            fi
+          else
+            echo "⚠️ Issue fetch succeeded but no output file created"
+            echo '{"fetched_count": 0, "issues": []}' > issues.json
+          fi
+        else
+          echo "❌ Failed to fetch issues - creating empty dataset"
+          echo '{"fetched_count": 0, "issues": []}' > issues.json
         fi
         
     - name: 📖 Generate wiki content
       env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         FORCE_REBUILD: ${{ github.event.inputs.force_rebuild || 'false' }}
       run: |
         echo "📝 Generating wiki content..."
@@ -202,15 +220,29 @@ jobs:
         # Create wiki content based on issues
         if [ "$FORCE_REBUILD" = "true" ]; then
           echo "🔄 Force rebuild requested - regenerating all wiki content"
-          ./bin/beaver build
+          if ! ./bin/beaver wiki generate ${{ github.repository }} --output ./wiki-output; then
+            echo "❌ Wiki generation failed - creating minimal output directory"
+            mkdir -p ./wiki-output
+            echo "# Wiki Generation Failed" > ./wiki-output/Error.md
+          fi
         else
           echo "⚡ Incremental update - processing recent changes"
-          ./bin/beaver build
+          if ! ./bin/beaver wiki generate ${{ github.repository }} --output ./wiki-output; then
+            echo "❌ Wiki generation failed - creating minimal output directory"
+            mkdir -p ./wiki-output
+            echo "# Wiki Generation Failed" > ./wiki-output/Error.md
+          fi
+        fi
+        
+        # Verify output directory exists
+        if [ ! -d "./wiki-output" ]; then
+          echo "📁 Creating empty wiki output directory"
+          mkdir -p ./wiki-output
         fi
         
     - name: 📤 Clone wiki repository
       env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       run: |
         echo "📁 Cloning wiki repository..."
         
@@ -269,7 +301,7 @@ jobs:
     - name: 📝 Update wiki pages
       working-directory: wiki-repo
       env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       run: |
         echo "📝 Updating wiki pages..."
         
@@ -349,10 +381,13 @@ jobs:
         EOF
           
           # Add issue statistics using jq if available
-          if command -v jq >/dev/null; then
+          if command -v jq >/dev/null && [ -f "../issues.json" ]; then
             echo "📈 Adding issue statistics..."
-            issue_count=$(jq '.fetched_count' ../issues.json)
+            issue_count=$(jq -r '.fetched_count // 0' ../issues.json)
             echo "**Total Issues Processed:** $issue_count" >> Issues-Summary.md
+            echo "" >> Issues-Summary.md
+          else
+            echo "**Total Issues Processed:** Unknown (data not available)" >> Issues-Summary.md
             echo "" >> Issues-Summary.md
           fi
         fi
