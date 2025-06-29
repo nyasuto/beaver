@@ -1599,7 +1599,7 @@ ai:
 		configPath := tempDir + "/beaver.yml"
 		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
-		
+
 		// Set BEAVER_CONFIG_PATH to ensure test config is used
 		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
 		defer func() {
@@ -1641,7 +1641,7 @@ ai:
 		configPath := tempDir + "/beaver.yml"
 		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
-		
+
 		// Set BEAVER_CONFIG_PATH to ensure test config is used
 		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
 		defer func() {

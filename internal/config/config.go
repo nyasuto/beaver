@@ -72,13 +72,18 @@ var globalConfig *Config
 
 // LoadConfig loads configuration from file and environment variables
 func LoadConfig() (*Config, error) {
-	viper.SetConfigName("beaver")
-	viper.SetConfigType("yaml")
+	// Check for custom config path from environment variable
+	if configPath := os.Getenv("BEAVER_CONFIG_PATH"); configPath != "" {
+		viper.SetConfigFile(configPath)
+	} else {
+		viper.SetConfigName("beaver")
+		viper.SetConfigType("yaml")
 
-	// Add config search paths
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME/.beaver")
-	viper.AddConfigPath("/etc/beaver")
+		// Add config search paths
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("$HOME/.beaver")
+		viper.AddConfigPath("/etc/beaver")
+	}
 
 	// Environment variable settings
 	viper.SetEnvPrefix("BEAVER")

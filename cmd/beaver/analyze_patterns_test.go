@@ -28,8 +28,8 @@ func TestRunAnalyzePatternsCommand_NoConfig(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error when config file doesn't exist, got nil")
 	}
-	if !containsStringAnywhere(err.Error(), "設定が無効です") {
-		t.Errorf("Expected Japanese config validation error message, got: %v", err)
+	if !containsStringAnywhere(err.Error(), "設定ファイル読み込みエラー") && !containsStringAnywhere(err.Error(), "設定が無効です") {
+		t.Errorf("Expected Japanese config loading or validation error message, got: %v", err)
 	}
 }
 
@@ -113,8 +113,8 @@ output:
 	if err == nil {
 		t.Error("Expected repository format error, got nil")
 	}
-	if !containsStringAnywhere(err.Error(), "設定が無効です") {
-		t.Errorf("Expected config validation error (which includes repository check), got: %v", err)
+	if !containsStringAnywhere(err.Error(), "リポジトリ形式が無効です") && !containsStringAnywhere(err.Error(), "設定が無効です") {
+		t.Errorf("Expected config validation or repository format error, got: %v", err)
 	}
 }
 
