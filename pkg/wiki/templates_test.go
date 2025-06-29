@@ -100,8 +100,8 @@ func TestListTemplates(t *testing.T) {
 		{
 			name:           "default templates only",
 			setupTemplates: nil,
-			expectedNames:  []string{"issues-summary", "troubleshooting", "learning-path", "index"},
-			description:    "Should return all default templates",
+			expectedNames:  []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs"},
+			description:    "Should return all working default templates",
 		},
 		{
 			name: "default plus custom templates",
@@ -109,7 +109,7 @@ func TestListTemplates(t *testing.T) {
 				"custom1": "Template 1 content",
 				"custom2": "Template 2 content",
 			},
-			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "custom1", "custom2"},
+			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "custom1", "custom2"},
 			description:   "Should return both default and custom templates",
 		},
 		{
@@ -121,7 +121,7 @@ func TestListTemplates(t *testing.T) {
 				"template-d": "Content D",
 				"template-e": "Content E",
 			},
-			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index",
+			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs",
 				"template-a", "template-b", "template-c", "template-d", "template-e"},
 			description: "Should handle many templates",
 		},
@@ -130,7 +130,7 @@ func TestListTemplates(t *testing.T) {
 			setupTemplates: map[string]string{
 				"issues-summary": "Custom issues summary content",
 			},
-			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index"},
+			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs"},
 			description:   "Should not duplicate template names when overwriting",
 		},
 	}
@@ -266,10 +266,10 @@ func TestTemplateManagerIntegration(t *testing.T) {
 
 	// Test that default templates are loaded correctly
 	templates := tm.ListTemplates()
-	assert.Len(t, templates, 4, "Should have 4 default templates")
+	assert.Len(t, templates, 5, "Should have 5 working default templates")
 
 	// Test that each default template can be retrieved
-	for _, name := range []string{"issues-summary", "troubleshooting", "learning-path", "index"} {
+	for _, name := range []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs"} {
 		tmpl, exists := tm.GetTemplate(name)
 		assert.True(t, exists, "Default template should exist: %s", name)
 		assert.NotNil(t, tmpl, "Default template should not be nil: %s", name)
@@ -287,7 +287,7 @@ func TestTemplateManagerIntegration(t *testing.T) {
 
 	// Verify custom template appears in list
 	updatedTemplates := tm.ListTemplates()
-	assert.Len(t, updatedTemplates, 5, "Should have 5 templates after adding custom")
+	assert.Len(t, updatedTemplates, 6, "Should have 6 templates after adding custom")
 	assert.Contains(t, updatedTemplates, "integration-test", "Custom template should be in list")
 
 	// Verify custom template can be retrieved
