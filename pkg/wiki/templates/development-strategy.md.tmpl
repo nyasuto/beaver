@@ -30,10 +30,10 @@
 ## 🎯 Dynamic Priority Matrix
 
 ### High Priority (Immediate Action) {{if .HighPriorityCount}}({{.HighPriorityCount}} items){{end}}
-{{range .HighPriorityIssues}}
+{{if .HighPriorityIssues}}
 | Issue | Type | Impact | Status | Assignee |
 |-------|------|--------|--------|----------|
-{{range .}}| [#{{.Number}}]({{.URL}}) | {{.Type}} | {{.Impact}} | {{.State}} | {{.Assignee}} |
+{{range .HighPriorityIssues}}| [#{{.Number}}]({{.URL}}) | {{.Type}} | {{.Impact}} | {{.State}} | {{.Assignee}} |
 {{end}}{{end}}
 
 {{if not .HighPriorityIssues}}
@@ -41,10 +41,10 @@
 {{end}}
 
 ### Medium Priority (Next Sprint) {{if .MediumPriorityCount}}({{.MediumPriorityCount}} items){{end}}
-{{range .MediumPriorityIssues}}
+{{if .MediumPriorityIssues}}
 | Issue | Type | Effort | Expected Impact |
 |-------|------|--------|-----------------|
-{{range .}}| [#{{.Number}}]({{.URL}}) | {{.Type}} | {{.Effort}} | {{.ExpectedImpact}} |
+{{range .MediumPriorityIssues}}| [#{{.Number}}]({{.URL}}) | {{.Type}} | {{.Effort}} | {{.ExpectedImpact}} |
 {{end}}{{end}}
 
 ### Low Priority (Backlog) {{if .LowPriorityCount}}({{.LowPriorityCount}} items){{end}}

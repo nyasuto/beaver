@@ -100,7 +100,7 @@ func TestListTemplates(t *testing.T) {
 		{
 			name:           "default templates only",
 			setupTemplates: nil,
-			expectedNames:  []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs"},
+			expectedNames:  []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "statistics", "label-analysis", "quick-reference", "development-strategy"},
 			description:    "Should return all working default templates",
 		},
 		{
@@ -109,7 +109,7 @@ func TestListTemplates(t *testing.T) {
 				"custom1": "Template 1 content",
 				"custom2": "Template 2 content",
 			},
-			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "custom1", "custom2"},
+			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "statistics", "label-analysis", "quick-reference", "development-strategy", "custom1", "custom2"},
 			description:   "Should return both default and custom templates",
 		},
 		{
@@ -121,7 +121,7 @@ func TestListTemplates(t *testing.T) {
 				"template-d": "Content D",
 				"template-e": "Content E",
 			},
-			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs",
+			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "statistics", "label-analysis", "quick-reference", "development-strategy",
 				"template-a", "template-b", "template-c", "template-d", "template-e"},
 			description: "Should handle many templates",
 		},
@@ -130,7 +130,7 @@ func TestListTemplates(t *testing.T) {
 			setupTemplates: map[string]string{
 				"issues-summary": "Custom issues summary content",
 			},
-			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs"},
+			expectedNames: []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "statistics", "label-analysis", "quick-reference", "development-strategy"},
 			description:   "Should not duplicate template names when overwriting",
 		},
 	}
@@ -235,21 +235,20 @@ func TestGetDefaultTemplateContent(t *testing.T) {
 			if tt.expectFound {
 				assert.NotEmpty(t, content, "Content should not be empty for existing template")
 
-				// Verify content contains expected template markers
+				// Verify content contains expected external file reference
 				switch tt.templateName {
 				case "issues-summary":
-					assert.Contains(t, content, "{{.ProjectName}}", "Issues summary should contain ProjectName placeholder")
-					assert.Contains(t, content, "{{.TotalIssues}}", "Issues summary should contain TotalIssues placeholder")
-					assert.Contains(t, content, "📋", "Issues summary should contain emoji markers")
+					assert.Contains(t, content, "External template file:", "Issues summary should reference external file")
+					assert.Contains(t, content, "issues-summary.md.tmpl", "Issues summary should reference correct file")
 				case "troubleshooting":
-					assert.Contains(t, content, "🛠️", "Troubleshooting should contain tool emoji")
-					assert.Contains(t, content, "{{len .SolvedIssues}}", "Troubleshooting should contain SolvedIssues placeholder")
+					assert.Contains(t, content, "External template file:", "Troubleshooting should reference external file")
+					assert.Contains(t, content, "troubleshooting.md.tmpl", "Troubleshooting should reference correct file")
 				case "learning-path":
-					assert.Contains(t, content, "📚", "Learning path should contain book emoji")
-					assert.Contains(t, content, "{{range .Milestones}}", "Learning path should contain Milestones placeholder")
+					assert.Contains(t, content, "External template file:", "Learning path should reference external file")
+					assert.Contains(t, content, "learning-path.md.tmpl", "Learning path should reference correct file")
 				case "index":
-					assert.Contains(t, content, "🦫", "Index should contain beaver emoji")
-					assert.Contains(t, content, "Knowledge Dam", "Index should contain Knowledge Dam text")
+					assert.Contains(t, content, "External template file:", "Index should reference external file")
+					assert.Contains(t, content, "index.md.tmpl", "Index should reference correct file")
 				}
 			} else {
 				if tt.expectEmpty {
@@ -266,10 +265,10 @@ func TestTemplateManagerIntegration(t *testing.T) {
 
 	// Test that default templates are loaded correctly
 	templates := tm.ListTemplates()
-	assert.Len(t, templates, 5, "Should have 5 working default templates")
+	assert.Len(t, templates, 9, "Should have 9 working default templates")
 
 	// Test that each default template can be retrieved
-	for _, name := range []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs"} {
+	for _, name := range []string{"issues-summary", "troubleshooting", "learning-path", "index", "processing-logs", "statistics", "label-analysis", "quick-reference", "development-strategy"} {
 		tmpl, exists := tm.GetTemplate(name)
 		assert.True(t, exists, "Default template should exist: %s", name)
 		assert.NotNil(t, tmpl, "Default template should not be nil: %s", name)
@@ -287,7 +286,7 @@ func TestTemplateManagerIntegration(t *testing.T) {
 
 	// Verify custom template appears in list
 	updatedTemplates := tm.ListTemplates()
-	assert.Len(t, updatedTemplates, 6, "Should have 6 templates after adding custom")
+	assert.Len(t, updatedTemplates, 10, "Should have 10 templates after adding custom")
 	assert.Contains(t, updatedTemplates, "integration-test", "Custom template should be in list")
 
 	// Verify custom template can be retrieved
@@ -301,20 +300,20 @@ func BenchmarkTemplateOperations(b *testing.B) {
 	tm := NewTemplateManager()
 
 	b.Run("RegisterTemplate", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			tm := NewTemplateManager()
 			_ = tm.RegisterTemplate("bench-template", "# {{.Title}}\n\n{{.Content}}")
 		}
 	})
 
 	b.Run("ListTemplates", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = tm.ListTemplates()
 		}
 	})
 
 	b.Run("GetDefaultTemplateContent", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, _ = GetDefaultTemplateContent("issues-summary")
 		}
 	})
