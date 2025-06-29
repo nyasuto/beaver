@@ -70,6 +70,7 @@ jobs:
       id: check_conditions
       env:
         TARGET_REPO: ${{ github.event.inputs.target_repository || github.repository }}
+        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
       run: |
         should_update=true
         update_type="incremental"
@@ -78,7 +79,7 @@ jobs:
         echo "Action: ${{ github.event.action }}"
         
         # Skip if commit contains [skip-wiki]
-        if [[ "${{ github.event.head_commit.message }}" == *"[skip-wiki]"* ]]; then
+        if [[ "$COMMIT_MESSAGE" == *"[skip-wiki]"* ]]; then
           echo "Skipping - commit contains [skip-wiki]"
           should_update=false
         fi
@@ -256,6 +257,170 @@ jobs:
           echo ""
           echo "📝 Recent Log Entries:"
           tail -n 10 .beaver/ci-beaver.log | sed 's/^/  /'
+        fi
+
+    - name: 📤 Deploy to GitHub Wiki
+      if: success()
+      env:
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+      run: |
+        echo "📖 Deploying generated content to GitHub Wiki..."
+        
+        # Clone wiki repository
+        wiki_url="https://x-access-token:$GITHUB_TOKEN@github.com/${{ needs.preflight.outputs.repository }}.wiki.git"
+        
+        if git clone "$wiki_url" wiki-repo 2>/dev/null; then
+          echo "✅ Wiki repository cloned successfully"
+        else
+          echo "⚠️ Wiki not initialized - creating initial wiki structure"
+          mkdir -p wiki-repo
+          cd wiki-repo
+          git init
+          git remote add origin "$wiki_url"
+          
+          # Create initial Home page
+          cat > Home.md << 'EOF'
+        # Beaver Self-Documentation Wiki
+        
+        This wiki is automatically maintained by Beaver's self-documentation system.
+        
+        ## About This Wiki
+        
+        This wiki contains automatically generated documentation from:
+        - GitHub Issues and their discussions
+        - Project development insights
+        - AI-enhanced analysis and patterns
+        
+        ## Last Updated
+        
+        This wiki was last updated automatically on $(date '+%Y-%m-%d %H:%M:%S UTC').
+        
+        ---
+        *🦫 This wiki is maintained automatically by Beaver*
+        EOF
+          
+          git add .
+          git -c user.name="GitHub Actions" -c user.email="actions@github.com" commit -m "docs: initialize Beaver wiki [skip-wiki]"
+          
+          if git push -u origin master 2>/dev/null || git push -u origin main 2>/dev/null; then
+            echo "✅ Wiki initialized successfully"
+            cd ..
+          else
+            echo "❌ Failed to initialize wiki"
+            cd ..
+            exit 1
+          fi
+        fi
+        
+        # Copy generated markdown files to wiki
+        cd wiki-repo
+        
+        # Update Home page with current project status
+        cat > Home.md << EOF
+        # ${{ needs.preflight.outputs.repository }} - Beaver Self-Documentation
+        
+        **Last Updated:** \$(date '+%Y-%m-%d %H:%M:%S UTC')  
+        **Update Trigger:** ${{ github.event_name }}
+        **Update Type:** ${{ needs.preflight.outputs.update_type }}
+        
+        ## 🦫 Beaver Self-Documentation System
+        
+        This wiki is automatically maintained by Beaver's self-documentation automation and contains:
+        
+        ### 📋 Generated Content
+        - **Issue Analysis**: Automatically extracted from GitHub Issues
+        - **Development Patterns**: AI-enhanced insights and learning paths
+        - **Project Statistics**: Comprehensive metrics and trends
+        - **Troubleshooting Guides**: Automated problem-solving documentation
+        
+        ### 🔄 Automation Details
+        
+        | Trigger | Description |
+        |---------|-------------|
+        | Issues Events | Wiki updated on issue changes (opened, closed, labeled) |
+        | Pull Requests | Content refreshed on PR events |
+        | Main Branch Push | Documentation updated on code changes |
+        | Weekly Schedule | Comprehensive rebuild every Saturday |
+        | Manual Trigger | On-demand updates with custom parameters |
+        
+        ### 🏷️ Recent Activity
+        
+        **Event:** \`${{ github.event_name }}\`
+        **Update Type:** \`${{ needs.preflight.outputs.update_type }}\`
+        
+        \$( if [ "${{ github.event_name }}" = "issues" ]; then
+          echo "**Issue #${{ github.event.issue.number }}** - Issue Updated"
+        elif [ "${{ github.event_name }}" = "push" ]; then
+          echo "**Latest Commit:** \`${{ github.sha }}\`"
+          echo "**Message:** [Commit Message]"
+        elif [ "${{ github.event_name }}" = "schedule" ]; then
+          echo "**Scheduled Update:** Weekly comprehensive rebuild"
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "**Manual Update** triggered by: @${{ github.actor }}"
+        fi )
+        
+        ---
+        
+        ## 📖 Navigation
+        
+        🏠 **[Home](./Home)**  
+        📊 **[Statistics](./Statistics)** (if available)  
+        🔍 **[Search Issues](https://github.com/${{ needs.preflight.outputs.repository }}/issues)**  
+        🚀 **[Project Repository](https://github.com/${{ needs.preflight.outputs.repository }})**
+        
+        ---
+        *🤖 This wiki is automatically maintained by Beaver Self-Documentation*
+        EOF
+        
+        # Copy generated markdown files (remove repo prefix for wiki)
+        for file in ../*.md; do
+          if [ -f "$file" ]; then
+            basename_file=$(basename "$file")
+            # Remove repository prefix (e.g., "beaver-Home.md" -> "Home.md")
+            wiki_filename="${basename_file#*-}"
+            
+            # Skip README.md
+            if [ "$wiki_filename" != "README.md" ]; then
+              cp "$file" "$wiki_filename"
+              echo "📝 Copied $basename_file -> $wiki_filename"
+            fi
+          fi
+        done
+        
+        # Configure git
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        
+        # Add all changes
+        git add .
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "ℹ️ No changes to commit to wiki"
+        else
+          # Commit changes
+          commit_msg="docs: Beaver自動Wiki更新 - ${{ github.event_name }}"
+          
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            commit_msg="docs: Issue #${{ github.event.issue.number }} 対応のWiki更新 [skip-wiki]"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            commit_msg="docs: main push後のWiki更新 [skip-wiki]"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            commit_msg="docs: 定期Wiki更新 [skip-wiki]"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            commit_msg="docs: @${{ github.actor }}による手動Wiki更新 [skip-wiki]"
+          fi
+          
+          git commit -m "$commit_msg"
+          
+          # Push changes
+          if git push; then
+            echo "✅ Wiki updated successfully"
+            echo "🔗 View wiki: https://github.com/${{ needs.preflight.outputs.repository }}/wiki"
+          else
+            echo "❌ Failed to push wiki changes"
+            exit 1
+          fi
         fi
 
     - name: 📤 Upload automation artifacts
