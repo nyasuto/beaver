@@ -45,7 +45,7 @@ Thumbs.db
 .env.*.local
 
 # Beaver configuration (contains tokens)
-beaver.yml
+/beaver.yml
 
 # Log files
 *.log
