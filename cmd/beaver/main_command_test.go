@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -1243,7 +1244,8 @@ func TestRunBuildCommand(t *testing.T) {
 
 		err := runBuildCommand(cmd, args)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "設定が無効です")
+		// With improved error handling, app now uses defaults and fails at GitHub connection
+		assert.Contains(t, err.Error(), "GitHub接続エラー")
 	})
 
 	t.Run("invalid repository configuration", func(t *testing.T) {
@@ -1272,8 +1274,8 @@ output:
 
 		err = runBuildCommand(cmd, args)
 		require.Error(t, err)
-		// For build commands, GitHub token validation comes first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation now happens first for better error reporting
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("missing GitHub token", func(t *testing.T) {
@@ -1346,8 +1348,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// Config validation checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository validation is performed before GitHub token validation
+		assert.Contains(t, err.Error(), "リポジトリが設定されていません")
 	})
 
 	t.Run("repository with multiple slashes", func(t *testing.T) {
@@ -1369,8 +1371,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// For build commands, GitHub token validation comes first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation now happens first for better error reporting
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("repository with only slash", func(t *testing.T) {
@@ -1392,8 +1394,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// For build commands, GitHub token validation comes first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation now happens first for better error reporting
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("repository with no slash", func(t *testing.T) {
@@ -1415,70 +1417,60 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// For build commands, GitHub token validation comes first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation now happens first for better error reporting
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 }
 
 func TestRunInitCommand(t *testing.T) {
 	t.Run("create new config file successfully", func(t *testing.T) {
-		// Create temporary directory
-		tempDir := t.TempDir()
-		originalWd, _ := os.Getwd()
-		defer os.Chdir(originalWd)
-		os.Chdir(tempDir)
+		// Use TestHelpers for better isolation
+		helper := NewTestHelpers(t)
+		defer helper.Cleanup()
 
-		// Capture stdout
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		// Change to temp directory with proper cleanup
+		cleanup := helper.ChangeToTempDir()
+		defer cleanup()
 
-		cmd := &cobra.Command{}
-		args := []string{}
+		// Capture stdout using helper
+		stdout, _ := helper.CaptureOutput(func() {
+			cmd := &cobra.Command{}
+			args := []string{}
+			runInitCommand(cmd, args)
+		})
 
-		runInitCommand(cmd, args)
-
-		w.Close()
-		os.Stdout = oldStdout
-		output, _ := io.ReadAll(r)
-
-		// Verify config file was created
-		_, err := os.Stat("beaver.yml")
-		assert.NoError(t, err, "beaver.yml should be created")
+		// Verify config file was created in temp directory
+		configPath := filepath.Join(helper.TempDir(), "beaver.yml")
+		_, err := os.Stat(configPath)
+		assert.NoError(t, err, "beaver.yml should be created in temp directory")
 
 		// Verify success message
-		outputStr := string(output)
-		assert.Contains(t, outputStr, "Beaverプロジェクトの初期化完了")
+		assert.Contains(t, stdout, "Beaverプロジェクトの初期化完了")
 	})
 
 	t.Run("config file already exists", func(t *testing.T) {
-		// Create temporary directory with existing config
-		tempDir := t.TempDir()
-		originalWd, _ := os.Getwd()
-		defer os.Chdir(originalWd)
-		os.Chdir(tempDir)
+		// Use TestHelpers for better isolation
+		helper := NewTestHelpers(t)
+		defer helper.Cleanup()
 
-		// Create existing config file
-		err := os.WriteFile("beaver.yml", []byte("existing config"), 0600)
+		// Change to temp directory with proper cleanup
+		cleanup := helper.ChangeToTempDir()
+		defer cleanup()
+
+		// Create existing config file in temp directory
+		configPath := filepath.Join(helper.TempDir(), "beaver.yml")
+		err := os.WriteFile(configPath, []byte("existing config"), 0600)
 		require.NoError(t, err)
 
-		// Capture stdout
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
-
-		cmd := &cobra.Command{}
-		args := []string{}
-
-		runInitCommand(cmd, args)
-
-		w.Close()
-		os.Stdout = oldStdout
-		output, _ := io.ReadAll(r)
+		// Capture stdout using helper
+		stdout, _ := helper.CaptureOutput(func() {
+			cmd := &cobra.Command{}
+			args := []string{}
+			runInitCommand(cmd, args)
+		})
 
 		// Verify warning message
-		outputStr := string(output)
-		assert.Contains(t, outputStr, "設定ファイル beaver.yml は既に存在します")
+		assert.Contains(t, stdout, "設定ファイル beaver.yml は既に存在します")
 	})
 }
 
