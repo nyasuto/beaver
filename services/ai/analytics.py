@@ -18,7 +18,7 @@ import numpy as np
 from scipy import stats
 import structlog
 
-from .patterns import LearningPattern, LearningTrajectory, DevelopmentEvent, PatternType, LearningStage
+from patterns import LearningPattern, LearningTrajectory, DevelopmentEvent, PatternType, LearningStage
 
 logger = structlog.get_logger()
 
