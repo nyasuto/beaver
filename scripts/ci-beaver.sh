@@ -181,7 +181,7 @@ detect_environment() {
             git_remote=$(git remote get-url origin 2>/dev/null || echo "")
             if [[ -n "$git_remote" ]]; then
                 # Extract owner/repo from git URL
-                REPOSITORY=$(echo "$git_remote" | sed -n 's/.*github\.com[:/]\([^/]*\/[^/]*\)\.git.*/\1/p' | sed 's/\.git$//')
+                REPOSITORY=$(echo "$git_remote" | sed 's|.*github\.com[/:]||' | sed 's|\.git$||' | sed 's|/$||')
                 if [[ -n "$REPOSITORY" ]]; then
                     log_info "Auto-detected repository from git: $REPOSITORY"
                 fi
@@ -202,7 +202,7 @@ check_prerequisites() {
     fi
     
     # Test Beaver binary
-    if ! "$BEAVER_BIN" --version >/dev/null 2>&1; then
+    if ! "$BEAVER_BIN" version >/dev/null 2>&1; then
         log_error "Beaver binary is not executable or corrupted"
         return 1
     fi
@@ -417,6 +417,9 @@ send_test_notifications() {
 health_check() {
     log_info "Performing health check..."
     
+    # Ensure environment is detected for prerequisite checks
+    detect_environment
+    
     local health_issues=0
     
     # Check disk space
@@ -450,7 +453,7 @@ health_check() {
     fi
     
     # Test prerequisites
-    if ! check_prerequisites >/dev/null 2>&1; then
+    if ! check_prerequisites; then
         log_error "Prerequisites check failed"
         ((health_issues++))
     fi
