@@ -7,6 +7,7 @@ import (
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/analytics"
 )
 
 // Generator generates Wiki content from GitHub Issues
@@ -552,6 +553,94 @@ func (g *Generator) GenerateIndex(issues []models.Issue, projectName string) (*W
 		Summary:   fmt.Sprintf("Main index page for %s knowledge base", projectName),
 		Category:  "Index",
 		Tags:      []string{"index", "home", "navigation"},
+	}, nil
+}
+
+// GenerateStatistics generates a comprehensive statistics dashboard
+func (g *Generator) GenerateStatistics(issues []models.Issue, projectName string) (*WikiPage, error) {
+	calculator := analytics.NewStatisticsCalculator(issues, projectName)
+	data := calculator.Calculate()
+
+	content, err := g.renderTemplate("statistics", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render statistics template: %w", err)
+	}
+
+	return &WikiPage{
+		Title:     fmt.Sprintf("%s - Statistics Dashboard", projectName),
+		Content:   content,
+		Filename:  "Statistics.md",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+		Summary:   fmt.Sprintf("Comprehensive statistics and analytics for %s project", projectName),
+		Category:  "Analytics",
+		Tags:      []string{"statistics", "analytics", "dashboard", "metrics"},
+	}, nil
+}
+
+// GenerateLabelAnalysis generates a comprehensive label analysis page
+func (g *Generator) GenerateLabelAnalysis(issues []models.Issue, projectName string) (*WikiPage, error) {
+	calculator := analytics.NewLabelAnalysisCalculator(issues, projectName)
+	data := calculator.Calculate()
+
+	content, err := g.renderTemplate("label-analysis", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render label analysis template: %w", err)
+	}
+
+	return &WikiPage{
+		Title:     fmt.Sprintf("%s - Label Analysis", projectName),
+		Content:   content,
+		Filename:  "Label-Analysis.md",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+		Summary:   fmt.Sprintf("Comprehensive label and categorization analysis for %s project", projectName),
+		Category:  "Analytics",
+		Tags:      []string{"labels", "categorization", "analysis", "organization"},
+	}, nil
+}
+
+// GenerateQuickReference generates a quick reference page
+func (g *Generator) GenerateQuickReference(issues []models.Issue, projectName string) (*WikiPage, error) {
+	calculator := analytics.NewQuickReferenceCalculator(issues, projectName)
+	data := calculator.Calculate()
+
+	content, err := g.renderTemplate("quick-reference", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render quick reference template: %w", err)
+	}
+
+	return &WikiPage{
+		Title:     fmt.Sprintf("%s - Quick Reference", projectName),
+		Content:   content,
+		Filename:  "Quick-Reference.md",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+		Summary:   fmt.Sprintf("Quick reference guide for %s project essentials", projectName),
+		Category:  "Reference",
+		Tags:      []string{"reference", "quick-start", "guide", "essentials"},
+	}, nil
+}
+
+// GenerateProcessingLogs generates a processing logs and monitoring page
+func (g *Generator) GenerateProcessingLogs(issues []models.Issue, projectName string) (*WikiPage, error) {
+	calculator := analytics.NewProcessingLogsCalculator(issues, projectName)
+	data := calculator.Calculate()
+
+	content, err := g.renderTemplate("processing-logs", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render processing logs template: %w", err)
+	}
+
+	return &WikiPage{
+		Title:     fmt.Sprintf("%s - Processing Logs", projectName),
+		Content:   content,
+		Filename:  "Processing-Logs.md",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+		Summary:   fmt.Sprintf("Processing logs and system monitoring for %s project", projectName),
+		Category:  "Monitoring",
+		Tags:      []string{"logs", "monitoring", "performance", "system-health"},
 	}, nil
 }
 
