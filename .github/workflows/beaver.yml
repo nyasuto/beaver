@@ -286,56 +286,55 @@ jobs:
             repo: context.repo.repo,
             title: `🚨 Beaver Self-Documentation Failed - ${new Date().toISOString().split('T')[0]}`,
             body: `## 🦫 Beaver Self-Documentation Failure Report
-            
-            **Meta-Issue**: Beaver's self-documentation system encountered an error
-            **Workflow:** Beaver Self-Documentation Automation
-            **Trigger:** \`${{ github.event_name }}\`
-            **Action:** \`${{ github.event.action }}\`
-            **Update Type:** \`${{ needs.preflight.outputs.update_type }}\`
-            **Repository:** \`${{ needs.preflight.outputs.repository }}\`
-            **Run ID:** [\`${{ github.run_id }}\`](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            **Failure Time:** ${new Date().toUTCString()}
-            
-            ### Failure Context
-            
-            ${ 
-              context.eventName === 'issues' ? 
-              \`**Issue:** [#${{ github.event.issue.number }} - ${{ github.event.issue.title }}](${{ github.event.issue.html_url }})\` :
-              context.eventName === 'pull_request' ?
-              \`**Pull Request:** [#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\` :
-              \`**Event:** ${{ github.event_name }}\`
-            }
-            
-            ### Investigation Steps
-            
-            1. 🔍 Review the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            2. 🔑 Check GitHub token permissions and scopes
-            3. 📊 Verify incremental state integrity
-            4. ⚙️ Validate Beaver configuration and setup
-            5. 🔗 Test GitHub API connectivity and rate limits
-            
-            ### Enhanced Debugging
-            
-            - **Incremental State:** Check \`.beaver/incremental-state.json\` integrity
-            - **Configuration:** Verify Beaver configuration integrity
-            - **CI Script:** Review \`scripts/ci-beaver.sh\` execution logs
-            - **Build Issues:** Check Go compilation and dependency issues
-            
-            ### Quick Fixes
-            
-            - 🔧 Re-run with \`--force-rebuild\` flag for clean state
-            - 🧹 Clean incremental state: \`rm -rf .beaver/\`
-            - 🔄 Manual trigger with different parameters
-            - 📝 Check recent changes in automation code
-            
-            ---
-            
-            *🤖 This issue was created automatically by the Beaver Automation workflow*
-            `,
+
+**Meta-Issue**: Beaver's self-documentation system encountered an error
+**Workflow:** Beaver Self-Documentation Automation
+**Trigger:** \`${{ github.event_name }}\`
+**Action:** \`${{ github.event.action }}\`
+**Update Type:** \`${{ needs.preflight.outputs.update_type }}\`
+**Repository:** \`${{ needs.preflight.outputs.repository }}\`
+**Run ID:** [\`${{ github.run_id }}\`](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+**Failure Time:** ${new Date().toUTCString()}
+
+### Failure Context
+
+${context.eventName === 'issues' ? 
+  `**Issue:** [#${{ github.event.issue.number }} - ${{ github.event.issue.title }}](${{ github.event.issue.html_url }})` :
+  context.eventName === 'pull_request' ?
+  `**Pull Request:** [#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})` :
+  `**Event:** ${{ github.event_name }}`
+}
+
+### Investigation Steps
+
+1. 🔍 Review the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+2. 🔑 Check GitHub token permissions and scopes
+3. 📊 Verify incremental state integrity
+4. ⚙️ Validate Beaver configuration and setup
+5. 🔗 Test GitHub API connectivity and rate limits
+
+### Enhanced Debugging
+
+- **Incremental State:** Check \`.beaver/incremental-state.json\` integrity
+- **Configuration:** Verify Beaver configuration integrity
+- **CI Script:** Review \`scripts/ci-beaver.sh\` execution logs
+- **Build Issues:** Check Go compilation and dependency issues
+
+### Quick Fixes
+
+- 🔧 Re-run with \`--force-rebuild\` flag for clean state
+- 🧹 Clean incremental state: \`rm -rf .beaver/\`
+- 🔄 Manual trigger with different parameters
+- 📝 Check recent changes in automation code
+
+---
+
+*🤖 This issue was created automatically by the Beaver Automation workflow*
+`,
             labels: ['type: ci/cd', 'priority: high', 'automation', 'beaver', 'self-documentation']
           });
           
-          console.log(\`Created failure issue #\${issue.data.number}\`);
+          console.log(`Created failure issue #${issue.data.number}`);
     
 
   # Self-documentation cleanup and maintenance

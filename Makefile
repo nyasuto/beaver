@@ -8,7 +8,9 @@ BINARY_NAME=beaver
 MAIN_PATH=./cmd/beaver
 BUILD_DIR=./bin
 VERSION?=$(shell git describe --tags --always --dirty)
-LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
+BUILD_TIME=$(shell date -u '+%Y-%m-%d %H:%M:%S UTC')
+GIT_COMMIT=$(shell git rev-parse --short HEAD)
+LDFLAGS=-ldflags "-X main.version=$(VERSION) -X 'main.buildTime=$(BUILD_TIME)' -X main.gitCommit=$(GIT_COMMIT)"
 
 # Default target
 .DEFAULT_GOAL := help

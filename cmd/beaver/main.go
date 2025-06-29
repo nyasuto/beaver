@@ -15,9 +15,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Version information - set during build
+var (
+	version   = "dev"
+	buildTime = "unknown"
+	gitCommit = "unknown"
+)
+
 var rootCmd = &cobra.Command{
-	Use:   "beaver",
-	Short: "🦫 Beaver - AIエージェント知識ダム構築ツール",
+	Use:     "beaver",
+	Short:   "🦫 Beaver - AIエージェント知識ダム構築ツール",
+	Version: version,
 	Long: `Beaver は AI エージェント開発の軌跡を自動的に整理された永続的な知識に変換します。
 	
 散在する GitHub Issues、コミットログ、AI実験記録を構造化された Wiki ドキュメントに変換し、
@@ -29,6 +37,19 @@ func runRootCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("🦫 Beaver - AIエージェント知識ダム構築ツール")
 	fmt.Println("使用方法: beaver [command]")
 	fmt.Println("詳細なヘルプ: beaver --help")
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "バージョン情報を表示",
+	Long:  "Beaverのバージョン、ビルド時刻、Git commit情報を表示します。",
+	Run:   runVersionCommand,
+}
+
+func runVersionCommand(cmd *cobra.Command, args []string) {
+	fmt.Printf("🦫 Beaver バージョン: %s\n", version)
+	fmt.Printf("📅 ビルド時刻: %s\n", buildTime)
+	fmt.Printf("📝 Git commit: %s\n", gitCommit)
 }
 
 var initCmd = &cobra.Command{
@@ -531,6 +552,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(generateCmd)
 
