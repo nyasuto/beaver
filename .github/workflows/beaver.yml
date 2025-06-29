@@ -1,0 +1,519 @@
+name: 🦫 Beaver Self-Documentation Automation
+
+# Enhanced GitHub Actions automation for Beaver self-management
+# Meta-documentation: Beaver managing its own project development through automated knowledge capture
+# Supports incremental updates, notifications, and comprehensive self-analysis
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+on:
+  # Issue events - create, update, close, reopen
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  
+  # Pull request events
+  pull_request:
+    types: [opened, closed, synchronize]
+    branches: [main]
+  
+  # Push to main branch
+  push:
+    branches: [main]
+  
+  # Scheduled updates - weekly full rebuild
+  schedule:
+    - cron: '0 17 * * 6'  # Every Saturday at 5 PM UTC (2 AM JST Sunday)
+  
+  # Manual trigger with advanced options
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force full wiki rebuild'
+        required: false
+        default: false
+        type: boolean
+      max_items:
+        description: 'Maximum items to process'
+        required: false
+        default: '100'
+        type: string
+      notify_success:
+        description: 'Send success notifications'
+        required: false
+        default: true
+        type: boolean
+      notify_failure:
+        description: 'Send failure notifications'
+        required: false
+        default: true
+        type: boolean
+      target_repository:
+        description: 'Override target repository'
+        required: false
+        default: ''
+        type: string
+
+env:
+  GO_VERSION: 'stable'
+  BEAVER_CONFIG_FILE: 'beaver.yml'
+
+jobs:
+  # Pre-flight checks and environment setup
+  preflight:
+    name: 🔍 Pre-flight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_update: ${{ steps.check_conditions.outputs.should_update }}
+      update_type: ${{ steps.check_conditions.outputs.update_type }}
+      repository: ${{ steps.check_conditions.outputs.repository }}
+      
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 🔍 Analyze trigger conditions
+      id: check_conditions
+      env:
+        TARGET_REPO: ${{ github.event.inputs.target_repository || github.repository }}
+      run: |
+        should_update=true
+        update_type="incremental"
+        
+        echo "Event: ${{ github.event_name }}"
+        echo "Action: ${{ github.event.action }}"
+        
+        # Skip if commit contains [skip-wiki]
+        if [[ "${{ github.event.head_commit.message }}" == *"[skip-wiki]"* ]]; then
+          echo "Skipping - commit contains [skip-wiki]"
+          should_update=false
+        fi
+        
+        # Determine update type based on trigger
+        case "${{ github.event_name }}" in
+          "issues")
+            case "${{ github.event.action }}" in
+              "opened"|"edited"|"reopened"|"labeled"|"unlabeled")
+                echo "Issue event: ${{ github.event.action }} - incremental update"
+                update_type="incremental"
+                ;;
+              "closed")
+                echo "Issue closed - incremental update"
+                update_type="incremental"
+                ;;
+              *)
+                echo "Unknown issue action: ${{ github.event.action }}"
+                should_update=false
+                ;;
+            esac
+            ;;
+          "pull_request")
+            if [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
+              echo "PR merged - incremental update"
+              update_type="incremental"
+            else
+              echo "PR event but not merged - skipping"
+              should_update=false
+            fi
+            ;;
+          "push")
+            echo "Push to main - incremental update"
+            update_type="incremental"
+            ;;
+          "schedule")
+            echo "Scheduled run - full rebuild"
+            update_type="full"
+            ;;
+          "workflow_dispatch")
+            if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
+              echo "Manual trigger - full rebuild requested"
+              update_type="full"
+            else
+              echo "Manual trigger - incremental update"
+              update_type="incremental"
+            fi
+            ;;
+          *)
+            echo "Unknown event type: ${{ github.event_name }}"
+            should_update=false
+            ;;
+        esac
+        
+        echo "should_update=$should_update" >> $GITHUB_OUTPUT
+        echo "update_type=$update_type" >> $GITHUB_OUTPUT
+        echo "repository=$TARGET_REPO" >> $GITHUB_OUTPUT
+
+  # Main Beaver self-documentation job
+  beaver-self-documentation:
+    name: 🦫 Beaver Self-Documentation
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should_update == 'true'
+    
+    # Use environment for sensitive operations
+    # environment: beaver-automation  # Uncomment if you have this environment configured
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: 📦 Install dependencies and build
+      run: |
+        # Install Go dependencies
+        go mod download
+        go mod tidy
+        
+        # Install system tools
+        sudo apt-get update
+        sudo apt-get install -y jq curl
+        
+        # Build Beaver
+        make build
+        chmod +x ./bin/beaver ./scripts/ci-beaver.sh
+        
+    - name: ✅ Verify installation
+      run: |
+        # Test binary
+        ./bin/beaver --help
+        ./scripts/ci-beaver.sh --help
+        
+        # Test CI script
+        ./scripts/ci-beaver.sh health-check
+        
+    - name: ⚙️ Setup configuration
+      env:
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        TARGET_REPO: ${{ needs.preflight.outputs.repository }}
+      run: |
+        # Verify GitHub token
+        if [ -z "$GITHUB_TOKEN" ]; then
+          echo "❌ No GitHub token available"
+          exit 1
+        fi
+        
+        # Create configuration using CI script
+        ./scripts/ci-beaver.sh test-setup \
+          --repository "$TARGET_REPO" \
+          --verbose
+        
+    - name: 🦫 Execute Beaver Self-Documentation
+      env:
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
+        MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
+        NOTIFY_SUCCESS: ${{ github.event.inputs.notify_success || 'true' }}
+        NOTIFY_FAILURE: ${{ github.event.inputs.notify_failure || 'true' }}
+      run: |
+        echo "🦫 === Beaver Self-Documentation Process ==="
+        echo "📊 Meta-Documentation: Beaver analyzing its own development"
+        echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
+        
+        # Determine command based on update type
+        case "$UPDATE_TYPE" in
+          "full")
+            COMMAND="full-rebuild"
+            echo "🔄 Executing full self-analysis and knowledge rebuild"
+            ;;
+          "incremental"|*)
+            COMMAND="incremental"
+            echo "⚡ Executing incremental self-documentation update"
+            ;;
+        esac
+        
+        # Build notification flags
+        NOTIFY_FLAGS=""
+        if [[ "$NOTIFY_SUCCESS" == "true" ]]; then
+          NOTIFY_FLAGS="$NOTIFY_FLAGS --notify-success"
+        fi
+        if [[ "$NOTIFY_FAILURE" == "true" ]]; then
+          NOTIFY_FLAGS="$NOTIFY_FLAGS --notify-failure"
+        fi
+        
+        # Execute self-documentation
+        echo "🧠 Beaver is now analyzing and documenting its own development..."
+        ./scripts/ci-beaver.sh "$COMMAND" \
+          --repository "${{ needs.preflight.outputs.repository }}" \
+          --max-items "$MAX_ITEMS" \
+          $NOTIFY_FLAGS \
+          --verbose
+          
+        echo "✅ Self-documentation complete - Beaver Wiki updated with latest insights"
+        
+    - name: 📊 Generate Self-Documentation Report
+      if: always()
+      run: |
+        echo "📊 Beaver Self-Documentation Report"
+        echo "====================================="
+        echo "🦫 Meta-Analysis: Beaver documenting its own development"
+        echo "🎯 Trigger: ${{ github.event_name }}"
+        echo "🔄 Update Type: ${{ needs.preflight.outputs.update_type }}"
+        echo "📁 Repository: ${{ needs.preflight.outputs.repository }}"
+        echo "⏰ Completed: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "✅ Status: ${{ job.status }}"
+        echo "🌐 Wiki: https://github.com/${{ needs.preflight.outputs.repository }}/wiki"
+        
+        # Show incremental state if exists
+        if [ -f ".beaver/incremental-state.json" ]; then
+          echo ""
+          echo "📈 Incremental State:"
+          jq -r '.last_update // "Never"' .beaver/incremental-state.json | sed 's/^/  Last Update: /'
+          jq -r '.processed_issues | length' .beaver/incremental-state.json | sed 's/^/  Processed Issues: /'
+          jq -r '.processed_events | length' .beaver/incremental-state.json | sed 's/^/  Processed Events: /'
+        fi
+        
+        # Show log file if exists
+        if [ -f ".beaver/ci-beaver.log" ]; then
+          echo ""
+          echo "📝 Recent Log Entries:"
+          tail -n 10 .beaver/ci-beaver.log | sed 's/^/  /'
+        fi
+
+    - name: 📤 Upload automation artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: beaver-automation-${{ github.run_id }}
+        path: |
+          .beaver/
+          *.md
+          !README.md
+        retention-days: 7
+
+  # Self-documentation success notification
+  self-documentation-notification:
+    name: 📧 Self-Documentation Notification
+    runs-on: ubuntu-latest
+    needs: [preflight, beaver-self-documentation]
+    if: github.event_name == 'issues' && (secrets.SLACK_WEBHOOK_URL || secrets.TEAMS_WEBHOOK_URL)
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 📦 Build notification tools
+      run: |
+        go mod download
+        make build
+        
+    - name: 📧 Send self-documentation notification
+      env:
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      run: |
+        # Send notification about self-documentation update
+        echo "🦫 Sending self-documentation update notification..."
+        ./scripts/ci-beaver.sh notify \
+          --repository "${{ github.repository }}" \
+          --message "🦫 Beaver has updated its self-documentation wiki based on issue #${{ github.event.issue.number }}" \
+          --wiki-url "https://github.com/${{ github.repository }}/wiki" \
+          --verbose
+
+  # Self-documentation failure notification and issue creation
+  self-documentation-failure:
+    name: 🚨 Self-Documentation Failure Handling
+    runs-on: ubuntu-latest
+    needs: [preflight, beaver-self-documentation]
+    if: failure() && needs.beaver-self-documentation.result == 'failure'
+    
+    steps:
+    - name: 🚨 Create failure issue
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        script: |
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `🚨 Beaver Self-Documentation Failed - ${new Date().toISOString().split('T')[0]}`,
+            body: `## 🦫 Beaver Self-Documentation Failure Report
+            
+            **Meta-Issue**: Beaver's self-documentation system encountered an error
+            **Workflow:** Beaver Self-Documentation Automation
+            **Trigger:** \`${{ github.event_name }}\`
+            **Action:** \`${{ github.event.action }}\`
+            **Update Type:** \`${{ needs.preflight.outputs.update_type }}\`
+            **Repository:** \`${{ needs.preflight.outputs.repository }}\`
+            **Run ID:** [\`${{ github.run_id }}\`](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            **Failure Time:** ${new Date().toUTCString()}
+            
+            ### Failure Context
+            
+            ${ 
+              context.eventName === 'issues' ? 
+              \`**Issue:** [#${{ github.event.issue.number }} - ${{ github.event.issue.title }}](${{ github.event.issue.html_url }})\` :
+              context.eventName === 'pull_request' ?
+              \`**Pull Request:** [#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\` :
+              \`**Event:** ${{ github.event_name }}\`
+            }
+            
+            ### Investigation Steps
+            
+            1. 🔍 Review the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. 🔑 Check GitHub token permissions and scopes
+            3. 📊 Verify incremental state integrity
+            4. ⚙️ Validate Beaver configuration and setup
+            5. 🔗 Test GitHub API connectivity and rate limits
+            
+            ### Enhanced Debugging
+            
+            - **Incremental State:** Check \`.beaver/incremental-state.json\` integrity
+            - **Notifications:** Verify webhook URLs and credentials
+            - **CI Script:** Review \`scripts/ci-beaver.sh\` execution logs
+            - **Build Issues:** Check Go compilation and dependency issues
+            
+            ### Quick Fixes
+            
+            - 🔧 Re-run with \`--force-rebuild\` flag for clean state
+            - 🧹 Clean incremental state: \`rm -rf .beaver/\`
+            - 🔄 Manual trigger with different parameters
+            - 📝 Check recent changes in automation code
+            
+            ---
+            
+            *🤖 This issue was created automatically by the Beaver Automation workflow*
+            `,
+            labels: ['type: ci/cd', 'priority: high', 'automation', 'beaver', 'self-documentation']
+          });
+          
+          console.log(\`Created failure issue #\${issue.data.number}\`);
+    
+    - name: 📧 Send failure notification
+      if: secrets.SLACK_WEBHOOK_URL || secrets.TEAMS_WEBHOOK_URL
+      run: |
+        # Send immediate failure notification
+        if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"🚨 Beaver Self-Documentation Failed\n🦫 Meta-Issue: Beaver could not document its own development\nWorkflow: ${{ github.workflow }}\nRun: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_number }}>\nTrigger: ${{ github.event_name }}\nRepository: ${{ github.repository }}\nWiki: <https://github.com/${{ github.repository }}/wiki|Check Wiki Status>"}' \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
+        fi
+
+  # Self-documentation cleanup and maintenance
+  self-documentation-cleanup:
+    name: 🧹 Self-Documentation Cleanup
+    runs-on: ubuntu-latest
+    needs: [beaver-self-documentation]
+    if: always() && (github.event_name == 'schedule' || github.event.inputs.force_rebuild == 'true')
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 📦 Build tools
+      run: |
+        go mod download
+        make build
+        chmod +x ./scripts/ci-beaver.sh
+        
+    - name: 🧹 Perform self-documentation cleanup
+      run: |
+        echo "🧹 Performing self-documentation maintenance cleanup..."
+        echo "🦫 Meta-maintenance: Beaver cleaning up its own documentation artifacts"
+        
+        # Clean up old artifacts
+        ./scripts/ci-beaver.sh clean --verbose
+        
+        # Optimize incremental state for self-documentation
+        if [ -f ".beaver/incremental-state.json" ]; then
+          echo "📊 Self-documentation state size before cleanup:"
+          du -h .beaver/incremental-state.json
+          
+          # The cleanup is handled by the incremental manager
+          ./bin/beaver build --incremental --max-items 1 --dry-run >/dev/null 2>&1 || true
+          
+          echo "📊 Self-documentation state size after cleanup:"
+          du -h .beaver/incremental-state.json 2>/dev/null || echo "State file removed"
+        fi
+        
+        echo "✅ Self-documentation cleanup complete - Beaver maintained its own knowledge base"
+
+  # Weekly comprehensive self-analysis (separate from regular triggers)
+  weekly-self-analysis:
+    name: 📈 Weekly Self-Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: 📦 Build tools
+      run: |
+        go mod download
+        make build
+        chmod +x ./bin/beaver ./scripts/ci-beaver.sh
+        
+    - name: 📊 Execute comprehensive self-analysis
+      env:
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+      run: |
+        echo "📈 === Weekly Beaver Self-Analysis ==="
+        echo "🦫 Meta-Analysis: Comprehensive review of Beaver's own development patterns"
+        echo "📅 Analysis Period: Past 7 days"
+        echo "🎯 Focus: Development trends, health metrics, strategic insights"
+        
+        # Run comprehensive analysis with extended metrics
+        ./bin/beaver build --comprehensive-analysis --week-range=7 --verbose
+        
+        echo "📊 Generating weekly development insights..."
+        ./bin/beaver wiki generate development-strategy --force-refresh
+        
+        echo "🏷️ Analyzing label effectiveness trends..."
+        ./bin/beaver wiki generate label-analysis --trend-analysis
+        
+        echo "📈 Computing velocity and health trends..."
+        ./bin/beaver wiki generate statistics --include-trends
+        
+        echo "✅ Weekly self-analysis complete - Comprehensive insights generated"
+        
+    - name: 📤 Upload weekly analysis artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: weekly-self-analysis-${{ github.run_id }}
+        path: |
+          .beaver/
+          *.md
+          !README.md
+        retention-days: 30
+
+    - name: 📧 Send weekly analysis notification
+      if: secrets.SLACK_WEBHOOK_URL
+      run: |
+        echo "📧 Sending weekly self-analysis notification..."
+        curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"📈 Beaver Weekly Self-Analysis Complete\n🦫 Meta-Report: Beaver has completed its weekly development self-assessment\n📊 New insights available in the Wiki\n🌐 Wiki: <https://github.com/${{ github.repository }}/wiki|View Updated Knowledge Dam>\n📅 Analysis Period: Past 7 days\n⭐ Key Pages: Development Strategy, Statistics Dashboard, Label Analysis"}' \
+          "${{ secrets.SLACK_WEBHOOK_URL }}"

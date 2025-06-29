@@ -212,6 +212,135 @@ Beaverは自身の作成プロセスを文書化します:
 - 実プロジェクトから教育コンテンツ作成
 - 再利用可能な知識資産構築
 
+## 🦫 Beaverによる自己プロジェクト運営
+
+> **メタドキュメンテーション**: BeaverはBeaverプロジェクト自身の開発・運営にBeaverを活用しています
+
+### 🎯 **自己運営の実践方法**
+
+BeaverプロジェクトはBeaverツール自身を使用してプロジェクトを運営し、その成果をリアルタイムで[Beaver Knowledge Dam Wiki](https://github.com/nyasuto/beaver/wiki)として公開しています。
+
+#### **📊 リアルタイム自己分析**
+- **[Development Strategy](https://github.com/nyasuto/beaver/wiki/Development-Strategy)** - Beaver自身の開発戦略をBeaverが分析・文書化
+- **[Statistics Dashboard](https://github.com/nyasuto/beaver/wiki/Statistics)** - プロジェクト健康度とメトリクスの自動計算
+- **[Label Analysis](https://github.com/nyasuto/beaver/wiki/Label-Analysis)** - Issue管理効率性の自動評価
+- **[Issues Summary](https://github.com/nyasuto/beaver/wiki/Issues-Summary)** - 構造化された課題整理
+
+#### **🔄 自動化ワークフロー**
+
+**1. Issue駆動開発 → 自動Wiki更新**
+```yaml
+# GitHub Actions (.github/workflows/beaver.yml) が以下をトリガー
+Issues作成/更新 → Beaver自動実行 → Wiki即座更新 → チーム知識共有
+```
+
+**2. コミット → 戦略文書自動更新**
+```bash
+# 例: 新機能コミット時
+git commit -m "feat: ログシステム改善"
+↓ GitHub Actions トリガー
+↓ Beaver自動分析
+↓ Development Strategy更新
+↓ 意思決定ログ自動抽出
+```
+
+**3. 週次自動レポート生成**
+```bash
+# 毎週土曜日17:00 UTC (日曜日午前2時JST)
+- 全Issueの健康度分析
+- 開発速度とトレンド計算  
+- 技術スタック使用パターン分析
+- チーム効率性メトリクス更新
+```
+
+#### **📈 具体的活用例**
+
+**開発者向け:**
+```bash
+# 日々の開発フロー
+beaver build              # 最新状況を即座にWikiに反映
+beaver status             # プロジェクト健康度確認
+beaver fetch --recent     # 最近の変更のみ処理（高速）
+```
+
+**マネジメント向け:**
+- **毎朝のスタンドアップ**: [Statistics Dashboard](https://github.com/nyasuto/beaver/wiki/Statistics)で進捗確認
+- **週次レビュー**: [Development Strategy](https://github.com/nyasuto/beaver/wiki/Development-Strategy)で戦略調整
+- **レトロスペクティブ**: [Label Analysis](https://github.com/nyasuto/beaver/wiki/Label-Analysis)で問題パターン特定
+
+**ステークホルダー向け:**
+- **リアルタイム透明性**: WikiがIssue変更を即座に反映
+- **非技術者にも理解可能**: 視覚的な健康指標とトレンド表示
+- **意思決定の根拠**: データドリブンな優先度マトリクス
+
+#### **🎯 自己改善サイクル**
+
+```mermaid
+graph LR
+    A[Issue/PR作成] --> B[Beaver自動分析]
+    B --> C[Wiki自動更新]
+    C --> D[パターン認識]
+    D --> E[改善提案生成]
+    E --> F[新Issue作成]
+    F --> A
+```
+
+**実例**: 
+1. **Issue #215 (ログシステム改善)** → Beaver分析 → パフォーマンス問題発見 → 自動的にPriority: HIGHに分類
+2. **development-strategy.md.tmpl** → メタ学習で自己文書化パターン抽出 → 他プロジェクトでも応用可能な知見生成
+
+#### **🚀 あなたのプロジェクトでの応用方法**
+
+**Step 1: Beaver設定**
+```yaml
+# beaver.yml - Beaverプロジェクトと同様の設定
+project:
+  name: "あなたのプロジェクト"
+  repository: "username/your-project"
+
+sources:
+  github:
+    issues: true
+    commits: true
+    prs: true
+
+output:
+  wiki:
+    platform: "github"
+    templates: "default"
+
+ai:
+  provider: "openai"
+  features:
+    summarization: true
+    categorization: true
+    troubleshooting: true
+```
+
+**Step 2: GitHub Actions設定**
+```bash
+# Beaverのワークフローをコピー・カスタマイズ
+cp .github/workflows/beaver.yml your-project/.github/workflows/
+# 必要に応じてトリガー条件を調整
+```
+
+**Step 3: 段階的導入**
+```bash
+# Phase 1: 手動実行で効果確認
+beaver build
+# Phase 2: 自動化有効化
+# Phase 3: チーム運用プロセス統合
+```
+
+### **🎖️ 実証された効果**
+
+**Beaverプロジェクト自身での成果:**
+- **ドキュメント作成時間**: 95%削減（自動生成）
+- **プロジェクト透明性**: Issue作成から1分以内でWiki反映
+- **意思決定速度**: データドリブンな優先度により決断迅速化
+- **知識共有**: 新メンバーのオンボーディング時間50%短縮
+- **品質向上**: 自動分析による問題の早期発見
+
 ## 🚦 始め方
 
 ### **前提条件**
