@@ -269,69 +269,6 @@ jobs:
           !README.md
         retention-days: 7
 
-
-  # Self-documentation failure notification and issue creation
-  self-documentation-failure:
-    name: 🚨 Self-Documentation Failure Handling
-    runs-on: ubuntu-latest
-    needs: [preflight, beaver-self-documentation]
-    if: ${{ failure() && needs.beaver-self-documentation.result == 'failure' }}
-    
-    steps:
-    - name: 🚨 Create failure issue
-      uses: actions/github-script@v7
-      env:
-        EVENT_NAME: ${{ github.event_name }}
-        UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
-        REPOSITORY: ${{ needs.preflight.outputs.repository }}
-        RUN_ID: ${{ github.run_id }}
-        REPO_URL: ${{ github.repository }}
-      with:
-        github-token: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        script: |
-          const title = `🚨 Beaver Self-Documentation Failed - ${new Date().toISOString().split('T')[0]}`;
-          
-          const body = [
-            '## 🦫 Beaver Self-Documentation Failure Report',
-            '',
-            '**Meta-Issue**: Beaver self-documentation system encountered an error',
-            '**Workflow:** Beaver Self-Documentation Automation',
-            `**Trigger:** ${process.env.EVENT_NAME}`,
-            `**Update Type:** ${process.env.UPDATE_TYPE}`,
-            `**Repository:** ${process.env.REPOSITORY}`,
-            `**Run ID:** [${process.env.RUN_ID}](https://github.com/${process.env.REPO_URL}/actions/runs/${process.env.RUN_ID})`,
-            `**Failure Time:** ${new Date().toUTCString()}`,
-            '',
-            '### Investigation Steps',
-            '',
-            `1. 🔍 Review the [workflow logs](https://github.com/${process.env.REPO_URL}/actions/runs/${process.env.RUN_ID})`,
-            '2. 🔑 Check GitHub token permissions and scopes',
-            '3. 📊 Verify incremental state integrity',
-            '4. ⚙️ Validate Beaver configuration and setup',
-            '5. 🔗 Test GitHub API connectivity and rate limits',
-            '',
-            '### Quick Fixes',
-            '',
-            '- 🔧 Re-run with `--force-rebuild` flag for clean state',
-            '- 🧹 Clean incremental state: `rm -rf .beaver/`',
-            '- 🔄 Manual trigger with different parameters',
-            '',
-            '---',
-            '',
-            '*🤖 This issue was created automatically by the Beaver Automation workflow*'
-          ].join('\n');
-
-          const issue = await github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: title,
-            body: body,
-            labels: ['type: ci/cd', 'priority: high', 'automation', 'beaver', 'self-documentation']
-          });
-          
-          console.log(`Created failure issue #${issue.data.number}`);
-    
-
   # Self-documentation cleanup and maintenance
   self-documentation-cleanup:
     name: 🧹 Self-Documentation Cleanup
