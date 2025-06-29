@@ -11,8 +11,8 @@ sources:
 
 output:
   wiki:
-    platform: "github"    # github, notion, confluence
-    templates: "default"  # default, academic, startup
+    platform: "github"
+    templates: "default"
 
 ai:
   provider: "openai"      # openai, anthropic, local

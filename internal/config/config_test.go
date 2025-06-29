@@ -122,50 +122,6 @@ func TestConfig_Validate(t *testing.T) {
 			wantError: true,
 			errorMsg:  "無効な AI provider: invalid",
 		},
-		{
-			name: "Valid notion platform",
-			config: Config{
-				Project: ProjectConfig{
-					Repository: "owner/repo",
-				},
-				Sources: SourcesConfig{
-					GitHub: GitHubConfig{
-						Token: "test-token",
-					},
-				},
-				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "notion",
-					},
-				},
-				AI: AIConfig{
-					Provider: "anthropic",
-				},
-			},
-			wantError: false,
-		},
-		{
-			name: "Valid confluence platform",
-			config: Config{
-				Project: ProjectConfig{
-					Repository: "owner/repo",
-				},
-				Sources: SourcesConfig{
-					GitHub: GitHubConfig{
-						Token: "test-token",
-					},
-				},
-				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "confluence",
-					},
-				},
-				AI: AIConfig{
-					Provider: "local",
-				},
-			},
-			wantError: false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -355,7 +311,7 @@ sources:
 
 output:
   wiki:
-    platform: "notion"
+    platform: "github"
     templates: "academic"
 
 ai:
@@ -391,8 +347,8 @@ ai:
 		if config.Project.Repository != "test/repo" {
 			t.Errorf("Expected repository 'test/repo', got %s", config.Project.Repository)
 		}
-		if config.Output.Wiki.Platform != "notion" {
-			t.Errorf("Expected wiki platform 'notion', got %s", config.Output.Wiki.Platform)
+		if config.Output.Wiki.Platform != "github" {
+			t.Errorf("Expected wiki platform 'github', got %s", config.Output.Wiki.Platform)
 		}
 		if config.AI.Provider != "anthropic" {
 			t.Errorf("Expected AI provider 'anthropic', got %s", config.AI.Provider)

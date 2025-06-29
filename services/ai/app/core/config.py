@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     
     # AI Model Configuration
     default_openai_model: str = Field(default="gpt-4", description="Default OpenAI model")
-    default_anthropic_model: str = Field(default="claude-3-sonnet-20240229", description="Default Anthropic model")
+    default_anthropic_model: str = Field(default="claude-3-5-sonnet-20241022", description="Default Anthropic model")
     max_tokens: int = Field(default=4000, description="Maximum tokens for AI responses")
     temperature: float = Field(default=0.7, description="AI model temperature")
     
