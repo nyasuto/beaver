@@ -184,6 +184,18 @@ project:
 		t.Fatalf("Failed to create test config file: %v", err)
 	}
 
+	// Change to temp directory to prevent file creation in current directory
+	originalWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current working directory: %v", err)
+	}
+	defer func() { _ = os.Chdir(originalWd) }()
+
+	err = os.Chdir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to change to temp directory: %v", err)
+	}
+
 	// Set config path temporarily
 	originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
 	defer func() {
