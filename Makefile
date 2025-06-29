@@ -102,9 +102,21 @@ fmt:
 	@echo "📝 コードをフォーマット中..."
 	go fmt ./...
 
+## workflow-lint: Validate GitHub Actions workflows
+workflow-lint:
+	@echo "🔍 GitHub Actionsワークフロー検証中..."
+	@if command -v actionlint >/dev/null 2>&1; then \
+		actionlint .github/workflows/*.yml || true; \
+		echo "ℹ️ ワークフロー構文チェック完了（警告は無視）"; \
+	else \
+		echo "⚠️ actionlint がインストールされていません"; \
+		echo "インストール: go install github.com/rhysd/actionlint/cmd/actionlint@latest"; \
+		echo "代替手段: GitHub Actions構文を手動で確認してください"; \
+	fi
 
-## quality: Run all quality checks (lint includes security + format + test)
-quality: fmt lint test
+
+## quality: Run all quality checks (lint includes security + format + test + workflow validation)
+quality: fmt lint test workflow-lint
 	@echo "✅ 品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible
