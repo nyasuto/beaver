@@ -40,16 +40,6 @@ on:
         required: false
         default: '100'
         type: string
-      notify_success:
-        description: 'Send success notifications'
-        required: false
-        default: true
-        type: boolean
-      notify_failure:
-        description: 'Send failure notifications'
-        required: false
-        default: true
-        type: boolean
       target_repository:
         description: 'Override target repository'
         required: false
@@ -152,10 +142,8 @@ jobs:
     name: 🦫 Beaver Self-Documentation
     runs-on: ubuntu-latest
     needs: preflight
-    if: needs.preflight.outputs.should_update == 'true'
+    if: ${{ needs.preflight.outputs.should_update == 'true' }}
     
-    # Use environment for sensitive operations
-    # environment: beaver-automation  # Uncomment if you have this environment configured
     
     steps:
     - name: 📥 Checkout code
@@ -211,12 +199,8 @@ jobs:
     - name: 🦫 Execute Beaver Self-Documentation
       env:
         GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
         MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
-        NOTIFY_SUCCESS: ${{ github.event.inputs.notify_success || 'true' }}
-        NOTIFY_FAILURE: ${{ github.event.inputs.notify_failure || 'true' }}
       run: |
         echo "🦫 === Beaver Self-Documentation Process ==="
         echo "📊 Meta-Documentation: Beaver analyzing its own development"
@@ -234,21 +218,11 @@ jobs:
             ;;
         esac
         
-        # Build notification flags
-        NOTIFY_FLAGS=""
-        if [[ "$NOTIFY_SUCCESS" == "true" ]]; then
-          NOTIFY_FLAGS="$NOTIFY_FLAGS --notify-success"
-        fi
-        if [[ "$NOTIFY_FAILURE" == "true" ]]; then
-          NOTIFY_FLAGS="$NOTIFY_FLAGS --notify-failure"
-        fi
-        
         # Execute self-documentation
         echo "🧠 Beaver is now analyzing and documenting its own development..."
         ./scripts/ci-beaver.sh "$COMMAND" \
           --repository "${{ needs.preflight.outputs.repository }}" \
           --max-items "$MAX_ITEMS" \
-          $NOTIFY_FLAGS \
           --verbose
           
         echo "✅ Self-documentation complete - Beaver Wiki updated with latest insights"
@@ -293,48 +267,13 @@ jobs:
           !README.md
         retention-days: 7
 
-  # Self-documentation success notification
-  self-documentation-notification:
-    name: 📧 Self-Documentation Notification
-    runs-on: ubuntu-latest
-    needs: [preflight, beaver-self-documentation]
-    if: github.event_name == 'issues' && (secrets.SLACK_WEBHOOK_URL || secrets.TEAMS_WEBHOOK_URL)
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🐹 Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
-        
-    - name: 📦 Build notification tools
-      run: |
-        go mod download
-        make build
-        
-    - name: 📧 Send self-documentation notification
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
-      run: |
-        # Send notification about self-documentation update
-        echo "🦫 Sending self-documentation update notification..."
-        ./scripts/ci-beaver.sh notify \
-          --repository "${{ github.repository }}" \
-          --message "🦫 Beaver has updated its self-documentation wiki based on issue #${{ github.event.issue.number }}" \
-          --wiki-url "https://github.com/${{ github.repository }}/wiki" \
-          --verbose
 
   # Self-documentation failure notification and issue creation
   self-documentation-failure:
     name: 🚨 Self-Documentation Failure Handling
     runs-on: ubuntu-latest
     needs: [preflight, beaver-self-documentation]
-    if: failure() && needs.beaver-self-documentation.result == 'failure'
+    if: ${{ failure() && needs.beaver-self-documentation.result == 'failure' }}
     
     steps:
     - name: 🚨 Create failure issue
@@ -378,7 +317,7 @@ jobs:
             ### Enhanced Debugging
             
             - **Incremental State:** Check \`.beaver/incremental-state.json\` integrity
-            - **Notifications:** Verify webhook URLs and credentials
+            - **Configuration:** Verify Beaver configuration integrity
             - **CI Script:** Review \`scripts/ci-beaver.sh\` execution logs
             - **Build Issues:** Check Go compilation and dependency issues
             
@@ -398,22 +337,13 @@ jobs:
           
           console.log(\`Created failure issue #\${issue.data.number}\`);
     
-    - name: 📧 Send failure notification
-      if: secrets.SLACK_WEBHOOK_URL || secrets.TEAMS_WEBHOOK_URL
-      run: |
-        # Send immediate failure notification
-        if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"🚨 Beaver Self-Documentation Failed\n🦫 Meta-Issue: Beaver could not document its own development\nWorkflow: ${{ github.workflow }}\nRun: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_number }}>\nTrigger: ${{ github.event_name }}\nRepository: ${{ github.repository }}\nWiki: <https://github.com/${{ github.repository }}/wiki|Check Wiki Status>"}' \
-            "${{ secrets.SLACK_WEBHOOK_URL }}"
-        fi
 
   # Self-documentation cleanup and maintenance
   self-documentation-cleanup:
     name: 🧹 Self-Documentation Cleanup
     runs-on: ubuntu-latest
     needs: [beaver-self-documentation]
-    if: always() && (github.event_name == 'schedule' || github.event.inputs.force_rebuild == 'true')
+    if: ${{ always() && (github.event_name == 'schedule' || github.event.inputs.force_rebuild == 'true') }}
     
     steps:
     - name: 📥 Checkout code
@@ -457,7 +387,7 @@ jobs:
   weekly-self-analysis:
     name: 📈 Weekly Self-Analysis
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
+    if: ${{ github.event_name == 'schedule' }}
     
     steps:
     - name: 📥 Checkout code
@@ -510,10 +440,3 @@ jobs:
           !README.md
         retention-days: 30
 
-    - name: 📧 Send weekly analysis notification
-      if: secrets.SLACK_WEBHOOK_URL
-      run: |
-        echo "📧 Sending weekly self-analysis notification..."
-        curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"📈 Beaver Weekly Self-Analysis Complete\n🦫 Meta-Report: Beaver has completed its weekly development self-assessment\n📊 New insights available in the Wiki\n🌐 Wiki: <https://github.com/${{ github.repository }}/wiki|View Updated Knowledge Dam>\n📅 Analysis Period: Past 7 days\n⭐ Key Pages: Development Strategy, Statistics Dashboard, Label Analysis"}' \
-          "${{ secrets.SLACK_WEBHOOK_URL }}"
