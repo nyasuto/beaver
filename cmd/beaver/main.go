@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/actions"
 	"github.com/nyasuto/beaver/pkg/github"
 	"github.com/nyasuto/beaver/pkg/wiki"
 	"github.com/spf13/cobra"
@@ -36,22 +38,92 @@ var initCmd = &cobra.Command{
 	Run:   runInitCommand,
 }
 
+// Build command flags
+var (
+	incrementalBuild bool
+	forceRebuild     bool
+	notifyOnSuccess  bool
+	notifyOnFailure  bool
+	stateFile        string
+	maxItems         int
+)
+
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "最新Issuesをwikiに処理",
-	Long:  "GitHub Issues を取得し、AI処理を実行して Wiki ドキュメントを生成します。",
-	RunE:  runBuildCommand,
+	Long: `GitHub Issues を取得し、AI処理を実行して Wiki ドキュメントを生成します。
+
+インクリメンタルモード:
+  --incremental    前回の更新以降の変更のみを処理 (高速化)
+  --force-rebuild  すべてのIssueを再処理 (完全再構築)
+  --state-file     インクリメンタル状態ファイルのパス
+  --max-items      1回の更新で処理する最大アイテム数
+
+通知オプション:
+  --notify-success 成功時にSlack/Teams通知を送信
+  --notify-failure 失敗時にSlack/Teams通知を送信
+
+Example:
+  beaver build                    # 通常のビルド
+  beaver build --incremental      # インクリメンタルビルド
+  beaver build --force-rebuild    # 完全再構築
+  beaver build --notify-success   # 成功時通知付き`,
+	RunE: runBuildCommand,
 }
 
 func runBuildCommand(cmd *cobra.Command, args []string) error {
 	log.Printf("INFO Starting beaver build command")
-	fmt.Println("🏗️ Beaverビルドを開始中...")
+
+	// Get GitHub Actions context if available
+	var githubCtx *actions.GitHubContext
+	var notifier *actions.Notifier
+
+	if actions.IsGitHubActions() {
+		if ctx, err := actions.GetGitHubContext(); err == nil {
+			githubCtx = ctx
+			actions.LogInfo(fmt.Sprintf("Running in GitHub Actions: %s", actions.GetUpdateReason(ctx)))
+		}
+	}
+
+	// Setup notifications if configured
+	if (notifyOnSuccess || notifyOnFailure) && githubCtx != nil {
+		// Load notification config from environment
+		notificationConfig := actions.NotificationConfig{
+			Slack: actions.SlackConfig{
+				WebhookURL: os.Getenv("SLACK_WEBHOOK_URL"),
+				Channel:    os.Getenv("SLACK_CHANNEL"),
+				Username:   "Beaver Wiki Bot",
+				IconEmoji:  ":beaver:",
+			},
+			Teams: actions.TeamsConfig{
+				WebhookURL: os.Getenv("TEAMS_WEBHOOK_URL"),
+			},
+		}
+		if notificationConfig.Slack.WebhookURL != "" || notificationConfig.Teams.WebhookURL != "" {
+			notifier = actions.NewNotifier(notificationConfig)
+		}
+	}
+
+	// Determine if this should be an incremental build
+	isIncremental := incrementalBuild
+	if githubCtx != nil && !forceRebuild {
+		isIncremental = actions.IsIncrementalUpdate(githubCtx)
+	}
+
+	if isIncremental {
+		fmt.Println("⚡ インクリメンタルビルドを開始中...")
+	} else {
+		fmt.Println("🏗️ 完全ビルドを開始中...")
+	}
 
 	// Load configuration
 	log.Printf("INFO Loading configuration")
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Printf("ERROR Failed to load configuration: %v", err)
+		if notifier != nil && notifyOnFailure && githubCtx != nil {
+			notifier.SendWikiUpdateNotification(githubCtx, false, fmt.Sprintf("設定読み込みエラー: %v", err))
+		}
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
 	log.Printf("INFO Configuration loaded: project=%s, repo=%s", cfg.Project.Name, cfg.Project.Repository)
@@ -86,6 +158,35 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	}
 	log.Printf("INFO GitHub token configured (length: %d)", len(cfg.Sources.GitHub.Token))
 
+	// Setup incremental manager if needed
+	var incrementalManager *actions.IncrementalManager
+	if isIncremental || githubCtx != nil {
+		options := actions.IncrementalOptions{
+			StateFile:    stateFile,
+			ForceRebuild: forceRebuild,
+			MaxItems:     maxItems,
+			LookbackTime: 24 * time.Hour, // Default 24 hours
+		}
+
+		if options.StateFile == "" {
+			options.StateFile = ".beaver/incremental-state.json"
+		}
+		if options.MaxItems == 0 {
+			options.MaxItems = 100
+		}
+
+		incrementalManager = actions.NewIncrementalManager(options)
+		if err := incrementalManager.LoadState(); err != nil {
+			log.Printf("WARN Failed to load incremental state: %v", err)
+		}
+
+		// Check if we should force a rebuild
+		if githubCtx != nil && incrementalManager.ShouldTriggerRebuild(githubCtx) {
+			isIncremental = false
+			fmt.Println("🔄 フルリビルドが必要です...")
+		}
+	}
+
 	// Initialize GitHub service
 	log.Printf("INFO Initializing GitHub service")
 	githubService := github.NewService(cfg.Sources.GitHub.Token)
@@ -103,8 +204,20 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 
 	// Fetch Issues
 	log.Printf("INFO Fetching Issues from repository: %s", cfg.Project.Repository)
-	fmt.Printf("📥 Issues取得中: %s\n", cfg.Project.Repository)
+	if isIncremental && incrementalManager != nil {
+		fmt.Printf("⚡ インクリメンタルIssues取得中: %s\n", cfg.Project.Repository)
+	} else {
+		fmt.Printf("📥 Issues取得中: %s\n", cfg.Project.Repository)
+	}
+
 	query := models.DefaultIssueQuery(cfg.Project.Repository)
+
+	// Modify query for incremental updates
+	if isIncremental && incrementalManager != nil {
+		query = *incrementalManager.GetIncrementalQuery(&query)
+		log.Printf("INFO Using incremental query: since=%v, max_items=%d",
+			query.Since, query.PerPage)
+	}
 
 	result, err := githubService.FetchIssues(ctx, query)
 	if err != nil {
@@ -131,11 +244,19 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 			result.RateLimit.ResetTime.Format("15:04:05"))
 	}
 
+	// Apply incremental filtering if needed
+	issuesForProcessing := result.Issues
+	if isIncremental && incrementalManager != nil {
+		issuesForProcessing = incrementalManager.FilterIssuesForIncremental(result.Issues)
+		log.Printf("INFO Filtered issues for incremental processing: %d -> %d",
+			len(result.Issues), len(issuesForProcessing))
+	}
+
 	// Generate Wiki content
 	log.Printf("INFO Generating Wiki content")
 	fmt.Printf("📝 Wiki生成中...\n")
 	wikiGenerator := wiki.NewGenerator()
-	wikiPages, err := wikiGenerator.GenerateAllPages(result.Issues, cfg.Project.Name)
+	wikiPages, err := wikiGenerator.GenerateAllPages(issuesForProcessing, cfg.Project.Name)
 	if err != nil {
 		log.Printf("ERROR Failed to generate Wiki content: %v", err)
 		return fmt.Errorf("❌ Wiki生成エラー: %w", err)
@@ -156,11 +277,66 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 		fmt.Printf("✅ Wikiページ生成完了: %s\n", outputPath)
 	}
 
-	fmt.Printf("📄 総ファイルサイズ: %.2f KB\n", float64(totalSize)/1024)
-	fmt.Printf("📊 処理したIssues: %d件\n", len(result.Issues))
-	fmt.Printf("📝 生成したページ: %d件\n", len(wikiPages))
-	fmt.Println("🦫 Beaver Build完了!")
+	// Update incremental state if needed
+	if incrementalManager != nil {
+		// Mark processed issues
+		for _, issue := range issuesForProcessing {
+			incrementalManager.MarkIssueProcessed(issue.Number)
+		}
 
+		// Update last update timestamp
+		if githubCtx != nil {
+			incrementalManager.UpdateLastUpdate(githubCtx.SHA)
+			incrementalManager.MarkEventProcessed(githubCtx.Event, githubCtx.RunID, map[string]interface{}{
+				"repository": githubCtx.Repository,
+				"actor":      githubCtx.Actor,
+				"workflow":   githubCtx.Workflow,
+			})
+		} else {
+			incrementalManager.UpdateLastUpdate("")
+		}
+
+		// Clean up old state entries
+		incrementalManager.CleanupOldState()
+
+		// Save state
+		if err := incrementalManager.SaveState(); err != nil {
+			log.Printf("WARN Failed to save incremental state: %v", err)
+		}
+
+		// Display incremental summary
+		summary := incrementalManager.GetUpdateSummary()
+		if summary["is_incremental"].(bool) {
+			fmt.Printf("⚡ インクリメンタル更新統計:\n")
+			fmt.Printf("  📊 処理したIssues: %d件 (全体: %d件)\n", len(issuesForProcessing), len(result.Issues))
+			fmt.Printf("  🕒 前回更新: %s\n", summary["last_update"])
+			fmt.Printf("  📈 累計処理済み: %d件\n", summary["total_processed_issues"])
+		}
+	}
+
+	fmt.Printf("📄 総ファイルサイズ: %.2f KB\n", float64(totalSize)/1024)
+	fmt.Printf("📊 処理したIssues: %d件\n", len(issuesForProcessing))
+	fmt.Printf("📝 生成したページ: %d件\n", len(wikiPages))
+
+	// Send success notification if configured
+	if notifier != nil && notifyOnSuccess && githubCtx != nil {
+		message := fmt.Sprintf("Wiki更新完了: %d件のIssueを処理し、%d個のページを生成しました",
+			len(issuesForProcessing), len(wikiPages))
+		if isIncremental {
+			message = fmt.Sprintf("インクリメンタルWiki更新完了: %d件のIssueを処理し、%d個のページを生成しました",
+				len(issuesForProcessing), len(wikiPages))
+		}
+		results := notifier.SendWikiUpdateNotification(githubCtx, true, message)
+		for _, result := range results {
+			if result.Success {
+				log.Printf("INFO Notification sent successfully to %s", result.Channel)
+			} else {
+				log.Printf("WARN Failed to send notification to %s: %s", result.Channel, result.Error)
+			}
+		}
+	}
+
+	fmt.Println("🦫 Beaver Build完了!")
 	log.Printf("INFO Build command completed successfully")
 	return nil
 }
@@ -347,6 +523,14 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(generateCmd)
+
+	// Build command flags
+	buildCmd.Flags().BoolVar(&incrementalBuild, "incremental", false, "インクリメンタルビルドを実行 (前回更新以降の変更のみ)")
+	buildCmd.Flags().BoolVar(&forceRebuild, "force-rebuild", false, "すべてのIssueを再処理 (完全再構築)")
+	buildCmd.Flags().BoolVar(&notifyOnSuccess, "notify-success", false, "成功時にSlack/Teams通知を送信")
+	buildCmd.Flags().BoolVar(&notifyOnFailure, "notify-failure", false, "失敗時にSlack/Teams通知を送信")
+	buildCmd.Flags().StringVar(&stateFile, "state-file", "", "インクリメンタル状態ファイルのパス (デフォルト: .beaver/incremental-state.json)")
+	buildCmd.Flags().IntVar(&maxItems, "max-items", 100, "1回の更新で処理する最大アイテム数")
 }
 
 // mainLogic contains the core logic of main() without os.Exit for testing
