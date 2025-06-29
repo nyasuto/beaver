@@ -155,7 +155,6 @@ func (tm *TemplateManager) ListTemplates() []string {
 	return names
 }
 
-
 // GetDefaultTemplateContent returns the content of a default template
 func GetDefaultTemplateContent(templateName string) (string, bool) {
 	// For external templates, return a reference to the file
