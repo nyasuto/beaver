@@ -172,6 +172,8 @@ jobs:
         chmod +x ./bin/beaver ./scripts/ci-beaver.sh
         
     - name: ✅ Verify installation
+      env:
+        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       run: |
         # Test binary
         ./bin/beaver --help
