@@ -217,7 +217,7 @@ func (f *TestFixtures) CreateTestAIResponse() *ai.SummarizationResponse {
 		KeyPoints:      []string{"Key point 1", "Key point 2"},
 		Category:       &category,
 		Complexity:     "medium",
-		ProviderUsed:   "openai",
+		ProviderUsed:   ai.ProviderOpenAI,
 		ModelUsed:      "gpt-4",
 		ProcessingTime: 1.5,
 		TokenUsage: map[string]int{
