@@ -2,6 +2,8 @@ package logger
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"log/slog"
 	"strings"
 	"testing"
@@ -436,5 +438,331 @@ func TestConcurrentLogging(t *testing.T) {
 	// Should contain messages from all goroutines
 	if !strings.Contains(output, "concurrent message") {
 		t.Error("Concurrent logging should work without race conditions")
+	}
+}
+
+func TestWithContext(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	var buf bytes.Buffer
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &buf,
+	})
+
+	t.Run("WithContext extracts context values", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "request_id", "req-123")
+		ctx = context.WithValue(ctx, "user_id", "user-456")
+		ctx = context.WithValue(ctx, "service", "beaver")
+
+		logger := WithContext(ctx, "extra", "value")
+
+		buf.Reset()
+		logger.Info("test message")
+		output := buf.String()
+
+		if !strings.Contains(output, "request_id=req-123") {
+			t.Errorf("Should contain request_id, got: %s", output)
+		}
+		if !strings.Contains(output, "user_id=user-456") {
+			t.Errorf("Should contain user_id, got: %s", output)
+		}
+		if !strings.Contains(output, "service=beaver") {
+			t.Errorf("Should contain service, got: %s", output)
+		}
+		if !strings.Contains(output, "extra=value") {
+			t.Errorf("Should contain extra attributes, got: %s", output)
+		}
+	})
+
+	t.Run("WithContext handles missing context values", func(t *testing.T) {
+		ctx := context.Background()
+		logger := WithContext(ctx, "test", "value")
+
+		buf.Reset()
+		logger.Info("test message")
+		output := buf.String()
+
+		if !strings.Contains(output, "test=value") {
+			t.Errorf("Should contain provided attributes, got: %s", output)
+		}
+		// Should not contain context values that weren't set
+		if strings.Contains(output, "request_id=") {
+			t.Errorf("Should not contain request_id when not set, got: %s", output)
+		}
+	})
+}
+
+func TestFromContext(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	var buf bytes.Buffer
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &buf,
+	})
+
+	t.Run("FromContext returns stored logger", func(t *testing.T) {
+		customLogger := GetLogger().With("component", "test")
+		ctx := ToContext(context.Background(), customLogger)
+
+		retrieved := FromContext(ctx)
+		if retrieved != customLogger {
+			t.Error("FromContext should return the stored logger")
+		}
+	})
+
+	t.Run("FromContext returns global logger when no logger in context", func(t *testing.T) {
+		ctx := context.Background()
+		retrieved := FromContext(ctx)
+
+		if retrieved != GetLogger() {
+			t.Error("FromContext should return global logger when none in context")
+		}
+	})
+}
+
+func TestToContext(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &bytes.Buffer{},
+	})
+
+	customLogger := GetLogger().With("component", "test")
+	ctx := ToContext(context.Background(), customLogger)
+
+	retrieved := FromContext(ctx)
+	if retrieved != customLogger {
+		t.Error("ToContext/FromContext should preserve logger instance")
+	}
+}
+
+func TestWithComponent(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	var buf bytes.Buffer
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &buf,
+	})
+
+	logger := WithComponent("auth-service")
+
+	buf.Reset()
+	logger.Info("authentication successful")
+	output := buf.String()
+
+	if !strings.Contains(output, "component=auth-service") {
+		t.Errorf("Should contain component attribute, got: %s", output)
+	}
+	if !strings.Contains(output, "authentication successful") {
+		t.Errorf("Should contain log message, got: %s", output)
+	}
+}
+
+func TestWithError(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	var buf bytes.Buffer
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &buf,
+	})
+
+	testErr := errors.New("database connection failed")
+	logger := WithError(testErr)
+
+	buf.Reset()
+	logger.Error("operation failed")
+	output := buf.String()
+
+	if !strings.Contains(output, "error=\"database connection failed\"") {
+		t.Errorf("Should contain error attribute, got: %s", output)
+	}
+	if !strings.Contains(output, "operation failed") {
+		t.Errorf("Should contain log message, got: %s", output)
+	}
+}
+
+func TestWithFields(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	var buf bytes.Buffer
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &buf,
+	})
+
+	fields := map[string]any{
+		"user_id":    "123",
+		"session_id": "abc-def",
+		"action":     "login",
+		"attempt":    3,
+	}
+
+	logger := WithFields(fields)
+
+	buf.Reset()
+	logger.Info("user action logged")
+	output := buf.String()
+
+	if !strings.Contains(output, "user_id=123") {
+		t.Errorf("Should contain user_id field, got: %s", output)
+	}
+	if !strings.Contains(output, "session_id=abc-def") {
+		t.Errorf("Should contain session_id field, got: %s", output)
+	}
+	if !strings.Contains(output, "action=login") {
+		t.Errorf("Should contain action field, got: %s", output)
+	}
+	if !strings.Contains(output, "attempt=3") {
+		t.Errorf("Should contain attempt field, got: %s", output)
+	}
+}
+
+func TestEnabled(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	t.Run("Enabled returns true for levels at or above threshold", func(t *testing.T) {
+		InitLogger(Config{
+			Level:  LevelWarn,
+			Format: "text",
+			Output: &bytes.Buffer{},
+		})
+
+		if Enabled(LevelDebug) {
+			t.Error("Debug should not be enabled at Warn level")
+		}
+		if Enabled(LevelInfo) {
+			t.Error("Info should not be enabled at Warn level")
+		}
+		if !Enabled(LevelWarn) {
+			t.Error("Warn should be enabled at Warn level")
+		}
+		if !Enabled(LevelError) {
+			t.Error("Error should be enabled at Warn level")
+		}
+	})
+}
+
+func TestLazyLoggingFunctions(t *testing.T) {
+	// Reset global logger for testing
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
+
+	var buf bytes.Buffer
+	InitLogger(Config{
+		Level:  LevelInfo,
+		Format: "text",
+		Output: &buf,
+	})
+
+	called := false
+	expensiveFunc := func() []any {
+		called = true
+		return []any{"expensive", "computation"}
+	}
+
+	t.Run("DebugFunc skips execution when debug disabled", func(t *testing.T) {
+		called = false
+		buf.Reset()
+
+		DebugFunc("debug message", expensiveFunc)
+
+		if called {
+			t.Error("Expensive function should not be called when debug is disabled")
+		}
+		if buf.String() != "" {
+			t.Error("Debug message should not be logged when debug is disabled")
+		}
+	})
+
+	t.Run("InfoFunc executes when info enabled", func(t *testing.T) {
+		called = false
+		buf.Reset()
+
+		InfoFunc("info message", expensiveFunc)
+
+		if !called {
+			t.Error("Expensive function should be called when info is enabled")
+		}
+		output := buf.String()
+		if !strings.Contains(output, "info message") {
+			t.Errorf("Should contain info message, got: %s", output)
+		}
+		if !strings.Contains(output, "expensive=computation") {
+			t.Errorf("Should contain expensive computation result, got: %s", output)
+		}
+	})
+
+	t.Run("WarnFunc executes when warn enabled", func(t *testing.T) {
+		called = false
+		buf.Reset()
+
+		WarnFunc("warn message", expensiveFunc)
+
+		if !called {
+			t.Error("Expensive function should be called when warn is enabled")
+		}
+		output := buf.String()
+		if !strings.Contains(output, "warn message") {
+			t.Errorf("Should contain warn message, got: %s", output)
+		}
+	})
+
+	t.Run("ErrorFunc executes when error enabled", func(t *testing.T) {
+		called = false
+		buf.Reset()
+
+		ErrorFunc("error message", expensiveFunc)
+
+		if !called {
+			t.Error("Expensive function should be called when error is enabled")
+		}
+		output := buf.String()
+		if !strings.Contains(output, "error message") {
+			t.Errorf("Should contain error message, got: %s", output)
+		}
+	})
+}
+
+func TestContextConfig(t *testing.T) {
+	config := ContextConfig{
+		RequestIDKey: "req_id",
+		UserIDKey:    "uid",
+		ServiceKey:   "svc",
+	}
+
+	if config.RequestIDKey != "req_id" {
+		t.Errorf("ContextConfig.RequestIDKey = %q, want %q", config.RequestIDKey, "req_id")
+	}
+	if config.UserIDKey != "uid" {
+		t.Errorf("ContextConfig.UserIDKey = %q, want %q", config.UserIDKey, "uid")
+	}
+	if config.ServiceKey != "svc" {
+		t.Errorf("ContextConfig.ServiceKey = %q, want %q", config.ServiceKey, "svc")
 	}
 }

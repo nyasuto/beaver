@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
+	"github.com/nyasuto/beaver/internal/logger"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/analytics"
 	"github.com/nyasuto/beaver/pkg/github"
@@ -50,20 +50,21 @@ var (
 )
 
 func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
-	log.Printf("INFO Starting beaver analyze patterns command")
+	analyzeLogger := logger.WithComponent("analyze")
+	analyzeLogger.Info("Starting beaver analyze patterns command")
 	fmt.Println("🔍 学習パターン分析を開始中...")
 
 	// Load configuration
-	log.Printf("INFO Loading configuration")
+	analyzeLogger.Info("Loading configuration")
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Printf("ERROR Failed to load configuration: %v", err)
+		analyzeLogger.Error("Failed to load configuration", "error", err)
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
 
 	// Validate configuration
 	if err := cfg.Validate(); err != nil {
-		log.Printf("ERROR Configuration validation failed: %v", err)
+		analyzeLogger.Error("Configuration validation failed", "error", err)
 		return fmt.Errorf("❌ 設定が無効です: %w", err)
 	}
 
@@ -80,7 +81,7 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 
 	// Check AI service dependencies
 	if err := aiService.CheckPythonDependencies(ctx); err != nil {
-		log.Printf("WARN AI pattern recognition unavailable: %v", err)
+		analyzeLogger.Warn("AI pattern recognition unavailable", "error", err)
 		fmt.Printf("⚠️  AI分析が利用できません: %v\n", err)
 		fmt.Println("📝 基本的なタイムライン分析のみ実行します...")
 	}
@@ -92,7 +93,7 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 		fmt.Println("📥 GitHub Issues を取得中...")
 		events, err := fetchGitHubEvents(ctx, cfg, owner, repo)
 		if err != nil {
-			log.Printf("WARN Failed to fetch GitHub events: %v", err)
+			analyzeLogger.Warn("Failed to fetch GitHub events", "error", err)
 			fmt.Printf("⚠️  GitHub イベント取得エラー: %v\n", err)
 		} else {
 			allEvents = append(allEvents, events...)
@@ -105,7 +106,7 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 		fmt.Println("📥 Git コミット履歴を取得中...")
 		gitEvents, err := fetchGitEvents(ctx, sinceDate, maxCommits)
 		if err != nil {
-			log.Printf("WARN Failed to fetch Git events: %v", err)
+			analyzeLogger.Warn("Failed to fetch Git events", "error", err)
 			fmt.Printf("⚠️  Git イベント取得エラー: %v\n", err)
 		} else {
 			allEvents = append(allEvents, gitEvents...)
@@ -142,7 +143,7 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 	fmt.Println("📊 タイムライン傾向を分析中...")
 	trends, err := timelineProcessor.AnalyzeTimelineTrends(ctx, timeline)
 	if err != nil {
-		log.Printf("ERROR Failed to analyze timeline trends: %v", err)
+		analyzeLogger.Error("Failed to analyze timeline trends", "error", err)
 		return fmt.Errorf("❌ タイムライン分析エラー: %w", err)
 	}
 
@@ -154,10 +155,10 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 	fmt.Println("🤖 AI学習パターン分析を実行中...")
 	aiResult, err = aiService.AnalyzePatterns(ctx, allEvents, author)
 	if err != nil {
-		log.Printf("WARN AI pattern analysis failed: %v", err)
+		analyzeLogger.Warn("AI pattern analysis failed", "error", err)
 		fmt.Printf("⚠️  AI分析エラー: %v\n", err)
 	} else if aiResult.ErrorMessage != "" {
-		log.Printf("WARN AI pattern analysis error: %s", aiResult.ErrorMessage)
+		analyzeLogger.Warn("AI pattern analysis error", "error_message", aiResult.ErrorMessage)
 		fmt.Printf("⚠️  AI分析エラー: %s\n", aiResult.ErrorMessage)
 	} else {
 		fmt.Printf("✅ AI分析完了: %d個のパターンを検出 (%.2f秒)\n",
@@ -254,7 +255,7 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("\n💾 結果を保存中: %s\n", outputFile)
 	if err := saveAnalysisResult(result, outputFile); err != nil {
-		log.Printf("ERROR Failed to save analysis result: %v", err)
+		analyzeLogger.Error("Failed to save analysis result", "error", err)
 		return fmt.Errorf("❌ 結果保存エラー: %w", err)
 	}
 
