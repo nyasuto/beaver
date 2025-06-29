@@ -1596,8 +1596,20 @@ ai:
   provider: "openai"
   model: "gpt-3.5-turbo"`
 
-		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		configPath := tempDir + "/beaver.yml"
+		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
+		
+		// Set BEAVER_CONFIG_PATH to ensure test config is used
+		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
+		defer func() {
+			if originalConfigPath != "" {
+				os.Setenv("BEAVER_CONFIG_PATH", originalConfigPath)
+			} else {
+				os.Unsetenv("BEAVER_CONFIG_PATH")
+			}
+		}()
+		os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
 		// Capture stdout
 		oldStdout := os.Stdout
@@ -1626,8 +1638,20 @@ ai:
 
 		// Create invalid config file
 		configContent := `invalid yaml content: [unclosed`
-		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		configPath := tempDir + "/beaver.yml"
+		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
+		
+		// Set BEAVER_CONFIG_PATH to ensure test config is used
+		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
+		defer func() {
+			if originalConfigPath != "" {
+				os.Setenv("BEAVER_CONFIG_PATH", originalConfigPath)
+			} else {
+				os.Unsetenv("BEAVER_CONFIG_PATH")
+			}
+		}()
+		os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
 		// Capture stdout
 		oldStdout := os.Stdout
