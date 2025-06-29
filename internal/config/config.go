@@ -147,8 +147,8 @@ sources:
 
 output:
   wiki:
-    platform: "github"    # github, notion, confluence
-    templates: "default"  # default, academic, startup
+    platform: "github"
+    templates: "default"
 
 ai:
   provider: "openai"      # openai, anthropic, local
@@ -204,9 +204,7 @@ func (c *Config) Validate() error {
 	}
 
 	validPlatforms := map[string]bool{
-		"github":     true,
-		"notion":     true,
-		"confluence": true,
+		"github": true,
 	}
 	if !validPlatforms[c.Output.Wiki.Platform] {
 		return fmt.Errorf("無効な wiki platform: %s", c.Output.Wiki.Platform)

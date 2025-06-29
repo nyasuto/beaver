@@ -62,14 +62,13 @@ graph LR
     D --> E[AI処理エンジン]
     E --> F[Wiki生成器]
     F --> G[GitHub Wiki]
-    F --> H[Notion/Confluence]
 ```
 
 **技術スタック:**
 - **バックエンド**: Go（GitHub API、高性能、既存経験）
 - **AI処理**: Python（LangChain、OpenAI SDK、豊富なMLエコシステム）
 - **連携**: GoとPythonサービス間のREST API通信
-- **ストレージ**: GitHub Wiki、Notion、Confluence（設定可能）
+- **ストレージ**: GitHub Wiki
 
 **GitHub Wiki更新方式:**
 - **Git Clone方式**: `git clone https://github.com/owner/repo.wiki.git`
@@ -140,7 +139,7 @@ beaver summarize # AI要約機能
 - [ ] 複数リポジトリサポート
 - [ ] チーム学習分析
 - [ ] 知識ギャップ特定
-- [ ] 外部ツール統合（Notion、Confluence）
+- [ ] 外部プラットフォーム統合
 - [ ] 知識探索用Webダッシュボード
 
 **高度なAI:**
@@ -402,7 +401,7 @@ sources:
   
 output:
   wiki:
-    platform: "github"    # github, notion, confluence
+    platform: "github"    # github
     templates: "default"  # default, academic, startup
     
 ai:
