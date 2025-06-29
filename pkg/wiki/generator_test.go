@@ -246,12 +246,13 @@ func TestGenerateAllPages(t *testing.T) {
 		t.Fatalf("GenerateAllPages() failed: %v", err)
 	}
 
-	if len(pages) != 4 {
-		t.Errorf("Expected 4 pages, got %d", len(pages))
+	if len(pages) != 5 {
+		t.Errorf("Expected 5 pages, got %d", len(pages))
 	}
 
 	// Check that all expected pages are generated
 	expectedFilenames := map[string]bool{
+		"_Sidebar.md":              false,
 		"Home.md":                  false,
 		"Issues-Summary.md":        false,
 		"Troubleshooting-Guide.md": false,

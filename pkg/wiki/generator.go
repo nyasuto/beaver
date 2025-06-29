@@ -11,15 +11,19 @@ import (
 
 // Generator generates Wiki content from GitHub Issues
 type Generator struct {
-	templateManager *TemplateManager
-	config          *config.Config
+	templateManager   *TemplateManager
+	config            *config.Config
+	navigationManager *NavigationManager
+	sidebarGenerator  *SidebarGenerator
 }
 
 // NewGenerator creates a new Wiki generator
 func NewGenerator() *Generator {
 	return &Generator{
-		templateManager: NewTemplateManager(),
-		config:          config.GetConfig(),
+		templateManager:   NewTemplateManager(),
+		config:            config.GetConfig(),
+		navigationManager: NewNavigationManager(),
+		sidebarGenerator:  NewSidebarGenerator(),
 	}
 }
 
@@ -62,6 +66,7 @@ type IssuesSummaryData struct {
 	AIProcessor         string
 	BeaverVersion       string
 	ClassificationStats ClassificationSummary
+	Navigation          NavigationContext
 }
 
 // TroubleshootingData contains data for troubleshooting guide
@@ -71,6 +76,7 @@ type TroubleshootingData struct {
 	SolvedIssues []models.Issue
 	CommonErrors []ErrorPattern
 	Solutions    []Solution
+	Navigation   NavigationContext
 }
 
 // ErrorPattern represents a common error pattern
@@ -96,6 +102,7 @@ type LearningPathData struct {
 	Milestones    []Milestone
 	Technologies  []Technology
 	LearningGoals []LearningGoal
+	Navigation    NavigationContext
 }
 
 // Milestone represents a development milestone
@@ -131,6 +138,7 @@ type IndexData struct {
 	TotalIssues int
 	Status      string
 	LastUpdate  time.Time
+	Navigation  NavigationContext
 }
 
 // GenerateIssuesSummary generates an Issues summary Wiki page
@@ -142,6 +150,7 @@ func (g *Generator) GenerateIssuesSummary(issues []models.Issue, projectName str
 		Issues:        issues,
 		AIProcessor:   "OpenAI/Anthropic",
 		BeaverVersion: "1.0.0",
+		Navigation:    g.navigationManager.GetNavigationContext("Issues-Summary"),
 	}
 
 	// Count open/closed issues and calculate classification statistics
@@ -189,6 +198,7 @@ func (g *Generator) GenerateTroubleshootingGuide(issues []models.Issue, projectN
 		SolvedIssues: solvedIssues,
 		CommonErrors: g.extractErrorPatterns(solvedIssues),
 		Solutions:    g.extractSolutions(solvedIssues),
+		Navigation:   g.navigationManager.GetNavigationContext("Troubleshooting-Guide"),
 	}
 
 	content, err := g.renderTemplate("troubleshooting", data)
@@ -216,6 +226,7 @@ func (g *Generator) GenerateLearningPath(issues []models.Issue, projectName stri
 		Milestones:    g.extractMilestones(issues),
 		Technologies:  g.extractTechnologies(issues),
 		LearningGoals: g.extractLearningGoals(issues),
+		Navigation:    g.navigationManager.GetNavigationContext("Learning-Path"),
 	}
 
 	content, err := g.renderTemplate("learning-path", data)
@@ -473,6 +484,13 @@ func (bp *BatchProcessor) processBatch(issues []models.Issue, projectName string
 func (g *Generator) GenerateAllPages(issues []models.Issue, projectName string) ([]*WikiPage, error) {
 	var pages []*WikiPage
 
+	// Generate sidebar first (for navigation consistency)
+	sidebarPage, err := g.GenerateSidebar(issues, projectName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate sidebar: %w", err)
+	}
+	pages = append(pages, sidebarPage)
+
 	// Generate index page
 	indexPage, err := g.GenerateIndex(issues, projectName)
 	if err != nil {
@@ -504,6 +522,11 @@ func (g *Generator) GenerateAllPages(issues []models.Issue, projectName string) 
 	return pages, nil
 }
 
+// GenerateSidebar generates the _Sidebar.md page for GitHub Wiki navigation
+func (g *Generator) GenerateSidebar(issues []models.Issue, projectName string) (*WikiPage, error) {
+	return g.sidebarGenerator.GenerateSidebar(projectName, issues)
+}
+
 // GenerateIndex generates the main index page
 func (g *Generator) GenerateIndex(issues []models.Issue, projectName string) (*WikiPage, error) {
 	data := IndexData{
@@ -512,6 +535,7 @@ func (g *Generator) GenerateIndex(issues []models.Issue, projectName string) (*W
 		TotalIssues: len(issues),
 		Status:      "Active",
 		LastUpdate:  g.now(),
+		Navigation:  g.navigationManager.GetNavigationContext("Home"),
 	}
 
 	content, err := g.renderTemplate("index", data)
