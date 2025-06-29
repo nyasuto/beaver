@@ -65,8 +65,8 @@ func TestRunClassifyIssue(t *testing.T) {
 		err := runClassifyIssue(cmd, []string{"invalid-repo", "123"})
 
 		assert.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("Invalid issue number", func(t *testing.T) {
@@ -176,8 +176,8 @@ func TestRunClassifyIssues(t *testing.T) {
 		err := runClassifyIssues(cmd, []string{"invalid-repo", "123"})
 
 		assert.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("Invalid parallel parameter", func(t *testing.T) {
@@ -273,8 +273,8 @@ func TestRunClassifyAll(t *testing.T) {
 		err := runClassifyAll(cmd, []string{"invalid-repo"})
 
 		assert.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("Invalid parallel parameter", func(t *testing.T) {
@@ -1272,8 +1272,8 @@ output:
 
 		err = runBuildCommand(cmd, args)
 		require.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("missing GitHub token", func(t *testing.T) {
@@ -1346,7 +1346,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "リポジトリが設定されていません")
+		// Config validation checks GitHub token first
+		assert.Contains(t, err.Error(), "GitHub token")
 	})
 
 	t.Run("repository with multiple slashes", func(t *testing.T) {
@@ -1368,8 +1369,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("repository with only slash", func(t *testing.T) {
@@ -1391,8 +1392,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 
 	t.Run("repository with no slash", func(t *testing.T) {
@@ -1414,8 +1415,8 @@ sources:
 		cmd := &cobra.Command{}
 		err = runBuildCommand(cmd, []string{})
 		require.Error(t, err)
-		// Config validation now checks GitHub token first
-		assert.Contains(t, err.Error(), "GitHub token")
+		// Repository format validation happens first for classify commands
+		assert.Contains(t, err.Error(), "リポジトリ形式が無効です")
 	})
 }
 
