@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
+	"github.com/nyasuto/beaver/internal/logger"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/actions"
 	"github.com/nyasuto/beaver/pkg/github"
@@ -72,7 +72,8 @@ Example:
 }
 
 func runBuildCommand(cmd *cobra.Command, args []string) error {
-	log.Printf("INFO Starting beaver build command")
+	buildLogger := logger.WithComponent("build")
+	buildLogger.Info("Starting beaver build command")
 
 	// Get GitHub Actions context if available
 	var githubCtx *actions.GitHubContext
@@ -117,46 +118,46 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Load configuration
-	log.Printf("INFO Loading configuration")
+	buildLogger.Info("Loading configuration")
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Printf("ERROR Failed to load configuration: %v", err)
+		buildLogger.Error("Failed to load configuration", "error", err)
 		if notifier != nil && notifyOnFailure && githubCtx != nil {
 			notifier.SendWikiUpdateNotification(githubCtx, false, fmt.Sprintf("設定読み込みエラー: %v", err))
 		}
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
-	log.Printf("INFO Configuration loaded: project=%s, repo=%s", cfg.Project.Name, cfg.Project.Repository)
+	buildLogger.Info("Configuration loaded", "project", cfg.Project.Name, "repository", cfg.Project.Repository)
 
 	// Validate configuration
-	log.Printf("INFO Validating configuration")
+	buildLogger.Info("Validating configuration")
 	if err := cfg.Validate(); err != nil {
-		log.Printf("ERROR Configuration validation failed: %v", err)
+		buildLogger.Error("Configuration validation failed", "error", err)
 		return fmt.Errorf("❌ 設定が無効です: %w", err)
 	}
-	log.Printf("INFO Configuration validation passed")
+	buildLogger.Info("Configuration validation passed")
 
 	// Check if repository is configured
 	if cfg.Project.Repository == "" || cfg.Project.Repository == "username/my-repo" {
-		log.Printf("ERROR Repository not configured")
+		buildLogger.Error("Repository not configured")
 		return fmt.Errorf("❌ リポジトリが設定されていません。beaver.yml でリポジトリを指定してください")
 	}
 
-	log.Printf("INFO Parsing repository path: %s", cfg.Project.Repository)
+	buildLogger.Info("Parsing repository path", "repository", cfg.Project.Repository)
 	owner, repo := parseOwnerRepo(cfg.Project.Repository)
 	if owner == "" || repo == "" {
-		log.Printf("ERROR Invalid repository format: %s", cfg.Project.Repository)
+		buildLogger.Error("Invalid repository format", "repository", cfg.Project.Repository)
 		return fmt.Errorf("❌ リポジトリ形式が無効です: %s (owner/repo 形式で指定してください)", cfg.Project.Repository)
 	}
-	log.Printf("INFO Repository parsed: owner=%s, repo=%s", owner, repo)
+	buildLogger.Info("Repository parsed", "owner", owner, "repo", repo)
 
 	// Check GitHub token
-	log.Printf("INFO Checking GitHub token")
+	buildLogger.Info("Checking GitHub token")
 	if cfg.Sources.GitHub.Token == "" {
-		log.Printf("ERROR GitHub token not configured")
+		buildLogger.Error("GitHub token not configured")
 		return fmt.Errorf("❌ GITHUB_TOKEN が設定されていません")
 	}
-	log.Printf("INFO GitHub token configured (length: %d)", len(cfg.Sources.GitHub.Token))
+	buildLogger.Info("GitHub token configured", "token_length", len(cfg.Sources.GitHub.Token))
 
 	// Setup incremental manager if needed
 	var incrementalManager *actions.IncrementalManager
@@ -177,7 +178,7 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 
 		incrementalManager = actions.NewIncrementalManager(options)
 		if err := incrementalManager.LoadState(); err != nil {
-			log.Printf("WARN Failed to load incremental state: %v", err)
+			buildLogger.Warn("Failed to load incremental state", "error", err)
 		}
 
 		// Check if we should force a rebuild
@@ -188,22 +189,22 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize GitHub service
-	log.Printf("INFO Initializing GitHub service")
+	buildLogger.Info("Initializing GitHub service")
 	githubService := github.NewService(cfg.Sources.GitHub.Token)
 	ctx := context.Background()
 
 	// Test GitHub connection
-	log.Printf("INFO Testing GitHub connection")
+	buildLogger.Info("Testing GitHub connection")
 	fmt.Printf("🔗 GitHub接続をテスト中...\n")
 	if err := githubService.TestConnection(ctx); err != nil {
-		log.Printf("ERROR GitHub connection failed: %v", err)
+		buildLogger.Error("GitHub connection failed", "error", err)
 		return fmt.Errorf("❌ GitHub接続エラー: %w", err)
 	}
-	log.Printf("INFO GitHub connection successful")
+	buildLogger.Info("GitHub connection successful")
 	fmt.Println("✅ GitHub接続成功")
 
 	// Fetch Issues
-	log.Printf("INFO Fetching Issues from repository: %s", cfg.Project.Repository)
+	buildLogger.Info("Fetching Issues from repository", "repository", cfg.Project.Repository)
 	if isIncremental && incrementalManager != nil {
 		fmt.Printf("⚡ インクリメンタルIssues取得中: %s\n", cfg.Project.Repository)
 	} else {
@@ -215,26 +216,28 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	// Modify query for incremental updates
 	if isIncremental && incrementalManager != nil {
 		query = *incrementalManager.GetIncrementalQuery(&query)
-		log.Printf("INFO Using incremental query: since=%v, max_items=%d",
-			query.Since, query.PerPage)
+		buildLogger.Info("Using incremental query", "since", query.Since, "max_items", query.PerPage)
 	}
 
 	result, err := githubService.FetchIssues(ctx, query)
 	if err != nil {
-		log.Printf("ERROR Failed to fetch Issues: %v", err)
+		buildLogger.Error("Failed to fetch Issues", "error", err)
 		return fmt.Errorf("❌ Issues取得エラー: %w", err)
 	}
-	log.Printf("INFO Issues fetch successful: count=%d, rate_limit=%d/%d", result.FetchedCount, func() int {
-		if result.RateLimit != nil {
-			return result.RateLimit.Remaining
-		}
-		return -1
-	}(), func() int {
-		if result.RateLimit != nil {
-			return result.RateLimit.Limit
-		}
-		return -1
-	}())
+	buildLogger.Info("Issues fetch successful",
+		"count", result.FetchedCount,
+		"rate_limit_remaining", func() int {
+			if result.RateLimit != nil {
+				return result.RateLimit.Remaining
+			}
+			return -1
+		}(),
+		"rate_limit_total", func() int {
+			if result.RateLimit != nil {
+				return result.RateLimit.Limit
+			}
+			return -1
+		}())
 
 	fmt.Printf("📊 取得したIssues: %d件\n", result.FetchedCount)
 	if result.RateLimit != nil {
@@ -248,32 +251,33 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	issuesForProcessing := result.Issues
 	if isIncremental && incrementalManager != nil {
 		issuesForProcessing = incrementalManager.FilterIssuesForIncremental(result.Issues)
-		log.Printf("INFO Filtered issues for incremental processing: %d -> %d",
-			len(result.Issues), len(issuesForProcessing))
+		buildLogger.Info("Filtered issues for incremental processing",
+			"original_count", len(result.Issues),
+			"filtered_count", len(issuesForProcessing))
 	}
 
 	// Generate Wiki content
-	log.Printf("INFO Generating Wiki content")
+	buildLogger.Info("Generating Wiki content")
 	fmt.Printf("📝 Wiki生成中...\n")
 	wikiGenerator := wiki.NewGenerator()
 	wikiPages, err := wikiGenerator.GenerateAllPages(issuesForProcessing, cfg.Project.Name)
 	if err != nil {
-		log.Printf("ERROR Failed to generate Wiki content: %v", err)
+		buildLogger.Error("Failed to generate Wiki content", "error", err)
 		return fmt.Errorf("❌ Wiki生成エラー: %w", err)
 	}
-	log.Printf("INFO Wiki content generated: %d pages", len(wikiPages))
+	buildLogger.Info("Wiki content generated", "page_count", len(wikiPages))
 
 	// Save Wiki pages
-	log.Printf("INFO Saving Wiki pages")
+	buildLogger.Info("Saving Wiki pages")
 	var totalSize int
 	for _, page := range wikiPages {
 		outputPath := fmt.Sprintf("%s-%s", repo, page.Filename)
 		if err := os.WriteFile(outputPath, []byte(page.Content), 0600); err != nil {
-			log.Printf("ERROR Failed to save Wiki page: %v", err)
+			buildLogger.Error("Failed to save Wiki page", "error", err, "output_path", outputPath)
 			return fmt.Errorf("❌ Wikiページ保存エラー: %w", err)
 		}
 		totalSize += len(page.Content)
-		log.Printf("INFO Wiki page saved: %s (size: %d bytes)", outputPath, len(page.Content))
+		buildLogger.Info("Wiki page saved", "output_path", outputPath, "size_bytes", len(page.Content))
 		fmt.Printf("✅ Wikiページ生成完了: %s\n", outputPath)
 	}
 
@@ -301,7 +305,7 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 
 		// Save state
 		if err := incrementalManager.SaveState(); err != nil {
-			log.Printf("WARN Failed to save incremental state: %v", err)
+			buildLogger.Warn("Failed to save incremental state", "error", err)
 		}
 
 		// Display incremental summary
@@ -329,39 +333,40 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 		results := notifier.SendWikiUpdateNotification(githubCtx, true, message)
 		for _, result := range results {
 			if result.Success {
-				log.Printf("INFO Notification sent successfully to %s", result.Channel)
+				buildLogger.Info("Notification sent successfully", "channel", result.Channel)
 			} else {
-				log.Printf("WARN Failed to send notification to %s: %s", result.Channel, result.Error)
+				buildLogger.Warn("Failed to send notification", "channel", result.Channel, "error", result.Error)
 			}
 		}
 	}
 
 	fmt.Println("🦫 Beaver Build完了!")
-	log.Printf("INFO Build command completed successfully")
+	buildLogger.Info("Build command completed successfully")
 	return nil
 }
 
 func runInitCommand(cmd *cobra.Command, args []string) {
-	log.Printf("INFO Starting beaver init command")
+	initLogger := logger.WithComponent("init")
+	initLogger.Info("Starting beaver init command")
 	fmt.Println("🏗️ Beaverプロジェクトを初期化中...")
 
 	// Check if config file already exists
-	log.Printf("INFO Checking for existing configuration file")
+	initLogger.Info("Checking for existing configuration file")
 	if configPath, err := config.GetConfigPath(); err == nil {
-		log.Printf("WARN Configuration file already exists at: %s", configPath)
+		initLogger.Warn("Configuration file already exists", "config_path", configPath)
 		fmt.Println("⚠️  設定ファイル beaver.yml は既に存在します")
 		fmt.Println("🔧 既存の設定を確認するには: beaver status")
 		return
 	}
 
 	// Create default configuration file
-	log.Printf("INFO Creating default configuration file")
+	initLogger.Info("Creating default configuration file")
 	if err := config.CreateDefaultConfig(); err != nil {
-		log.Printf("ERROR Failed to create config file: %v", err)
+		initLogger.Error("Failed to create config file", "error", err)
 		fmt.Printf("❌ 設定ファイル作成に失敗しました: %v\n", err)
 		os.Exit(1)
 	}
-	log.Printf("INFO Configuration file created successfully")
+	initLogger.Info("Configuration file created successfully")
 
 	fmt.Println("📝 設定を完了するには:")
 	fmt.Println("   1. beaver.yml を編集して GitHub リポジトリを指定")
@@ -373,13 +378,14 @@ func runInitCommand(cmd *cobra.Command, args []string) {
 
 // parseOwnerRepo parses "owner/repo" format and returns owner, repo
 func parseOwnerRepo(repoPath string) (string, string) {
-	log.Printf("DEBUG Parsing repository path: %s", repoPath)
+	parseLogger := logger.WithComponent("parse")
+	parseLogger.Debug("Parsing repository path", "path", repoPath)
 	parts := splitString(repoPath, "/")
 	if len(parts) != 2 {
-		log.Printf("ERROR Invalid repository path format: %s (expected owner/repo)", repoPath)
+		parseLogger.Error("Invalid repository path format", "path", repoPath, "expected", "owner/repo")
 		return "", ""
 	}
-	log.Printf("DEBUG Parsed repository: owner=%s, repo=%s", parts[0], parts[1])
+	parseLogger.Debug("Parsed repository", "owner", parts[0], "repo", parts[1])
 	return parts[0], parts[1]
 }
 
@@ -411,31 +417,32 @@ var statusCmd = &cobra.Command{
 }
 
 func runStatusCommand(cmd *cobra.Command, args []string) {
-	log.Printf("INFO Starting beaver status command")
+	statusLogger := logger.WithComponent("status")
+	statusLogger.Info("Starting beaver status command")
 	fmt.Println("📊 Beaver処理状況:")
 
 	// Check configuration file
-	log.Printf("INFO Checking for configuration file")
+	statusLogger.Info("Checking for configuration file")
 	configPath, err := config.GetConfigPath()
 	if err != nil {
-		log.Printf("WARN No configuration file found: %v", err)
+		statusLogger.Warn("No configuration file found", "error", err)
 		fmt.Println("❌ 設定ファイルなし")
 		fmt.Println("💡 beaver init で初期化してください")
 		return
 	}
 
-	log.Printf("INFO Configuration file found: %s", configPath)
+	statusLogger.Info("Configuration file found", "config_path", configPath)
 	fmt.Printf("📄 設定ファイル: %s\n", configPath)
 
 	// Load and validate configuration
-	log.Printf("INFO Loading configuration")
+	statusLogger.Info("Loading configuration")
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Printf("ERROR Failed to load configuration: %v", err)
+		statusLogger.Error("Failed to load configuration", "error", err)
 		fmt.Printf("❌ 設定読み込みエラー: %v\n", err)
 		return
 	}
-	log.Printf("INFO Configuration loaded: project=%s, repo=%s, ai_provider=%s", cfg.Project.Name, cfg.Project.Repository, cfg.AI.Provider)
+	statusLogger.Info("Configuration loaded", "project", cfg.Project.Name, "repository", cfg.Project.Repository, "ai_provider", cfg.AI.Provider)
 
 	fmt.Printf("📁 プロジェクト: %s\n", cfg.Project.Name)
 	fmt.Printf("🔗 リポジトリ: %s\n", cfg.Project.Repository)
@@ -443,51 +450,54 @@ func runStatusCommand(cmd *cobra.Command, args []string) {
 	fmt.Printf("📝 出力先: %s Wiki\n", cfg.Output.Wiki.Platform)
 
 	// Check GitHub token
-	log.Printf("INFO Checking GitHub token configuration")
+	statusLogger.Info("Checking GitHub token configuration")
 	if cfg.Sources.GitHub.Token == "" {
-		log.Printf("WARN GitHub token not configured")
+		statusLogger.Warn("GitHub token not configured")
 		fmt.Println("⚠️  GITHUB_TOKEN が設定されていません")
 	} else {
-		log.Printf("INFO GitHub token configured (length: %d)", len(cfg.Sources.GitHub.Token))
+		statusLogger.Info("GitHub token configured", "token_length", len(cfg.Sources.GitHub.Token))
 		fmt.Println("✅ GITHUB_TOKEN 設定済み")
 	}
 
 	// Test GitHub connection if token is available
 	if cfg.Sources.GitHub.Token != "" {
-		log.Printf("INFO Testing GitHub connection")
+		statusLogger.Info("Testing GitHub connection")
 		fmt.Printf("🔗 GitHub接続をテスト中...\n")
 		githubService := github.NewService(cfg.Sources.GitHub.Token)
 		ctx := context.Background()
 
 		if err := githubService.TestConnection(ctx); err != nil {
-			log.Printf("ERROR GitHub connection failed: %v", err)
+			statusLogger.Error("GitHub connection failed", "error", err)
 			fmt.Printf("❌ GitHub接続エラー: %v\n", err)
 		} else {
-			log.Printf("INFO GitHub connection successful")
+			statusLogger.Info("GitHub connection successful")
 			fmt.Println("✅ GitHub接続成功")
 
 			// Get repository info if configured
 			if cfg.Project.Repository != "" && cfg.Project.Repository != "username/my-repo" {
-				log.Printf("INFO Testing Issues fetch for repository: %s", cfg.Project.Repository)
+				statusLogger.Info("Testing Issues fetch for repository", "repository", cfg.Project.Repository)
 				query := models.DefaultIssueQuery(cfg.Project.Repository)
 				query.PerPage = 1 // Just get one issue to test
 
 				result, err := githubService.FetchIssues(ctx, query)
 				if err != nil {
-					log.Printf("WARN Issues fetch test failed: %v", err)
+					statusLogger.Warn("Issues fetch test failed", "error", err)
 					fmt.Printf("⚠️  Issues取得テストエラー: %v\n", err)
 				} else {
-					log.Printf("INFO Issues fetch test successful: count=%d, rate_limit=%d/%d", result.FetchedCount, func() int {
-						if result.RateLimit != nil {
-							return result.RateLimit.Remaining
-						}
-						return -1
-					}(), func() int {
-						if result.RateLimit != nil {
-							return result.RateLimit.Limit
-						}
-						return -1
-					}())
+					statusLogger.Info("Issues fetch test successful",
+						"count", result.FetchedCount,
+						"rate_limit_remaining", func() int {
+							if result.RateLimit != nil {
+								return result.RateLimit.Remaining
+							}
+							return -1
+						}(),
+						"rate_limit_total", func() int {
+							if result.RateLimit != nil {
+								return result.RateLimit.Limit
+							}
+							return -1
+						}())
 					fmt.Printf("📊 利用可能Issues: %d件以上\n", result.FetchedCount)
 					if result.RateLimit != nil {
 						fmt.Printf("🚦 API制限: %d/%d (リセット: %s)\n",
@@ -497,24 +507,24 @@ func runStatusCommand(cmd *cobra.Command, args []string) {
 					}
 				}
 			} else {
-				log.Printf("WARN Repository not properly configured for testing: %s", cfg.Project.Repository)
+				statusLogger.Warn("Repository not properly configured for testing", "repository", cfg.Project.Repository)
 			}
 		}
 	}
 
 	// Show configuration validation
-	log.Printf("INFO Validating configuration")
+	statusLogger.Info("Validating configuration")
 	fmt.Printf("\n🔍 設定検証:\n")
 	if err := cfg.Validate(); err != nil {
-		log.Printf("ERROR Configuration validation failed: %v", err)
+		statusLogger.Error("Configuration validation failed", "error", err)
 		fmt.Printf("❌ %v\n", err)
 		fmt.Printf("💡 設定を修正してから beaver build を実行してください\n")
 	} else {
-		log.Printf("INFO Configuration validation passed")
+		statusLogger.Info("Configuration validation passed")
 		fmt.Printf("✅ 設定は有効です\n")
 		fmt.Printf("🚀 beaver build でWiki生成を実行できます\n")
 	}
-	log.Printf("INFO Status command completed")
+	statusLogger.Info("Status command completed")
 }
 
 func init() {
@@ -535,13 +545,14 @@ func init() {
 
 // mainLogic contains the core logic of main() without os.Exit for testing
 func mainLogic() error {
-	log.Printf("INFO Starting beaver CLI application")
+	mainLogger := logger.WithComponent("main")
+	mainLogger.Info("Starting beaver CLI application")
 	if err := rootCmd.Execute(); err != nil {
-		log.Printf("ERROR Command execution failed: %v", err)
+		mainLogger.Error("Command execution failed", "error", err)
 		fmt.Fprintf(os.Stderr, "エラー: %v\n", err)
 		return err
 	}
-	log.Printf("INFO Beaver CLI application completed successfully")
+	mainLogger.Info("Beaver CLI application completed successfully")
 	return nil
 }
 
