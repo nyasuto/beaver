@@ -345,6 +345,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(analyzeCmd)
 }
 
 // mainLogic contains the core logic of main() without os.Exit for testing
