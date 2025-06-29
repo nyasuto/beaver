@@ -78,6 +78,31 @@ const issuesSummaryTemplate = `# 📋 {{.ProjectName}} - Issues Summary
 - **AI Processor**: {{.AIProcessor}}
 - **Beaver Version**: {{.BeaverVersion}}
 
+## 🤖 AI Classification Summary
+
+{{if gt .ClassificationStats.TotalClassified 0}}
+- **Total Classified**: {{.ClassificationStats.TotalClassified}} / {{.TotalIssues}}
+- **Average Confidence**: {{printf "%.2f" .ClassificationStats.AverageConfidence}}
+- **High Confidence (≥0.8)**: {{.ClassificationStats.HighConfidenceCount}}
+- **Low Confidence (<0.5)**: {{.ClassificationStats.LowConfidenceCount}}
+
+### 📊 Categories Distribution
+{{range $category, $count := .ClassificationStats.ByCategory}}
+- **{{$category}}**: {{$count}} issue(s)
+{{end}}
+
+### 🔧 Classification Methods
+{{range $method, $count := .ClassificationStats.ByMethod}}
+- **{{$method}}**: {{$count}} issue(s)
+{{end}}
+
+### 🏷️ Most Common Tags
+{{if .ClassificationStats.MostCommonTags}}{{range $i, $tag := .ClassificationStats.MostCommonTags}}{{if $i}}, {{end}}` + "`{{$tag}}`" + `{{end}}{{end}}
+{{else}}
+- **No AI classification data available**
+- Run ` + "`beaver classify`" + ` to generate AI classifications
+{{end}}
+
 ## 📝 Issues List
 
 {{range .Issues}}
@@ -87,6 +112,15 @@ const issuesSummaryTemplate = `# 📋 {{.ProjectName}} - Issues Summary
 **Created**: {{.CreatedAt.Format "2006-01-02"}}
 **Updated**: {{.UpdatedAt.Format "2006-01-02"}}
 **Author**: {{.User}}
+
+{{if .Classification}}
+**🤖 AI Classification**:
+- **Category**: ` + "`{{.Classification.Category}}`" + ` ({{printf "%.2f" .Classification.Confidence}} confidence)
+- **Method**: {{.Classification.Method}}
+- **Reasoning**: {{.Classification.Reasoning}}
+{{if .Classification.SuggestedTags}}- **Suggested Tags**: {{range $i, $tag := .Classification.SuggestedTags}}{{if $i}}, {{end}}` + "`{{$tag}}`" + `{{end}}{{end}}
+- **Classified**: {{.Classification.ClassifiedAt.Format "2006-01-02 15:04"}}
+{{end}}
 
 {{if .Labels}}**Labels**: {{range $i, $label := .Labels}}{{if $i}}, {{end}}` + "`{{$label}}`" + `{{end}}{{end}}
 

@@ -40,16 +40,28 @@ type WikiPage struct {
 	Tags      []string
 }
 
+// ClassificationSummary contains classification statistics
+type ClassificationSummary struct {
+	TotalClassified     int            `json:"total_classified"`
+	ByCategory          map[string]int `json:"by_category"`
+	ByMethod            map[string]int `json:"by_method"`
+	AverageConfidence   float64        `json:"average_confidence"`
+	HighConfidenceCount int            `json:"high_confidence_count"`
+	LowConfidenceCount  int            `json:"low_confidence_count"`
+	MostCommonTags      []string       `json:"most_common_tags"`
+}
+
 // IssuesSummaryData contains data for Issues summary page
 type IssuesSummaryData struct {
-	ProjectName   string
-	GeneratedAt   time.Time
-	TotalIssues   int
-	OpenIssues    int
-	ClosedIssues  int
-	Issues        []models.Issue
-	AIProcessor   string
-	BeaverVersion string
+	ProjectName         string
+	GeneratedAt         time.Time
+	TotalIssues         int
+	OpenIssues          int
+	ClosedIssues        int
+	Issues              []models.Issue
+	AIProcessor         string
+	BeaverVersion       string
+	ClassificationStats ClassificationSummary
 }
 
 // TroubleshootingData contains data for troubleshooting guide
@@ -132,7 +144,10 @@ func (g *Generator) GenerateIssuesSummary(issues []models.Issue, projectName str
 		BeaverVersion: "1.0.0",
 	}
 
-	// Count open/closed issues
+	// Count open/closed issues and calculate classification statistics
+	classificationStats := g.calculateClassificationStats(issues)
+	data.ClassificationStats = classificationStats
+
 	for _, issue := range issues {
 		if issue.State == "open" {
 			data.OpenIssues++
@@ -590,4 +605,81 @@ func truncateString(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen] + "..."
+}
+
+// calculateClassificationStats calculates statistics from classified issues
+func (g *Generator) calculateClassificationStats(issues []models.Issue) ClassificationSummary {
+	stats := ClassificationSummary{
+		ByCategory: make(map[string]int),
+		ByMethod:   make(map[string]int),
+	}
+
+	var totalConfidence float64
+	var classifiedCount int
+	tagCounts := make(map[string]int)
+	highConfidenceThreshold := 0.8
+	lowConfidenceThreshold := 0.5
+
+	for _, issue := range issues {
+		if issue.Classification != nil {
+			classifiedCount++
+			classification := issue.Classification
+
+			// Category statistics
+			stats.ByCategory[classification.Category]++
+
+			// Method statistics
+			stats.ByMethod[classification.Method]++
+
+			// Confidence statistics
+			totalConfidence += classification.Confidence
+			if classification.Confidence >= highConfidenceThreshold {
+				stats.HighConfidenceCount++
+			} else if classification.Confidence < lowConfidenceThreshold {
+				stats.LowConfidenceCount++
+			}
+
+			// Tag statistics
+			for _, tag := range classification.SuggestedTags {
+				tagCounts[tag]++
+			}
+		}
+	}
+
+	stats.TotalClassified = classifiedCount
+	if classifiedCount > 0 {
+		stats.AverageConfidence = totalConfidence / float64(classifiedCount)
+	}
+
+	// Find most common tags (top 5)
+	type tagCount struct {
+		tag   string
+		count int
+	}
+
+	var tagCounts2 []tagCount
+	for tag, count := range tagCounts {
+		tagCounts2 = append(tagCounts2, tagCount{tag: tag, count: count})
+	}
+
+	// Simple bubble sort for top tags
+	for i := 0; i < len(tagCounts2); i++ {
+		for j := i + 1; j < len(tagCounts2); j++ {
+			if tagCounts2[j].count > tagCounts2[i].count {
+				tagCounts2[i], tagCounts2[j] = tagCounts2[j], tagCounts2[i]
+			}
+		}
+	}
+
+	// Get top 5 tags
+	maxTags := 5
+	if len(tagCounts2) < maxTags {
+		maxTags = len(tagCounts2)
+	}
+
+	for i := 0; i < maxTags; i++ {
+		stats.MostCommonTags = append(stats.MostCommonTags, tagCounts2[i].tag)
+	}
+
+	return stats
 }

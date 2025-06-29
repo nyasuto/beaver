@@ -390,7 +390,7 @@ Body: {example.issue.body}
 Labels: {', '.join(example.issue.labels) if example.issue.labels else 'None'}
 Repository: {example.issue.repository or 'N/A'}"""
                 
-                example_output = f```json
+                example_output = f"""```json
 {{
   "category": "{example.expected_category}",
   "confidence": {example.expected_confidence},
