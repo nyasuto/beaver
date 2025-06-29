@@ -520,6 +520,13 @@ func (g *Generator) GenerateAllPages(issues []models.Issue, projectName string) 
 	}
 	pages = append(pages, learningPage)
 
+	// Generate development strategy (meta-documentation)
+	strategyPage, err := g.GenerateDevelopmentStrategy(issues, projectName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate development strategy: %w", err)
+	}
+	pages = append(pages, strategyPage)
+
 	return pages, nil
 }
 
@@ -641,6 +648,28 @@ func (g *Generator) GenerateProcessingLogs(issues []models.Issue, projectName st
 		Summary:   fmt.Sprintf("Processing logs and system monitoring for %s project", projectName),
 		Category:  "Monitoring",
 		Tags:      []string{"logs", "monitoring", "performance", "system-health"},
+	}, nil
+}
+
+// GenerateDevelopmentStrategy generates development strategy wiki page
+func (g *Generator) GenerateDevelopmentStrategy(issues []models.Issue, projectName string) (*WikiPage, error) {
+	calculator := analytics.NewDevelopmentStrategyCalculator(issues, projectName)
+	data := calculator.Calculate()
+
+	content, err := g.renderTemplate("development-strategy", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render development strategy template: %w", err)
+	}
+
+	return &WikiPage{
+		Title:     "Development Strategy",
+		Content:   content,
+		Filename:  "Development-Strategy.md",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+		Summary:   fmt.Sprintf("Self-documenting development strategy for %s project", projectName),
+		Category:  "Strategy",
+		Tags:      []string{"strategy", "development", "meta", "self-documentation", "roadmap"},
 	}, nil
 }
 
