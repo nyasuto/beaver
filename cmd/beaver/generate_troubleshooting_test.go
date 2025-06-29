@@ -58,6 +58,11 @@ func TestRunGenerateTroubleshooting_NoConfig(t *testing.T) {
 }
 
 func TestRunGenerateTroubleshooting_WithGitHubTokenFromEnv(t *testing.T) {
+	// Skip test that makes real GitHub API calls unless explicitly enabled
+	if os.Getenv("BEAVER_GITHUB_API_TESTS") != "true" {
+		t.Skip("Skipping GitHub API test. Set BEAVER_GITHUB_API_TESTS=true to enable.")
+	}
+
 	// Save original config path and restore after test
 	originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
 	defer func() {
@@ -96,6 +101,11 @@ func TestRunGenerateTroubleshooting_WithGitHubTokenFromEnv(t *testing.T) {
 }
 
 func TestRunGenerateTroubleshooting_NoIssues(t *testing.T) {
+	// Skip test that makes real GitHub API calls unless explicitly enabled
+	if os.Getenv("BEAVER_GITHUB_API_TESTS") != "true" {
+		t.Skip("Skipping GitHub API test. Set BEAVER_GITHUB_API_TESTS=true to enable.")
+	}
+
 	// This would require a more complex mock setup to test the case
 	// where GitHub API returns successfully but with no issues
 	// For now, we'll just test that the function can be called

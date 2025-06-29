@@ -227,6 +227,11 @@ func TestFetchGitEvents_InvalidDate(t *testing.T) {
 }
 
 func TestRunAnalyzePatternsCommand_WithGitHubToken(t *testing.T) {
+	// Skip test that makes real GitHub API calls unless explicitly enabled
+	if os.Getenv("BEAVER_GITHUB_API_TESTS") != "true" {
+		t.Skip("Skipping GitHub API test. Set BEAVER_GITHUB_API_TESTS=true to enable.")
+	}
+
 	// Create temporary config file with valid GitHub token
 	tmpDir := t.TempDir()
 	configPath := tmpDir + "/beaver.yml"

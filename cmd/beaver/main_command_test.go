@@ -1511,6 +1511,11 @@ func TestRunStatusCommand(t *testing.T) {
 	})
 
 	t.Run("valid configuration loaded", func(t *testing.T) {
+		// Skip test that makes real GitHub API calls unless explicitly enabled
+		if os.Getenv("BEAVER_GITHUB_API_TESTS") != "true" {
+			t.Skip("Skipping GitHub API test. Set BEAVER_GITHUB_API_TESTS=true to enable.")
+		}
+
 		// Create temporary directory with valid config
 		tempDir := t.TempDir()
 		originalWd, _ := os.Getwd()
@@ -1531,8 +1536,20 @@ ai:
   provider: "openai"
   model: "gpt-3.5-turbo"`
 
-		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		configPath := tempDir + "/beaver.yml"
+		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
+
+		// Set BEAVER_CONFIG_PATH to ensure test config is used
+		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
+		defer func() {
+			if originalConfigPath != "" {
+				os.Setenv("BEAVER_CONFIG_PATH", originalConfigPath)
+			} else {
+				os.Unsetenv("BEAVER_CONFIG_PATH")
+			}
+		}()
+		os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
 		// Capture stdout
 		oldStdout := os.Stdout
@@ -1550,12 +1567,12 @@ ai:
 
 		// Verify status information
 		outputStr := string(output)
-		// Status command uses actual config content, not hardcoded test values
-		assert.Contains(t, outputStr, "私のAIエージェント学習記録")
-		assert.Contains(t, outputStr, "username/my-repo")
+		// Test configuration file should be used
+		assert.Contains(t, outputStr, "Test Project")
+		assert.Contains(t, outputStr, "owner/repo")
 		assert.Contains(t, outputStr, "openai")
-		// Token is missing in test, so should show warning
-		assert.Contains(t, outputStr, "GITHUB_TOKEN が設定されていません")
+		// Token is configured in test, so connection may be tested
+		assert.Contains(t, outputStr, "GITHUB_TOKEN 設定済み")
 	})
 
 	t.Run("missing GitHub token", func(t *testing.T) {
@@ -1630,6 +1647,11 @@ ai:
 	})
 
 	t.Run("GitHub connection failure", func(t *testing.T) {
+		// Skip test that makes real GitHub API calls unless explicitly enabled
+		if os.Getenv("BEAVER_GITHUB_API_TESTS") != "true" {
+			t.Skip("Skipping GitHub API test. Set BEAVER_GITHUB_API_TESTS=true to enable.")
+		}
+
 		tempDir := t.TempDir()
 		originalWd, _ := os.Getwd()
 		defer os.Chdir(originalWd)
@@ -1691,8 +1713,20 @@ ai:
   provider: "openai"
   model: "gpt-3.5-turbo"`
 
-		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		configPath := tempDir + "/beaver.yml"
+		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
+
+		// Set BEAVER_CONFIG_PATH to ensure test config is used
+		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
+		defer func() {
+			if originalConfigPath != "" {
+				os.Setenv("BEAVER_CONFIG_PATH", originalConfigPath)
+			} else {
+				os.Unsetenv("BEAVER_CONFIG_PATH")
+			}
+		}()
+		os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
 		// Capture stdout
 		oldStdout := os.Stdout
@@ -1708,7 +1742,7 @@ ai:
 
 		// Verify status information shows but repository is not tested
 		outputStr := string(output)
-		assert.Contains(t, outputStr, "私のAIエージェント学習記録")
+		assert.Contains(t, outputStr, "Test Project")
 		assert.Contains(t, outputStr, "username/my-repo")
 		// Should not test Issues fetch for default repository
 		assert.NotContains(t, outputStr, "Issues取得テスト")
@@ -1734,8 +1768,20 @@ ai:
   provider: "openai"
   model: "gpt-3.5-turbo"`
 
-		err := os.WriteFile("beaver.yml", []byte(configContent), 0600)
+		configPath := tempDir + "/beaver.yml"
+		err := os.WriteFile(configPath, []byte(configContent), 0600)
 		require.NoError(t, err)
+
+		// Set BEAVER_CONFIG_PATH to ensure test config is used
+		originalConfigPath := os.Getenv("BEAVER_CONFIG_PATH")
+		defer func() {
+			if originalConfigPath != "" {
+				os.Setenv("BEAVER_CONFIG_PATH", originalConfigPath)
+			} else {
+				os.Unsetenv("BEAVER_CONFIG_PATH")
+			}
+		}()
+		os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
 		// Capture stdout
 		oldStdout := os.Stdout
@@ -1751,7 +1797,7 @@ ai:
 
 		// Verify status information shows but repository is not tested
 		outputStr := string(output)
-		assert.Contains(t, outputStr, "私のAIエージェント学習記録")
+		assert.Contains(t, outputStr, "Test Project")
 		// Should not test Issues fetch for empty repository
 		assert.NotContains(t, outputStr, "Issues取得テスト")
 	})
