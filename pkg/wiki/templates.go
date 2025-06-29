@@ -1,6 +1,7 @@
 package wiki
 
 import (
+	"embed"
 	"fmt"
 	"text/template"
 )
@@ -35,6 +36,9 @@ func (tm *TemplateManager) GetTemplate(name string) (*template.Template, bool) {
 	return tmpl, exists
 }
 
+//go:embed templates/development-strategy.md.tmpl
+var developmentStrategyTemplateFile embed.FS
+
 // loadDefaultTemplates loads built-in templates
 func (tm *TemplateManager) loadDefaultTemplates() {
 	// Issues Summary Template
@@ -60,6 +64,25 @@ func (tm *TemplateManager) loadDefaultTemplates() {
 
 	// Processing Logs Template
 	_ = tm.LoadTemplate("processing-logs", processingLogsTemplate) //nolint:errcheck // Default templates
+
+	// Development Strategy Template - Load from external file
+	tm.loadDevelopmentStrategyTemplate()
+}
+
+// loadDevelopmentStrategyTemplate loads the development strategy template from external file
+func (tm *TemplateManager) loadDevelopmentStrategyTemplate() {
+	content, err := developmentStrategyTemplateFile.ReadFile("templates/development-strategy.md.tmpl")
+	if err != nil {
+		// If external file loading fails, create a minimal fallback template
+		fallbackTemplate := `# 🦫 {{.ProjectName}} - Development Strategy
+> **Generated**: {{.GeneratedAt.Format "2006-01-02 15:04:05"}}
+> **Error**: Could not load external template file
+
+Please check that pkg/wiki/templates/development-strategy.md.tmpl exists.`
+		_ = tm.LoadTemplate("development-strategy", fallbackTemplate) //nolint:errcheck // Fallback
+		return
+	}
+	_ = tm.LoadTemplate("development-strategy", string(content)) //nolint:errcheck // External file
 }
 
 // RegisterTemplate registers a custom template
@@ -1544,16 +1567,20 @@ The system is currently operating without errors.
 // GetDefaultTemplateContent returns the content of a default template
 func GetDefaultTemplateContent(templateName string) (string, bool) {
 	templates := map[string]string{
-		"issues-summary":  issuesSummaryTemplate,
-		"troubleshooting": troubleshootingTemplate,
-		"learning-path":   learningPathTemplate,
-		"index":           indexTemplate,
-		"statistics":      statisticsTemplate,
-		"label-analysis":  labelAnalysisTemplate,
-		"quick-reference": quickReferenceTemplate,
-		"processing-logs": processingLogsTemplate,
+		"issues-summary":       issuesSummaryTemplate,
+		"troubleshooting":      troubleshootingTemplate,
+		"learning-path":        learningPathTemplate,
+		"index":                indexTemplate,
+		"statistics":           statisticsTemplate,
+		"label-analysis":       labelAnalysisTemplate,
+		"quick-reference":      quickReferenceTemplate,
+		"processing-logs":      processingLogsTemplate,
+		"development-strategy": "# External template file: pkg/wiki/templates/development-strategy.md.tmpl",
 	}
 
 	content, exists := templates[templateName]
 	return content, exists
 }
+
+// Development strategy template is now loaded from external file
+// See: pkg/wiki/templates/development-strategy.md.tmpl
