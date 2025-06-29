@@ -31,6 +31,20 @@ type Comment struct {
 	HTMLURL   string    `json:"html_url,omitempty"`
 }
 
+// ClassificationInfo represents AI classification results for an issue
+type ClassificationInfo struct {
+	Category       string    `json:"category"`
+	Confidence     float64   `json:"confidence"`
+	Reasoning      string    `json:"reasoning"`
+	SuggestedTags  []string  `json:"suggested_tags"`
+	Method         string    `json:"method"` // "ai", "rule-based", "hybrid"
+	ProcessingTime float64   `json:"processing_time"`
+	ClassifiedAt   time.Time `json:"classified_at"`
+	ModelUsed      string    `json:"model_used,omitempty"`
+	AIConfidence   float64   `json:"ai_confidence,omitempty"`
+	RuleConfidence float64   `json:"rule_confidence,omitempty"`
+}
+
 // Issue represents a GitHub issue with all relevant information
 type Issue struct {
 	ID          int64      `json:"id"`
@@ -48,6 +62,9 @@ type Issue struct {
 	ClosedAt    *time.Time `json:"closed_at,omitempty"`
 	HTMLURL     string     `json:"html_url,omitempty"`
 	Repository  string     `json:"repository,omitempty"` // owner/repo format
+
+	// AI Classification results
+	Classification *ClassificationInfo `json:"classification,omitempty"`
 }
 
 // IssueQuery represents parameters for querying GitHub issues

@@ -3,8 +3,8 @@ Configuration management for AI Classification Service
 """
 
 import os
-from typing import Optional
-from pydantic import Field
+from typing import Optional, Union
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     request_timeout: int = Field(default=30, env="REQUEST_TIMEOUT")
     
     # Categories Configuration
-    categories: list[str] = Field(
+    categories: Union[list[str], str] = Field(
         default=[
             "bug-fix",
             "feature-request", 
@@ -39,6 +39,15 @@ class Settings(BaseSettings):
         env="CATEGORIES"
     )
     
+    @field_validator('categories')
+    @classmethod
+    def parse_categories(cls, v):
+        """Parse categories from string or list"""
+        if isinstance(v, str):
+            # Handle comma-separated string
+            return [cat.strip() for cat in v.split(',') if cat.strip()]
+        return v
+    
     # API Security
     api_key: Optional[str] = Field(default=None, env="AI_SERVICE_API_KEY")
     
@@ -47,7 +56,8 @@ class Settings(BaseSettings):
     
     model_config = {
         "env_file": ".env",
-        "case_sensitive": False
+        "case_sensitive": False,
+        "extra": "ignore"
     }
 
 

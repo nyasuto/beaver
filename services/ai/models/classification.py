@@ -39,7 +39,8 @@ class ClassificationResult(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0)
     reasoning: str
     suggested_tags: List[str] = Field(default_factory=list)
-    processing_time_ms: int
+    processing_time_ms: int = 0
+    model_used: str = "unknown"
 
 
 class ClassificationResponse(BaseModel):
