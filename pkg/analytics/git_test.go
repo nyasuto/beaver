@@ -137,7 +137,7 @@ func TestGitAnalyzer_AnalyzeCommitPatterns(t *testing.T) {
 		hasMdPattern := patterns.FilePatterns["md"] > 0 || patterns.FilePatterns[".md"] > 0
 		hasYamlPattern := patterns.FilePatterns["yaml"] > 0 || patterns.FilePatterns[".yaml"] > 0
 		assert.True(t, hasGoPattern, "Should have Go file pattern")
-		assert.True(t, hasMdPattern, "Should have MD file pattern") 
+		assert.True(t, hasMdPattern, "Should have MD file pattern")
 		assert.True(t, hasYamlPattern, "Should have YAML file pattern")
 
 		// Check derived metrics
