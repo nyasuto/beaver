@@ -248,10 +248,19 @@ jobs:
           fi
           ls -la _site || echo "No _site directory found - check if generation was successful"
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: "./_site"
+          destination: "./output"
+          
       - name: 📤 Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./_site"
+          path: "./output"
 
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
