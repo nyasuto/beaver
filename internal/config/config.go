@@ -39,13 +39,30 @@ type GitHubConfig struct {
 
 // OutputConfig defines output destinations
 type OutputConfig struct {
-	Wiki WikiConfig `mapstructure:"wiki"`
+	Wiki    WikiConfig     `mapstructure:"wiki"`
+	Targets []OutputTarget `mapstructure:"targets"`
 }
 
-// WikiConfig holds wiki output settings
+// WikiConfig holds wiki output settings (legacy support)
 type WikiConfig struct {
 	Platform  string `mapstructure:"platform"`
 	Templates string `mapstructure:"templates"`
+}
+
+// OutputTarget defines a single output destination
+type OutputTarget struct {
+	Type   string                 `mapstructure:"type"`
+	Config map[string]interface{} `mapstructure:"config"`
+}
+
+// GitHubPagesConfig holds GitHub Pages specific settings
+type GitHubPagesConfig struct {
+	Theme        string `mapstructure:"theme"`
+	Domain       string `mapstructure:"domain"`
+	EnableSearch bool   `mapstructure:"enable_search"`
+	Analytics    string `mapstructure:"analytics"`
+	BaseURL      string `mapstructure:"base_url"`
+	Branch       string `mapstructure:"branch"`
 }
 
 // AIConfig holds AI processing settings
@@ -146,9 +163,26 @@ sources:
     # token: "your-github-token" # または環境変数 GITHUB_TOKEN を使用
 
 output:
+  # Legacy wiki configuration (for backward compatibility)
   wiki:
     platform: "github"
     templates: "default"
+  
+  # Multiple output targets (GitHub Pages, Wiki, etc.)
+  targets:
+    - type: "github-wiki"
+      config:
+        templates: "default"
+    
+    # GitHub Pages configuration (uncomment to enable)
+    # - type: "github-pages"
+    #   config:
+    #     theme: "minima"           # Jekyll theme
+    #     branch: "gh-pages"        # Target branch
+    #     domain: ""                # Custom domain (optional)
+    #     enable_search: true       # Enable search functionality
+    #     analytics: ""             # Google Analytics ID (optional)
+    #     base_url: ""              # Base URL (auto-detected if empty)
 
 ai:
   provider: "openai"      # openai, anthropic, local
@@ -203,11 +237,17 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("GitHub token が設定されていません。GITHUB_TOKEN 環境変数または設定ファイルで指定してください")
 	}
 
+	// Validate legacy wiki platform (for backward compatibility)
 	validPlatforms := map[string]bool{
 		"github": true,
 	}
-	if !validPlatforms[c.Output.Wiki.Platform] {
+	if c.Output.Wiki.Platform != "" && !validPlatforms[c.Output.Wiki.Platform] {
 		return fmt.Errorf("無効な wiki platform: %s", c.Output.Wiki.Platform)
+	}
+
+	// Validate output targets
+	if err := c.validateOutputTargets(); err != nil {
+		return fmt.Errorf("出力設定エラー: %w", err)
 	}
 
 	validProviders := map[string]bool{
@@ -222,6 +262,82 @@ func (c *Config) Validate() error {
 	// Validate timezone
 	if _, err := time.LoadLocation(c.Timezone.Location); err != nil {
 		return fmt.Errorf("無効なタイムゾーン: %s (%w)", c.Timezone.Location, err)
+	}
+
+	return nil
+}
+
+// validateOutputTargets validates the output targets configuration
+func (c *Config) validateOutputTargets() error {
+	validTargetTypes := map[string]bool{
+		"github-wiki":  true,
+		"github-pages": true,
+		"notion":       true,
+		"confluence":   true,
+	}
+
+	for i, target := range c.Output.Targets {
+		if target.Type == "" {
+			return fmt.Errorf("出力ターゲット %d: type は必須です", i+1)
+		}
+
+		if !validTargetTypes[target.Type] {
+			return fmt.Errorf("出力ターゲット %d: 無効なtype '%s'", i+1, target.Type)
+		}
+
+		// Validate GitHub Pages specific configuration
+		if target.Type == "github-pages" {
+			if err := c.validateGitHubPagesConfig(target.Config); err != nil {
+				return fmt.Errorf("出力ターゲット %d (GitHub Pages): %w", i+1, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validateGitHubPagesConfig validates GitHub Pages specific settings
+func (c *Config) validateGitHubPagesConfig(config map[string]interface{}) error {
+	if config == nil {
+		return nil // Use defaults
+	}
+
+	// Validate theme if specified
+	if theme, exists := config["theme"]; exists {
+		validThemes := map[string]bool{
+			"minima":       true,
+			"minimal":      true,
+			"modernist":    true,
+			"cayman":       true,
+			"architect":    true,
+			"slate":        true,
+			"merlot":       true,
+			"time-machine": true,
+			"leap-day":     true,
+			"midnight":     true,
+			"tactile":      true,
+			"dinky":        true,
+		}
+
+		if themeStr, ok := theme.(string); ok && themeStr != "" {
+			if !validThemes[themeStr] {
+				return fmt.Errorf("無効なtheme '%s'", themeStr)
+			}
+		}
+	}
+
+	// Validate branch if specified
+	if branch, exists := config["branch"]; exists {
+		if branchStr, ok := branch.(string); ok && branchStr != "" {
+			validBranches := map[string]bool{
+				"gh-pages": true,
+				"main":     true,
+				"master":   true,
+			}
+			if !validBranches[branchStr] {
+				return fmt.Errorf("無効なbranch '%s' (gh-pages, main, master のみサポート)", branchStr)
+			}
+		}
 	}
 
 	return nil
@@ -265,4 +381,56 @@ func (c *Config) Now() time.Time {
 		return time.Now().UTC()
 	}
 	return time.Now().In(location)
+}
+
+// GetGitHubPagesTargets returns all GitHub Pages output targets
+func (c *Config) GetGitHubPagesTargets() []OutputTarget {
+	var targets []OutputTarget
+	for _, target := range c.Output.Targets {
+		if target.Type == "github-pages" {
+			targets = append(targets, target)
+		}
+	}
+	return targets
+}
+
+// HasGitHubPages returns true if GitHub Pages output is configured
+func (c *Config) HasGitHubPages() bool {
+	return len(c.GetGitHubPagesTargets()) > 0
+}
+
+// GetGitHubPagesConfig converts a target config to GitHubPagesConfig
+func (c *Config) GetGitHubPagesConfig(targetConfig map[string]interface{}) GitHubPagesConfig {
+	config := GitHubPagesConfig{
+		Theme:        "minima",   // Default theme
+		Branch:       "gh-pages", // Default branch
+		EnableSearch: true,       // Default enable search
+		BaseURL:      "",         // Default empty (auto-detect)
+	}
+
+	if targetConfig == nil {
+		return config
+	}
+
+	// Map configuration values with type safety
+	if theme, ok := targetConfig["theme"].(string); ok && theme != "" {
+		config.Theme = theme
+	}
+	if domain, ok := targetConfig["domain"].(string); ok {
+		config.Domain = domain
+	}
+	if enableSearch, ok := targetConfig["enable_search"].(bool); ok {
+		config.EnableSearch = enableSearch
+	}
+	if analytics, ok := targetConfig["analytics"].(string); ok {
+		config.Analytics = analytics
+	}
+	if baseURL, ok := targetConfig["base_url"].(string); ok {
+		config.BaseURL = baseURL
+	}
+	if branch, ok := targetConfig["branch"].(string); ok && branch != "" {
+		config.Branch = branch
+	}
+
+	return config
 }
