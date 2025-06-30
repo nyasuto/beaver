@@ -78,15 +78,15 @@ func sanitizeUTF8Content(content string) string {
 func WriteFileUTF8(filename string, content string, perm os.FileMode) error {
 	// Sanitize content to ensure valid UTF-8
 	sanitizedContent := sanitizeUTF8Content(content)
-	
+
 	// Convert to bytes - Go strings are already UTF-8 encoded
 	contentBytes := []byte(sanitizedContent)
-	
+
 	// Verify the byte sequence is valid UTF-8
 	if !utf8.Valid(contentBytes) {
 		return fmt.Errorf("content contains invalid UTF-8 sequences after sanitization")
 	}
-	
+
 	// Write the file
 	return os.WriteFile(filename, contentBytes, perm)
 }
@@ -292,7 +292,7 @@ func (fm *WikiFileManager) WritePageFile(title, content string) (*FileInfo, erro
 	} else {
 		err = os.WriteFile(finalPath, []byte(content), 0600)
 	}
-	
+
 	if err != nil { // #nosec G306 -- Wiki files need appropriate read permissions
 		return nil, NewWikiError(ErrorTypeFileSystem, "write_page", err,
 			"ページファイルの書き込みに失敗しました", 0,
