@@ -330,35 +330,105 @@ execute_build() {
 execute_github_pages() {
     log_info "Executing GitHub Pages deployment..."
     
-    # Check if GitHub Pages is configured
-    if ! "$BEAVER_BIN" config validate --check-github-pages >/dev/null 2>&1; then
-        log_error "GitHub Pages not configured in beaver.yml"
-        log_info "Please add GitHub Pages target configuration"
-        return 1
-    fi
-    
-    log_info "GitHub Pages command: $BEAVER_BIN github-pages"
+    # Use available Beaver build command to generate content
+    log_info "Generating content using Beaver build command..."
     
     if [[ "$DRY_RUN" == "true" ]]; then
-        log_info "DRY RUN: Would execute: $BEAVER_BIN github-pages"
+        log_info "DRY RUN: Would execute: $BEAVER_BIN build --max-items $MAX_ITEMS"
+        log_info "DRY RUN: Would setup Jekyll site structure in _site/"
         return 0
     fi
     
-    # Execute the GitHub Pages deployment
+    # Generate wiki content first using the build command
+    local build_args=("build")
+    
+    if [[ "$MAX_ITEMS" -gt 0 ]]; then
+        build_args+=("--max-items" "$MAX_ITEMS")
+    fi
+    
     if [[ "$VERBOSE" == "true" ]]; then
-        "$BEAVER_BIN" github-pages
+        log_info "Executing: $BEAVER_BIN ${build_args[*]}"
+        "$BEAVER_BIN" "${build_args[@]}"
     else
-        "$BEAVER_BIN" github-pages 2>&1 | tee -a "$LOG_FILE"
+        "$BEAVER_BIN" "${build_args[@]}" 2>&1 | tee -a "$LOG_FILE"
     fi
     
-    local exit_code=$?
+    local build_exit_code=$?
     
-    if [[ $exit_code -eq 0 ]]; then
-        log_success "GitHub Pages deployment completed successfully"
-    else
-        log_error "GitHub Pages deployment failed with exit code $exit_code"
-        return $exit_code
+    if [[ $build_exit_code -ne 0 ]]; then
+        log_error "Beaver build failed with exit code $build_exit_code"
+        return $build_exit_code
     fi
+    
+    log_success "Beaver content generation completed"
+    
+    # Create Jekyll site structure for GitHub Pages
+    log_info "Setting up Jekyll site structure for GitHub Pages..."
+    
+    # Create _site directory
+    mkdir -p "_site"
+    
+    # Copy generated markdown files to _site
+    local files_copied=0
+    for md_file in *.md; do
+        if [[ -f "$md_file" && "$md_file" != "README.md" ]]; then
+            cp "$md_file" "_site/"
+            ((files_copied++))
+            log_debug "Copied $md_file to _site/"
+        fi
+    done
+    
+    # Create basic Jekyll structure
+    cat > "_site/_config.yml" << EOF
+title: "Beaver Documentation"
+description: "AI agent knowledge dam construction tool documentation"
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+markdown: kramdown
+highlighter: rouge
+
+header_pages:
+  - index.md
+  - issues-summary.md
+  - statistics.md
+  - learning-path.md
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+EOF
+    
+    # Create index.html if no index.md exists
+    if [[ ! -f "_site/index.md" ]]; then
+        cat > "_site/index.md" << EOF
+---
+layout: home
+title: Home
+---
+
+# Beaver Documentation
+
+Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam construction tool that transforms AI development workflows into structured, persistent knowledge.
+
+## Navigation
+
+EOF
+        # Add links to available pages
+        for md_file in _site/*.md; do
+            if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" ]]; then
+                local page_name=$(basename "$md_file" .md)
+                local page_title=$(echo "$page_name" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                echo "- [$page_title]($page_name.html)" >> "_site/index.md"
+            fi
+        done
+    fi
+    
+    log_success "Jekyll site structure created with $files_copied content files"
+    log_info "GitHub Pages content ready in _site/ directory"
     
     return 0
 }
