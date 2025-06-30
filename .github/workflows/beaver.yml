@@ -16,13 +16,14 @@ on:
   issues:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
   
-  # Push to main branch
+  # Push to main branch - for production deployment
   push:
     branches: [main]
   
-  # Scheduled updates - weekly full rebuild
+  # Scheduled updates
   schedule:
-    - cron: '0 17 * * 6'  # Every Saturday at 5 PM UTC (2 AM JST Sunday)
+    - cron: '0 17 * * 6'  # Weekly full rebuild - Every Saturday at 5 PM UTC (2 AM JST Sunday)
+    - cron: '0 */3 * * *'  # Check for merged PRs - Every 3 hours
   
   # Manual trigger with advanced options
   workflow_dispatch:
@@ -105,8 +106,14 @@ jobs:
             update_type="incremental"
             ;;
           "schedule")
-            echo "Scheduled run - full rebuild"
-            update_type="full"
+            # Determine if this is weekly full rebuild or hourly PR check
+            if [[ "${{ github.event.schedule }}" == "0 17 * * 6" ]]; then
+              echo "Weekly scheduled run - full rebuild"
+              update_type="full"
+            else
+              echo "Hourly PR check - incremental update for recent merges"
+              update_type="incremental"
+            fi
             ;;
           "workflow_dispatch")
             if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
@@ -137,7 +144,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
     
     steps:
     - name: 📥 Checkout code
