@@ -10,7 +10,13 @@ sources:
     # token will be provided via GITHUB_TOKEN environment variable
 
 output:
-  # GitHub Pages configuration - v1.0 supports GitHub Pages only
+  # GitHub Pages configuration - primary output target
+  targets:
+    - type: "github-pages"
+      config:
+        theme: "minima"
+        branch: "gh-pages"
+        enable_search: true
   github_pages:
     theme: "minima"
     enable_search: true
