@@ -500,8 +500,8 @@ execute_github_pages() {
     log_info "Selected remote theme: '$remote_theme'"
     
     # Create Jekyll config with UTF-8 content
-    local config_content="title: \"Beaver Documentation\"
-description: \"AI agent knowledge dam construction tool documentation\"
+    local config_content="title: \"Beaver ナレッジベース\"
+description: \"AI駆動型ナレッジベース - GitHub Issues から自動生成\"
 remote_theme: $remote_theme
 plugins:
   - jekyll-remote-theme
@@ -582,23 +582,64 @@ except Exception as e:
     if [[ ! -f "_site/index.md" ]]; then
         log_info "Creating index.md with UTF-8 encoding..."
         
-        # Build index content
+        # Build index content with Japanese 3-column layout
         local index_content="---
 layout: default
-title: Beaver Documentation
+title: ホーム
+description: \"Beaver AI駆動型ナレッジベース - GitHub Issues から自動生成\"
 ---
 
-# Beaver Documentation
+<style>
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
 
-Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam construction tool that transforms AI development workflows into structured, persistent knowledge.
+@media (max-width: 768px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
 
-## 🦫 Project Overview
+.content-card {
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: #f6f8fa;
+}
 
-**Core Mission**: Transform flowing AI development streams into structured knowledge dams, preventing valuable insights from being lost.
+.content-card h3 {
+  margin-top: 0;
+  color: #24292e;
+}
 
-## 📋 Documentation Navigation
+.content-card ul {
+  padding-left: 1rem;
+}
 
-### 🏠 Core Documentation
+.content-card a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.content-card a:hover {
+  text-decoration: underline;
+}
+</style>
+
+# 🦫 Beaver ナレッジベース
+
+> 🤖 AI駆動型ナレッジベース - GitHub Issues から自動生成
+
+**コアミッション**: 流れるAI開発ストリームを構造化されたナレッジダムに変換し、貴重な洞察が失われることを防ぐ。
+
+<div class=\"content-grid\">
+
+<div class=\"content-card\">
+<h3>📋 コアドキュメンテーション</h3>
 
 "
         
@@ -606,13 +647,24 @@ Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam co
         for md_file in _site/beaver-*.md; do
             if [[ -f "$md_file" ]]; then
                 local page_name=$(basename "$md_file" .md)
-                local clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                local clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g')
+                # Convert to Japanese titles
+                case "$clean_title" in
+                    "Home") clean_title="ホーム" ;;
+                    "Issues Summary") clean_title="課題サマリー" ;;
+                    "Learning Path") clean_title="学習パス" ;;
+                    "Development Strategy") clean_title="開発戦略" ;;
+                    "Troubleshooting Guide") clean_title="トラブルシューティング" ;;
+                esac
                 index_content+="- [$clean_title]($page_name)"$'\n'
             fi
         done
         
         index_content+="
-### 📊 Project Resources
+</div>
+
+<div class=\"content-card\">
+<h3>📊 プロジェクトリソース</h3>
 
 "
         
@@ -620,15 +672,29 @@ Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam co
         for md_file in _site/*.md; do
             if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" && "$(basename "$md_file")" != beaver-*.md ]]; then
                 local page_name=$(basename "$md_file" .md)
-                local page_title=$(echo "$page_name" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                local page_title=$(echo "$page_name" | sed 's/-/ /g')
                 index_content+="- [$page_title]($page_name)"$'\n'
             fi
         done
         
         index_content+="
+</div>
+
+<div class=\"content-card\">
+<h3>🔗 クイックアクセス</h3>
+
+- [🦫 Beaver について](https://github.com/nyasuto/beaver)
+- [📝 貢献ガイド](https://github.com/nyasuto/beaver/blob/main/CONTRIBUTING.md)
+- [🚀 リリース](https://github.com/nyasuto/beaver/releases)
+- [📞 サポート](https://github.com/nyasuto/beaver/issues)
+
+</div>
+
+</div>
+
 ---
 
-*🤖 This documentation is automatically generated and maintained by Beaver*"
+*🤖 このドキュメントは Beaver によって自動生成・維持されています*"
         
         # Write index.md with UTF-8 encoding using Python
         if command -v python3 >/dev/null 2>&1; then
