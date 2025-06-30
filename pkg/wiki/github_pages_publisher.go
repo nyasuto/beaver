@@ -206,14 +206,14 @@ func (p *GitHubPagesPublisher) createInitialJekyllStructure() error {
 	// Create _config.yml
 	configContent := p.generateJekyllConfig()
 	configPath := filepath.Join(p.workingDir, "_config.yml")
-	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
+	if err := WriteFileUTF8(configPath, configContent, 0600); err != nil {
 		return fmt.Errorf("failed to create _config.yml: %w", err)
 	}
 
 	// Create initial index.md
 	indexContent := p.generateInitialIndex()
 	indexPath := filepath.Join(p.workingDir, "index.md")
-	if err := os.WriteFile(indexPath, []byte(indexContent), 0600); err != nil {
+	if err := WriteFileUTF8(indexPath, indexContent, 0600); err != nil {
 		return fmt.Errorf("failed to create index.md: %w", err)
 	}
 
@@ -226,7 +226,7 @@ func (p *GitHubPagesPublisher) createInitialJekyllStructure() error {
 	// Create default layout
 	defaultLayoutContent := p.generateDefaultLayout()
 	defaultLayoutPath := filepath.Join(layoutsDir, "default.html")
-	if err := os.WriteFile(defaultLayoutPath, []byte(defaultLayoutContent), 0600); err != nil {
+	if err := WriteFileUTF8(defaultLayoutPath, defaultLayoutContent, 0600); err != nil {
 		return fmt.Errorf("failed to create default layout: %w", err)
 	}
 
@@ -462,7 +462,7 @@ func (p *GitHubPagesPublisher) convertAndSaveWikiPage(page *WikiPage) error {
 	filePath := filepath.Join(p.workingDir, filename)
 
 	// Write the file
-	if err := os.WriteFile(filePath, []byte(jekyllContent), 0600); err != nil {
+	if err := WriteFileUTF8(filePath, jekyllContent, 0600); err != nil {
 		return fmt.Errorf("failed to write Jekyll page %s: %w", filePath, err)
 	}
 
