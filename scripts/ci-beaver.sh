@@ -657,7 +657,244 @@ EOF
     log_info "🚀 GitHub Pages content ready in _site/ directory"
     log_info "=== End Jekyll Site Verification ==="
     
+    # Generate detailed deployment file manifest
+    generate_deployment_manifest
+    
     return 0
+}
+
+# Generate deployment manifest with detailed file information
+generate_deployment_manifest() {
+    log_section "🚀 GitHub Pages デプロイメントマニフェスト"
+    
+    if [[ ! -d "_site" ]]; then
+        log_error "❌ _site directory not found"
+        return 1
+    fi
+    
+    # Change to _site directory for cleaner paths
+    cd "_site" || {
+        log_error "❌ Failed to change to _site directory"
+        return 1
+    }
+    
+    # Calculate total deployment size
+    local total_size=0
+    local file_count=0
+    local deployment_manifest="deployment-manifest.txt"
+    
+    log_info "📊 デプロイ対象ファイル分析中..."
+    
+    # Create manifest header
+    cat > "$deployment_manifest" << EOF
+================================================================================
+🚀 Beaver GitHub Pages デプロイメントマニフェスト
+================================================================================
+生成日時: $(date '+%Y-%m-%d %H:%M:%S')
+リポジトリ: ${REPOSITORY:-"未設定"}
+ビルドタイプ: ${UPDATE_TYPE:-"unknown"}
+================================================================================
+
+EOF
+    
+    # Analyze files by category
+    log_info "📄 ファイルカテゴリ別分析:"
+    
+    # Configuration files
+    log_info "  🔧 設定ファイル:"
+    find . -maxdepth 1 \( -name "*.yml" -o -name "*.yaml" -o -name "*.json" \) -type f | while read -r file; do
+        local file_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            file_size=$(stat -f%z "$file" 2>/dev/null || echo '0')
+        else
+            file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
+        fi
+        local human_size=$(format_bytes "$file_size")
+        log_info "    📋 $(basename "$file"): ${human_size}"
+        echo "  📋 $(basename "$file"): ${human_size} (${file_size} bytes)" >> "$deployment_manifest"
+        ((total_size += file_size))
+        ((file_count++))
+    done
+    
+    # Content files (Beaver generated)
+    log_info "  📝 Beaverコンテンツファイル:"
+    find . -maxdepth 1 -name "beaver-*.md" -type f | sort | while read -r file; do
+        local file_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            file_size=$(stat -f%z "$file" 2>/dev/null || echo '0')
+        else
+            file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
+        fi
+        local human_size=$(format_bytes "$file_size")
+        local content_type=$(basename "$file" | sed 's/beaver-//' | sed 's/\.md$//')
+        log_info "    🦫 $content_type: ${human_size}"
+        echo "  🦫 $(basename "$file"): ${human_size} (${file_size} bytes)" >> "$deployment_manifest"
+        ((total_size += file_size))
+        ((file_count++))
+    done
+    
+    # Documentation files
+    log_info "  📚 ドキュメンテーションファイル:"
+    find . -maxdepth 1 \( -name "*.md" ! -name "beaver-*.md" ! -name "index.md" \) -type f | sort | while read -r file; do
+        local file_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            file_size=$(stat -f%z "$file" 2>/dev/null || echo '0')
+        else
+            file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
+        fi
+        local human_size=$(format_bytes "$file_size")
+        log_info "    📖 $(basename "$file"): ${human_size}"
+        echo "  📖 $(basename "$file"): ${human_size} (${file_size} bytes)" >> "$deployment_manifest"
+        ((total_size += file_size))
+        ((file_count++))
+    done
+    
+    # Index file (special treatment)
+    if [[ -f "index.md" ]]; then
+        local index_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            index_size=$(stat -f%z "index.md" 2>/dev/null || echo '0')
+        else
+            index_size=$(stat -c%s "index.md" 2>/dev/null || echo '0')
+        fi
+        local index_human_size=$(format_bytes "$index_size")
+        log_info "  🏠 インデックスページ: ${index_human_size}"
+        echo "  🏠 index.md: ${index_human_size} (${index_size} bytes)" >> "$deployment_manifest"
+        ((total_size += index_size))
+        ((file_count++))
+    fi
+    
+    # Calculate totals and statistics
+    local total_human_size=$(format_bytes "$total_size")
+    
+    # Add statistics to manifest
+    cat >> "$deployment_manifest" << EOF
+
+================================================================================
+📊 デプロイメント統計
+================================================================================
+総ファイル数: ${file_count}
+総サイズ: ${total_human_size} (${total_size} bytes)
+平均ファイルサイズ: $(format_bytes $((total_size / (file_count > 0 ? file_count : 1))))
+
+================================================================================
+🔍 ファイル構成詳細
+================================================================================
+EOF
+    
+    # Generate detailed file listing
+    find . -type f | sort | while read -r file; do
+        local file_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            file_size=$(stat -f%z "$file" 2>/dev/null || echo '0')
+        else
+            file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
+        fi
+        local human_size=$(format_bytes "$file_size")
+        local file_path=$(echo "$file" | sed 's|^\./||')
+        printf "%-50s %10s (%s bytes)\n" "$file_path" "$human_size" "$file_size" >> "$deployment_manifest"
+    done
+    
+    cat >> "$deployment_manifest" << EOF
+
+================================================================================
+🚀 デプロイ準備完了
+================================================================================
+このマニフェストに記載されたファイルがGitHub Pagesにデプロイされます。
+マニフェスト生成時刻: $(date '+%Y-%m-%d %H:%M:%S')
+================================================================================
+EOF
+    
+    # Display summary
+    log_info "📊 デプロイメント統計サマリー:"
+    log_info "  📦 総ファイル数: ${file_count}"
+    log_info "  📏 総サイズ: ${total_human_size}"
+    log_info "  📋 マニフェストファイル: deployment-manifest.txt"
+    
+    # Show deployment readiness check
+    log_info "🔍 デプロイ準備状況チェック:"
+    
+    # Check essential files
+    local essential_checks=0
+    local essential_total=4
+    
+    if [[ -f "_config.yml" ]]; then
+        log_info "  ✅ Jekyll設定ファイル (_config.yml)"
+        ((essential_checks++))
+    else
+        log_error "  ❌ Jekyll設定ファイル (_config.yml) が見つかりません"
+    fi
+    
+    if [[ -f "index.md" ]]; then
+        log_info "  ✅ インデックスページ (index.md)"
+        ((essential_checks++))
+    else
+        log_error "  ❌ インデックスページ (index.md) が見つかりません"
+    fi
+    
+    local beaver_files=$(find . -name "beaver-*.md" | wc -l | tr -d ' ')
+    if [[ $beaver_files -gt 0 ]]; then
+        log_info "  ✅ Beaverコンテンツファイル (${beaver_files}件)"
+        ((essential_checks++))
+    else
+        log_error "  ❌ Beaverコンテンツファイルが見つかりません"
+    fi
+    
+    if [[ $total_size -gt 0 ]]; then
+        log_info "  ✅ コンテンツサイズ (${total_human_size})"
+        ((essential_checks++))
+    else
+        log_error "  ❌ コンテンツが空です"
+    fi
+    
+    # Final readiness assessment
+    if [[ $essential_checks -eq $essential_total ]]; then
+        log_success "🚀 デプロイ準備完了: ${essential_checks}/${essential_total} チェック通過"
+        log_info "✨ GitHub Pagesデプロイメントに進む準備ができました"
+    else
+        log_error "❌ デプロイ準備未完了: ${essential_checks}/${essential_total} チェック通過"
+        log_error "❗ 上記のエラーを修正してからデプロイしてください"
+    fi
+    
+    # Return to original directory
+    cd .. || {
+        log_error "❌ Failed to return to original directory"
+        return 1
+    }
+    
+    # Show final manifest location
+    log_info "📄 詳細なデプロイマニフェスト: _site/deployment-manifest.txt"
+    
+    return 0
+}
+
+# Helper function to format bytes in human readable format
+format_bytes() {
+    local bytes=$1
+    local units=("B" "KB" "MB" "GB")
+    local unit=0
+    local size=$bytes
+    
+    while [[ $size -gt 1024 && $unit -lt 3 ]]; do
+        size=$((size / 1024))
+        ((unit++))
+    done
+    
+    if [[ $unit -eq 0 ]]; then
+        echo "${size}${units[$unit]}"
+    else
+        # Use awk for decimal precision
+        echo "$bytes" | awk -v unit="$unit" '
+        {
+            size = $1
+            units[0] = "B"
+            units[1] = "KB" 
+            units[2] = "MB"
+            units[3] = "GB"
+            for(i=0; i<unit; i++) size = size / 1024
+            printf "%.1f%s", size, units[unit]
+        }'
+    fi
 }
 
 # Test setup
