@@ -631,7 +631,7 @@ EOF
     log_info "🚀 GitHub Pages source files ready in root directory"
     log_info "=== End GitHub Pages Source Verification ==="
     
-    # Generate detailed deployment file manifest
+    # Generate detailed deployment file manifest for source files
     generate_deployment_manifest
     
     return 0
@@ -639,34 +639,28 @@ EOF
 
 # Generate deployment manifest with detailed file information
 generate_deployment_manifest() {
-    log_section "🚀 GitHub Pages デプロイメントマニフェスト"
+    log_info "🚀 GitHub Pages デプロイメントマニフェスト"
     
-    if [[ ! -d "_site" ]]; then
-        log_error "❌ _site directory not found"
-        return 1
-    fi
+    # For GitHub Pages, we work with files in root directory, not _site/
+    # GitHub Actions will handle Jekyll build process automatically
+    log_info "Analyzing files in root directory for GitHub Pages deployment..."
     
-    # Change to _site directory for cleaner paths
-    cd "_site" || {
-        log_error "❌ Failed to change to _site directory"
-        return 1
-    }
-    
-    # Calculate total deployment size
+    # Calculate total source file size (Jekyll will build these into _site/)
     local total_size=0
     local file_count=0
     local deployment_manifest="deployment-manifest.txt"
     
-    log_info "📊 デプロイ対象ファイル分析中..."
+    log_info "📊 Jekyll ソースファイル分析中..."
     
     # Create manifest header
     cat > "$deployment_manifest" << EOF
 ================================================================================
-🚀 Beaver GitHub Pages デプロイメントマニフェスト
+🚀 Beaver GitHub Pages ソースファイルマニフェスト
 ================================================================================
 生成日時: $(date '+%Y-%m-%d %H:%M:%S')
 リポジトリ: ${REPOSITORY:-"未設定"}
 ビルドタイプ: ${UPDATE_TYPE:-"unknown"}
+Jekyll ビルドプロセス: GitHub Actions が自動処理
 ================================================================================
 
 EOF
@@ -745,7 +739,7 @@ EOF
     cat >> "$deployment_manifest" << EOF
 
 ================================================================================
-📊 デプロイメント統計
+📊 Jekyll ソースファイル統計
 ================================================================================
 総ファイル数: ${file_count}
 総サイズ: ${total_human_size} (${total_size} bytes)
@@ -772,21 +766,22 @@ EOF
     cat >> "$deployment_manifest" << EOF
 
 ================================================================================
-🚀 デプロイ準備完了
+🚀 Jekyll ソースファイル準備完了
 ================================================================================
-このマニフェストに記載されたファイルがGitHub Pagesにデプロイされます。
+これらのソースファイルをGitHub ActionsのJekyllビルドプロセスが処理し、
+静的サイトを生成してGitHub Pagesにデプロイします。
 マニフェスト生成時刻: $(date '+%Y-%m-%d %H:%M:%S')
 ================================================================================
 EOF
     
     # Display summary
-    log_info "📊 デプロイメント統計サマリー:"
+    log_info "📊 Jekyll ソースファイル統計サマリー:"
     log_info "  📦 総ファイル数: ${file_count}"
     log_info "  📏 総サイズ: ${total_human_size}"
     log_info "  📋 マニフェストファイル: deployment-manifest.txt"
     
-    # Show deployment readiness check
-    log_info "🔍 デプロイ準備状況チェック:"
+    # Show source file readiness check
+    log_info "🔍 Jekyll ソースファイル準備状況チェック:"
     
     # Check essential files
     local essential_checks=0
@@ -823,21 +818,15 @@ EOF
     
     # Final readiness assessment
     if [[ $essential_checks -eq $essential_total ]]; then
-        log_success "🚀 デプロイ準備完了: ${essential_checks}/${essential_total} チェック通過"
-        log_info "✨ GitHub Pagesデプロイメントに進む準備ができました"
+        log_success "🚀 Jekyll ソースファイル準備完了: ${essential_checks}/${essential_total} チェック通過"
+        log_info "✨ GitHub Actions Jekyll ビルドプロセスに進む準備ができました"
     else
-        log_error "❌ デプロイ準備未完了: ${essential_checks}/${essential_total} チェック通過"
+        log_error "❌ Jekyll ソースファイル準備未完了: ${essential_checks}/${essential_total} チェック通過"
         log_error "❗ 上記のエラーを修正してからデプロイしてください"
     fi
     
-    # Return to original directory
-    cd .. || {
-        log_error "❌ Failed to return to original directory"
-        return 1
-    }
-    
     # Show final manifest location
-    log_info "📄 詳細なデプロイマニフェスト: _site/deployment-manifest.txt"
+    log_info "📄 詳細なソースファイルマニフェスト: deployment-manifest.txt"
     
     return 0
 }
