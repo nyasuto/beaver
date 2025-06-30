@@ -308,7 +308,7 @@ func TestGitHubPagesPublisher_CreateInitialJekyllStructure(t *testing.T) {
 	} else {
 		configStr := string(configContent)
 		expectedContent := []string{
-			"title: testrepo Knowledge Base",
+			"title: testrepo ナレッジベース",
 			"theme: cayman",
 			"repository: testowner/testrepo",
 			"baseurl: \"/testrepo\"",
@@ -329,9 +329,9 @@ func TestGitHubPagesPublisher_CreateInitialJekyllStructure(t *testing.T) {
 	} else {
 		indexStr := string(indexContent)
 		expectedContent := []string{
-			"# testrepo Knowledge Base",
+			"# testrepo ナレッジベース",
 			"layout: default",
-			"title: Home",
+			"title: ホーム",
 		}
 
 		for _, expected := range expectedContent {
@@ -405,7 +405,7 @@ func TestGitHubPagesPublisher_ConvertAndSaveWikiPage(t *testing.T) {
 		`title: "Test Issue Summary"`,
 		"beaver_auto_generated: true",
 		`description: "This is a test summary"`,
-		`category: "issues"`,
+		`category: "課題"`, // Japanese category mapping for "issues"
 		"tags:",
 		`  - "test"`,
 		`  - "summary"`,
