@@ -1,0 +1,32 @@
+project:
+  name: "Beaver - AIエージェント知識ダム構築ツール"
+  repository: "nyasuto/beaver"
+
+sources:
+  github:
+    issues: true
+    commits: true
+    prs: true
+    # token will be provided via GITHUB_TOKEN environment variable
+
+output:
+  wiki:
+    platform: "github"
+    templates: "default"
+  
+  # GitHub Pages configuration for the new modular script architecture
+  github_pages:
+    enabled: true
+    theme: "minima"
+    enable_search: true
+    custom_domain: ""
+    output_dir: "_site"
+    branch: "gh-pages"
+
+ai:
+  provider: "openai"      # openai, anthropic, local
+  model: "gpt-4"
+  features:
+    summarization: true   # 要約
+    categorization: true  # 分類
+    troubleshooting: true # トラブルシューティング
