@@ -1,0 +1,184 @@
+name: 🚀 リリース
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'リリースバージョン (例: v1.0.0)'
+        required: true
+        type: string
+
+env:
+  GO_VERSION: 'stable'
+
+jobs:
+  # リリースバイナリのビルド
+  build-release:
+    name: 🔨 リリースビルド
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            suffix: linux-amd64
+          - goos: linux
+            goarch: arm64
+            suffix: linux-arm64
+          - goos: darwin
+            goarch: amd64
+            suffix: darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            suffix: darwin-arm64
+          - goos: windows
+            goarch: amd64
+            suffix: windows-amd64.exe
+            
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      
+    - name: 🐹 Go環境のセットアップ
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+        
+    - name: 📦 依存関係のインストール
+      run: |
+        go mod download
+        go mod tidy
+        
+    - name: 🔨 クロスプラットフォームビルド
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        VERSION=${{ github.ref_name || inputs.version }}
+        BINARY_NAME=beaver-${{ matrix.suffix }}
+        
+        echo "🔨 ビルド中: $BINARY_NAME (${GOOS}/${GOARCH})"
+        go build -ldflags "-X main.Version=$VERSION -s -w" -o $BINARY_NAME ./cmd/beaver
+        
+        # バイナリサイズの確認
+        ls -lh $BINARY_NAME
+        
+        # Windows以外はsha256sumを生成
+        if [ "${{ matrix.goos }}" != "windows" ]; then
+          sha256sum $BINARY_NAME > $BINARY_NAME.sha256
+        fi
+        
+    - name: 📤 ビルド成果物のアップロード
+      uses: actions/upload-artifact@v4
+      with:
+        name: beaver-${{ matrix.suffix }}
+        path: |
+          beaver-${{ matrix.suffix }}*
+        retention-days: 30
+
+  # リリースノートの生成とGitHubリリースの作成
+  create-release:
+    name: 🏷️ GitHubリリースの作成
+    runs-on: ubuntu-latest
+    needs: build-release
+    
+    steps:
+    - name: 📥 コードのチェックアウト
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📥 全ビルド成果物のダウンロード
+      uses: actions/download-artifact@v4
+      with:
+        path: release-artifacts
+        
+    - name: 📋 成果物の整理
+      run: |
+        mkdir -p release-files
+        find release-artifacts -type f -exec cp {} release-files/ \;
+        ls -la release-files/
+        
+    - name: 📝 リリースノートの生成
+      id: release-notes
+      run: |
+        VERSION=${{ github.ref_name || inputs.version }}
+        echo "🏷️ リリースバージョン: $VERSION"
+        
+        # 前回のタグを取得
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        if [ -n "$PREVIOUS_TAG" ]; then
+          echo "📋 変更履歴 ($PREVIOUS_TAG..$VERSION):"
+          CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        else
+          echo "📋 初回リリース"
+          CHANGELOG=$(git log --pretty=format:"- %s")
+        fi
+        
+        # リリースノートを作成
+        cat > release-notes.md << EOF
+        ## 🦫 Beaver $VERSION リリース
+        
+        ### 📋 変更内容
+        $CHANGELOG
+        
+        ### 📦 ダウンロード
+        - **Linux (x64)**: \`beaver-linux-amd64\`
+        - **Linux (ARM64)**: \`beaver-linux-arm64\`
+        - **macOS (x64)**: \`beaver-darwin-amd64\`
+        - **macOS (ARM64)**: \`beaver-darwin-arm64\`
+        - **Windows (x64)**: \`beaver-windows-amd64.exe\`
+        
+        ### 🚀 インストール方法
+        
+        #### Linux/macOS
+        \`\`\`bash
+        # ダウンロード（例：Linux x64）
+        curl -L -o beaver https://github.com/nyasuto/beaver/releases/download/$VERSION/beaver-linux-amd64
+        chmod +x beaver
+        sudo mv beaver /usr/local/bin/
+        \`\`\`
+        
+        #### Windows
+        1. \`beaver-windows-amd64.exe\` をダウンロード
+        2. \`beaver.exe\` にリネーム
+        3. PATHの通ったディレクトリに配置
+        
+        ### ✅ 動作確認
+        \`\`\`bash
+        beaver --help
+        beaver status
+        \`\`\`
+        
+        ---
+        🤖 Generated with [Claude Code](https://claude.ai/code)
+        EOF
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        cat release-notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: 🏷️ GitHubリリースの作成
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name || inputs.version }}
+        name: 'Beaver ${{ github.ref_name || inputs.version }}'
+        body: ${{ steps.release-notes.outputs.release_notes }}
+        files: release-files/*
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📊 リリース完了
+      run: |
+        echo "🎉 リリース ${{ github.ref_name || inputs.version }} が正常に作成されました！"
+        echo "📦 ビルド成果物:"
+        ls -la release-files/
+        echo ""
+        echo "🔗 リリースページ: https://github.com/nyasuto/beaver/releases/tag/${{ github.ref_name || inputs.version }}"
