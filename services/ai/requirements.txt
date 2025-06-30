@@ -5,7 +5,7 @@ fastapi==0.115.14
 uvicorn[standard]==0.34.3
 
 # AI/ML Libraries
-langchain==0.2.5
+langchain==0.3.26
 langchain-openai==0.3.27
 openai>=1.6.1,<2.0.0
 
