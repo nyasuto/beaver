@@ -9,12 +9,6 @@ func TestConfig_GetGitHubPagesTargets(t *testing.T) {
 		Output: OutputConfig{
 			Targets: []OutputTarget{
 				{
-					Type: "github-wiki",
-					Config: map[string]interface{}{
-						"templates": "default",
-					},
-				},
-				{
 					Type: "github-pages",
 					Config: map[string]interface{}{
 						"theme":  "minima",
@@ -83,9 +77,9 @@ func TestConfig_HasGitHubPages(t *testing.T) {
 				Output: OutputConfig{
 					Targets: []OutputTarget{
 						{
-							Type: "github-wiki",
+							Type: "notion",
 							Config: map[string]interface{}{
-								"templates": "default",
+								"database_id": "test-id",
 							},
 						},
 					},
@@ -233,12 +227,6 @@ func TestValidateOutputTargets(t *testing.T) {
 			config: &Config{
 				Output: OutputConfig{
 					Targets: []OutputTarget{
-						{
-							Type: "github-wiki",
-							Config: map[string]interface{}{
-								"templates": "default",
-							},
-						},
 						{
 							Type: "github-pages",
 							Config: map[string]interface{}{
