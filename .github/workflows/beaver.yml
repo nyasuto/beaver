@@ -246,6 +246,7 @@ jobs:
           echo "📝 Recent Log Entries:"
           tail -n 10 .beaver/ci-beaver.log | sed 's/^/  /'
         fi
+        ls -la _sites || echo "No _site directory found - check if generation was successful"
 
     - name: 📄 Setup GitHub Pages
       uses: actions/configure-pages@v5
