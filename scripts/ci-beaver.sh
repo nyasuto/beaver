@@ -417,14 +417,27 @@ execute_github_pages() {
     log_info "Copying markdown files to _site..."
     for md_file in *.md; do
         if [[ -f "$md_file" && "$md_file" != "README.md" ]]; then
-            log_debug "Processing file: $md_file (size: $(stat -f%z "$md_file" 2>/dev/null || echo 'unknown'))"
+            # Cross-platform file size check
+            local file_size
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                file_size=$(stat -f%z "$md_file" 2>/dev/null || echo 'unknown')
+            else
+                file_size=$(stat -c%s "$md_file" 2>/dev/null || echo 'unknown')
+            fi
+            log_debug "Processing file: $md_file (size: $file_size)"
             if cp "$md_file" "_site/"; then
                 ((files_copied++))
                 log_debug "✅ Successfully copied $md_file to _site/"
-                # Verify the copy
+                # Verify the copy with cross-platform file size check
                 if [[ -f "_site/$md_file" ]]; then
-                    local original_size=$(stat -f%z "$md_file" 2>/dev/null || echo '0')
-                    local copied_size=$(stat -f%z "_site/$md_file" 2>/dev/null || echo '0')
+                    local original_size copied_size
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        original_size=$(stat -f%z "$md_file" 2>/dev/null || echo '0')
+                        copied_size=$(stat -f%z "_site/$md_file" 2>/dev/null || echo '0')
+                    else
+                        original_size=$(stat -c%s "$md_file" 2>/dev/null || echo '0')
+                        copied_size=$(stat -c%s "_site/$md_file" 2>/dev/null || echo '0')
+                    fi
                     log_debug "  Original: ${original_size} bytes, Copied: ${copied_size} bytes"
                 else
                     log_error "❌ File $md_file was not found in _site/ after copy"
@@ -513,7 +526,12 @@ EOF
     
     # Verify _config.yml creation
     if [[ -f "_site/_config.yml" ]]; then
-        local config_size=$(stat -f%z "_site/_config.yml" 2>/dev/null || echo '0')
+        local config_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            config_size=$(stat -f%z "_site/_config.yml" 2>/dev/null || echo '0')
+        else
+            config_size=$(stat -c%s "_site/_config.yml" 2>/dev/null || echo '0')
+        fi
         log_success "✅ _config.yml created successfully (${config_size} bytes)"
         log_debug "_config.yml content preview:"
         head -10 "_site/_config.yml" | while read -r line; do
@@ -583,7 +601,12 @@ EOF
     
     # Verify index.md creation/existence
     if [[ -f "_site/index.md" ]]; then
-        local index_size=$(stat -f%z "_site/index.md" 2>/dev/null || echo '0')
+        local index_size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            index_size=$(stat -f%z "_site/index.md" 2>/dev/null || echo '0')
+        else
+            index_size=$(stat -c%s "_site/index.md" 2>/dev/null || echo '0')
+        fi
         log_debug "index.md size: ${index_size} bytes"
         log_debug "index.md front matter check:"
         head -5 "_site/index.md" | while read -r line; do
@@ -606,7 +629,12 @@ EOF
     local missing_files=0
     for file in "${essential_files[@]}"; do
         if [[ -f "_site/$file" ]]; then
-            local file_size=$(stat -f%z "_site/$file" 2>/dev/null || echo '0')
+            local file_size
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                file_size=$(stat -f%z "_site/$file" 2>/dev/null || echo '0')
+            else
+                file_size=$(stat -c%s "_site/$file" 2>/dev/null || echo '0')
+            fi
             log_success "✅ Essential file: $file (${file_size} bytes)"
         else
             log_error "❌ Missing essential file: $file"
