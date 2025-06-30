@@ -157,7 +157,7 @@ sources:
     # token: "your-github-token" # または環境変数 GITHUB_TOKEN を使用
 
 output:
-  # GitHub Pages configuration - v1.0 supports GitHub Pages only
+  # GitHub Pages configuration - primary output target
   github_pages:
     theme: "minima"           # Jekyll theme
     branch: "gh-pages"        # Target branch
@@ -250,7 +250,6 @@ func (c *Config) Validate() error {
 // validateOutputTargets validates the output targets configuration
 func (c *Config) validateOutputTargets() error {
 	validTargetTypes := map[string]bool{
-		"github-wiki":  true,
 		"github-pages": true,
 		"notion":       true,
 		"confluence":   true,

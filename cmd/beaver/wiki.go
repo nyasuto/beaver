@@ -63,7 +63,7 @@ var (
 
 var wikiCmd = &cobra.Command{
 	Use:   "wiki",
-	Short: "GitHub Pages生成コマンド群",
+	Short: "ナレッジベース生成・デプロイコマンド群",
 	Long: `GitHub IssuesからGitHub Pagesドキュメントを生成します。
 
 AI処理されたIssueデータを構造化されたWikiページに変換し、
