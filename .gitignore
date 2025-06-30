@@ -65,6 +65,12 @@ generated-wiki-*/
 wiki-output/
 *.wiki/
 
+# Jekyll build output
+_site/
+
+# Generated Beaver documentation files (not source)
+beaver-*.md
+
 # Python AI services
 services/ai/.env
 services/ai/__pycache__/

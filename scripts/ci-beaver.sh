@@ -31,6 +31,12 @@ log_success() {
     echo "✅ [$(date '+%Y-%m-%d %H:%M:%S')] SUCCESS: $*" | tee -a "$LOG_FILE"
 }
 
+log_debug() {
+    if [[ "${VERBOSE:-false}" == "true" ]]; then
+        echo "🔍 [$(date '+%Y-%m-%d %H:%M:%S')] DEBUG: $*" | tee -a "$LOG_FILE"
+    fi
+}
+
 # Usage information
 usage() {
     cat << EOF
@@ -397,8 +403,9 @@ execute_github_pages() {
     cat > "_site/_config.yml" << EOF
 title: "Beaver Documentation"
 description: "AI agent knowledge dam construction tool documentation"
-theme: $jekyll_theme
+remote_theme: pages-themes/minimal@v0.2.0
 plugins:
+  - jekyll-remote-theme
   - jekyll-feed
   - jekyll-sitemap
 
@@ -407,42 +414,85 @@ highlighter: rouge
 
 header_pages:
   - index.md
-  - issues-summary.md
-  - statistics.md
-  - learning-path.md
+  - beaver-Home.md
+  - beaver-Issues-Summary.md
+  - beaver-Development-Strategy.md
+  - beaver-Learning-Path.md
 
 exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
+  - "*.log"
 
-# Search configuration
+# GitHub Pages configuration
+github:
+  is_project_page: true
+  repository_name: beaver
+  repository_url: https://github.com/nyasuto/beaver
+
+# Search configuration  
 search_enabled: $search_enabled
+
+# Collections and defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
 EOF
     
     # Create index.html if no index.md exists
     if [[ ! -f "_site/index.md" ]]; then
         cat > "_site/index.md" << EOF
 ---
-layout: home
-title: Home
+layout: default
+title: Beaver Documentation
 ---
 
 # Beaver Documentation
 
 Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam construction tool that transforms AI development workflows into structured, persistent knowledge.
 
-## Navigation
+## 🦫 Project Overview
+
+**Core Mission**: Transform flowing AI development streams into structured knowledge dams, preventing valuable insights from being lost.
+
+## 📋 Documentation Navigation
+
+### 🏠 Core Documentation
 
 EOF
-        # Add links to available pages
-        for md_file in _site/*.md; do
-            if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" ]]; then
+        # Add links to core Beaver pages
+        for md_file in _site/beaver-*.md; do
+            if [[ -f "$md_file" ]]; then
                 local page_name=$(basename "$md_file" .md)
-                local page_title=$(echo "$page_name" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
-                echo "- [$page_title]($page_name.html)" >> "_site/index.md"
+                local clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                echo "- [$clean_title]($page_name)" >> "_site/index.md"
             fi
         done
+        
+        cat >> "_site/index.md" << EOF
+
+### 📊 Project Resources
+
+EOF
+        # Add links to other documentation files
+        for md_file in _site/*.md; do
+            if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" && "$(basename "$md_file")" != beaver-*.md ]]; then
+                local page_name=$(basename "$md_file" .md)
+                local page_title=$(echo "$page_name" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                echo "- [$page_title]($page_name)" >> "_site/index.md"
+            fi
+        done
+        
+        cat >> "_site/index.md" << EOF
+
+---
+
+*🤖 This documentation is automatically generated and maintained by Beaver*
+EOF
     fi
     
     log_success "Jekyll site structure created with $files_copied content files"
