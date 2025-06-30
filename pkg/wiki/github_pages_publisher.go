@@ -132,16 +132,72 @@ func (p *GitHubPagesPublisher) Clone(ctx context.Context) error {
 			})
 	}
 
+	// Successfully cloned - ensure we're on the correct branch
+	currentBranch, err := p.gitClient.GetCurrentBranch(ctx, p.workingDir)
+	if err != nil {
+		return fmt.Errorf("failed to get current branch: %w", err)
+	}
+
+	if currentBranch != p.config.BranchName {
+		if err := p.gitClient.CheckoutBranch(ctx, p.workingDir, p.config.BranchName); err != nil {
+			return fmt.Errorf("failed to checkout branch %s: %w", p.config.BranchName, err)
+		}
+	}
+
 	return nil
 }
 
 // initializeNewGitHubPagesRepo creates a basic structure for new GitHub Pages repo
-func (p *GitHubPagesPublisher) initializeNewGitHubPagesRepo(_ context.Context, _ string) error {
-	// For now, just create a basic directory structure
-	// Full implementation would include git init, remote setup, etc.
+func (p *GitHubPagesPublisher) initializeNewGitHubPagesRepo(ctx context.Context, repoURL string) error {
+	// Create initial Jekyll structure
 	if err := p.createInitialJekyllStructure(); err != nil {
 		return fmt.Errorf("failed to create Jekyll structure: %w", err)
 	}
+
+	// Initialize git repository
+	if err := p.initializeGitRepository(ctx, repoURL); err != nil {
+		return fmt.Errorf("failed to initialize git repository: %w", err)
+	}
+
+	return nil
+}
+
+// initializeGitRepository initializes git repository with initial commit
+func (p *GitHubPagesPublisher) initializeGitRepository(ctx context.Context, _ string) error {
+	// Set git configuration for the repository
+	if err := p.gitClient.SetConfig(ctx, p.workingDir, "user.name", "Beaver AI"); err != nil {
+		return fmt.Errorf("failed to set git user.name: %w", err)
+	}
+
+	if err := p.gitClient.SetConfig(ctx, p.workingDir, "user.email", "noreply@beaver.ai"); err != nil {
+		return fmt.Errorf("failed to set git user.email: %w", err)
+	}
+
+	// Set up authenticated remote URL
+	authenticatedURL := fmt.Sprintf("https://x-access-token:%s@github.com/%s/%s",
+		p.config.Token, p.config.Owner, p.config.Repository)
+
+	if err := p.gitClient.SetConfig(ctx, p.workingDir, "remote.origin.url", authenticatedURL); err != nil {
+		return fmt.Errorf("failed to set remote origin: %w", err)
+	}
+
+	// Check out the target branch
+	if err := p.gitClient.CheckoutBranch(ctx, p.workingDir, p.config.BranchName); err != nil {
+		// If branch doesn't exist, we'll create it with the initial commit
+		fmt.Printf("Branch %s doesn't exist, will create it with initial commit\n", p.config.BranchName)
+	}
+
+	// Add all files to staging
+	if err := p.gitClient.Add(ctx, p.workingDir, []string{"."}); err != nil {
+		return fmt.Errorf("failed to add files to git: %w", err)
+	}
+
+	// Create initial commit
+	commitOptions := NewDefaultCommitOptions()
+	if err := p.gitClient.Commit(ctx, p.workingDir, "Initial GitHub Pages setup by Beaver", commitOptions); err != nil {
+		return fmt.Errorf("failed to create initial commit: %w", err)
+	}
+
 	return nil
 }
 
@@ -349,10 +405,35 @@ func (p *GitHubPagesPublisher) PublishPages(ctx context.Context, pages []*WikiPa
 		}
 	}
 
-	// For Phase 1, we'll skip the git operations
-	// In Phase 2, we'll add proper git commit and push
+	// Phase 2: Full deployment workflow (only if working directory is a git repository)
+	if p.isGitRepository() {
+		// Commit changes with descriptive message
+		commitMessage := fmt.Sprintf("Update wiki pages: %d pages updated by Beaver\n\nAuto-generated from GitHub Issues\nTimestamp: %s",
+			len(pages), time.Now().Format(time.RFC3339))
+
+		if err := p.Commit(ctx, commitMessage); err != nil {
+			return fmt.Errorf("failed to commit changes: %w", err)
+		}
+
+		// Push changes to GitHub Pages
+		if err := p.Push(ctx); err != nil {
+			return fmt.Errorf("failed to push changes: %w", err)
+		}
+
+		fmt.Printf("✅ Successfully published %d pages to GitHub Pages\n", len(pages))
+	} else {
+		fmt.Printf("✅ Successfully generated %d Jekyll pages (no git repository for deployment)\n", len(pages))
+	}
 
 	return nil
+}
+
+// isGitRepository checks if the working directory is a git repository
+func (p *GitHubPagesPublisher) isGitRepository() bool {
+	if p.workingDir == "" {
+		return false
+	}
+	return IsGitRepository(p.workingDir)
 }
 
 // GenerateAndPublishWiki generates and publishes wiki from issues
@@ -435,7 +516,7 @@ func (p *GitHubPagesPublisher) wikiPageToJekyllFilename(wikiFilename string) str
 	return name + ".html"
 }
 
-// Commit commits changes (simplified for Phase 1)
+// Commit commits changes to the local repository
 func (p *GitHubPagesPublisher) Commit(ctx context.Context, message string) error {
 	if !p.isInitialized {
 		return NewWikiError(ErrorTypeRepository, "github pages commit",
@@ -443,13 +524,33 @@ func (p *GitHubPagesPublisher) Commit(ctx context.Context, message string) error
 			[]string{"Call Initialize() first"})
 	}
 
-	// Phase 1: Basic implementation - just log the action
-	// In Phase 2, we'll implement actual git operations
-	fmt.Printf("📝 GitHub Pages commit (Phase 1): %s\n", message)
+	// Check if there are changes to commit
+	status, err := p.gitClient.Status(ctx, p.workingDir)
+	if err != nil {
+		return fmt.Errorf("failed to get git status: %w", err)
+	}
+
+	if status.IsClean {
+		fmt.Printf("📝 No changes to commit\n")
+		return nil
+	}
+
+	// Add all changes to staging
+	if err := p.gitClient.Add(ctx, p.workingDir, []string{"."}); err != nil {
+		return fmt.Errorf("failed to add changes to git: %w", err)
+	}
+
+	// Create commit with Beaver metadata
+	commitOptions := NewDefaultCommitOptions()
+	if err := p.gitClient.Commit(ctx, p.workingDir, message, commitOptions); err != nil {
+		return fmt.Errorf("failed to commit changes: %w", err)
+	}
+
+	fmt.Printf("📝 GitHub Pages changes committed: %s\n", message)
 	return nil
 }
 
-// Push pushes changes to remote (simplified for Phase 1)
+// Push pushes changes to the remote GitHub Pages repository
 func (p *GitHubPagesPublisher) Push(ctx context.Context) error {
 	if !p.isInitialized {
 		return NewWikiError(ErrorTypeRepository, "github pages push",
@@ -457,13 +558,31 @@ func (p *GitHubPagesPublisher) Push(ctx context.Context) error {
 			[]string{"Call Initialize() first"})
 	}
 
-	// Phase 1: Basic implementation - just log the action
-	// In Phase 2, we'll implement actual git operations
-	fmt.Printf("🚀 GitHub Pages push (Phase 1): changes ready for deployment\n")
+	// Set up push options for GitHub Pages
+	pushOptions := &PushOptions{
+		Remote:  "origin",
+		Branch:  p.config.BranchName,
+		Force:   false,
+		Timeout: p.config.Timeout,
+	}
+
+	// Push changes to remote repository
+	if err := p.gitClient.Push(ctx, p.workingDir, pushOptions); err != nil {
+		return NewWikiError(ErrorTypeGitOperation, "github pages push",
+			err, "Failed to push changes to GitHub Pages", 0,
+			[]string{
+				"Check GitHub token permissions",
+				"Verify branch exists on remote",
+				fmt.Sprintf("Branch: %s", p.config.BranchName),
+				"Ensure repository allows pushes to this branch",
+			})
+	}
+
+	fmt.Printf("🚀 GitHub Pages changes pushed successfully to %s branch\n", p.config.BranchName)
 	return nil
 }
 
-// Pull pulls changes from remote (simplified for Phase 1)
+// Pull pulls changes from the remote GitHub Pages repository
 func (p *GitHubPagesPublisher) Pull(ctx context.Context) error {
 	if !p.isInitialized {
 		return NewWikiError(ErrorTypeRepository, "github pages pull",
@@ -471,8 +590,34 @@ func (p *GitHubPagesPublisher) Pull(ctx context.Context) error {
 			[]string{"Call Initialize() first"})
 	}
 
-	// Phase 1: Basic implementation - just log the action
-	fmt.Printf("📥 GitHub Pages pull (Phase 1): sync with remote\n")
+	// Check for uncommitted changes before pulling
+	status, err := p.gitClient.Status(ctx, p.workingDir)
+	if err != nil {
+		return fmt.Errorf("failed to get git status: %w", err)
+	}
+
+	if !status.IsClean {
+		return NewWikiError(ErrorTypeGitOperation, "github pages pull",
+			nil, "Working directory has uncommitted changes", 0,
+			[]string{
+				"Commit or stash your changes before pulling",
+				"Use Commit() method to commit changes",
+			})
+	}
+
+	// Pull changes from remote repository
+	if err := p.gitClient.Pull(ctx, p.workingDir); err != nil {
+		return NewWikiError(ErrorTypeGitOperation, "github pages pull",
+			err, "Failed to pull changes from GitHub Pages", 0,
+			[]string{
+				"Check GitHub token permissions",
+				"Verify branch exists on remote",
+				fmt.Sprintf("Branch: %s", p.config.BranchName),
+				"Check internet connectivity",
+			})
+	}
+
+	fmt.Printf("📥 GitHub Pages changes pulled successfully from %s branch\n", p.config.BranchName)
 	return nil
 }
 
