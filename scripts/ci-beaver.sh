@@ -400,10 +400,24 @@ execute_github_pages() {
     local jekyll_theme="${THEME:-minima}"
     local search_enabled="${ENABLE_SEARCH:-false}"
     
+    # Set appropriate remote theme based on theme parameter
+    local remote_theme
+    case "$jekyll_theme" in
+        "minima")
+            remote_theme="minima"
+            ;;
+        "minimal")
+            remote_theme="pages-themes/minimal@v0.2.0"
+            ;;
+        *)
+            remote_theme="$jekyll_theme"
+            ;;
+    esac
+    
     cat > "_site/_config.yml" << EOF
 title: "Beaver Documentation"
 description: "AI agent knowledge dam construction tool documentation"
-remote_theme: pages-themes/minimal@v0.2.0
+remote_theme: $remote_theme
 plugins:
   - jekyll-remote-theme
   - jekyll-feed
