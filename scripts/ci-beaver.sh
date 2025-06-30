@@ -42,6 +42,7 @@ Commands:
   build           Build wiki from issues (with auto-detection of incremental mode)
   incremental     Force incremental build
   full-rebuild    Force full rebuild
+  github-pages    Deploy to GitHub Pages
   test-setup      Test Beaver setup and configuration
   clean           Clean up build artifacts and state
   notify          Send test notifications
@@ -77,6 +78,9 @@ Examples:
   # Force full rebuild
   $0 full-rebuild --notify-failure
 
+  # Deploy to GitHub Pages
+  $0 github-pages --notify-success
+
   # Test setup
   $0 test-setup --verbose
 
@@ -98,7 +102,7 @@ VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        build|incremental|full-rebuild|test-setup|clean|notify|health-check)
+        build|incremental|full-rebuild|github-pages|test-setup|clean|notify|health-check)
             COMMAND="$1"
             shift
             ;;
@@ -322,6 +326,43 @@ execute_build() {
     return 0
 }
 
+# Execute GitHub Pages deployment
+execute_github_pages() {
+    log_info "Executing GitHub Pages deployment..."
+    
+    # Check if GitHub Pages is configured
+    if ! "$BEAVER_BIN" config validate --check-github-pages >/dev/null 2>&1; then
+        log_error "GitHub Pages not configured in beaver.yml"
+        log_info "Please add GitHub Pages target configuration"
+        return 1
+    fi
+    
+    log_info "GitHub Pages command: $BEAVER_BIN github-pages"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log_info "DRY RUN: Would execute: $BEAVER_BIN github-pages"
+        return 0
+    fi
+    
+    # Execute the GitHub Pages deployment
+    if [[ "$VERBOSE" == "true" ]]; then
+        "$BEAVER_BIN" github-pages
+    else
+        "$BEAVER_BIN" github-pages 2>&1 | tee -a "$LOG_FILE"
+    fi
+    
+    local exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "GitHub Pages deployment completed successfully"
+    else
+        log_error "GitHub Pages deployment failed with exit code $exit_code"
+        return $exit_code
+    fi
+    
+    return 0
+}
+
 # Test setup
 test_setup() {
     log_info "Testing Beaver setup..."
@@ -526,6 +567,10 @@ main() {
         build|incremental|full-rebuild)
             check_prerequisites || exit 1
             execute_build || exit 1
+            ;;
+        github-pages)
+            check_prerequisites || exit 1
+            execute_github_pages || exit 1
             ;;
         test-setup)
             check_prerequisites || exit 1
