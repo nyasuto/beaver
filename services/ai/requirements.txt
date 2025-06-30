@@ -28,7 +28,7 @@ pytest==7.4.3
 pytest-asyncio==1.0.0
 
 # Configuration (Enhanced)
-pydantic-settings==2.1.0
+pydantic-settings==2.10.1
 
 # Development
 ruff==0.12.1
