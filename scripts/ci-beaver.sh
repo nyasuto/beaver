@@ -478,7 +478,8 @@ execute_github_pages() {
             log_debug "Using custom theme: $jekyll_theme"
             ;;
     esac
-    
+    remote_theme="pages-themes/slate"
+
     log_info "Selected remote theme: '$remote_theme'"
     
     cat > "_site/_config.yml" << EOF
