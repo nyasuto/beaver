@@ -13,12 +13,12 @@ import (
 // RecoveryManager handles automatic recovery from common errors
 type RecoveryManager struct {
 	gitClient GitClient
-	publisher *GitHubWikiPublisher
+	publisher WikiPublisher
 	logger    *log.Logger
 }
 
 // NewRecoveryManager creates a new recovery manager
-func NewRecoveryManager(gitClient GitClient, publisher *GitHubWikiPublisher) *RecoveryManager {
+func NewRecoveryManager(gitClient GitClient, publisher WikiPublisher) *RecoveryManager {
 	return &RecoveryManager{
 		gitClient: gitClient,
 		publisher: publisher,
@@ -194,13 +194,13 @@ func (rm *RecoveryManager) initializeWikiRepository(ctx context.Context) bool {
 		UpdatedAt: time.Now(),
 	}
 
-	// Try to publish via API first (this initializes the wiki)
-	if err := rm.publisher.publishPageViaAPI(ctx, homePage); err != nil {
-		rm.logger.Printf("Failed to initialize wiki via API: %v", err)
+	// Try to create the home page (this initializes the repository)
+	if err := rm.publisher.CreatePage(ctx, homePage); err != nil {
+		rm.logger.Printf("Failed to initialize repository: %v", err)
 		return false
 	}
 
-	rm.logger.Printf("Successfully initialized wiki repository")
+	rm.logger.Printf("Successfully initialized repository")
 	return true
 }
 
@@ -277,14 +277,3 @@ func containsAnyString(text string, patterns []string) bool {
 	return false
 }
 
-// publishPageViaAPI would be a method on GitHubWikiPublisher to create pages via GitHub API
-// This is a placeholder for the actual implementation
-func (p *GitHubWikiPublisher) publishPageViaAPI(ctx context.Context, page *WikiPage) error {
-	// This would use the GitHub API to create a wiki page
-	// which automatically initializes the wiki repository
-	log.Printf("Publishing page via API: %s", page.Title)
-
-	// Placeholder implementation
-	// In reality, this would use the GitHub client to create the page
-	return fmt.Errorf("API publishing not yet implemented")
-}

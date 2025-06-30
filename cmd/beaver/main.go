@@ -468,7 +468,7 @@ func runStatusCommand(cmd *cobra.Command, args []string) {
 	fmt.Printf("📁 プロジェクト: %s\n", cfg.Project.Name)
 	fmt.Printf("🔗 リポジトリ: %s\n", cfg.Project.Repository)
 	fmt.Printf("🤖 AI Provider: %s (%s)\n", cfg.AI.Provider, cfg.AI.Model)
-	fmt.Printf("📝 出力先: %s Wiki\n", cfg.Output.Wiki.Platform)
+	fmt.Printf("📝 出力先: GitHub Pages (%s)\n", cfg.Output.GitHubPages.Theme)
 
 	// Check GitHub token
 	statusLogger.Info("Checking GitHub token configuration")

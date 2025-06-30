@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/github"
 	"github.com/nyasuto/beaver/pkg/wiki"
@@ -24,8 +25,14 @@ var (
 	wikiGeneratorFactory = func() *wiki.Generator {
 		return wiki.NewGenerator()
 	}
-	wikiPublisherFactory = func(config *wiki.PublisherConfig) (wiki.WikiPublisher, error) {
-		return wiki.NewGitHubWikiPublisher(config)
+	wikiPublisherFactory = func(publisherConfig *wiki.PublisherConfig) (wiki.WikiPublisher, error) {
+		// For v1.0, we only support GitHub Pages
+		pagesConfig := config.GitHubPagesConfig{
+			Theme:        "minima",
+			Branch:       "gh-pages",
+			EnableSearch: false,
+		}
+		return wiki.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
 	}
 	wikiViperGetString = func(key string) string {
 		return viper.GetString(key)
@@ -56,17 +63,17 @@ var (
 
 var wikiCmd = &cobra.Command{
 	Use:   "wiki",
-	Short: "Wiki生成コマンド群",
-	Long: `GitHub IssuesからWikiドキュメントを生成します。
+	Short: "GitHub Pages生成コマンド群",
+	Long: `GitHub IssuesからGitHub Pagesドキュメントを生成します。
 
 AI処理されたIssueデータを構造化されたWikiページに変換し、
-GitHub Wikiへの自動投稿もサポートします。`,
+GitHub Pagesへの自動デプロイメントをサポートします。`,
 }
 
 var generateWikiCmd = &cobra.Command{
 	Use:   "generate [owner/repo]",
-	Short: "GitHub IssuesからWikiを生成",
-	Long: `指定されたリポジトリのGitHub IssuesからWikiドキュメントを生成します。
+	Short: "GitHub IssuesからGitHub Pagesを生成",
+	Long: `指定されたリポジトリのGitHub IssuesからGitHub Pagesドキュメントを生成します。
 
 生成される主要ページ:
 - Issues Summary: 課題一覧と要約
@@ -83,8 +90,8 @@ Example:
 
 var publishWikiCmd = &cobra.Command{
 	Use:   "publish [owner/repo]",
-	Short: "WikiをGitHub Wikiに投稿",
-	Long: `ローカルで生成されたWikiページをGitHub Wikiに投稿します。
+	Short: "GitHub Pagesにデプロイ",
+	Long: `ローカルで生成されたWikiページをGitHub Pagesにデプロイします。
 
 GitHub Personal Access Tokenが必要です。
 環境変数GITHUB_TOKENまたは設定ファイルで指定してください。
@@ -98,10 +105,10 @@ Example:
 
 var listWikiCmd = &cobra.Command{
 	Use:   "list [owner/repo]",
-	Short: "GitHub Wikiページ一覧表示",
-	Long: `指定されたリポジトリのGitHub Wikiページ一覧を表示します。
+	Short: "GitHub Pagesページ一覧表示",
+	Long: `指定されたリポジトリのGitHub Pagesページ一覧を表示します。
 
-現在のWikiの状態を確認する際に使用します。
+現在のGitHub Pagesの状態を確認する際に使用します。
 
 Example:
   beaver wiki list nyasuto/beaver`,
@@ -121,7 +128,7 @@ func init() {
 	// Generate command flags
 	generateWikiCmd.Flags().StringVarP(&wikiOutput, "output", "o", "./wiki", "出力ディレクトリ")
 	generateWikiCmd.Flags().StringVar(&wikiTemplate, "template", "", "カスタムテンプレートディレクトリ")
-	generateWikiCmd.Flags().BoolVar(&wikiPublish, "publish", false, "生成後にGitHub Wikiに自動投稿")
+	generateWikiCmd.Flags().BoolVar(&wikiPublish, "publish", false, "生成後にGitHub Pagesに自動デプロイ")
 	generateWikiCmd.Flags().IntVar(&wikiBatch, "batch", 0, "バッチ処理するIssue数 (0=全て)")
 
 	// Publish command flags
@@ -240,7 +247,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 
 	// Auto-publish if requested
 	if wikiPublish {
-		log.Printf("🚀 Publishing to GitHub Wiki...")
+		log.Printf("🚀 Deploying to GitHub Pages...")
 		publisherConfig := &wiki.PublisherConfig{
 			Owner:                    owner,
 			Repository:               repo,
@@ -271,9 +278,9 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 		}
 
 		if err := publisher.PublishPages(ctx, pages); err != nil {
-			return fmt.Errorf("failed to publish wiki: %w", err)
+			return fmt.Errorf("failed to deploy to GitHub Pages: %w", err)
 		}
-		log.Printf("✅ Successfully published to GitHub Wiki!")
+		log.Printf("✅ Successfully deployed to GitHub Pages!")
 	}
 
 	return nil
@@ -283,7 +290,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	repoPath := args[0]
 
-	log.Printf("🚀 Publishing Wiki to %s", repoPath)
+	log.Printf("🚀 Deploying to GitHub Pages: %s", repoPath)
 
 	// Parse owner/repo
 	owner, repo, err := parseRepoPath(repoPath)
@@ -365,12 +372,12 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize publisher: %w", err)
 	}
 
-	log.Printf("📤 Publishing %d wiki pages...", len(pages))
+	log.Printf("📤 Deploying %d pages to GitHub Pages...", len(pages))
 	if err := publisher.PublishPages(ctx, pages); err != nil {
-		return fmt.Errorf("failed to publish wiki pages: %w", err)
+		return fmt.Errorf("failed to deploy pages to GitHub Pages: %w", err)
 	}
 
-	log.Printf("✅ Wiki publishing completed!")
+	log.Printf("✅ GitHub Pages deployment completed!")
 	return nil
 }
 
@@ -423,24 +430,24 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize publisher: %w", err)
 	}
 
-	// Clone to access existing Wiki content
+	// Clone to access existing GitHub Pages content
 	if err := publisher.Clone(ctx); err != nil {
-		return fmt.Errorf("failed to clone wiki repository: %w", err)
+		return fmt.Errorf("failed to clone GitHub Pages repository: %w", err)
 	}
 
 	// List pages
-	log.Printf("📋 Listing Wiki pages for %s/%s", owner, repo)
+	log.Printf("📋 Listing GitHub Pages for %s/%s", owner, repo)
 	pages, err := publisher.ListPages(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list wiki pages: %w", err)
+		return fmt.Errorf("failed to list GitHub Pages: %w", err)
 	}
 
 	if len(pages) == 0 {
-		log.Printf("📄 No Wiki pages found")
+		log.Printf("📄 No GitHub Pages found")
 		return nil
 	}
 
-	log.Printf("📄 Found %d Wiki pages:", len(pages))
+	log.Printf("📄 Found %d GitHub Pages:", len(pages))
 	for _, page := range pages {
 		log.Printf("  - %s (%s)", page.Title, page.Filename)
 	}

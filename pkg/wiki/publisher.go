@@ -127,12 +127,12 @@ func (c *PublisherConfig) Validate() error {
 	return nil
 }
 
-// GetRepositoryURL returns the full repository URL
+// GetRepositoryURL returns the full repository URL for GitHub Pages
 func (c *PublisherConfig) GetRepositoryURL() string {
-	return "https://github.com/" + c.Owner + "/" + c.Repository + ".wiki.git"
+	return "https://github.com/" + c.Owner + "/" + c.Repository + ".git"
 }
 
-// GetAuthenticatedURL returns the repository URL with authentication
+// GetAuthenticatedURL returns the repository URL with authentication for GitHub Pages
 func (c *PublisherConfig) GetAuthenticatedURL() string {
-	return "https://" + c.Token + "@github.com/" + c.Owner + "/" + c.Repository + ".wiki.git"
+	return "https://x-access-token:" + c.Token + "@github.com/" + c.Owner + "/" + c.Repository + ".git"
 }
