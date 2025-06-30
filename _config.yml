@@ -1,0 +1,102 @@
+# Beaver Knowledge Base - Custom Jekyll Configuration
+title: "Beaver ナレッジベース"
+description: "AI駆動型ナレッジベース - GitHub Issues から自動生成"
+baseurl: "/beaver"
+url: "https://nyasuto.github.io"
+
+# Language and locale settings
+lang: ja
+locale: ja_JP
+
+# Custom Beaver theme
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Beaver brand settings
+beaver:
+  brand_colors:
+    primary: "#8B4513"      # Saddle Brown - representing beaver fur
+    secondary: "#4682B4"    # Steel Blue - representing water
+    accent: "#228B22"       # Forest Green - representing nature
+    text: "#2F4F4F"         # Dark Slate Gray
+    background: "#FAFAFA"   # Off White
+    
+# Japanese typography settings
+typography:
+  font_family: '"Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif'
+  heading_font: '"Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif'
+  code_font: '"SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace'
+  
+# Site navigation
+navigation:
+  - title: "ホーム"
+    url: "/"
+  - title: "開発戦略"
+    url: "/beaver-Development-Strategy"
+  - title: "課題サマリー"  
+    url: "/beaver-Issues-Summary"
+  - title: "学習パス"
+    url: "/beaver-Learning-Path"
+  - title: "トラブルシューティング"
+    url: "/beaver-Troubleshooting-Guide"
+
+# Performance optimizations
+sass:
+  style: compressed
+  
+exclude:
+  - bin/
+  - cmd/
+  - internal/
+  - pkg/
+  - services/
+  - tests/
+  - scripts/
+  - config/
+  - templates/
+  - docs/
+  - "*.go"
+  - "*.yml"
+  - "*.md"
+  - Makefile
+  - go.mod
+  - go.sum
+
+# Include only necessary files
+include:
+  - beaver-*.md
+  - CLAUDE.md
+  - code-coverage-analysis-report.md
+
+# Collections for better organization
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+    
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      lang: "ja"
+  - scope:
+      path: ""
+      type: "pages" 
+    values:
+      layout: "page"
+      lang: "ja"
+      
+# SEO and social media
+author: "nyasuto"
+twitter:
+  username: "nyasuto"
+  
+social:
+  type: "Person"
+  links:
+    - "https://github.com/nyasuto"

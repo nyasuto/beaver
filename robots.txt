@@ -1,0 +1,12 @@
+---
+layout: null
+---
+
+User-agent: *
+Allow: /
+
+# Beaver Knowledge Base sitemap
+Sitemap: {{ site.url }}{{ site.baseurl }}/sitemap.xml
+
+# Optimized for Japanese content crawling
+Crawl-delay: 1

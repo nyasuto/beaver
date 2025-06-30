@@ -1,0 +1,49 @@
+<!-- Beaver Analytics and Performance Monitoring -->
+{% if jekyll.environment == 'production' %}
+
+<!-- Performance monitoring -->
+<script>
+  // Page load performance tracking
+  window.addEventListener('load', function() {
+    const perfData = performance.timing;
+    const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+    
+    // Log performance data for Japanese pages
+    if (document.documentElement.lang === 'ja' && loadTime > 0) {
+      console.log('🦫 Beaver Page Load Time:', loadTime + 'ms');
+      
+      // Track Japanese font loading
+      if ('fonts' in document) {
+        document.fonts.ready.then(function() {
+          console.log('🎌 Japanese fonts loaded successfully');
+        });
+      }
+    }
+  });
+  
+  // Accessibility helper for keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      document.body.classList.add('keyboard-navigation');
+    }
+  });
+  
+  document.addEventListener('mousedown', function() {
+    document.body.classList.remove('keyboard-navigation');
+  });
+</script>
+
+<!-- Service Worker for caching Japanese content -->
+<script>
+  if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    navigator.serviceWorker.register('/beaver/sw.js')
+      .then(function(registration) {
+        console.log('🦫 Beaver Service Worker registered');
+      })
+      .catch(function(error) {
+        console.log('Service Worker registration failed');
+      });
+  }
+</script>
+
+{% endif %}

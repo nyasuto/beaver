@@ -1,0 +1,54 @@
+---
+layout: default
+---
+
+<article class="page" itemscope itemtype="http://schema.org/CreativeWork">
+  
+  <header class="page-header">
+    <h1 class="page-title" itemprop="headline">{{ page.title | escape }}</h1>
+    
+    {% if page.description %}
+    <p class="page-description" itemprop="description">{{ page.description }}</p>
+    {% endif %}
+    
+    {% if page.date %}
+    <p class="page-meta">
+      <time datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
+        🗓️ {{ page.date | date: "%Y年%m月%d日" }}
+      </time>
+      {% if page.author %}
+      <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        👤 <span itemprop="name">{{ page.author }}</span>
+      </span>
+      {% endif %}
+    </p>
+    {% endif %}
+  </header>
+
+  <div class="page-content" itemprop="text">
+    {{ content }}
+  </div>
+
+  {% if page.tags or page.categories %}
+  <footer class="page-footer">
+    {% if page.categories %}
+    <div class="page-categories">
+      <strong>📂 カテゴリ:</strong>
+      {% for category in page.categories %}
+        <span class="category">{{ category }}</span>{% unless forloop.last %}, {% endunless %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if page.tags %}
+    <div class="page-tags">
+      <strong>🏷️ タグ:</strong>
+      {% for tag in page.tags %}
+        <span class="tag">{{ tag }}</span>{% unless forloop.last %}, {% endunless %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </footer>
+  {% endif %}
+
+</article>
