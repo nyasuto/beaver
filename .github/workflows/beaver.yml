@@ -246,7 +246,42 @@ jobs:
             echo "📝 Recent Log Entries:"
             tail -n 10 .beaver/ci-beaver.log | sed 's/^/  /'
           fi
+          
+          # Check generated site structure
           ls -la _site || echo "No _site directory found - check if generation was successful"
+          
+          # Show generated content for debugging
+          echo ""
+          echo "📄 Generated Site Content Analysis:"
+          echo "==================================="
+          if [ -d "_site" ]; then
+            echo "📁 Site directory structure:"
+            find _site -type f -name "*.html" -o -name "*.md" | head -10
+            
+            echo ""
+            echo "📝 Index page content (first 50 lines):"
+            if [ -f "_site/index.html" ]; then
+              echo "--- _site/index.html ---"
+              head -50 _site/index.html
+            elif [ -f "_site/index.md" ]; then
+              echo "--- _site/index.md ---"
+              head -50 _site/index.md
+            else
+              echo "❌ No index file found!"
+              ls -la _site/
+            fi
+            
+            echo ""
+            echo "🔍 Japanese content check:"
+            if grep -q "日本語\|ナレッジベース\|ホーム" _site/index.* 2>/dev/null; then
+              echo "✅ Japanese content detected in index page"
+              grep -n "日本語\|ナレッジベース\|ホーム" _site/index.* | head -5
+            else
+              echo "❌ No Japanese content found in index page"
+            fi
+          else
+            echo "❌ _site directory not found"
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
