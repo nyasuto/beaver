@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -438,12 +439,7 @@ func (fm *WikiFileManager) WriteAssetFile(filename string, data []byte) (*FileIn
 // isImageFile checks if a filename represents an image file
 func (fm *WikiFileManager) isImageFile(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
-	for _, supportedExt := range fm.config.SupportedImageExts {
-		if ext == supportedExt {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(fm.config.SupportedImageExts, ext)
 }
 
 // ListFiles returns information about all managed files
