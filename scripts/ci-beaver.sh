@@ -230,10 +230,21 @@ check_prerequisites() {
     fi
     
     # Check GitHub token
+    log_info "Checking GitHub token availability..."
     if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-        log_error "GITHUB_TOKEN environment variable is not set"
+        log_error "❌ GITHUB_TOKEN environment variable is not set"
         log_info "Please set GITHUB_TOKEN with a valid GitHub personal access token"
+        log_debug "Available environment variables starting with 'GITHUB':"
+        env | grep '^GITHUB' | while read -r var; do
+            local var_name="${var%%=*}"
+            log_debug "  $var_name=[REDACTED]"
+        done
         return 1
+    else
+        local token_length=${#GITHUB_TOKEN}
+        log_success "✅ GITHUB_TOKEN found (length: $token_length characters)"
+        local token_prefix="${GITHUB_TOKEN:0:7}"
+        log_debug "Token prefix: ${token_prefix}..."
     fi
     
     # Check repository
@@ -383,36 +394,79 @@ execute_github_pages() {
     # Create Jekyll site structure for GitHub Pages
     log_info "Setting up Jekyll site structure for GitHub Pages..."
     
+    # Log current working directory and files
+    log_info "Current working directory: $(pwd)"
+    log_info "Available markdown files before _site creation:"
+    ls -la *.md 2>/dev/null | while read -r line; do
+        log_debug "  $line"
+    done
+    
     # Create _site directory
+    log_info "Creating _site directory..."
     mkdir -p "_site"
+    if [[ -d "_site" ]]; then
+        log_success "_site directory created successfully"
+        log_debug "_site directory permissions: $(ls -ld _site)"
+    else
+        log_error "Failed to create _site directory"
+        return 1
+    fi
     
     # Copy generated markdown files to _site
     local files_copied=0
+    log_info "Copying markdown files to _site..."
     for md_file in *.md; do
         if [[ -f "$md_file" && "$md_file" != "README.md" ]]; then
-            cp "$md_file" "_site/"
-            ((files_copied++))
-            log_debug "Copied $md_file to _site/"
+            log_debug "Processing file: $md_file (size: $(stat -f%z "$md_file" 2>/dev/null || echo 'unknown'))"
+            if cp "$md_file" "_site/"; then
+                ((files_copied++))
+                log_debug "✅ Successfully copied $md_file to _site/"
+                # Verify the copy
+                if [[ -f "_site/$md_file" ]]; then
+                    local original_size=$(stat -f%z "$md_file" 2>/dev/null || echo '0')
+                    local copied_size=$(stat -f%z "_site/$md_file" 2>/dev/null || echo '0')
+                    log_debug "  Original: ${original_size} bytes, Copied: ${copied_size} bytes"
+                else
+                    log_error "❌ File $md_file was not found in _site/ after copy"
+                fi
+            else
+                log_error "❌ Failed to copy $md_file to _site/"
+            fi
+        else
+            if [[ -f "$md_file" ]]; then
+                log_debug "Skipping $md_file (README.md or other excluded file)"
+            fi
         fi
     done
     
+    log_info "Files copied to _site: $files_copied"
+    
     # Create basic Jekyll structure
+    log_info "Creating Jekyll configuration..."
     local jekyll_theme="${THEME:-minima}"
     local search_enabled="${ENABLE_SEARCH:-false}"
+    
+    log_debug "Jekyll theme parameter: '$jekyll_theme'"
+    log_debug "Search enabled: '$search_enabled'"
     
     # Set appropriate remote theme based on theme parameter
     local remote_theme
     case "$jekyll_theme" in
         "minima")
             remote_theme="minima"
+            log_debug "Using standard minima theme"
             ;;
         "minimal")
             remote_theme="pages-themes/minimal@v0.2.0"
+            log_debug "Using GitHub Pages minimal theme"
             ;;
         *)
             remote_theme="$jekyll_theme"
+            log_debug "Using custom theme: $jekyll_theme"
             ;;
     esac
+    
+    log_info "Selected remote theme: '$remote_theme'"
     
     cat > "_site/_config.yml" << EOF
 title: "Beaver Documentation"
@@ -457,8 +511,23 @@ defaults:
       layout: "default"
 EOF
     
-    # Create index.html if no index.md exists
+    # Verify _config.yml creation
+    if [[ -f "_site/_config.yml" ]]; then
+        local config_size=$(stat -f%z "_site/_config.yml" 2>/dev/null || echo '0')
+        log_success "✅ _config.yml created successfully (${config_size} bytes)"
+        log_debug "_config.yml content preview:"
+        head -10 "_site/_config.yml" | while read -r line; do
+            log_debug "  $line"
+        done
+    else
+        log_error "❌ Failed to create _config.yml"
+        return 1
+    fi
+    
+    # Create index.md if it doesn't exist
+    log_info "Checking for index.md..."
     if [[ ! -f "_site/index.md" ]]; then
+        log_info "Creating index.md..."
         cat > "_site/index.md" << EOF
 ---
 layout: default
@@ -507,10 +576,58 @@ EOF
 
 *🤖 This documentation is automatically generated and maintained by Beaver*
 EOF
+        log_success "✅ index.md created successfully"
+    else
+        log_info "index.md already exists, skipping creation"
     fi
     
-    log_success "Jekyll site structure created with $files_copied content files"
-    log_info "GitHub Pages content ready in _site/ directory"
+    # Verify index.md creation/existence
+    if [[ -f "_site/index.md" ]]; then
+        local index_size=$(stat -f%z "_site/index.md" 2>/dev/null || echo '0')
+        log_debug "index.md size: ${index_size} bytes"
+        log_debug "index.md front matter check:"
+        head -5 "_site/index.md" | while read -r line; do
+            log_debug "  $line"
+        done
+    else
+        log_error "❌ index.md not found after creation attempt"
+        return 1
+    fi
+    
+    # Final verification of Jekyll site structure
+    log_info "=== Final Jekyll Site Verification ==="
+    log_info "_site directory contents:"
+    ls -la "_site/" | while read -r line; do
+        log_debug "  $line"
+    done
+    
+    # Check essential files
+    local essential_files=("_config.yml" "index.md")
+    local missing_files=0
+    for file in "${essential_files[@]}"; do
+        if [[ -f "_site/$file" ]]; then
+            local file_size=$(stat -f%z "_site/$file" 2>/dev/null || echo '0')
+            log_success "✅ Essential file: $file (${file_size} bytes)"
+        else
+            log_error "❌ Missing essential file: $file"
+            ((missing_files++))
+        fi
+    done
+    
+    # Count total files
+    local total_files=$(find "_site" -name "*.md" -o -name "*.yml" | wc -l | tr -d ' ')
+    log_info "Total files in _site: $total_files"
+    log_info "Content files copied: $files_copied"
+    log_info "Missing essential files: $missing_files"
+    
+    if [[ $missing_files -gt 0 ]]; then
+        log_error "Jekyll site structure validation failed"
+        return 1
+    fi
+    
+    log_success "✅ Jekyll site structure created with $files_copied content files"
+    log_info "🚀 GitHub Pages content ready in _site/ directory"
+    log_info "=== End Jekyll Site Verification ==="
     
     return 0
 }
