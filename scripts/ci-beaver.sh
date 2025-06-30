@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+# Force UTF-8 encoding for all operations
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+
 # Script configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
