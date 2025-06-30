@@ -1,0 +1,403 @@
+name: 'Deploy Wiki'
+description: 'Deploy documentation to GitHub Wiki and Pages'
+author: 'Beaver Team'
+
+inputs:
+  github-token:
+    description: 'GitHub token for authentication'
+    required: true
+  repository:
+    description: 'Repository in owner/repo format'
+    required: true
+  deployment-target:
+    description: 'Deployment target: wiki, pages, both'
+    required: false
+    default: 'both'
+  content-source:
+    description: 'Source directory for content'
+    required: false
+    default: '.'
+  max-items:
+    description: 'Maximum items to process'
+    required: false
+    default: '100'
+  update-type:
+    description: 'Update type: incremental, full'
+    required: false
+    default: 'incremental'
+  theme:
+    description: 'Jekyll theme for GitHub Pages'
+    required: false
+    default: 'minima'
+  enable-search:
+    description: 'Enable search functionality'
+    required: false
+    default: 'false'
+  custom-domain:
+    description: 'Custom domain for GitHub Pages'
+    required: false
+    default: ''
+
+outputs:
+  wiki-url:
+    description: 'URL of the deployed GitHub Wiki'
+    value: ${{ steps.deploy-results.outputs.wiki-url }}
+  pages-url:
+    description: 'URL of the deployed GitHub Pages'
+    value: ${{ steps.deploy-results.outputs.pages-url }}
+  deployment-status:
+    description: 'Overall deployment status'
+    value: ${{ steps.deploy-results.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🔍 Validate deployment inputs
+      shell: bash
+      run: |
+        echo "🔍 Deploy Wiki Action"
+        echo "Repository: ${{ inputs.repository }}"
+        echo "Target: ${{ inputs.deployment-target }}"
+        echo "Content source: ${{ inputs.content-source }}"
+        echo "Max items: ${{ inputs.max-items }}"
+        echo "Update type: ${{ inputs.update-type }}"
+        echo "Theme: ${{ inputs.theme }}"
+        echo "Enable search: ${{ inputs.enable-search }}"
+        echo "Custom domain: ${{ inputs.custom-domain }}"
+        echo ""
+        
+        # Validate repository format
+        if [[ ! "${{ inputs.repository }}" =~ ^[^/]+/[^/]+$ ]]; then
+          echo "❌ Invalid repository format: ${{ inputs.repository }}"
+          echo "Repository should be in 'owner/repo' format"
+          exit 1
+        fi
+        
+        # Validate deployment target
+        case "${{ inputs.deployment-target }}" in
+          wiki|pages|both)
+            echo "✅ Valid deployment target: ${{ inputs.deployment-target }}"
+            ;;
+          *)
+            echo "❌ Invalid deployment target: ${{ inputs.deployment-target }}"
+            echo "Must be one of: wiki, pages, both"
+            exit 1
+            ;;
+        esac
+
+    - name: ⚙️ Setup deployment environment
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        echo "⚙️ Setting up deployment environment..."
+        
+        # Configure git for deployments
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        
+        # Verify GitHub token
+        if [[ -z "$GITHUB_TOKEN" ]]; then
+          echo "❌ GitHub token not provided"
+          exit 1
+        fi
+        
+        # Test GitHub API connectivity
+        if curl -s -H "Authorization: token $GITHUB_TOKEN" \
+               "https://api.github.com/repos/${{ inputs.repository }}" >/dev/null; then
+          echo "✅ GitHub API connectivity verified"
+        else
+          echo "❌ Failed to connect to GitHub API"
+          exit 1
+        fi
+
+    - name: 🦫 Generate content with Beaver
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        echo "🦫 Generating content with Beaver..."
+        
+        # Use beaver-automation.sh if available
+        if [[ -f "scripts/beaver-automation.sh" ]]; then
+          echo "Using beaver-automation.sh for content generation"
+          chmod +x scripts/beaver-automation.sh
+          
+          # Generate content based on deployment target
+          case "${{ inputs.deployment-target }}" in
+            wiki)
+              ./scripts/beaver-automation.sh github-wiki \
+                --repository "${{ inputs.repository }}" \
+                --max-items "${{ inputs.max-items }}" \
+                --update-type "${{ inputs.update-type }}" \
+                --verbose
+              ;;
+            pages)
+              ./scripts/beaver-automation.sh github-pages \
+                --repository "${{ inputs.repository }}" \
+                --max-items "${{ inputs.max-items }}" \
+                --theme "${{ inputs.theme }}" \
+                $([[ "${{ inputs.enable-search }}" == "true" ]] && echo "--enable-search") \
+                $([[ -n "${{ inputs.custom-domain }}" ]] && echo "--custom-domain ${{ inputs.custom-domain }}") \
+                --verbose
+              ;;
+            both)
+              # Generate both targets
+              ./scripts/beaver-automation.sh github-pages \
+                --repository "${{ inputs.repository }}" \
+                --max-items "${{ inputs.max-items }}" \
+                --theme "${{ inputs.theme }}" \
+                $([[ "${{ inputs.enable-search }}" == "true" ]] && echo "--enable-search") \
+                $([[ -n "${{ inputs.custom-domain }}" ]] && echo "--custom-domain ${{ inputs.custom-domain }}") \
+                --verbose
+              
+              ./scripts/beaver-automation.sh github-wiki \
+                --repository "${{ inputs.repository }}" \
+                --max-items "${{ inputs.max-items }}" \
+                --update-type "${{ inputs.update-type }}" \
+                --verbose
+              ;;
+          esac
+        elif [[ -f "scripts/ci-beaver.sh" ]]; then
+          echo "Using ci-beaver.sh for content generation"
+          chmod +x scripts/ci-beaver.sh
+          
+          # Setup configuration
+          ./scripts/ci-beaver.sh test-setup \
+            --repository "${{ inputs.repository }}" \
+            --verbose
+          
+          # Generate content
+          case "${{ inputs.deployment-target }}" in
+            wiki)
+              if [[ "${{ inputs.update-type }}" == "full" ]]; then
+                ./scripts/ci-beaver.sh full-rebuild \
+                  --repository "${{ inputs.repository }}" \
+                  --max-items "${{ inputs.max-items }}" \
+                  --verbose
+              else
+                ./scripts/ci-beaver.sh incremental \
+                  --repository "${{ inputs.repository }}" \
+                  --max-items "${{ inputs.max-items }}" \
+                  --verbose
+              fi
+              ;;
+            pages|both)
+              ./scripts/ci-beaver.sh github-pages \
+                --repository "${{ inputs.repository }}" \
+                --max-items "${{ inputs.max-items }}" \
+                --theme "${{ inputs.theme }}" \
+                $([[ "${{ inputs.enable-search }}" == "true" ]] && echo "--enable-search") \
+                --verbose
+              ;;
+          esac
+        elif [[ -f "bin/beaver" ]]; then
+          echo "Using direct Beaver binary"
+          chmod +x bin/beaver
+          
+          # Generate content with Beaver
+          case "${{ inputs.deployment-target }}" in
+            wiki)
+              if [[ "${{ inputs.update-type }}" == "full" ]]; then
+                ./bin/beaver build --force-rebuild --max-items "${{ inputs.max-items }}"
+              else
+                ./bin/beaver build --incremental --max-items "${{ inputs.max-items }}"
+              fi
+              ;;
+            pages)
+              ./bin/beaver github-pages \
+                --max-items "${{ inputs.max-items }}" \
+                --theme "${{ inputs.theme }}" \
+                $([[ "${{ inputs.enable-search }}" == "true" ]] && echo "--enable-search")
+              ;;
+            both)
+              # Generate both
+              if [[ "${{ inputs.update-type }}" == "full" ]]; then
+                ./bin/beaver build --force-rebuild --max-items "${{ inputs.max-items }}"
+              else
+                ./bin/beaver build --incremental --max-items "${{ inputs.max-items }}"
+              fi
+              
+              ./bin/beaver github-pages \
+                --max-items "${{ inputs.max-items }}" \
+                --theme "${{ inputs.theme }}" \
+                $([[ "${{ inputs.enable-search }}" == "true" ]] && echo "--enable-search")
+              ;;
+          esac
+        else
+          echo "❌ No Beaver binary or automation scripts found"
+          echo "Please ensure Beaver is built or scripts are available"
+          exit 1
+        fi
+
+    - name: 📖 Deploy to GitHub Wiki
+      if: inputs.deployment-target == 'wiki' || inputs.deployment-target == 'both'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        echo "📖 Deploying to GitHub Wiki..."
+        
+        # Use deployment script if available
+        if [[ -f "scripts/deployment.sh" ]]; then
+          chmod +x scripts/deployment.sh
+          
+          ./scripts/deployment.sh github-wiki \
+            --repository "${{ inputs.repository }}" \
+            --content-dir "${{ inputs.content-source }}" \
+            --verbose
+        else
+          # Manual wiki deployment
+          wiki_url="https://x-access-token:$GITHUB_TOKEN@github.com/${{ inputs.repository }}.wiki.git"
+          
+          # Clone or create wiki
+          if git clone "$wiki_url" wiki-repo 2>/dev/null; then
+            echo "✅ Wiki repository cloned"
+          else
+            echo "📝 Creating new wiki repository"
+            mkdir -p wiki-repo
+            cd wiki-repo
+            git init
+            git remote add origin "$wiki_url"
+            
+            # Create initial home page
+            cat > Home.md << 'EOF'
+        # Beaver Documentation Wiki
+        
+        This wiki is automatically maintained by Beaver.
+        
+        ## Navigation
+        
+        - [Issues Summary](Issues-Summary)
+        - [Statistics](Statistics)
+        - [Learning Path](Learning-Path)
+        EOF
+            
+            git add .
+            git commit -m "docs: Initialize wiki"
+            git push -u origin master || git push -u origin main
+            cd ..
+          fi
+          
+          # Update wiki content
+          cd wiki-repo
+          
+          # Copy generated markdown files
+          find .. -name "*.md" -maxdepth 1 -not -name "README.md" | while read -r file; do
+            if [[ -f "$file" ]]; then
+              basename_file=$(basename "$file")
+              cp "$file" "$basename_file"
+              echo "📝 Copied $basename_file"
+            fi
+          done
+          
+          # Commit and push changes
+          git add .
+          if ! git diff --staged --quiet; then
+            git commit -m "docs: Update wiki documentation [skip-wiki]"
+            git push
+            echo "✅ Wiki updated successfully"
+          else
+            echo "ℹ️ No changes to commit to wiki"
+          fi
+          
+          cd ..
+        fi
+
+    - name: 📄 Deploy to GitHub Pages
+      if: inputs.deployment-target == 'pages' || inputs.deployment-target == 'both'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        echo "📄 Deploying to GitHub Pages..."
+        
+        # Use deployment script if available
+        if [[ -f "scripts/deployment.sh" ]]; then
+          chmod +x scripts/deployment.sh
+          
+          # Setup GitHub Pages
+          ./scripts/deployment.sh setup-pages \
+            --repository "${{ inputs.repository }}" \
+            --theme "${{ inputs.theme }}" \
+            $([[ "${{ inputs.enable-search }}" == "true" ]] && echo "--enable-search") \
+            $([[ -n "${{ inputs.custom-domain }}" ]] && echo "--custom-domain ${{ inputs.custom-domain }}") \
+            --verbose
+          
+          # Deploy to GitHub Pages
+          ./scripts/deployment.sh github-pages \
+            --repository "${{ inputs.repository }}" \
+            --verbose
+        else
+          echo "⚠️ Deployment script not found, using GitHub Pages action"
+          
+          # Check if _site directory exists
+          if [[ -d "_site" ]]; then
+            echo "✅ Found _site directory for deployment"
+          else
+            echo "❌ _site directory not found"
+            echo "GitHub Pages content was not generated properly"
+            exit 1
+          fi
+        fi
+
+    - name: 📊 Deployment results
+      id: deploy-results
+      if: always()
+      shell: bash
+      run: |
+        echo "📊 Deployment Results"
+        echo "==================="
+        
+        # Determine URLs
+        repo_owner=$(echo "${{ inputs.repository }}" | cut -d'/' -f1)
+        repo_name=$(echo "${{ inputs.repository }}" | cut -d'/' -f2)
+        
+        wiki_url="https://github.com/${{ inputs.repository }}/wiki"
+        
+        if [[ -n "${{ inputs.custom-domain }}" ]]; then
+          pages_url="https://${{ inputs.custom-domain }}"
+        else
+          pages_url="https://${repo_owner}.github.io/${repo_name}"
+        fi
+        
+        echo "wiki-url=$wiki_url" >> $GITHUB_OUTPUT
+        echo "pages-url=$pages_url" >> $GITHUB_OUTPUT
+        
+        # Determine overall status
+        if [[ "${{ job.status }}" == "success" ]]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "✅ Deployment completed successfully"
+        else
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "❌ Deployment failed"
+        fi
+        
+        echo ""
+        echo "📍 Deployment URLs:"
+        
+        if [[ "${{ inputs.deployment-target }}" == "wiki" || "${{ inputs.deployment-target }}" == "both" ]]; then
+          echo "📖 Wiki: $wiki_url"
+        fi
+        
+        if [[ "${{ inputs.deployment-target }}" == "pages" || "${{ inputs.deployment-target }}" == "both" ]]; then
+          echo "📄 Pages: $pages_url"
+        fi
+
+    - name: 🧹 Cleanup
+      if: always()
+      shell: bash
+      run: |
+        echo "🧹 Cleaning up deployment artifacts..."
+        
+        # Remove temporary directories
+        rm -rf wiki-repo
+        
+        # Clean up any temporary files
+        find . -name "*.tmp" -delete 2>/dev/null || true
+        
+        echo "✅ Cleanup completed"
+
+branding:
+  icon: 'upload-cloud'
+  color: 'purple'

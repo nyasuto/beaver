@@ -1,0 +1,358 @@
+# Deployment Configuration for Beaver project
+# Centralized configuration for deployment targets and strategies
+
+# General deployment settings
+deployment:
+  strategy: "blue_green"  # blue_green, rolling, recreate
+  timeout: "15m"
+  rollback_on_failure: true
+  
+  environments:
+    - development
+    - staging
+    - production
+
+# GitHub Pages deployment
+github_pages:
+  enabled: true
+  branch: "gh-pages"
+  build_dir: "_site"
+  custom_domain: ""
+  
+  jekyll:
+    theme: "minima"
+    plugins:
+      - jekyll-feed
+      - jekyll-sitemap
+      - jekyll-seo-tag
+    
+    config:
+      title: "Beaver Documentation"
+      description: "AI agent knowledge dam construction tool"
+      baseurl: ""
+      markdown: "kramdown"
+      highlighter: "rouge"
+      
+      kramdown:
+        input: "GFM"
+        syntax_highlighter: "rouge"
+    
+    collections:
+      docs:
+        output: true
+        permalink: "/:collection/:name/"
+    
+    navigation:
+      - name: "Home"
+        url: "/"
+      - name: "Documentation"
+        url: "/docs/"
+      - name: "Issues"
+        url: "/issues/"
+      - name: "Statistics"
+        url: "/statistics/"
+  
+  search:
+    enabled: false
+    provider: "lunr"  # lunr, algolia
+    
+  analytics:
+    enabled: false
+    google_analytics_id: ""
+    
+  optimization:
+    minify_html: true
+    compress_images: true
+    generate_sitemap: true
+
+# GitHub Wiki deployment
+github_wiki:
+  enabled: true
+  branch: "master"  # or "main"
+  clone_url_template: "https://github.com/{{.Repository}}.wiki.git"
+  
+  content:
+    source_dir: "wiki-content"
+    exclude_patterns:
+      - "README.md"
+      - ".*"
+    
+    file_naming:
+      convert_spaces: true
+      replacement_char: "-"
+      preserve_case: false
+    
+    templates:
+      home_page: "Home.md"
+      sidebar: "_Sidebar.md"
+    
+  initialization:
+    auto_create: true
+    initial_content:
+      home_page: |
+        # {{.ProjectName}} Documentation Wiki
+        
+        Welcome to the {{.ProjectName}} documentation wiki.
+        
+        This wiki is automatically maintained by Beaver.
+        
+        ## Navigation
+        
+        - [Issues Summary](Issues-Summary)
+        - [Statistics](Statistics)
+        - [Learning Path](Learning-Path)
+  
+  sync:
+    bidirectional: false
+    conflict_resolution: "overwrite"  # overwrite, merge, skip
+
+# Container Registry deployment
+container_registry:
+  enabled: false
+  
+  docker_hub:
+    enabled: false
+    username_env: "DOCKER_USERNAME"
+    password_env: "DOCKER_PASSWORD"
+    repository: "{{.Repository}}"
+    
+  github_registry:
+    enabled: false
+    token_env: "GITHUB_TOKEN"
+    registry: "ghcr.io"
+    repository: "{{.Repository}}"
+  
+  tags:
+    - "{{.Version}}"
+    - "latest"
+  
+  platforms:
+    - "linux/amd64"
+    - "linux/arm64"
+
+# Release deployment
+releases:
+  github:
+    enabled: true
+    create_release: true
+    upload_artifacts: true
+    
+    release_notes:
+      auto_generate: true
+      template_file: "release-notes.tmpl"
+      include_changelog: true
+      
+    artifacts:
+      include_patterns:
+        - "{{.OutputDir}}/{{.BinaryName}}-*"
+        - "*.sha256"
+        - "checksums.txt"
+      
+      exclude_patterns:
+        - "*.tmp"
+        - "*.log"
+    
+    options:
+      draft: false
+      prerelease: false
+      generate_release_notes: true
+
+# Package managers
+package_managers:
+  homebrew:
+    enabled: false
+    tap_repository: ""
+    formula_template: ""
+    
+  apt:
+    enabled: false
+    repository: ""
+    signing_key: ""
+    
+  yum:
+    enabled: false
+    repository: ""
+    signing_key: ""
+  
+  chocolatey:
+    enabled: false
+    package_id: ""
+    api_key_env: "CHOCOLATEY_API_KEY"
+
+# CDN and static hosting
+cdn:
+  cloudflare:
+    enabled: false
+    zone_id_env: "CLOUDFLARE_ZONE_ID"
+    api_token_env: "CLOUDFLARE_API_TOKEN"
+    purge_cache: true
+    
+  aws_cloudfront:
+    enabled: false
+    distribution_id_env: "AWS_CLOUDFRONT_DISTRIBUTION_ID"
+    invalidation_paths:
+      - "/*"
+
+# Notification settings for deployments
+notifications:
+  slack:
+    enabled: false
+    webhook_url_env: "SLACK_WEBHOOK_URL"
+    
+    messages:
+      deployment_start: "🚀 Starting deployment of {{.ProjectName}} {{.Version}}"
+      deployment_success: "✅ Successfully deployed {{.ProjectName}} {{.Version}}"
+      deployment_failure: "❌ Deployment of {{.ProjectName}} {{.Version}} failed"
+      rollback: "🔄 Rolling back {{.ProjectName}} deployment"
+  
+  email:
+    enabled: false
+    smtp_server: ""
+    from_address: ""
+    to_addresses: []
+    
+  teams:
+    enabled: false
+    webhook_url_env: "TEAMS_WEBHOOK_URL"
+
+# Security settings
+security:
+  artifact_signing:
+    enabled: false
+    gpg_key_id_env: "GPG_KEY_ID"
+    gpg_passphrase_env: "GPG_PASSPHRASE"
+    
+  vulnerability_scanning:
+    enabled: false
+    tools:
+      - "trivy"
+      - "snyk"
+    
+  secrets_scanning:
+    enabled: false
+    tools:
+      - "truffleHog"
+      - "gitleaks"
+
+# Environment-specific configurations
+environments:
+  development:
+    github_pages:
+      custom_domain: ""
+      analytics:
+        enabled: false
+    
+    github_wiki:
+      sync:
+        bidirectional: true
+    
+    notifications:
+      slack:
+        enabled: false
+  
+  staging:
+    github_pages:
+      custom_domain: "staging.beaver.example.com"
+      analytics:
+        enabled: false
+    
+    security:
+      vulnerability_scanning:
+        enabled: true
+  
+  production:
+    github_pages:
+      custom_domain: "docs.beaver.example.com"
+      analytics:
+        enabled: true
+    
+    security:
+      artifact_signing:
+        enabled: true
+      vulnerability_scanning:
+        enabled: true
+      secrets_scanning:
+        enabled: true
+    
+    notifications:
+      slack:
+        enabled: true
+      email:
+        enabled: true
+
+# Rollback configuration
+rollback:
+  automatic:
+    enabled: true
+    triggers:
+      - "deployment_failure"
+      - "health_check_failure"
+    
+    timeout: "5m"
+    max_attempts: 3
+  
+  manual:
+    enabled: true
+    preserve_artifacts: true
+    notification_required: true
+
+# Health checks
+health_checks:
+  pre_deployment:
+    - name: "Build artifacts exist"
+      command: "test -d {{.OutputDir}}"
+      required: true
+    
+    - name: "Binary is executable"
+      command: "{{.BinaryPath}} --version"
+      required: true
+  
+  post_deployment:
+    - name: "GitHub Pages accessible"
+      url: "https://{{.GitHubPagesURL}}"
+      expected_status: 200
+      timeout: "30s"
+    
+    - name: "Wiki accessible"
+      url: "https://github.com/{{.Repository}}/wiki"
+      expected_status: 200
+      timeout: "30s"
+  
+  monitoring:
+    interval: "5m"
+    timeout: "30s"
+    retries: 3
+
+# Backup and recovery
+backup:
+  enabled: false
+  
+  targets:
+    - type: "github_wiki"
+      schedule: "daily"
+      retention: "30d"
+    
+    - type: "github_pages"
+      schedule: "weekly"
+      retention: "90d"
+  
+  storage:
+    type: "s3"  # s3, gcs, azure
+    bucket: ""
+    region: ""
+    encryption: true
+
+# Compliance and auditing
+compliance:
+  audit_logs:
+    enabled: false
+    storage: "cloudwatch"  # cloudwatch, splunk, elk
+    
+  change_tracking:
+    enabled: true
+    git_based: true
+    
+  approval_workflow:
+    enabled: false
+    required_approvers: 1
+    approval_timeout: "24h"
