@@ -485,6 +485,17 @@ create_github_release() {
         fi
     fi
     
+    # Check if release already exists
+    log_info "Checking if release $VERSION already exists..."
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        if gh release view "$VERSION" >/dev/null 2>&1; then
+            log_info "Release $VERSION already exists, skipping creation"
+            log_info "Release URL: https://github.com/$REPOSITORY/releases/tag/$VERSION"
+            return 0
+        fi
+    fi
+    
     # Create the release
     log_info "Creating GitHub release: $VERSION"
     
