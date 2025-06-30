@@ -401,13 +401,20 @@ execute_github_pages() {
         log_debug "  $line"
     done
     
-    # Note: For GitHub Pages, we need files in root directory, not _site/
-    # GitHub Actions will handle Jekyll build process automatically
-    log_info "Preparing GitHub Pages source files in root directory..."
+    # Create _site directory
+    log_info "Creating _site directory..."
+    mkdir -p "_site"
+    if [[ -d "_site" ]]; then
+        log_success "_site directory created successfully"
+        log_debug "_site directory permissions: $(ls -ld _site)"
+    else
+        log_error "Failed to create _site directory"
+        return 1
+    fi
     
-    # Verify markdown files are already in place
-    local files_ready=0
-    log_info "Verifying markdown files in root directory..."
+    # Copy generated markdown files to _site
+    local files_copied=0
+    log_info "Copying markdown files to _site..."
     for md_file in *.md; do
         if [[ -f "$md_file" && "$md_file" != "README.md" ]]; then
             # Cross-platform file size check
@@ -417,8 +424,27 @@ execute_github_pages() {
             else
                 file_size=$(stat -c%s "$md_file" 2>/dev/null || echo 'unknown')
             fi
-            log_debug "Verified file: $md_file (size: $file_size)"
-            ((files_ready++))
+            log_debug "Processing file: $md_file (size: $file_size)"
+            if cp "$md_file" "_site/"; then
+                ((files_copied++))
+                log_debug "✅ Successfully copied $md_file to _site/"
+                # Verify the copy with cross-platform file size check
+                if [[ -f "_site/$md_file" ]]; then
+                    local original_size copied_size
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        original_size=$(stat -f%z "$md_file" 2>/dev/null || echo '0')
+                        copied_size=$(stat -f%z "_site/$md_file" 2>/dev/null || echo '0')
+                    else
+                        original_size=$(stat -c%s "$md_file" 2>/dev/null || echo '0')
+                        copied_size=$(stat -c%s "_site/$md_file" 2>/dev/null || echo '0')
+                    fi
+                    log_debug "  Original: ${original_size} bytes, Copied: ${copied_size} bytes"
+                else
+                    log_error "❌ File $md_file was not found in _site/ after copy"
+                fi
+            else
+                log_error "❌ Failed to copy $md_file to _site/"
+            fi
         else
             if [[ -f "$md_file" ]]; then
                 log_debug "Skipping $md_file (README.md or other excluded file)"
@@ -426,7 +452,7 @@ execute_github_pages() {
         fi
     done
     
-    log_info "Files ready for GitHub Pages: $files_ready"
+    log_info "Files copied to _site: $files_copied"
     
     # Create basic Jekyll structure
     log_info "Creating Jekyll configuration..."
@@ -455,7 +481,7 @@ execute_github_pages() {
     
     log_info "Selected remote theme: '$remote_theme'"
     
-    cat > "_config.yml" << EOF
+    cat > "_site/_config.yml" << EOF
 title: "Beaver Documentation"
 description: "AI agent knowledge dam construction tool documentation"
 remote_theme: $remote_theme
@@ -499,16 +525,16 @@ defaults:
 EOF
     
     # Verify _config.yml creation
-    if [[ -f "_config.yml" ]]; then
+    if [[ -f "_site/_config.yml" ]]; then
         local config_size
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            config_size=$(stat -f%z "_config.yml" 2>/dev/null || echo '0')
+            config_size=$(stat -f%z "_site/_config.yml" 2>/dev/null || echo '0')
         else
-            config_size=$(stat -c%s "_config.yml" 2>/dev/null || echo '0')
+            config_size=$(stat -c%s "_site/_config.yml" 2>/dev/null || echo '0')
         fi
         log_success "✅ _config.yml created successfully (${config_size} bytes)"
         log_debug "_config.yml content preview:"
-        head -10 "_config.yml" | while read -r line; do
+        head -10 "_site/_config.yml" | while read -r line; do
             log_debug "  $line"
         done
     else
@@ -518,9 +544,9 @@ EOF
     
     # Create index.md if it doesn't exist
     log_info "Checking for index.md..."
-    if [[ ! -f "index.md" ]]; then
+    if [[ ! -f "_site/index.md" ]]; then
         log_info "Creating index.md..."
-        cat > "index.md" << EOF
+        cat > "_site/index.md" << EOF
 ---
 layout: default
 title: Beaver Documentation
@@ -540,29 +566,29 @@ Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam co
 
 EOF
         # Add links to core Beaver pages
-        for md_file in beaver-*.md; do
+        for md_file in _site/beaver-*.md; do
             if [[ -f "$md_file" ]]; then
                 local page_name=$(basename "$md_file" .md)
                 local clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
-                echo "- [$clean_title]($page_name)" >> "index.md"
+                echo "- [$clean_title]($page_name)" >> "_site/index.md"
             fi
         done
         
-        cat >> "index.md" << EOF
+        cat >> "_site/index.md" << EOF
 
 ### 📊 Project Resources
 
 EOF
         # Add links to other documentation files
-        for md_file in *.md; do
-            if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" && "$(basename "$md_file")" != beaver-*.md && "$(basename "$md_file")" != "README.md" ]]; then
+        for md_file in _site/*.md; do
+            if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" && "$(basename "$md_file")" != beaver-*.md ]]; then
                 local page_name=$(basename "$md_file" .md)
                 local page_title=$(echo "$page_name" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
-                echo "- [$page_title]($page_name)" >> "index.md"
+                echo "- [$page_title]($page_name)" >> "_site/index.md"
             fi
         done
         
-        cat >> "index.md" << EOF
+        cat >> "_site/index.md" << EOF
 
 ---
 
@@ -574,16 +600,16 @@ EOF
     fi
     
     # Verify index.md creation/existence
-    if [[ -f "index.md" ]]; then
+    if [[ -f "_site/index.md" ]]; then
         local index_size
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            index_size=$(stat -f%z "index.md" 2>/dev/null || echo '0')
+            index_size=$(stat -f%z "_site/index.md" 2>/dev/null || echo '0')
         else
-            index_size=$(stat -c%s "index.md" 2>/dev/null || echo '0')
+            index_size=$(stat -c%s "_site/index.md" 2>/dev/null || echo '0')
         fi
         log_debug "index.md size: ${index_size} bytes"
         log_debug "index.md front matter check:"
-        head -5 "index.md" | while read -r line; do
+        head -5 "_site/index.md" | while read -r line; do
             log_debug "  $line"
         done
     else
@@ -591,23 +617,23 @@ EOF
         return 1
     fi
     
-    # Final verification of GitHub Pages source structure
-    log_info "=== Final GitHub Pages Source Verification ==="
-    log_info "Root directory contents (GitHub Pages will build from here):"
-    ls -la *.md _config.yml 2>/dev/null | while read -r line; do
+    # Final verification of Jekyll site structure
+    log_info "=== Final Jekyll Site Verification ==="
+    log_info "_site directory contents:"
+    ls -la "_site/" | while read -r line; do
         log_debug "  $line"
     done
     
-    # Check essential files in root directory
+    # Check essential files
     local essential_files=("_config.yml" "index.md")
     local missing_files=0
     for file in "${essential_files[@]}"; do
-        if [[ -f "$file" ]]; then
+        if [[ -f "_site/$file" ]]; then
             local file_size
             if [[ "$OSTYPE" == "darwin"* ]]; then
-                file_size=$(stat -f%z "$file" 2>/dev/null || echo '0')
+                file_size=$(stat -f%z "_site/$file" 2>/dev/null || echo '0')
             else
-                file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
+                file_size=$(stat -c%s "_site/$file" 2>/dev/null || echo '0')
             fi
             log_success "✅ Essential file: $file (${file_size} bytes)"
         else
@@ -616,20 +642,20 @@ EOF
         fi
     done
     
-    # Count total files in root directory
-    local total_files=$(find . -maxdepth 1 -name "*.md" -o -name "_config.yml" | wc -l | tr -d ' ')
-    log_info "Total source files for GitHub Pages: $total_files"
-    log_info "Content files ready: $files_ready"
+    # Count total files
+    local total_files=$(find "_site" -name "*.md" -o -name "*.yml" | wc -l | tr -d ' ')
+    log_info "Total files in _site: $total_files"
+    log_info "Content files copied: $files_copied"
     log_info "Missing essential files: $missing_files"
     
     if [[ $missing_files -gt 0 ]]; then
-        log_error "GitHub Pages source structure validation failed"
+        log_error "Jekyll site structure validation failed"
         return 1
     fi
     
-    log_success "✅ GitHub Pages source structure ready with $files_ready content files"
-    log_info "🚀 GitHub Pages source files ready in root directory"
-    log_info "=== End GitHub Pages Source Verification ==="
+    log_success "✅ Jekyll site structure created with $files_copied content files"
+    log_info "🚀 GitHub Pages content ready in _site/ directory"
+    log_info "=== End Jekyll Site Verification ==="
     
     # Generate detailed deployment file manifest
     generate_deployment_manifest
