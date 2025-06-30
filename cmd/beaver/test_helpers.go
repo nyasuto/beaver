@@ -264,8 +264,9 @@ func (f *TestFixtures) CreateTestConfig(repoPath string) *config.Config {
 			Model:    "gpt-4",
 		},
 		Output: config.OutputConfig{
-			Wiki: config.WikiConfig{
-				Platform: "github",
+			GitHubPages: config.GitHubPagesConfig{
+				Theme:  "minima",
+				Branch: "gh-pages",
 			},
 		},
 	}

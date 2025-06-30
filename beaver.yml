@@ -10,17 +10,10 @@ sources:
     # token will be provided via GITHUB_TOKEN environment variable
 
 output:
-  wiki:
-    platform: "github"
-    templates: "default"
-  
-  # GitHub Pages configuration for the new modular script architecture
+  # GitHub Pages configuration - v1.0 supports GitHub Pages only
   github_pages:
-    enabled: true
     theme: "minima"
     enable_search: true
-    custom_domain: ""
-    output_dir: "_site"
     branch: "gh-pages"
 
 ai:

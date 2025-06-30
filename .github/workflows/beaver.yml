@@ -1,8 +1,8 @@
 name: 🦫 Beaver Self-Documentation Automation
 
-# Enhanced GitHub Actions automation for Beaver self-management
+# GitHub Pages-focused automation for Beaver self-management
 # Meta-documentation: Beaver managing its own project development through automated knowledge capture
-# Supports incremental updates, notifications, and comprehensive self-analysis
+# v1.0: GitHub Pages only deployment with incremental updates and comprehensive self-analysis
 
 permissions:
   contents: read
@@ -140,9 +140,9 @@ jobs:
         echo "update_type=$update_type" >> $GITHUB_OUTPUT
         echo "repository=$TARGET_REPO" >> $GITHUB_OUTPUT
 
-  # Primary Beaver self-documentation (GitHub Pages)
+  # Beaver self-documentation (GitHub Pages only)
   beaver-self-documentation:
-    name: 🚀 Beaver Self-Documentation (GitHub Pages Primary)
+    name: 🚀 Beaver Self-Documentation (GitHub Pages)
     runs-on: ubuntu-latest
     needs: preflight
     if: ${{ needs.preflight.outputs.should_update == 'true' }}
@@ -205,17 +205,17 @@ jobs:
           --repository "$TARGET_REPO" \
           --verbose
         
-    - name: 🚀 Generate GitHub Pages Content (Primary)
+    - name: 🚀 Generate GitHub Pages Content
       env:
         GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
         MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
       run: |
-        echo "🚀 === GitHub Pages Primary Deployment Process ==="
-        echo "📄 Generating Jekyll site for GitHub Pages (Primary Target)"
+        echo "🚀 === GitHub Pages Deployment Process ==="
+        echo "📄 Generating Jekyll site for GitHub Pages"
         echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
         
-        # Generate GitHub Pages content as primary target
+        # Generate GitHub Pages content
         ./scripts/ci-beaver.sh github-pages \
           --repository "${{ needs.preflight.outputs.repository }}" \
           --max-items "$MAX_ITEMS" \
@@ -223,14 +223,14 @@ jobs:
           --enable-search \
           --verbose
           
-        echo "✅ GitHub Pages content generated successfully (Primary)"
+        echo "✅ GitHub Pages content generated successfully"
         
-    - name: 📊 GitHub Pages Primary Deployment Report
+    - name: 📊 GitHub Pages Deployment Report
       if: always()
       run: |
-        echo "📊 GitHub Pages Primary Deployment Report"
-        echo "========================================"
-        echo "🚀 Primary Target: GitHub Pages Jekyll site"
+        echo "📊 GitHub Pages Deployment Report"
+        echo "================================="
+        echo "🚀 Target: GitHub Pages Jekyll site"
         echo "🎯 Trigger: ${{ github.event_name }}"
         echo "🔄 Update Type: ${{ needs.preflight.outputs.update_type }}"
         echo "📁 Repository: ${{ needs.preflight.outputs.repository }}"
@@ -262,7 +262,7 @@ jobs:
       with:
         path: './_site'
         
-    - name: 🚀 Deploy to GitHub Pages (Primary)
+    - name: 🚀 Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
 
@@ -277,150 +277,6 @@ jobs:
           !README.md
         retention-days: 7
 
-  # Secondary Wiki deployment job
-  deploy-github-wiki:
-    name: 📖 Deploy to GitHub Wiki (Secondary)
-    runs-on: ubuntu-latest
-    needs: [preflight, beaver-self-documentation]
-    if: ${{ needs.preflight.outputs.should_update == 'true' && success() }}
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: 🐹 Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
-
-    - name: 📦 Build Beaver
-      run: |
-        go mod download
-        go mod tidy
-        make build
-        chmod +x ./bin/beaver ./scripts/ci-beaver.sh
-        
-    - name: ⚙️ Setup GitHub Pages configuration
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        TARGET_REPO: ${{ needs.preflight.outputs.repository }}
-      run: |
-        # Create enhanced configuration with GitHub Pages support
-        ./scripts/ci-beaver.sh test-setup \
-          --repository "$TARGET_REPO" \
-          --enable-github-pages \
-          --verbose
-        
-    - name: 📖 Generate Wiki Content (Secondary)
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
-        MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
-      run: |
-        echo "📖 === Wiki Secondary Deployment Process ==="
-        echo "📄 Generating Wiki content as backup documentation"
-        echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
-        
-        # Determine command based on update type
-        case "$UPDATE_TYPE" in
-          "full")
-            COMMAND="full-rebuild"
-            ;;
-          "incremental"|*)
-            COMMAND="incremental"
-            ;;
-        esac
-        
-        # Generate Wiki content
-        ./scripts/ci-beaver.sh "$COMMAND" \
-          --repository "${{ needs.preflight.outputs.repository }}" \
-          --max-items "$MAX_ITEMS" \
-          --verbose
-          
-        echo "✅ Wiki content generated successfully (Secondary)"
-        
-    - name: 📤 Deploy to GitHub Wiki (Secondary)
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-      run: |
-        echo "📖 Deploying content to GitHub Wiki (Secondary)..."
-        
-        # Clone wiki repository
-        wiki_url="https://x-access-token:$GITHUB_TOKEN@github.com/${{ needs.preflight.outputs.repository }}.wiki.git"
-        
-        if git clone "$wiki_url" wiki-repo 2>/dev/null; then
-          echo "✅ Wiki repository cloned successfully"
-        else
-          echo "⚠️ Wiki not initialized - creating initial wiki structure"
-          mkdir -p wiki-repo
-          cd wiki-repo
-          git init
-          git remote add origin "$wiki_url"
-          
-          # Create initial Home page
-          cat > Home.md << 'EOF'
-        # Beaver Documentation Wiki (Secondary)
-        
-        This is the secondary documentation target. Primary documentation is at GitHub Pages.
-        
-        ## About This Wiki
-        
-        This wiki serves as a backup documentation source, automatically maintained by Beaver.
-        
-        ---
-        *🦫 Secondary wiki maintained by Beaver*
-        EOF
-          
-          git add .
-          git -c user.name="GitHub Actions" -c user.email="actions@github.com" commit -m "docs: initialize secondary wiki [skip-wiki]"
-          
-          if git push -u origin master 2>/dev/null || git push -u origin main 2>/dev/null; then
-            echo "✅ Wiki initialized successfully"
-            cd ..
-          else
-            echo "❌ Failed to initialize wiki"
-            cd ..
-            exit 1
-          fi
-        fi
-        
-        # Copy generated markdown files to wiki
-        cd wiki-repo
-        
-        # Copy generated content
-        for file in ../*.md; do
-          if [ -f "$file" ]; then
-            basename_file=$(basename "$file")
-            wiki_filename="${basename_file#*-}"
-            
-            if [ "$wiki_filename" != "README.md" ]; then
-              cp "$file" "$wiki_filename"
-              echo "📝 Copied $basename_file -> $wiki_filename"
-            fi
-          fi
-        done
-        
-        # Configure git and commit
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
-        git add .
-        
-        if ! git diff --staged --quiet; then
-          git commit -m "docs: Secondary wiki update - ${{ github.event_name }} [skip-wiki]"
-          
-          if git push; then
-            echo "✅ Secondary wiki updated successfully"
-            echo "🔗 View wiki: https://github.com/${{ needs.preflight.outputs.repository }}/wiki"
-          else
-            echo "❌ Failed to push wiki changes"
-            exit 1
-          fi
-        else
-          echo "ℹ️ No changes to commit to secondary wiki"
-        fi
 
   # Self-documentation cleanup and maintenance
   self-documentation-cleanup:

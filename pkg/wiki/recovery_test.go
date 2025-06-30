@@ -86,7 +86,7 @@ func (m *MockRecoveryGitClient) UnsetConfig(ctx context.Context, dir, key string
 
 func TestNewRecoveryManager(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 
@@ -98,7 +98,7 @@ func TestNewRecoveryManager(t *testing.T) {
 
 func TestRecoveryManager_ExecuteWithRecovery(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -218,7 +218,7 @@ func TestRecoveryManager_ExecuteWithRecovery(t *testing.T) {
 
 func TestRecoveryManager_AttemptRecovery(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -294,7 +294,7 @@ func TestRecoveryManager_AttemptRecovery(t *testing.T) {
 
 func TestRecoveryManager_RecoverRepositoryError(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -335,7 +335,7 @@ func TestRecoveryManager_RecoverRepositoryError(t *testing.T) {
 
 func TestRecoveryManager_RecoverGitError(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -398,7 +398,7 @@ func TestRecoveryManager_RecoverGitError(t *testing.T) {
 
 func TestRecoveryManager_RecoverNetworkError(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -428,7 +428,7 @@ func TestRecoveryManager_RecoverNetworkError(t *testing.T) {
 
 func TestRecoveryManager_InitializeWikiRepository(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -450,7 +450,7 @@ func TestRecoveryManager_InitializeWikiRepository(t *testing.T) {
 
 func TestRecoveryManager_CheckConnectivity(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -462,7 +462,7 @@ func TestRecoveryManager_CheckConnectivity(t *testing.T) {
 
 func TestRecoveryManager_ValidateTokenScopes(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -543,7 +543,7 @@ func TestContainsAnyString(t *testing.T) {
 
 func TestRecoveryManager_ExponentialBackoff(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 
@@ -580,7 +580,7 @@ func TestRecoveryManager_ErrorLogging(t *testing.T) {
 	logger := log.New(&logOutput, "[TEST] ", log.LstdFlags)
 
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	rm.logger = logger
 
@@ -613,7 +613,7 @@ func BenchmarkContainsAnyString(b *testing.B) {
 
 func BenchmarkRecoveryManager_ExecuteWithRecovery(b *testing.B) {
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 
 	// Suppress logging for benchmark
@@ -638,7 +638,7 @@ func TestRecoveryManager_Integration(t *testing.T) {
 	t.Skip("Integration test - requires real Git repository and GitHub token")
 
 	mockGitClient := &MockRecoveryGitClient{}
-	mockPublisher := &GitHubWikiPublisher{}
+	mockPublisher := &GitHubPagesPublisher{}
 	rm := NewRecoveryManager(mockGitClient, mockPublisher)
 	ctx := context.Background()
 

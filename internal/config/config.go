@@ -39,14 +39,8 @@ type GitHubConfig struct {
 
 // OutputConfig defines output destinations
 type OutputConfig struct {
-	Wiki    WikiConfig     `mapstructure:"wiki"`
-	Targets []OutputTarget `mapstructure:"targets"`
-}
-
-// WikiConfig holds wiki output settings (legacy support)
-type WikiConfig struct {
-	Platform  string `mapstructure:"platform"`
-	Templates string `mapstructure:"templates"`
+	GitHubPages GitHubPagesConfig `mapstructure:"github_pages"`
+	Targets     []OutputTarget    `mapstructure:"targets"`
 }
 
 // OutputTarget defines a single output destination
@@ -163,26 +157,14 @@ sources:
     # token: "your-github-token" # または環境変数 GITHUB_TOKEN を使用
 
 output:
-  # Legacy wiki configuration (for backward compatibility)
-  wiki:
-    platform: "github"
-    templates: "default"
-  
-  # Multiple output targets (GitHub Pages, Wiki, etc.)
-  targets:
-    - type: "github-wiki"
-      config:
-        templates: "default"
-    
-    # GitHub Pages configuration (uncomment to enable)
-    # - type: "github-pages"
-    #   config:
-    #     theme: "minima"           # Jekyll theme
-    #     branch: "gh-pages"        # Target branch
-    #     domain: ""                # Custom domain (optional)
-    #     enable_search: true       # Enable search functionality
-    #     analytics: ""             # Google Analytics ID (optional)
-    #     base_url: ""              # Base URL (auto-detected if empty)
+  # GitHub Pages configuration - v1.0 supports GitHub Pages only
+  github_pages:
+    theme: "minima"           # Jekyll theme
+    branch: "gh-pages"        # Target branch
+    enable_search: false      # Enable search functionality
+    # domain: ""              # Custom domain (optional)
+    # analytics: ""           # Google Analytics ID (optional)
+    # base_url: ""            # Base URL (auto-detected if empty)
 
 ai:
   provider: "openai"      # openai, anthropic, local
@@ -216,8 +198,9 @@ func setDefaults() {
 	viper.SetDefault("sources.github.issues", true)
 	viper.SetDefault("sources.github.commits", false)
 	viper.SetDefault("sources.github.prs", false)
-	viper.SetDefault("output.wiki.platform", "github")
-	viper.SetDefault("output.wiki.templates", "default")
+	viper.SetDefault("output.github_pages.theme", "minima")
+	viper.SetDefault("output.github_pages.branch", "gh-pages")
+	viper.SetDefault("output.github_pages.enable_search", false)
 	viper.SetDefault("ai.provider", "openai")
 	viper.SetDefault("ai.model", "gpt-4")
 	viper.SetDefault("ai.features.summarization", true)
@@ -237,12 +220,9 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("GitHub token が設定されていません。GITHUB_TOKEN 環境変数または設定ファイルで指定してください")
 	}
 
-	// Validate legacy wiki platform (for backward compatibility)
-	validPlatforms := map[string]bool{
-		"github": true,
-	}
-	if c.Output.Wiki.Platform != "" && !validPlatforms[c.Output.Wiki.Platform] {
-		return fmt.Errorf("無効な wiki platform: %s", c.Output.Wiki.Platform)
+	// Validate GitHub Pages configuration
+	if err := c.validateGitHubPages(); err != nil {
+		return fmt.Errorf("GitHub Pages設定エラー: %w", err)
 	}
 
 	// Validate output targets
@@ -290,6 +270,35 @@ func (c *Config) validateOutputTargets() error {
 			if err := c.validateGitHubPagesConfig(target.Config); err != nil {
 				return fmt.Errorf("出力ターゲット %d (GitHub Pages): %w", i+1, err)
 			}
+		}
+	}
+
+	return nil
+}
+
+// validateGitHubPages validates the main GitHub Pages configuration
+func (c *Config) validateGitHubPages() error {
+	// Validate theme
+	if c.Output.GitHubPages.Theme != "" {
+		validThemes := map[string]bool{
+			"minima": true, "minimal": true, "modernist": true, "cayman": true,
+			"architect": true, "slate": true, "merlot": true, "time-machine": true,
+			"leap-day": true, "midnight": true, "tactile": true, "dinky": true,
+		}
+		if !validThemes[c.Output.GitHubPages.Theme] {
+			return fmt.Errorf("無効なtheme '%s'", c.Output.GitHubPages.Theme)
+		}
+	}
+
+	// Validate branch
+	if c.Output.GitHubPages.Branch != "" {
+		validBranches := map[string]bool{
+			"gh-pages": true,
+			"main":     true,
+			"master":   true,
+		}
+		if !validBranches[c.Output.GitHubPages.Branch] {
+			return fmt.Errorf("無効なbranch '%s': gh-pages, main, master のみサポート", c.Output.GitHubPages.Branch)
 		}
 	}
 

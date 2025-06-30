@@ -111,7 +111,11 @@ func TestFullWorkflowIntegration(t *testing.T) {
 			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
-		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
+		pagesConfig := config.GitHubPagesConfig{
+			Theme:  "minima",
+			Branch: "gh-pages",
+		}
+		publisher, err := wiki.NewGitHubPagesPublisher(wikiConfig, pagesConfig)
 		if err != nil {
 			t.Fatalf("Failed to create GitHub Wiki publisher: %v", err)
 		}
@@ -210,7 +214,11 @@ func TestErrorScenarios(t *testing.T) {
 			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
-		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
+		pagesConfig := config.GitHubPagesConfig{
+			Theme:  "minima",
+			Branch: "gh-pages",
+		}
+		publisher, err := wiki.NewGitHubPagesPublisher(wikiConfig, pagesConfig)
 		if err != nil {
 			t.Logf("⚠️ Wiki permissions may be insufficient: %v", err)
 			// This might be expected in some test environments
@@ -248,7 +256,11 @@ func TestJapaneseContent(t *testing.T) {
 			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
-		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
+		pagesConfig := config.GitHubPagesConfig{
+			Theme:  "minima",
+			Branch: "gh-pages",
+		}
+		publisher, err := wiki.NewGitHubPagesPublisher(wikiConfig, pagesConfig)
 		if err != nil {
 			t.Fatalf("Failed to create publisher for Japanese test: %v", err)
 		}
@@ -317,7 +329,11 @@ func TestPerformanceScenarios(t *testing.T) {
 			EnableConflictResolution: true,             // Enable conflict resolution for CI
 		}
 
-		publisher, err := wiki.NewGitHubWikiPublisher(wikiConfig)
+		pagesConfig := config.GitHubPagesConfig{
+			Theme:  "minima",
+			Branch: "gh-pages",
+		}
+		publisher, err := wiki.NewGitHubPagesPublisher(wikiConfig, pagesConfig)
 		if err != nil {
 			t.Fatalf("Failed to create publisher for performance test: %v", err)
 		}

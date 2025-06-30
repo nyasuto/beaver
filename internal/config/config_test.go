@@ -28,8 +28,9 @@ func TestConfig_Validate(t *testing.T) {
 					},
 				},
 				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "github",
+					GitHubPages: GitHubPagesConfig{
+						Theme:  "minima",
+						Branch: "gh-pages",
 					},
 				},
 				AI: AIConfig{
@@ -47,8 +48,9 @@ func TestConfig_Validate(t *testing.T) {
 					},
 				},
 				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "github",
+					GitHubPages: GitHubPagesConfig{
+						Theme:  "minima",
+						Branch: "gh-pages",
 					},
 				},
 				AI: AIConfig{
@@ -65,8 +67,9 @@ func TestConfig_Validate(t *testing.T) {
 					Repository: "owner/repo",
 				},
 				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "github",
+					GitHubPages: GitHubPagesConfig{
+						Theme:  "minima",
+						Branch: "gh-pages",
 					},
 				},
 				AI: AIConfig{
@@ -77,7 +80,7 @@ func TestConfig_Validate(t *testing.T) {
 			errorMsg:  "GitHub token が設定されていません。GITHUB_TOKEN 環境変数または設定ファイルで指定してください",
 		},
 		{
-			name: "Invalid wiki platform",
+			name: "Invalid GitHub Pages theme",
 			config: Config{
 				Project: ProjectConfig{
 					Repository: "owner/repo",
@@ -88,8 +91,8 @@ func TestConfig_Validate(t *testing.T) {
 					},
 				},
 				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "invalid",
+					GitHubPages: GitHubPagesConfig{
+						Theme: "invalid-theme",
 					},
 				},
 				AI: AIConfig{
@@ -97,7 +100,7 @@ func TestConfig_Validate(t *testing.T) {
 				},
 			},
 			wantError: true,
-			errorMsg:  "無効な wiki platform: invalid",
+			errorMsg:  "GitHub Pages設定エラー: 無効なtheme 'invalid-theme'",
 		},
 		{
 			name: "Invalid AI provider",
@@ -111,8 +114,9 @@ func TestConfig_Validate(t *testing.T) {
 					},
 				},
 				Output: OutputConfig{
-					Wiki: WikiConfig{
-						Platform: "github",
+					GitHubPages: GitHubPagesConfig{
+						Theme:  "minima",
+						Branch: "gh-pages",
 					},
 				},
 				AI: AIConfig{
@@ -179,7 +183,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 			"sources:",
 			"github:",
 			"output:",
-			"wiki:",
+			"github_pages:",
 			"ai:",
 			"provider:",
 		}
@@ -289,8 +293,8 @@ func TestLoadConfig(t *testing.T) {
 		if config.AI.Provider != "openai" {
 			t.Errorf("Expected default AI provider 'openai', got %s", config.AI.Provider)
 		}
-		if config.Output.Wiki.Platform != "github" {
-			t.Errorf("Expected default wiki platform 'github', got %s", config.Output.Wiki.Platform)
+		if config.Output.GitHubPages.Theme != "minima" {
+			t.Errorf("Expected default GitHub Pages theme 'minima', got %s", config.Output.GitHubPages.Theme)
 		}
 		if !config.Sources.GitHub.Issues {
 			t.Error("Expected default GitHub issues to be true")
@@ -310,9 +314,9 @@ sources:
     prs: true
 
 output:
-  wiki:
-    platform: "github"
-    templates: "academic"
+  github_pages:
+    theme: "minima"
+    branch: "gh-pages"
 
 ai:
   provider: "anthropic"
@@ -347,8 +351,8 @@ ai:
 		if config.Project.Repository != "test/repo" {
 			t.Errorf("Expected repository 'test/repo', got %s", config.Project.Repository)
 		}
-		if config.Output.Wiki.Platform != "github" {
-			t.Errorf("Expected wiki platform 'github', got %s", config.Output.Wiki.Platform)
+		if config.Output.GitHubPages.Theme != "minima" {
+			t.Errorf("Expected GitHub Pages theme 'minima', got %s", config.Output.GitHubPages.Theme)
 		}
 		if config.AI.Provider != "anthropic" {
 			t.Errorf("Expected AI provider 'anthropic', got %s", config.AI.Provider)
@@ -495,8 +499,9 @@ func TestTimezoneConfig(t *testing.T) {
 				},
 			},
 			Output: OutputConfig{
-				Wiki: WikiConfig{
-					Platform: "github",
+				GitHubPages: GitHubPagesConfig{
+					Theme:  "minima",
+					Branch: "gh-pages",
 				},
 			},
 			AI: AIConfig{
@@ -536,8 +541,9 @@ func TestTimezoneConfig(t *testing.T) {
 				},
 			},
 			Output: OutputConfig{
-				Wiki: WikiConfig{
-					Platform: "github",
+				GitHubPages: GitHubPagesConfig{
+					Theme:  "minima",
+					Branch: "gh-pages",
 				},
 			},
 			AI: AIConfig{

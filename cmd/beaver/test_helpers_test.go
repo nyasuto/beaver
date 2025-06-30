@@ -333,7 +333,7 @@ func TestTestFixtures(t *testing.T) {
 		assert.True(t, config.Sources.GitHub.Issues)
 		assert.Equal(t, "openai", config.AI.Provider)
 		assert.Equal(t, "gpt-4", config.AI.Model)
-		assert.Equal(t, "github", config.Output.Wiki.Platform)
+		assert.Equal(t, "minima", config.Output.GitHubPages.Theme)
 	})
 }
 

@@ -10,9 +10,11 @@ sources:
     # token: "your-github-token" # または環境変数 GITHUB_TOKEN を使用
 
 output:
-  wiki:
-    platform: "github"
-    templates: "default"
+  # GitHub Pages configuration - v1.0 supports GitHub Pages only
+  github_pages:
+    theme: "minima"
+    enable_search: false
+    branch: "gh-pages"
 
 ai:
   provider: "openai"      # openai, anthropic, local
