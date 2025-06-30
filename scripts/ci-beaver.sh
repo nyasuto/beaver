@@ -41,6 +41,10 @@ log_debug() {
     fi
 }
 
+log_section() {
+    echo "📋 [$(date '+%Y-%m-%d %H:%M:%S')] SECTION: $*" | tee -a "$LOG_FILE"
+}
+
 # Usage information
 usage() {
     cat << EOF
@@ -416,9 +420,9 @@ execute_github_pages() {
         return 1
     fi
     
-    # Copy generated markdown files to _site
+    # Copy generated markdown files to _site with UTF-8 conversion
     local files_copied=0
-    log_info "Copying markdown files to _site..."
+    log_info "Copying and converting markdown files to UTF-8 in _site..."
     for md_file in *.md; do
         if [[ -f "$md_file" && "$md_file" != "README.md" ]]; then
             # Cross-platform file size check
@@ -429,9 +433,11 @@ execute_github_pages() {
                 file_size=$(stat -c%s "$md_file" 2>/dev/null || echo 'unknown')
             fi
             log_debug "Processing file: $md_file (size: $file_size)"
-            if cp "$md_file" "_site/"; then
+            
+            # Apply CLI-based UTF-8 conversion
+            if convert_file_to_utf8 "$md_file" "_site/$md_file"; then
                 ((files_copied++))
-                log_debug "✅ Successfully copied $md_file to _site/"
+                log_debug "✅ Successfully converted and copied $md_file to _site/"
                 # Verify the copy with cross-platform file size check
                 if [[ -f "_site/$md_file" ]]; then
                     local original_size copied_size
@@ -442,12 +448,19 @@ execute_github_pages() {
                         original_size=$(stat -c%s "$md_file" 2>/dev/null || echo '0')
                         copied_size=$(stat -c%s "_site/$md_file" 2>/dev/null || echo '0')
                     fi
-                    log_debug "  Original: ${original_size} bytes, Copied: ${copied_size} bytes"
+                    log_debug "  Original: ${original_size} bytes, Converted: ${copied_size} bytes"
+                    
+                    # Verify UTF-8 encoding
+                    if verify_utf8_encoding "_site/$md_file"; then
+                        log_debug "  ✅ UTF-8 encoding verified"
+                    else
+                        log_warn "  ⚠️ UTF-8 encoding verification failed for $md_file"
+                    fi
                 else
-                    log_error "❌ File $md_file was not found in _site/ after copy"
+                    log_error "❌ File $md_file was not found in _site/ after conversion"
                 fi
             else
-                log_error "❌ Failed to copy $md_file to _site/"
+                log_error "❌ Failed to convert and copy $md_file to _site/"
             fi
         else
             if [[ -f "$md_file" ]]; then
@@ -486,9 +499,9 @@ execute_github_pages() {
 
     log_info "Selected remote theme: '$remote_theme'"
     
-    cat > "_site/_config.yml" << EOF
-title: "Beaver Documentation"
-description: "AI agent knowledge dam construction tool documentation"
+    # Create Jekyll config with UTF-8 content
+    local config_content="title: \"Beaver Documentation\"
+description: \"AI agent knowledge dam construction tool documentation\"
 remote_theme: $remote_theme
 plugins:
   - jekyll-remote-theme
@@ -509,7 +522,7 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
-  - "*.log"
+  - \"*.log\"
 
 # GitHub Pages configuration
 github:
@@ -523,11 +536,28 @@ search_enabled: $search_enabled
 # Collections and defaults
 defaults:
   - scope:
-      path: ""
-      type: "pages"
+      path: \"\"
+      type: \"pages\"
     values:
-      layout: "default"
-EOF
+      layout: \"default\""
+
+    # Write config with UTF-8 encoding using Python
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c "
+import sys
+try:
+    content = '''$config_content'''
+    with open('_site/_config.yml', 'w', encoding='utf-8') as f:
+        f.write(content)
+    print('SUCCESS')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" >/dev/null 2>&1
+    else
+        # Fallback to echo with UTF-8 locale
+        echo "$config_content" > "_site/_config.yml"
+    fi
     
     # Verify _config.yml creation
     if [[ -f "_site/_config.yml" ]]; then
@@ -550,9 +580,10 @@ EOF
     # Create index.md if it doesn't exist
     log_info "Checking for index.md..."
     if [[ ! -f "_site/index.md" ]]; then
-        log_info "Creating index.md..."
-        cat > "_site/index.md" << EOF
----
+        log_info "Creating index.md with UTF-8 encoding..."
+        
+        # Build index content
+        local index_content="---
 layout: default
 title: Beaver Documentation
 ---
@@ -569,39 +600,68 @@ Welcome to the Beaver documentation site. Beaver is an AI agent knowledge dam co
 
 ### 🏠 Core Documentation
 
-EOF
+"
+        
         # Add links to core Beaver pages
         for md_file in _site/beaver-*.md; do
             if [[ -f "$md_file" ]]; then
                 local page_name=$(basename "$md_file" .md)
                 local clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
-                echo "- [$clean_title]($page_name)" >> "_site/index.md"
+                index_content+="- [$clean_title]($page_name)"$'\n'
             fi
         done
         
-        cat >> "_site/index.md" << EOF
-
+        index_content+="
 ### 📊 Project Resources
 
-EOF
+"
+        
         # Add links to other documentation files
         for md_file in _site/*.md; do
             if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" && "$(basename "$md_file")" != beaver-*.md ]]; then
                 local page_name=$(basename "$md_file" .md)
                 local page_title=$(echo "$page_name" | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
-                echo "- [$page_title]($page_name)" >> "_site/index.md"
+                index_content+="- [$page_title]($page_name)"$'\n'
             fi
         done
         
-        cat >> "_site/index.md" << EOF
-
+        index_content+="
 ---
 
-*🤖 This documentation is automatically generated and maintained by Beaver*
-EOF
-        log_success "✅ index.md created successfully"
+*🤖 This documentation is automatically generated and maintained by Beaver*"
+        
+        # Write index.md with UTF-8 encoding using Python
+        if command -v python3 >/dev/null 2>&1; then
+            python3 -c "
+import sys
+try:
+    content = '''$index_content'''
+    with open('_site/index.md', 'w', encoding='utf-8') as f:
+        f.write(content)
+    print('SUCCESS')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" >/dev/null 2>&1
+            if [[ $? -eq 0 ]]; then
+                log_success "✅ index.md created successfully with UTF-8 encoding"
+            else
+                log_warn "Python UTF-8 write failed, using fallback"
+                echo "$index_content" > "_site/index.md"
+            fi
+        else
+            # Fallback to echo
+            echo "$index_content" > "_site/index.md"
+            log_success "✅ index.md created successfully (fallback method)"
+        fi
     else
-        log_info "index.md already exists, skipping creation"
+        log_info "index.md already exists, cleaning UTF-8 content..."
+        # Clean existing index.md for UTF-8 compliance
+        if clean_utf8_content "_site/index.md"; then
+            log_debug "✅ index.md UTF-8 content cleaned"
+        else
+            log_warn "⚠️ Failed to clean index.md UTF-8 content"
+        fi
     fi
     
     # Verify index.md creation/existence
@@ -1089,6 +1149,158 @@ health_check() {
         log_warn "Health check completed with $health_issues issues"
         return 1
     fi
+}
+
+# UTF-8 conversion functions
+convert_file_to_utf8() {
+    local input_file="$1"
+    local output_file="$2"
+    
+    log_debug "Converting $input_file to UTF-8 at $output_file"
+    
+    # First, try to detect the current encoding
+    local current_encoding="UTF-8"
+    if command -v file >/dev/null 2>&1; then
+        local file_info=$(file -bi "$input_file" 2>/dev/null || echo "")
+        if [[ "$file_info" =~ charset=([^;]+) ]]; then
+            current_encoding="${BASH_REMATCH[1]}"
+            log_debug "Detected encoding: $current_encoding"
+        fi
+    fi
+    
+    # Strategy 1: Use iconv if available (most reliable)
+    if command -v iconv >/dev/null 2>&1; then
+        log_debug "Using iconv for UTF-8 conversion"
+        if iconv -f "$current_encoding" -t UTF-8//IGNORE "$input_file" > "$output_file" 2>/dev/null; then
+            log_debug "iconv conversion successful"
+            return 0
+        else
+            log_debug "iconv conversion failed, trying fallback"
+        fi
+    fi
+    
+    # Strategy 2: Use Python (available in most CI environments)
+    if command -v python3 >/dev/null 2>&1; then
+        log_debug "Using Python for UTF-8 conversion"
+        if python3 -c "
+import sys
+import codecs
+try:
+    with open('$input_file', 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
+    # Remove any null bytes and other problematic characters
+    content = content.replace('\x00', '')
+    # Ensure content is valid UTF-8
+    content = content.encode('utf-8', errors='ignore').decode('utf-8')
+    with open('$output_file', 'w', encoding='utf-8') as f:
+        f.write(content)
+    print('SUCCESS')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>/dev/null | grep -q "SUCCESS"; then
+            log_debug "Python UTF-8 conversion successful"
+            return 0
+        else
+            log_debug "Python conversion failed, trying fallback"
+        fi
+    fi
+    
+    # Strategy 3: Use sed/awk as fallback (removes non-printable characters)
+    log_debug "Using sed/awk fallback for UTF-8 conversion"
+    if sed 's/[[:cntrl:]]//g' "$input_file" | \
+       awk '{gsub(/[^\x00-\x7F]/, ""); print}' > "$output_file" 2>/dev/null; then
+        log_debug "sed/awk fallback conversion successful"
+        return 0
+    fi
+    
+    # Strategy 4: Simple copy with character filtering
+    log_debug "Using tr fallback for character filtering"
+    if tr -cd '\11\12\15\40-\176' < "$input_file" > "$output_file" 2>/dev/null; then
+        log_debug "tr fallback successful"
+        return 0
+    fi
+    
+    # Final fallback: simple copy
+    log_warn "All UTF-8 conversion methods failed, performing simple copy"
+    cp "$input_file" "$output_file"
+    return $?
+}
+
+verify_utf8_encoding() {
+    local file_path="$1"
+    
+    # Method 1: Use file command if available
+    if command -v file >/dev/null 2>&1; then
+        local file_info=$(file -bi "$file_path" 2>/dev/null || echo "")
+        if [[ "$file_info" =~ charset=utf-8 ]]; then
+            return 0
+        fi
+    fi
+    
+    # Method 2: Use Python to validate UTF-8
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 -c "
+import sys
+try:
+    with open('$file_path', 'r', encoding='utf-8', errors='strict') as f:
+        f.read()
+    print('VALID')
+except UnicodeDecodeError:
+    print('INVALID', file=sys.stderr)
+    sys.exit(1)
+" 2>/dev/null | grep -q "VALID"; then
+            return 0
+        fi
+    fi
+    
+    # Method 3: Use iconv to validate
+    if command -v iconv >/dev/null 2>&1; then
+        if iconv -f UTF-8 -t UTF-8 "$file_path" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    # If all methods fail, assume it's not valid UTF-8
+    return 1
+}
+
+clean_utf8_content() {
+    local file_path="$1"
+    
+    log_debug "Cleaning UTF-8 content in $file_path"
+    
+    # Use Python to clean and ensure valid UTF-8
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c "
+import sys
+import re
+try:
+    with open('$file_path', 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
+    
+    # Remove null bytes and other problematic control characters
+    content = content.replace('\x00', '')
+    content = re.sub(r'[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]', '', content)
+    
+    # Ensure proper line endings
+    content = content.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # Re-encode to ensure valid UTF-8
+    content = content.encode('utf-8', errors='ignore').decode('utf-8')
+    
+    # Write back to file
+    with open('$file_path', 'w', encoding='utf-8') as f:
+        f.write(content)
+    print('SUCCESS')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>/dev/null | grep -q "SUCCESS"
+        return $?
+    fi
+    
+    return 1
 }
 
 # Main execution
