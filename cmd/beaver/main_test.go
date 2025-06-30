@@ -860,4 +860,191 @@ func TestBoundaryConditions(t *testing.T) {
 	})
 }
 
+// TestRunVersionCommand tests the version command output
+func TestRunVersionCommand(t *testing.T) {
+	// Save original stdout
+	oldStdout := os.Stdout
+	defer func() { os.Stdout = oldStdout }()
+
+	// Create a pipe to capture output
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	// Create a buffer to capture the output
+	var buf bytes.Buffer
+	done := make(chan bool)
+	go func() {
+		defer close(done)
+		buf.ReadFrom(r)
+	}()
+
+	// Set test values for version variables
+	oldVersion, oldBuildTime, oldGitCommit := version, buildTime, gitCommit
+	version = "test-version"
+	buildTime = "test-build-time"
+	gitCommit = "test-git-commit"
+	defer func() {
+		version, buildTime, gitCommit = oldVersion, oldBuildTime, oldGitCommit
+	}()
+
+	// Run the version command
+	cmd := &cobra.Command{}
+	runVersionCommand(cmd, []string{})
+
+	// Close writer and wait for reader
+	w.Close()
+	<-done
+
+	// Check output
+	output := buf.String()
+
+	if !strings.Contains(output, "test-version") {
+		t.Errorf("Expected version 'test-version' in output, got: %s", output)
+	}
+	if !strings.Contains(output, "test-build-time") {
+		t.Errorf("Expected build time 'test-build-time' in output, got: %s", output)
+	}
+	if !strings.Contains(output, "test-git-commit") {
+		t.Errorf("Expected git commit 'test-git-commit' in output, got: %s", output)
+	}
+	if !strings.Contains(output, "🦫 Beaver バージョン") {
+		t.Errorf("Expected Japanese version label in output, got: %s", output)
+	}
+}
+
+// TestRunVersionCommand_EmptyValues tests version command with empty values
+func TestRunVersionCommand_EmptyValues(t *testing.T) {
+	// Save original stdout
+	oldStdout := os.Stdout
+	defer func() { os.Stdout = oldStdout }()
+
+	// Create a pipe to capture output
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	// Create a buffer to capture the output
+	var buf bytes.Buffer
+	done := make(chan bool)
+	go func() {
+		defer close(done)
+		buf.ReadFrom(r)
+	}()
+
+	// Set empty values for version variables
+	oldVersion, oldBuildTime, oldGitCommit := version, buildTime, gitCommit
+	version = ""
+	buildTime = ""
+	gitCommit = ""
+	defer func() {
+		version, buildTime, gitCommit = oldVersion, oldBuildTime, oldGitCommit
+	}()
+
+	// Run the version command
+	cmd := &cobra.Command{}
+	runVersionCommand(cmd, []string{})
+
+	// Close writer and wait for reader
+	w.Close()
+	<-done
+
+	// Check output contains expected structure even with empty values
+	output := buf.String()
+
+	if !strings.Contains(output, "🦫 Beaver バージョン") {
+		t.Errorf("Expected version label in output, got: %s", output)
+	}
+	if !strings.Contains(output, "📅 ビルド時刻") {
+		t.Errorf("Expected build time label in output, got: %s", output)
+	}
+	if !strings.Contains(output, "📝 Git commit") {
+		t.Errorf("Expected git commit label in output, got: %s", output)
+	}
+}
+
+// TestContainsStringAnywhere tests the helper function used across tests
+func TestContainsStringAnywhere(t *testing.T) {
+	tests := []struct {
+		name     string
+		str      string
+		substr   string
+		expected bool
+	}{
+		{
+			name:     "Empty substring returns true",
+			str:      "test string",
+			substr:   "",
+			expected: true,
+		},
+		{
+			name:     "Substring found at beginning",
+			str:      "hello world",
+			substr:   "hello",
+			expected: true,
+		},
+		{
+			name:     "Substring found in middle",
+			str:      "hello world",
+			substr:   "lo wo",
+			expected: true,
+		},
+		{
+			name:     "Substring found at end",
+			str:      "hello world",
+			substr:   "world",
+			expected: true,
+		},
+		{
+			name:     "Substring not found",
+			str:      "hello world",
+			substr:   "xyz",
+			expected: false,
+		},
+		{
+			name:     "Substring longer than string",
+			str:      "hi",
+			substr:   "hello",
+			expected: false,
+		},
+		{
+			name:     "Empty string with non-empty substring",
+			str:      "",
+			substr:   "test",
+			expected: false,
+		},
+		{
+			name:     "Both empty",
+			str:      "",
+			substr:   "",
+			expected: true,
+		},
+		{
+			name:     "Exact match",
+			str:      "test",
+			substr:   "test",
+			expected: true,
+		},
+		{
+			name:     "Case sensitive - no match",
+			str:      "Hello World",
+			substr:   "hello",
+			expected: false,
+		},
+		{
+			name:     "Japanese text",
+			str:      "設定読み込みエラー",
+			substr:   "読み込み",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := containsStringAnywhere(tt.str, tt.substr)
+			if result != tt.expected {
+				t.Errorf("containsStringAnywhere(%q, %q) = %v, want %v", tt.str, tt.substr, result, tt.expected)
+			}
+		})
+	}
+}
+
 // Tests for runClassifyIssue function
