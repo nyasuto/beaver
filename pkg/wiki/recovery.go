@@ -276,4 +276,3 @@ func containsAnyString(text string, patterns []string) bool {
 	}
 	return false
 }
-

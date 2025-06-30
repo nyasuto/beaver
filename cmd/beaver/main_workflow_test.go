@@ -47,7 +47,7 @@ ai:
   provider: "openai"
 output:
   wiki:
-    platform: "github"`
+    platform: "minima"`
 
 		err = os.WriteFile(configPath, []byte(configContent), 0644)
 		assert.NoError(t, err)
@@ -98,8 +98,8 @@ func TestBuildCommand_FullWorkflow(t *testing.T) {
 				},
 			},
 			Output: config.OutputConfig{
-				Wiki: config.WikiConfig{
-					Platform: "github",
+				GitHubPages: config.GitHubPagesConfig{
+					Theme: "minima",
 				},
 			},
 			AI: config.AIConfig{
@@ -143,8 +143,8 @@ func TestBuildCommand_FullWorkflow(t *testing.T) {
 		assert.Greater(t, len(pages), 0)
 		assert.Equal(t, "Home", pages[0].Title)
 
-		// Test wiki publishing (when platform is github)
-		if testConfig.Output.Wiki.Platform == "github" {
+		// Test wiki publishing (when GitHub Pages is configured)
+		if testConfig.Output.GitHubPages.Theme == "minima" {
 			err = mockWiki.PublishPages(ctx, pages)
 			assert.NoError(t, err)
 			assert.True(t, mockWiki.publishCalled)
@@ -225,8 +225,8 @@ func TestStatusCommand_FullWorkflow(t *testing.T) {
 				Model:    "gpt-4",
 			},
 			Output: config.OutputConfig{
-				Wiki: config.WikiConfig{
-					Platform: "github",
+				GitHubPages: config.GitHubPagesConfig{
+					Theme: "minima",
 				},
 			},
 		}

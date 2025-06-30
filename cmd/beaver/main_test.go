@@ -435,7 +435,7 @@ ai:
 
 output:
   wiki:
-    platform: "github"
+    platform: "minima"
     repository: "username/my-repo"
 `
 
@@ -643,9 +643,9 @@ func NewIntegrationTestContext(t *testing.T) *IntegrationTestContext {
 			},
 		},
 		Output: config.OutputConfig{
-			Wiki: config.WikiConfig{
-				Platform:  "github",
-				Templates: "default",
+			GitHubPages: config.GitHubPagesConfig{
+				Theme:  "minima",
+				Branch: "gh-pages",
 			},
 		},
 		Timezone: config.TimezoneConfig{
