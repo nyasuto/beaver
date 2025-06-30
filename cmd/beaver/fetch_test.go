@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -735,11 +736,57 @@ func TestFetchCommandValidation(t *testing.T) {
 	})
 
 	t.Run("valid repository format", func(t *testing.T) {
-		// This will fail on config or GitHub API, but repository validation should pass
-		err := runFetchIssues(nil, []string{"owner/repo"})
-		assert.Error(t, err, "Should fail on config or GitHub API")
+		// Test repository format validation without making real API calls
+		// Create a temp directory for the test
+		tmpDir := t.TempDir()
+		oldWd, err := os.Getwd()
+		require.NoError(t, err)
+		defer os.Chdir(oldWd)
+
+		err = os.Chdir(tmpDir)
+		require.NoError(t, err)
+
+		// Create minimal config to get past validation without making API calls
+		configContent := `
+project:
+  name: "test-project"
+  repository: "owner/repo"
+sources:
+  github:
+    token: "fake-token-for-testing"
+    base_url: "https://api.github.com"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  api_key: "fake-key"
+output:
+  github_pages:
+    theme: "minima"
+    branch: "gh-pages"
+`
+		configPath := filepath.Join(tmpDir, "beaver.yml")
+		err = os.WriteFile(configPath, []byte(configContent), 0600)
+		require.NoError(t, err)
+
+		// Mock the GitHub service to avoid real API calls
+		originalFactory := githubServiceFactory
+		githubServiceFactory = func(token string) github.ServiceInterface {
+			mockService := NewMockGitHubService()
+			// Set up mock to return an error to avoid actual processing
+			mockService.FetchIssuesError = fmt.Errorf("mock GitHub API error - no real calls")
+			return mockService
+		}
+		defer func() {
+			githubServiceFactory = originalFactory
+		}()
+
+		// This should fail on mock GitHub API call, not repository format validation
+		err = runFetchIssues(nil, []string{"owner/repo"})
+		assert.Error(t, err, "Should fail on mock GitHub API")
 		// Should not be a repository format error
 		assert.NotContains(t, err.Error(), "リポジトリ形式が無効です", "Should not be repository format error")
+		// Should be our mock API error
+		assert.Contains(t, err.Error(), "mock GitHub API error", "Should be mock API error, got: %s", err.Error())
 	})
 }
 
