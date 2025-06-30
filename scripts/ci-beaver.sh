@@ -53,6 +53,8 @@ Options:
   --config FILE        Override config file (default: beaver.yml)
   --state-file FILE    Override state file (default: .beaver/incremental-state.json)
   --max-items N        Max items per update (default: 100)
+  --theme THEME        Jekyll theme for GitHub Pages (default: minima)
+  --enable-search      Enable search functionality for GitHub Pages
   --notify-success     Send notifications on success
   --notify-failure     Send notifications on failure
   --dry-run           Perform dry run without making changes
@@ -99,6 +101,8 @@ NOTIFY_SUCCESS=false
 NOTIFY_FAILURE=false
 DRY_RUN=false
 VERBOSE=false
+THEME=""
+ENABLE_SEARCH=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -121,6 +125,14 @@ while [[ $# -gt 0 ]]; do
         --max-items)
             MAX_ITEMS="$2"
             shift 2
+            ;;
+        --theme)
+            THEME="$2"
+            shift 2
+            ;;
+        --enable-search)
+            ENABLE_SEARCH=true
+            shift
             ;;
         --notify-success)
             NOTIFY_SUCCESS=true
@@ -342,7 +354,7 @@ execute_github_pages() {
     # Generate wiki content first using the build command
     local build_args=("build")
     
-    if [[ "$MAX_ITEMS" -gt 0 ]]; then
+    if [[ -n "$MAX_ITEMS" && "$MAX_ITEMS" -gt 0 ]]; then
         build_args+=("--max-items" "$MAX_ITEMS")
     fi
     
@@ -379,10 +391,13 @@ execute_github_pages() {
     done
     
     # Create basic Jekyll structure
+    local jekyll_theme="${THEME:-minima}"
+    local search_enabled="${ENABLE_SEARCH:-false}"
+    
     cat > "_site/_config.yml" << EOF
 title: "Beaver Documentation"
 description: "AI agent knowledge dam construction tool documentation"
-theme: minima
+theme: $jekyll_theme
 plugins:
   - jekyll-feed
   - jekyll-sitemap
@@ -400,6 +415,9 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
+
+# Search configuration
+search_enabled: $search_enabled
 EOF
     
     # Create index.html if no index.md exists
