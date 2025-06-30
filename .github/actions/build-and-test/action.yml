@@ -1,0 +1,370 @@
+name: 'Build and Test'
+description: 'Run comprehensive build and testing pipeline for Beaver'
+author: 'Beaver Team'
+
+inputs:
+  test-type:
+    description: 'Type of tests to run: unit, integration, performance, all'
+    required: false
+    default: 'unit'
+  coverage-threshold:
+    description: 'Minimum coverage percentage required'
+    required: false
+    default: '75'
+  timeout:
+    description: 'Test timeout duration'
+    required: false
+    default: '15m'
+  platforms:
+    description: 'Platforms for cross-compilation (comma-separated)'
+    required: false
+    default: 'linux/amd64,darwin/amd64'
+  upload-artifacts:
+    description: 'Upload build artifacts and test results'
+    required: false
+    default: 'true'
+  fail-fast:
+    description: 'Stop on first test failure'
+    required: false
+    default: 'false'
+
+outputs:
+  test-result:
+    description: 'Overall test result (success/failure)'
+    value: ${{ steps.test-summary.outputs.result }}
+  coverage-percentage:
+    description: 'Test coverage percentage'
+    value: ${{ steps.coverage.outputs.percentage }}
+  binary-count:
+    description: 'Number of binaries built'
+    value: ${{ steps.cross-build.outputs.count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 📋 Initialize test pipeline
+      shell: bash
+      run: |
+        echo "🔍 Build and Test Pipeline"
+        echo "Test type: ${{ inputs.test-type }}"
+        echo "Coverage threshold: ${{ inputs.coverage-threshold }}%"
+        echo "Timeout: ${{ inputs.timeout }}"
+        echo "Platforms: ${{ inputs.platforms }}"
+        echo "Upload artifacts: ${{ inputs.upload-artifacts }}"
+        echo "Fail fast: ${{ inputs.fail-fast }}"
+        echo ""
+        
+        # Initialize result tracking
+        echo "PIPELINE_FAILED=false" >> $GITHUB_ENV
+        echo "FAILED_STEPS=" >> $GITHUB_ENV
+
+    - name: 📝 Format check
+      shell: bash
+      run: |
+        echo "📝 Checking Go code formatting..."
+        
+        if [[ -f "scripts/ci-checks.sh" ]]; then
+          chmod +x scripts/ci-checks.sh
+          if ! ./scripts/ci-checks.sh format-check; then
+            echo "FORMAT_CHECK_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},format-check" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          # Fallback to direct gofmt
+          unformatted=$(gofmt -l .)
+          if [[ -n "$unformatted" ]]; then
+            echo "❌ Unformatted files found:"
+            echo "$unformatted"
+            echo "FORMAT_CHECK_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},format-check" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          else
+            echo "✅ All files are properly formatted"
+          fi
+        fi
+
+    - name: 🔍 Lint and security check
+      shell: bash
+      run: |
+        echo "🔍 Running linting and security checks..."
+        
+        if [[ -f "scripts/ci-checks.sh" ]]; then
+          chmod +x scripts/ci-checks.sh
+          if ! ./scripts/ci-checks.sh lint; then
+            echo "LINT_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},lint" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          # Fallback linting
+          if command -v golangci-lint >/dev/null 2>&1; then
+            if ! golangci-lint run --timeout=5m; then
+              echo "LINT_FAILED=true" >> $GITHUB_ENV
+              echo "FAILED_STEPS=${FAILED_STEPS},lint" >> $GITHUB_ENV
+              if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+                exit 1
+              fi
+            fi
+          else
+            echo "⚠️ golangci-lint not available, running go vet"
+            if ! go vet ./...; then
+              echo "VET_FAILED=true" >> $GITHUB_ENV
+              echo "FAILED_STEPS=${FAILED_STEPS},vet" >> $GITHUB_ENV
+              if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+                exit 1
+              fi
+            fi
+          fi
+        fi
+
+    - name: 🧪 Unit tests
+      if: inputs.test-type == 'unit' || inputs.test-type == 'all'
+      shell: bash
+      run: |
+        echo "🧪 Running unit tests..."
+        
+        if [[ -f "scripts/ci-checks.sh" ]]; then
+          chmod +x scripts/ci-checks.sh
+          if ! ./scripts/ci-checks.sh unit-tests --timeout "${{ inputs.timeout }}"; then
+            echo "UNIT_TESTS_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},unit-tests" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          # Direct test execution
+          if ! go test -v -race -coverprofile=coverage.out -timeout="${{ inputs.timeout }}" ./...; then
+            echo "UNIT_TESTS_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},unit-tests" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        fi
+
+    - name: 📊 Coverage analysis
+      id: coverage
+      if: inputs.test-type == 'unit' || inputs.test-type == 'all'
+      shell: bash
+      run: |
+        echo "📊 Analyzing test coverage..."
+        
+        if [[ -f "coverage.out" ]]; then
+          # Calculate coverage percentage
+          coverage_line=$(go tool cover -func=coverage.out | tail -1)
+          coverage_percent=$(echo "$coverage_line" | awk '{print $3}' | sed 's/%//')
+          
+          echo "Coverage: ${coverage_percent}%"
+          echo "percentage=$coverage_percent" >> $GITHUB_OUTPUT
+          
+          # Check coverage threshold
+          threshold="${{ inputs.coverage-threshold }}"
+          if (( $(echo "$coverage_percent >= $threshold" | bc -l) )); then
+            echo "✅ Coverage threshold met: ${coverage_percent}% >= ${threshold}%"
+          else
+            echo "❌ Coverage below threshold: ${coverage_percent}% < ${threshold}%"
+            echo "COVERAGE_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},coverage" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+          
+          # Generate HTML report
+          go tool cover -html=coverage.out -o coverage.html
+          echo "📄 HTML coverage report: coverage.html"
+        else
+          echo "⚠️ No coverage file found"
+          echo "percentage=0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: 🔨 Build test
+      shell: bash
+      run: |
+        echo "🔨 Testing build process..."
+        
+        if [[ -f "scripts/ci-checks.sh" ]]; then
+          chmod +x scripts/ci-checks.sh
+          if ! ./scripts/ci-checks.sh build-test; then
+            echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          # Direct build test
+          if ! go build -o bin/beaver ./cmd/beaver; then
+            echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+          
+          # Test binary
+          if [[ -f "bin/beaver" ]]; then
+            chmod +x bin/beaver
+            if ! ./bin/beaver --help >/dev/null 2>&1; then
+              echo "❌ Binary test failed"
+              echo "BINARY_TEST_FAILED=true" >> $GITHUB_ENV
+              echo "FAILED_STEPS=${FAILED_STEPS},binary-test" >> $GITHUB_ENV
+              if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+                exit 1
+              fi
+            fi
+          fi
+        fi
+
+    - name: 🏗️ Cross-platform build
+      id: cross-build
+      if: inputs.platforms != ''
+      shell: bash
+      run: |
+        echo "🏗️ Cross-platform build for: ${{ inputs.platforms }}"
+        
+        if [[ -f "scripts/build-tools.sh" ]]; then
+          chmod +x scripts/build-tools.sh
+          if ! ./scripts/build-tools.sh cross-build --platforms "${{ inputs.platforms }}"; then
+            echo "CROSS_BUILD_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},cross-build" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          # Manual cross-compilation
+          mkdir -p bin
+          platforms="${{ inputs.platforms }}"
+          count=0
+          
+          IFS=',' read -ra PLATFORM_ARRAY <<< "$platforms"
+          for platform in "${PLATFORM_ARRAY[@]}"; do
+            IFS='/' read -ra PARTS <<< "$platform"
+            goos="${PARTS[0]}"
+            goarch="${PARTS[1]}"
+            
+            output="bin/beaver-${goos}-${goarch}"
+            if [[ "$goos" == "windows" ]]; then
+              output="${output}.exe"
+            fi
+            
+            echo "Building for $goos/$goarch -> $output"
+            if env GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 go build -o "$output" ./cmd/beaver; then
+              ((count++))
+              echo "✅ Built $goos/$goarch"
+            else
+              echo "❌ Failed to build $goos/$goarch"
+              echo "CROSS_BUILD_FAILED=true" >> $GITHUB_ENV
+              echo "FAILED_STEPS=${FAILED_STEPS},cross-build-${goos}-${goarch}" >> $GITHUB_ENV
+              if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+                exit 1
+              fi
+            fi
+          done
+        fi
+        
+        # Count built binaries
+        binary_count=$(find bin -name "beaver-*" -type f | wc -l)
+        echo "count=$binary_count" >> $GITHUB_OUTPUT
+        echo "📦 Built $binary_count binaries"
+
+    - name: 🔗 Integration tests
+      if: inputs.test-type == 'integration' || inputs.test-type == 'all'
+      shell: bash
+      run: |
+        echo "🔗 Running integration tests..."
+        
+        if [[ -f "scripts/ci-checks.sh" ]]; then
+          chmod +x scripts/ci-checks.sh
+          if ! ./scripts/ci-checks.sh integration --timeout "${{ inputs.timeout }}"; then
+            echo "INTEGRATION_TESTS_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},integration-tests" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          echo "⚠️ Integration test script not found, skipping"
+        fi
+
+    - name: 🚀 Performance tests
+      if: inputs.test-type == 'performance' || inputs.test-type == 'all'
+      shell: bash
+      run: |
+        echo "🚀 Running performance tests..."
+        
+        if [[ -f "scripts/ci-checks.sh" ]]; then
+          chmod +x scripts/ci-checks.sh
+          if ! ./scripts/ci-checks.sh performance --timeout "${{ inputs.timeout }}"; then
+            echo "PERFORMANCE_TESTS_FAILED=true" >> $GITHUB_ENV
+            echo "FAILED_STEPS=${FAILED_STEPS},performance-tests" >> $GITHUB_ENV
+            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+              exit 1
+            fi
+          fi
+        else
+          echo "⚠️ Performance test script not found, skipping"
+        fi
+
+    - name: 📤 Upload test artifacts
+      if: inputs.upload-artifacts == 'true' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ github.run_id }}
+        path: |
+          coverage.out
+          coverage.html
+          bin/
+          *.log
+        retention-days: 7
+
+    - name: 📊 Test summary
+      id: test-summary
+      if: always()
+      shell: bash
+      run: |
+        echo "📊 Test Pipeline Summary"
+        echo "======================="
+        
+        failed_steps="${FAILED_STEPS#,}"  # Remove leading comma
+        
+        if [[ -n "$failed_steps" ]]; then
+          echo "❌ Failed steps: $failed_steps"
+          echo "result=failure" >> $GITHUB_OUTPUT
+          
+          # Set job as failed
+          echo "PIPELINE_FAILED=true" >> $GITHUB_ENV
+        else
+          echo "✅ All tests passed!"
+          echo "result=success" >> $GITHUB_OUTPUT
+        fi
+        
+        # Show individual step results
+        echo ""
+        echo "Step Results:"
+        echo "Format Check: ${FORMAT_CHECK_FAILED:-false}"
+        echo "Lint: ${LINT_FAILED:-false}"
+        echo "Unit Tests: ${UNIT_TESTS_FAILED:-false}"
+        echo "Coverage: ${COVERAGE_FAILED:-false}"
+        echo "Build Test: ${BUILD_TEST_FAILED:-false}"
+        echo "Cross Build: ${CROSS_BUILD_FAILED:-false}"
+        echo "Integration Tests: ${INTEGRATION_TESTS_FAILED:-false}"
+        echo "Performance Tests: ${PERFORMANCE_TESTS_FAILED:-false}"
+        
+        # Exit with error if any step failed
+        if [[ "${PIPELINE_FAILED:-false}" == "true" ]]; then
+          exit 1
+        fi
+
+branding:
+  icon: 'check-circle'
+  color: 'green'

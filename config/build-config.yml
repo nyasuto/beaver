@@ -1,0 +1,241 @@
+# Build Configuration for Beaver project
+# Centralized configuration for build processes and compilation
+
+# Build metadata
+metadata:
+  project_name: "Beaver"
+  description: "AI agent knowledge dam construction tool"
+  license: "MIT"
+  repository: "github.com/nyasuto/beaver"
+
+# Go build configuration
+go:
+  version: "1.21"
+  min_version: "1.19"
+  module_path: "github.com/nyasuto/beaver"
+  main_package: "./cmd/beaver"
+
+# Binary configuration
+binary:
+  name: "beaver"
+  output_dir: "bin"
+  install_dir: "/usr/local/bin"
+  
+# Version configuration
+version:
+  auto_detect: true
+  sources:
+    - git_tag
+    - git_describe
+    - environment_variable
+  fallback: "v0.0.0-dev"
+  prefix: "v"
+
+# Cross-compilation targets
+targets:
+  default:
+    - os: linux
+      arch: amd64
+      cgo_enabled: 0
+    - os: linux
+      arch: arm64
+      cgo_enabled: 0
+    - os: darwin
+      arch: amd64
+      cgo_enabled: 0
+    - os: darwin
+      arch: arm64
+      cgo_enabled: 0
+    - os: windows
+      arch: amd64
+      cgo_enabled: 0
+      extension: ".exe"
+  
+  extended:
+    - os: linux
+      arch: 386
+      cgo_enabled: 0
+    - os: windows
+      arch: 386
+      cgo_enabled: 0
+      extension: ".exe"
+    - os: freebsd
+      arch: amd64
+      cgo_enabled: 0
+
+# Build flags and optimization
+build_flags:
+  ldflags:
+    base:
+      - "-s"  # Strip symbol table and debug info
+      - "-w"  # Strip DWARF debug info
+    version_info:
+      - "-X main.Version={{.Version}}"
+      - "-X main.BuildDate={{.BuildDate}}"
+      - "-X main.GitCommit={{.GitCommit}}"
+      - "-X main.GitBranch={{.GitBranch}}"
+      - "-X main.BuildUser={{.BuildUser}}"
+    optimization:
+      - "-extldflags=-static"  # Static linking
+  
+  tags:
+    - "netgo"  # Use Go's network stack
+    - "osusergo"  # Use Go's user/group lookup
+  
+  gcflags:
+    debug: "-N -l"  # Disable optimizations for debugging
+    release: ""  # Use default optimizations
+
+# Output configuration
+output:
+  naming_pattern: "{{.BinaryName}}-{{.OS}}-{{.Arch}}{{.Extension}}"
+  checksums:
+    enabled: true
+    algorithms:
+      - "sha256"
+      - "md5"
+    file_pattern: "{{.OutputName}}.{{.Algorithm}}"
+  
+  compression:
+    enabled: false
+    formats:
+      - "zip"  # For Windows
+      - "tar.gz"  # For Unix-like systems
+  
+  signing:
+    enabled: false
+    gpg_key_id: ""
+    detached_signature: true
+
+# Dependencies management
+dependencies:
+  auto_download: true
+  auto_tidy: true
+  verify_checksums: true
+  vendor_mode: false
+  
+  replace_directives: []
+  
+  exclude_patterns:
+    - "*/testdata/*"
+    - "*/test/*"
+    - "*_test.go"
+
+# Build environment
+environment:
+  required_vars:
+    - "GOPATH"
+    - "GOROOT"
+  
+  optional_vars:
+    - "GOPROXY"
+    - "GOSUMDB"
+    - "GOPRIVATE"
+  
+  default_values:
+    GOPROXY: "https://proxy.golang.org,direct"
+    GOSUMDB: "sum.golang.org"
+    CGO_ENABLED: "0"
+
+# Pre and post build hooks
+hooks:
+  pre_build:
+    - name: "Clean previous builds"
+      command: "rm -rf {{.OutputDir}}/*"
+      condition: "exists({{.OutputDir}})"
+    
+    - name: "Validate dependencies"
+      command: "go mod verify"
+      required: true
+  
+  post_build:
+    - name: "Test binary"
+      command: "{{.OutputPath}} --version"
+      condition: "file_exists({{.OutputPath}})"
+    
+    - name: "Generate checksums"
+      command: "scripts/generate-checksums.sh {{.OutputDir}}"
+      condition: "file_exists('scripts/generate-checksums.sh')"
+
+# Build optimization
+optimization:
+  parallel_builds: true
+  max_parallel: 4
+  use_build_cache: true
+  incremental_builds: true
+  
+  size_optimization:
+    enabled: true
+    strip_symbols: true
+    compress_dwarf: true
+    remove_debug_info: true
+  
+  speed_optimization:
+    use_link_cache: true
+    parallel_linking: true
+
+# Build validation
+validation:
+  size_limits:
+    max_size_mb: 100
+    warn_size_mb: 50
+  
+  performance_tests:
+    startup_time_ms: 1000
+    memory_usage_mb: 50
+  
+  compatibility_tests:
+    - name: "Minimum Go version"
+      command: "go version"
+      pattern: "go1\\.(19|2[0-9])"
+
+# Release configuration
+release:
+  create_archives: true
+  include_docs: true
+  include_license: true
+  include_changelog: true
+  
+  archive_contents:
+    - "{{.BinaryPath}}"
+    - "README.md"
+    - "LICENSE"
+    - "CHANGELOG.md"
+  
+  metadata_files:
+    - name: "build-info.json"
+      template: |
+        {
+          "version": "{{.Version}}",
+          "build_date": "{{.BuildDate}}",
+          "git_commit": "{{.GitCommit}}",
+          "git_branch": "{{.GitBranch}}",
+          "go_version": "{{.GoVersion}}",
+          "targets": {{.Targets}}
+        }
+
+# Docker build configuration
+docker:
+  enabled: false
+  base_image: "alpine:latest"
+  multi_stage: true
+  platforms:
+    - "linux/amd64"
+    - "linux/arm64"
+  
+  labels:
+    "org.opencontainers.image.title": "{{.ProjectName}}"
+    "org.opencontainers.image.description": "{{.Description}}"
+    "org.opencontainers.image.version": "{{.Version}}"
+    "org.opencontainers.image.source": "{{.Repository}}"
+
+# Debugging and development
+debug:
+  keep_build_artifacts: false
+  verbose_output: false
+  build_with_debug_info: false
+  
+  profiling:
+    enabled: false
+    cpu_profile: "cpu.prof"
+    memory_profile: "mem.prof"

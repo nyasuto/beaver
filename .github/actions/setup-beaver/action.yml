@@ -1,0 +1,196 @@
+name: 'Setup Beaver Environment'
+description: 'Sets up Go environment and builds Beaver with dependencies'
+author: 'Beaver Team'
+
+inputs:
+  go-version:
+    description: 'Go version to use'
+    required: false
+    default: 'stable'
+  cache:
+    description: 'Enable Go modules and build cache'
+    required: false
+    default: 'true'
+  build-beaver:
+    description: 'Build Beaver binary after setup'
+    required: false
+    default: 'true'
+  install-tools:
+    description: 'Install additional development tools'
+    required: false
+    default: 'false'
+
+outputs:
+  beaver-version:
+    description: 'Built Beaver version'
+    value: ${{ steps.build.outputs.version }}
+  go-version:
+    description: 'Go version used'
+    value: ${{ steps.setup-go.outputs.go-version }}
+  beaver-path:
+    description: 'Path to Beaver binary'
+    value: ${{ steps.build.outputs.path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 📥 Validate inputs
+      shell: bash
+      run: |
+        echo "🔍 Setup Beaver Environment"
+        echo "Go version: ${{ inputs.go-version }}"
+        echo "Cache enabled: ${{ inputs.cache }}"
+        echo "Build Beaver: ${{ inputs.build-beaver }}"
+        echo "Install tools: ${{ inputs.install-tools }}"
+
+    - name: 🐹 Setup Go
+      id: setup-go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: ${{ inputs.cache }}
+        cache-dependency-path: |
+          go.sum
+          go.mod
+
+    - name: 🔧 Install system dependencies
+      shell: bash
+      run: |
+        echo "🔧 Installing system dependencies..."
+        
+        # Update package lists
+        if command -v apt-get >/dev/null 2>&1; then
+          sudo apt-get update -qq
+          sudo apt-get install -y jq curl git
+        elif command -v brew >/dev/null 2>&1; then
+          brew install jq curl git
+        elif command -v yum >/dev/null 2>&1; then
+          sudo yum install -y jq curl git
+        fi
+        
+        echo "✅ System dependencies installed"
+
+    - name: 🛠️ Install development tools
+      if: inputs.install-tools == 'true'
+      shell: bash
+      run: |
+        echo "🛠️ Installing development tools..."
+        
+        # Install golangci-lint
+        if ! command -v golangci-lint >/dev/null 2>&1; then
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+          echo "✅ golangci-lint installed"
+        fi
+        
+        # Install govulncheck
+        if ! command -v govulncheck >/dev/null 2>&1; then
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          echo "✅ govulncheck installed"
+        fi
+        
+        # Install GitHub CLI if not available
+        if ! command -v gh >/dev/null 2>&1; then
+          if command -v apt-get >/dev/null 2>&1; then
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt-get update -qq
+            sudo apt-get install gh -y
+          elif command -v brew >/dev/null 2>&1; then
+            brew install gh
+          fi
+          echo "✅ GitHub CLI installed"
+        fi
+
+    - name: 📦 Download Go dependencies
+      shell: bash
+      run: |
+        echo "📦 Downloading Go dependencies..."
+        go mod download
+        go mod verify
+        echo "✅ Dependencies downloaded and verified"
+
+    - name: 🧹 Tidy Go modules
+      shell: bash
+      run: |
+        echo "🧹 Tidying Go modules..."
+        go mod tidy
+        
+        # Check if go.mod or go.sum changed
+        if ! git diff --quiet go.mod go.sum; then
+          echo "⚠️ Go modules were modified during tidy"
+          git diff go.mod go.sum
+        else
+          echo "✅ Go modules are clean"
+        fi
+
+    - name: 🔨 Build Beaver
+      if: inputs.build-beaver == 'true'
+      id: build
+      shell: bash
+      run: |
+        echo "🔨 Building Beaver..."
+        
+        # Use build-tools.sh if available
+        if [[ -f "scripts/build-tools.sh" ]]; then
+          echo "Using build-tools.sh for building"
+          chmod +x scripts/build-tools.sh
+          ./scripts/build-tools.sh build --verbose
+        else
+          echo "Using direct go build"
+          mkdir -p bin
+          go build -o bin/beaver ./cmd/beaver
+        fi
+        
+        # Verify binary
+        if [[ -f "bin/beaver" ]]; then
+          chmod +x bin/beaver
+          
+          # Test binary functionality
+          if ./bin/beaver --help >/dev/null 2>&1; then
+            echo "✅ Beaver binary built and tested successfully"
+          else
+            echo "❌ Beaver binary test failed"
+            exit 1
+          fi
+          
+          # Get version if possible
+          version=$(./bin/beaver version 2>/dev/null || echo "unknown")
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "path=$(pwd)/bin/beaver" >> $GITHUB_OUTPUT
+          
+          # Show binary info
+          ls -lh bin/beaver
+          echo "Beaver version: $version"
+        else
+          echo "❌ Beaver binary not found after build"
+          exit 1
+        fi
+
+    - name: ✅ Verify setup
+      shell: bash
+      run: |
+        echo "✅ Verifying Beaver setup..."
+        
+        # Verify Go installation
+        go version
+        
+        # Verify Beaver binary if built
+        if [[ "${{ inputs.build-beaver }}" == "true" && -f "bin/beaver" ]]; then
+          ./bin/beaver version || echo "Version command not available"
+          ./bin/beaver --help >/dev/null || echo "Help command failed"
+        fi
+        
+        # Verify tools if installed
+        if [[ "${{ inputs.install-tools }}" == "true" ]]; then
+          echo "Installed tools:"
+          command -v golangci-lint >/dev/null && echo "✅ golangci-lint" || echo "❌ golangci-lint"
+          command -v govulncheck >/dev/null && echo "✅ govulncheck" || echo "❌ govulncheck"
+          command -v gh >/dev/null && echo "✅ GitHub CLI" || echo "❌ GitHub CLI"
+        fi
+        
+        echo "🎉 Beaver environment setup completed successfully!"
+
+branding:
+  icon: 'tool'
+  color: 'blue'

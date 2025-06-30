@@ -1,0 +1,156 @@
+# CI Configuration for Beaver project
+# Centralized configuration for continuous integration workflows
+
+# Go environment configuration
+go:
+  version: "stable"
+  modules_cache: true
+  proxy: "https://proxy.golang.org,direct"
+
+# Build configuration
+build:
+  binary_name: "beaver"
+  output_dir: "bin"
+  platforms:
+    - os: linux
+      arch: amd64
+    - os: linux  
+      arch: arm64
+    - os: darwin
+      arch: amd64
+    - os: darwin
+      arch: arm64
+    - os: windows
+      arch: amd64
+  ldflags:
+    - "-s"
+    - "-w"
+    - "-X main.Version={{.Version}}"
+    - "-X main.BuildDate={{.BuildDate}}"
+    - "-X main.GitCommit={{.GitCommit}}"
+
+# Testing configuration
+testing:
+  timeout: "15m"
+  coverage_threshold: 75
+  coverage_file: "coverage.out"
+  race_detection: true
+  verbose: true
+  integration_tests:
+    enabled: true
+    timeout: "30m"
+    required_env_vars:
+      - "GITHUB_TOKEN"
+      - "BEAVER_TEST_REPO_OWNER"
+      - "BEAVER_TEST_REPO_NAME"
+  performance_tests:
+    enabled: true
+    timeout: "30m"
+    run_on_main_only: true
+
+# Quality checks configuration
+quality:
+  format_check:
+    enabled: true
+    tool: "gofmt"
+  linting:
+    enabled: true
+    tool: "golangci-lint"
+    timeout: "5m"
+    config_file: ".golangci.yml"
+  security:
+    enabled: true
+    tool: "govulncheck"
+  static_analysis:
+    enabled: true
+    tools:
+      - "go vet"
+      - "staticcheck"
+
+# Artifact configuration
+artifacts:
+  retention_days: 30
+  upload_patterns:
+    - "bin/*"
+    - "*.log"
+    - "coverage.*"
+    - "*.json"
+  exclude_patterns:
+    - "*.tmp"
+    - "*.temp"
+
+# Notification configuration
+notifications:
+  slack:
+    enabled: false
+    webhook_url_env: "SLACK_WEBHOOK_URL"
+    channels:
+      success: "#ci-success"
+      failure: "#ci-alerts"
+  teams:
+    enabled: false
+    webhook_url_env: "TEAMS_WEBHOOK_URL"
+  email:
+    enabled: false
+    smtp_server: ""
+    recipients: []
+
+# Environment-specific configurations
+environments:
+  development:
+    skip_slow_tests: true
+    verbose_output: true
+    artifact_retention: 7
+  staging:
+    run_integration_tests: true
+    performance_tests: false
+    artifact_retention: 14
+  production:
+    run_all_tests: true
+    performance_tests: true
+    security_scans: true
+    artifact_retention: 30
+
+# Conditional execution rules
+conditions:
+  skip_ci_patterns:
+    - "[skip ci]"
+    - "[ci skip]"
+    - "[skip-ci]"
+  force_full_build_patterns:
+    - "[force build]"
+    - "[rebuild]"
+  performance_test_triggers:
+    - schedule
+    - workflow_dispatch
+    - push_to_main
+
+# Cache configuration
+cache:
+  go_modules:
+    enabled: true
+    key_pattern: "go-mod-{{ .OS }}-{{ checksum 'go.sum' }}"
+  build_cache:
+    enabled: true
+    key_pattern: "go-build-{{ .OS }}-{{ .Arch }}"
+  dependencies:
+    enabled: true
+    paths:
+      - "~/go/pkg/mod"
+      - "~/.cache/go-build"
+
+# Parallel execution settings
+parallelism:
+  unit_tests: true
+  integration_tests: false
+  build_matrix: true
+  max_parallel_jobs: 3
+
+# Retry configuration
+retry:
+  max_attempts: 3
+  backoff_factor: 2
+  retry_on:
+    - "network timeout"
+    - "temporary failure"
+    - "rate limit"
