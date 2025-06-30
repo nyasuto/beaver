@@ -15,38 +15,38 @@ on:
   # Issue events - create, update, close, reopen
   issues:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
-  
+
   # Push to main branch - for production deployment
   push:
     branches: [main]
-  
+
   # Scheduled updates
   schedule:
-    - cron: '0 17 * * 6'  # Weekly full rebuild - Every Saturday at 5 PM UTC (2 AM JST Sunday)
-    - cron: '0 */3 * * *'  # Check for merged PRs - Every 3 hours
-  
+    - cron: "0 17 * * 6" # Weekly full rebuild - Every Saturday at 5 PM UTC (2 AM JST Sunday)
+    - cron: "0 */3 * * *" # Check for merged PRs - Every 3 hours
+
   # Manual trigger with advanced options
   workflow_dispatch:
     inputs:
       force_rebuild:
-        description: 'Force full wiki rebuild'
+        description: "Force full wiki rebuild"
         required: false
         default: false
         type: boolean
       max_items:
-        description: 'Maximum items to process'
+        description: "Maximum items to process"
         required: false
-        default: '100'
+        default: "100"
         type: string
       target_repository:
-        description: 'Override target repository'
+        description: "Override target repository"
         required: false
-        default: ''
+        default: ""
         type: string
 
 env:
-  GO_VERSION: 'stable'
-  BEAVER_CONFIG_FILE: 'beaver.yml'
+  GO_VERSION: "stable"
+  BEAVER_CONFIG_FILE: "beaver.yml"
 
 jobs:
   # Pre-flight checks and environment setup
@@ -58,81 +58,81 @@ jobs:
       should_update: ${{ steps.check_conditions.outputs.should_update }}
       update_type: ${{ steps.check_conditions.outputs.update_type }}
       repository: ${{ steps.check_conditions.outputs.repository }}
-      
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: 🔍 Analyze trigger conditions
-      id: check_conditions
-      env:
-        TARGET_REPO: ${{ github.event.inputs.target_repository || github.repository }}
-        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-      run: |
-        should_update=true
-        update_type="incremental"
-        
-        echo "Event: ${{ github.event_name }}"
-        echo "Action: ${{ github.event.action }}"
-        
-        # Skip if commit contains [skip-wiki]
-        if [[ "$COMMIT_MESSAGE" == *"[skip-wiki]"* ]]; then
-          echo "Skipping - commit contains [skip-wiki]"
-          should_update=false
-        fi
-        
-        # Determine update type based on trigger
-        case "${{ github.event_name }}" in
-          "issues")
-            case "${{ github.event.action }}" in
-              "opened"|"edited"|"reopened"|"labeled"|"unlabeled")
-                echo "Issue event: ${{ github.event.action }} - incremental update"
-                update_type="incremental"
-                ;;
-              "closed")
-                echo "Issue closed - incremental update"
-                update_type="incremental"
-                ;;
-              *)
-                echo "Unknown issue action: ${{ github.event.action }}"
-                should_update=false
-                ;;
-            esac
-            ;;
-          "push")
-            echo "Push to main - incremental update"
-            update_type="incremental"
-            ;;
-          "schedule")
-            # Determine if this is weekly full rebuild or hourly PR check
-            if [[ "${{ github.event.schedule }}" == "0 17 * * 6" ]]; then
-              echo "Weekly scheduled run - full rebuild"
-              update_type="full"
-            else
-              echo "Hourly PR check - incremental update for recent merges"
-              update_type="incremental"
-            fi
-            ;;
-          "workflow_dispatch")
-            if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
-              echo "Manual trigger - full rebuild requested"
-              update_type="full"
-            else
-              echo "Manual trigger - incremental update"
-              update_type="incremental"
-            fi
-            ;;
-          *)
-            echo "Unknown event type: ${{ github.event_name }}"
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Analyze trigger conditions
+        id: check_conditions
+        env:
+          TARGET_REPO: ${{ github.event.inputs.target_repository || github.repository }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          should_update=true
+          update_type="incremental"
+
+          echo "Event: ${{ github.event_name }}"
+          echo "Action: ${{ github.event.action }}"
+
+          # Skip if commit contains [skip-wiki]
+          if [[ "$COMMIT_MESSAGE" == *"[skip-wiki]"* ]]; then
+            echo "Skipping - commit contains [skip-wiki]"
             should_update=false
-            ;;
-        esac
-        
-        echo "should_update=$should_update" >> $GITHUB_OUTPUT
-        echo "update_type=$update_type" >> $GITHUB_OUTPUT
-        echo "repository=$TARGET_REPO" >> $GITHUB_OUTPUT
+          fi
+
+          # Determine update type based on trigger
+          case "${{ github.event_name }}" in
+            "issues")
+              case "${{ github.event.action }}" in
+                "opened"|"edited"|"reopened"|"labeled"|"unlabeled")
+                  echo "Issue event: ${{ github.event.action }} - incremental update"
+                  update_type="incremental"
+                  ;;
+                "closed")
+                  echo "Issue closed - incremental update"
+                  update_type="incremental"
+                  ;;
+                *)
+                  echo "Unknown issue action: ${{ github.event.action }}"
+                  should_update=false
+                  ;;
+              esac
+              ;;
+            "push")
+              echo "Push to main - incremental update"
+              update_type="incremental"
+              ;;
+            "schedule")
+              # Determine if this is weekly full rebuild or hourly PR check
+              if [[ "${{ github.event.schedule }}" == "0 17 * * 6" ]]; then
+                echo "Weekly scheduled run - full rebuild"
+                update_type="full"
+              else
+                echo "Hourly PR check - incremental update for recent merges"
+                update_type="incremental"
+              fi
+              ;;
+            "workflow_dispatch")
+              if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
+                echo "Manual trigger - full rebuild requested"
+                update_type="full"
+              else
+                echo "Manual trigger - incremental update"
+                update_type="incremental"
+              fi
+              ;;
+            *)
+              echo "Unknown event type: ${{ github.event_name }}"
+              should_update=false
+              ;;
+          esac
+
+          echo "should_update=$should_update" >> $GITHUB_OUTPUT
+          echo "update_type=$update_type" >> $GITHUB_OUTPUT
+          echo "repository=$TARGET_REPO" >> $GITHUB_OUTPUT
 
   # Beaver self-documentation (GitHub Pages only)
   beaver-self-documentation:
@@ -140,137 +140,133 @@ jobs:
     runs-on: ubuntu-latest
     needs: preflight
     if: ${{ needs.preflight.outputs.should_update == 'true' && github.ref == 'refs/heads/main' }}
-    
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: 🐹 Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: 📦 Install dependencies and build
-      run: |
-        # Install Go dependencies
-        go mod download
-        go mod tidy
-        
-        # Install system tools
-        sudo apt-get update
-        sudo apt-get install -y jq curl
-        
-        # Build Beaver
-        make build
-        chmod +x ./bin/beaver ./scripts/ci-beaver.sh
-        
-    - name: ✅ Verify installation
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-      run: |
-        # Test binary
-        ./bin/beaver --help
-        ./scripts/ci-beaver.sh --help
-        
-        # Test CI script
-        ./scripts/ci-beaver.sh health-check
-        
-    - name: ⚙️ Setup configuration
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        TARGET_REPO: ${{ needs.preflight.outputs.repository }}
-      run: |
-        # Verify GitHub token
-        if [ -z "$GITHUB_TOKEN" ]; then
-          echo "❌ No GitHub token available"
-          exit 1
-        fi
-        
-        # Create configuration using CI script
-        ./scripts/ci-beaver.sh test-setup \
-          --repository "$TARGET_REPO" \
-          --verbose
-        
-    - name: 🚀 Generate GitHub Pages Content
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-        UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
-        MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
-      run: |
-        echo "🚀 === GitHub Pages Deployment Process ==="
-        echo "📄 Generating Jekyll site for GitHub Pages"
-        echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
-        
-        # Generate GitHub Pages content
-        ./scripts/ci-beaver.sh github-pages \
-          --repository "${{ needs.preflight.outputs.repository }}" \
-          --max-items "$MAX_ITEMS" \
-          --theme "minima" \
-          --enable-search \
-          --verbose
-          
-        echo "✅ GitHub Pages content generated successfully"
-        
-    - name: 📊 GitHub Pages Deployment Report
-      if: always()
-      run: |
-        echo "📊 GitHub Pages Deployment Report"
-        echo "================================="
-        echo "🚀 Target: GitHub Pages Jekyll site"
-        echo "🎯 Trigger: ${{ github.event_name }}"
-        echo "🔄 Update Type: ${{ needs.preflight.outputs.update_type }}"
-        echo "📁 Repository: ${{ needs.preflight.outputs.repository }}"
-        echo "⏰ Completed: $(date '+%Y-%m-%d %H:%M:%S UTC')"
-        echo "✅ Status: ${{ job.status }}"
-        echo "🌐 Pages URL: https://${{ github.repository_owner }}.github.io/beaver"
-        
-        # Show incremental state if exists
-        if [ -f ".beaver/incremental-state.json" ]; then
-          echo ""
-          echo "📈 Incremental State:"
-          jq -r '.last_update // "Never"' .beaver/incremental-state.json | sed 's/^/  Last Update: /'
-          jq -r '.processed_issues | length' .beaver/incremental-state.json | sed 's/^/  Processed Issues: /'
-          jq -r '.processed_events | length' .beaver/incremental-state.json | sed 's/^/  Processed Events: /'
-        fi
-        
-        # Show log file if exists
-        if [ -f ".beaver/ci-beaver.log" ]; then
-          echo ""
-          echo "📝 Recent Log Entries:"
-          tail -n 10 .beaver/ci-beaver.log | sed 's/^/  /'
-        fi
-        ls -la _site || echo "No _site directory found - check if generation was successful"
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
 
-    - name: 📄 Setup GitHub Pages
-      uses: actions/configure-pages@v5
-      
-    - name: 📤 Upload Pages artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './_site'
-        
-    - name: 🚀 Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: 📦 Install dependencies and build
+        run: |
+          # Install Go dependencies
+          go mod download
+          go mod tidy
 
-    - name: 📤 Upload automation artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: beaver-automation-${{ github.run_id }}
-        path: |
-          .beaver/
-          *.md
-          !README.md
-        retention-days: 7
+          # Install system tools
+          sudo apt-get update
+          sudo apt-get install -y jq curl
 
+          # Build Beaver
+          make build
+          chmod +x ./bin/beaver ./scripts/ci-beaver.sh
+
+      - name: ✅ Verify installation
+        env:
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          # Test binary
+          ./bin/beaver --help
+          ./scripts/ci-beaver.sh --help
+
+          # Test CI script
+          ./scripts/ci-beaver.sh health-check
+
+      - name: ⚙️ Setup configuration
+        env:
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          TARGET_REPO: ${{ needs.preflight.outputs.repository }}
+        run: |
+          # Verify GitHub token
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "❌ No GitHub token available"
+            exit 1
+          fi
+
+          # Create configuration using CI script
+          ./scripts/ci-beaver.sh test-setup \
+            --repository "$TARGET_REPO" \
+            --verbose
+
+      - name: 🚀 Generate GitHub Pages Content
+        env:
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
+          MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
+        run: |
+          echo "🚀 === GitHub Pages Deployment Process ==="
+          echo "📄 Generating Jekyll site for GitHub Pages"
+          echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
+
+          # Generate GitHub Pages content
+          ./scripts/ci-beaver.sh github-pages \
+            --repository "${{ needs.preflight.outputs.repository }}" \
+            --max-items "$MAX_ITEMS" \
+            --theme "minima" \
+            --enable-search \
+            --verbose
+            
+          echo "✅ GitHub Pages content generated successfully"
+
+      - name: 📊 GitHub Pages Deployment Report
+        if: always()
+        run: |
+          echo "📊 GitHub Pages Deployment Report"
+          echo "================================="
+          echo "🚀 Target: GitHub Pages Jekyll site"
+          echo "🎯 Trigger: ${{ github.event_name }}"
+          echo "🔄 Update Type: ${{ needs.preflight.outputs.update_type }}"
+          echo "📁 Repository: ${{ needs.preflight.outputs.repository }}"
+          echo "⏰ Completed: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "✅ Status: ${{ job.status }}"
+          echo "🌐 Pages URL: https://${{ github.repository_owner }}.github.io/beaver"
+
+          # Show incremental state if exists
+          if [ -f ".beaver/incremental-state.json" ]; then
+            echo ""
+            echo "📈 Incremental State:"
+            jq -r '.last_update // "Never"' .beaver/incremental-state.json | sed 's/^/  Last Update: /'
+            jq -r '.processed_issues | length' .beaver/incremental-state.json | sed 's/^/  Processed Issues: /'
+            jq -r '.processed_events | length' .beaver/incremental-state.json | sed 's/^/  Processed Events: /'
+          fi
+
+          # Show log file if exists
+          if [ -f ".beaver/ci-beaver.log" ]; then
+            echo ""
+            echo "📝 Recent Log Entries:"
+            tail -n 10 .beaver/ci-beaver.log | sed 's/^/  /'
+          fi
+          ls -la _site || echo "No _site directory found - check if generation was successful"
+
+      - name: 📤 Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./_site"
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: 📤 Upload automation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beaver-automation-${{ github.run_id }}
+          path: |
+            .beaver/
+            *.md
+            !README.md
+          retention-days: 7
 
   # Self-documentation cleanup and maintenance
   self-documentation-cleanup:
@@ -278,99 +274,98 @@ jobs:
     runs-on: ubuntu-latest
     needs: [beaver-self-documentation]
     if: ${{ always() && (github.event_name == 'schedule' || github.event.inputs.force_rebuild == 'true') && github.ref == 'refs/heads/main' }}
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🐹 Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
-        
-    - name: 📦 Build tools
-      run: |
-        go mod download
-        make build
-        chmod +x ./scripts/ci-beaver.sh
-        
-    - name: 🧹 Perform self-documentation cleanup
-      run: |
-        echo "🧹 Performing self-documentation maintenance cleanup..."
-        echo "🦫 Meta-maintenance: Beaver cleaning up its own documentation artifacts"
-        
-        # Clean up old artifacts
-        ./scripts/ci-beaver.sh clean --verbose
-        
-        # Optimize incremental state for self-documentation
-        if [ -f ".beaver/incremental-state.json" ]; then
-          echo "📊 Self-documentation state size before cleanup:"
-          du -h .beaver/incremental-state.json
-          
-          # The cleanup is handled by the incremental manager
-          ./bin/beaver build --incremental --max-items 1 --dry-run >/dev/null 2>&1 || true
-          
-          echo "📊 Self-documentation state size after cleanup:"
-          du -h .beaver/incremental-state.json 2>/dev/null || echo "State file removed"
-        fi
-        
-        echo "✅ Self-documentation cleanup complete - Beaver maintained its own knowledge base"
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: 📦 Build tools
+        run: |
+          go mod download
+          make build
+          chmod +x ./scripts/ci-beaver.sh
+
+      - name: 🧹 Perform self-documentation cleanup
+        run: |
+          echo "🧹 Performing self-documentation maintenance cleanup..."
+          echo "🦫 Meta-maintenance: Beaver cleaning up its own documentation artifacts"
+
+          # Clean up old artifacts
+          ./scripts/ci-beaver.sh clean --verbose
+
+          # Optimize incremental state for self-documentation
+          if [ -f ".beaver/incremental-state.json" ]; then
+            echo "📊 Self-documentation state size before cleanup:"
+            du -h .beaver/incremental-state.json
+            
+            # The cleanup is handled by the incremental manager
+            ./bin/beaver build --incremental --max-items 1 --dry-run >/dev/null 2>&1 || true
+            
+            echo "📊 Self-documentation state size after cleanup:"
+            du -h .beaver/incremental-state.json 2>/dev/null || echo "State file removed"
+          fi
+
+          echo "✅ Self-documentation cleanup complete - Beaver maintained its own knowledge base"
 
   # Weekly comprehensive self-analysis (separate from regular triggers)
   weekly-self-analysis:
     name: 📈 Weekly Self-Analysis
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'schedule' && github.ref == 'refs/heads/main' }}
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: 🐹 Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: 📦 Build tools
-      run: |
-        go mod download
-        make build
-        chmod +x ./bin/beaver ./scripts/ci-beaver.sh
-        
-    - name: 📊 Execute comprehensive self-analysis
-      env:
-        GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-      run: |
-        echo "📈 === Weekly Beaver Self-Analysis ==="
-        echo "🦫 Meta-Analysis: Comprehensive review of Beaver's own development patterns"
-        echo "📅 Analysis Period: Past 7 days"
-        echo "🎯 Focus: Development trends, health metrics, strategic insights"
-        
-        # Run comprehensive analysis with extended metrics
-        ./bin/beaver build --comprehensive-analysis --week-range=7 --verbose
-        
-        echo "📊 Generating weekly development insights..."
-        ./bin/beaver wiki generate development-strategy --force-refresh
-        
-        echo "🏷️ Analyzing label effectiveness trends..."
-        ./bin/beaver wiki generate label-analysis --trend-analysis
-        
-        echo "📈 Computing velocity and health trends..."
-        ./bin/beaver wiki generate statistics --include-trends
-        
-        echo "✅ Weekly self-analysis complete - Comprehensive insights generated"
-        
-    - name: 📤 Upload weekly analysis artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: weekly-self-analysis-${{ github.run_id }}
-        path: |
-          .beaver/
-          *.md
-          !README.md
-        retention-days: 30
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
 
+      - name: 📦 Build tools
+        run: |
+          go mod download
+          make build
+          chmod +x ./bin/beaver ./scripts/ci-beaver.sh
+
+      - name: 📊 Execute comprehensive self-analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📈 === Weekly Beaver Self-Analysis ==="
+          echo "🦫 Meta-Analysis: Comprehensive review of Beaver's own development patterns"
+          echo "📅 Analysis Period: Past 7 days"
+          echo "🎯 Focus: Development trends, health metrics, strategic insights"
+
+          # Run comprehensive analysis with extended metrics
+          ./bin/beaver build --comprehensive-analysis --week-range=7 --verbose
+
+          echo "📊 Generating weekly development insights..."
+          ./bin/beaver wiki generate development-strategy --force-refresh
+
+          echo "🏷️ Analyzing label effectiveness trends..."
+          ./bin/beaver wiki generate label-analysis --trend-analysis
+
+          echo "📈 Computing velocity and health trends..."
+          ./bin/beaver wiki generate statistics --include-trends
+
+          echo "✅ Weekly self-analysis complete - Comprehensive insights generated"
+
+      - name: 📤 Upload weekly analysis artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-self-analysis-${{ github.run_id }}
+          path: |
+            .beaver/
+            *.md
+            !README.md
+          retention-days: 30
