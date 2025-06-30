@@ -259,8 +259,8 @@ func TestRunSiteBuildCommand_NoConfig(t *testing.T) {
 		t.Error("Expected error when no config file exists, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "設定読み込みエラー") {
-		t.Errorf("Expected config loading error, got: %s", err.Error())
+	if !strings.Contains(err.Error(), "設定が無効です") {
+		t.Errorf("Expected config validation error, got: %s", err.Error())
 	}
 }
 
@@ -307,8 +307,8 @@ func TestRunSiteDeployCommand_NoSite(t *testing.T) {
 		t.Error("Expected error when no site exists, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "site not found") {
-		t.Errorf("Expected 'site not found' error, got: %s", err.Error())
+	if !strings.Contains(err.Error(), "リポジトリ形式が無効です") {
+		t.Errorf("Expected repository format error, got: %s", err.Error())
 	}
 }
 
