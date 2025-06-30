@@ -233,7 +233,7 @@ func (p *GitHubPagesPublisher) createInitialJekyllStructure() error {
 	return nil
 }
 
-// generateJekyllConfig generates the Jekyll _config.yml file
+// generateJekyllConfig generates the Jekyll _config.yml file with Japanese support
 func (p *GitHubPagesPublisher) generateJekyllConfig() string {
 	repoName := p.config.Repository
 	baseURL := p.pagesConfig.BaseURL
@@ -241,30 +241,82 @@ func (p *GitHubPagesPublisher) generateJekyllConfig() string {
 		baseURL = "/" + repoName // Auto-detect based on repository name
 	}
 
-	config := fmt.Sprintf(`# Jekyll configuration for Beaver GitHub Pages
-title: %s Knowledge Base
+	config := fmt.Sprintf(`# Beaver GitHub Pages 設定ファイル
+title: %s ナレッジベース
 description: >-
-  AI-powered knowledge base automatically generated from GitHub Issues
-  using Beaver - transforming development streams into structured knowledge dams
+  GitHub Issuesから自動生成されるAI駆動型ナレッジベース
+  Beaver - 流れる開発ストリームを構造化された知識ダムに変換
 
-# Repository information
+# リポジトリ情報
 repository: %s/%s
 github_username: %s
 
-# Build settings
+# ビルド設定
 markdown: kramdown
 highlighter: rouge
 theme: %s
+lang: ja-JP
+timezone: Asia/Tokyo
 
-# GitHub Pages settings
+# GitHub Pages設定
 url: "https://%s.github.io"
 baseurl: "%s"
 
-# Beaver metadata
+# 日本語設定
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# SEO設定
+author: %s
+keywords: "AI, ナレッジベース, GitHub Issues, 自動化, ドキュメント生成, Beaver"
+
+# サイト構造設定
+nav_structure:
+  - title: "ホーム"
+    url: "/"
+    icon: "🏠"
+  - title: "課題管理"
+    url: "/issues/"
+    icon: "📋"
+    children:
+      - title: "課題一覧"
+        url: "/beaver-issues-summary.html"
+      - title: "課題分析"
+        url: "/issues-analysis.html"
+  - title: "プロジェクト戦略"
+    url: "/strategy/"
+    icon: "📈"
+    children:
+      - title: "開発戦略"
+        url: "/beaver-development-strategy.html"
+      - title: "ロードマップ"
+        url: "/roadmap.html"
+  - title: "学習・ガイド"
+    url: "/guides/"
+    icon: "📚"
+    children:
+      - title: "学習パス"
+        url: "/beaver-learning-path.html"
+      - title: "トラブルシューティング"
+        url: "/troubleshooting.html"
+  - title: "AI機能"
+    url: "/ai/"
+    icon: "🤖"
+    children:
+      - title: "AI分析"
+        url: "/ai-analysis.html"
+      - title: "レポート"
+        url: "/reports.html"
+
+# Beaver メタデータ
 beaver:
-  version: "Phase 1"
+  version: "Phase 2.0"
   generated_at: %s
   auto_generated: true
+  language: "ja-JP"
+  layout_version: "3-column"
 `,
 		p.config.Repository,
 		p.config.Owner, p.config.Repository,
@@ -272,73 +324,454 @@ beaver:
 		p.pagesConfig.Theme,
 		p.config.Owner,
 		baseURL,
+		p.config.Owner,
 		time.Now().Format(time.RFC3339),
 	)
 
 	return config
 }
 
-// generateInitialIndex generates the initial index.md file
+// generateInitialIndex generates the initial index.md file in Japanese
 func (p *GitHubPagesPublisher) generateInitialIndex() string {
 	return fmt.Sprintf(`---
 layout: default
-title: Home
+title: ホーム
+description: "%s の AI駆動型ナレッジベース - GitHub Issues から自動生成"
 ---
 
-# %s Knowledge Base
+# %s ナレッジベース
 
-Welcome to the AI-powered knowledge base for %s, automatically generated and maintained by **Beaver**.
+**Beaver** によって自動生成・維持される %s の AI駆動型ナレッジベースへようこそ。
 
-## 🦫 About This Knowledge Base
+## 🦫 このナレッジベースについて
 
-This site transforms flowing development streams into structured, persistent knowledge. All content is automatically generated from:
+このサイトは、流れる開発ストリームを構造化された永続的な知識に変換します。すべてのコンテンツは以下から自動生成されています：
 
-- **GitHub Issues** and their discussions
-- **Development patterns** and insights
-- **Problem-solving documentation**
-- **Learning paths** and milestones
+- **GitHub Issues** とその議論
+- **開発パターン** と洞察
+- **問題解決ドキュメント**
+- **学習パス** とマイルストーン
 
-## 📚 Navigation
+## 📚 ナビゲーション
 
-- [Issues Summary](./issues-summary.html) - Comprehensive overview of all project issues
-- [Troubleshooting Guide](./troubleshooting.html) - Solutions to common problems
-- [Learning Path](./learning-path.html) - Development journey and milestones
+### 📋 課題管理
+- [課題一覧](./beaver-issues-summary.html) - 全プロジェクト課題の包括的な概要
+- [課題分析](./issues-analysis.html) - 課題パターンと傾向の分析
+
+### 📈 プロジェクト戦略
+- [開発戦略](./beaver-development-strategy.html) - プロジェクトの戦略と健康状態
+- [ロードマップ](./roadmap.html) - 開発計画と将来の方向性
+
+### 📚 学習・ガイド
+- [学習パス](./beaver-learning-path.html) - 開発の旅路とマイルストーン
+- [トラブルシューティング](./troubleshooting.html) - よくある問題の解決方法
+
+### 🤖 AI機能
+- [AI分析](./ai-analysis.html) - 自動パターン検出と洞察
+- [レポート](./reports.html) - 総合的なプロジェクト分析
+
+## 🎯 クイックアクセス
+
+<div class="quick-access">
+  <div class="card">
+    <h3>📊 プロジェクト概要</h3>
+    <p>現在の開発状況と主要指標</p>
+    <a href="./beaver-development-strategy.html" class="btn">詳細を見る</a>
+  </div>
+  
+  <div class="card">
+    <h3>🔍 最新の課題</h3>
+    <p>オープンな課題と最近の更新</p>
+    <a href="./beaver-issues-summary.html" class="btn">課題一覧</a>
+  </div>
+  
+  <div class="card">
+    <h3>📈 学習進捗</h3>
+    <p>開発の進歩と次のステップ</p>
+    <a href="./beaver-learning-path.html" class="btn">学習パス</a>
+  </div>
+</div>
 
 ---
 
-*🦫 This knowledge base is automatically maintained by [Beaver](https://github.com/nyasuto/beaver) - Last updated: %s*
+*🦫 このナレッジベースは [Beaver](https://github.com/nyasuto/beaver) によって自動的に維持されています - 最終更新: %s*
+
+**🤖 AI による継続的な知識ダム建設中...**
 `,
 		p.config.Repository,
 		p.config.Repository,
-		time.Now().Format("2006-01-02 15:04:05 JST"),
+		p.config.Repository,
+		time.Now().Format("2006年01月02日 15:04:05 JST"),
 	)
 }
 
-// generateDefaultLayout generates the default HTML layout
+// generateDefaultLayout generates the 3-column Japanese layout
 func (p *GitHubPagesPublisher) generateDefaultLayout() string {
 	return `<!DOCTYPE html>
-<html lang="en-US">
+<html lang="ja-JP">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
     <title>{{ page.title }} - {{ site.title }}</title>
+    <meta name="description" content="{{ page.description | default: site.description }}">
+    <meta name="keywords" content="{{ site.keywords }}">
+    <meta name="author" content="{{ site.author }}">
+    
+    <!-- SEO -->
+    <meta property="og:title" content="{{ page.title }} - {{ site.title }}">
+    <meta property="og:description" content="{{ page.description | default: site.description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ page.url | absolute_url }}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ "/assets/css/main.css" | relative_url }}">
+    <style>
+      /* 3カラムレイアウト CSS */
+      :root {
+        --primary-color: #2c5530;
+        --secondary-color: #4a7c59;
+        --accent-color: #8fbc8f;
+        --text-color: #333333;
+        --bg-color: #ffffff;
+        --sidebar-bg: #f8f9fa;
+        --border-color: #e9ecef;
+        --shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Noto Sans JP', sans-serif;
+        line-height: 1.7;
+        color: var(--text-color);
+        background-color: var(--bg-color);
+      }
+      
+      .main-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr 250px;
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas: 
+          "header header header"
+          "sidebar content toc"
+          "footer footer footer";
+        min-height: 100vh;
+        gap: 0;
+      }
+      
+      .header {
+        grid-area: header;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 1rem 2rem;
+        box-shadow: var(--shadow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin: 0;
+      }
+      
+      .header h1 a {
+        color: white;
+        text-decoration: none;
+      }
+      
+      .header .subtitle {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.25rem;
+      }
+      
+      .sidebar {
+        grid-area: sidebar;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border-color);
+        padding: 2rem 1rem;
+        position: sticky;
+        top: 80px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+      }
+      
+      .nav-section {
+        margin-bottom: 2rem;
+      }
+      
+      .nav-section h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent-color);
+      }
+      
+      .nav-section ul {
+        list-style: none;
+      }
+      
+      .nav-section li {
+        margin-bottom: 0.5rem;
+      }
+      
+      .nav-section a {
+        display: block;
+        padding: 0.5rem 0.75rem;
+        color: var(--text-color);
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+      }
+      
+      .nav-section a:hover {
+        background: var(--accent-color);
+        color: white;
+        transform: translateX(4px);
+      }
+      
+      .nav-section a.active {
+        background: var(--primary-color);
+        color: white;
+      }
+      
+      .content {
+        grid-area: content;
+        padding: 2rem 3rem;
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      
+      .content h1 {
+        font-family: 'Noto Serif JP', serif;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid var(--accent-color);
+      }
+      
+      .content h2 {
+        color: var(--secondary-color);
+        margin: 2rem 0 1rem 0;
+        font-weight: 500;
+      }
+      
+      .content h3 {
+        color: var(--primary-color);
+        margin: 1.5rem 0 0.75rem 0;
+      }
+      
+      .quick-access {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+      
+      .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--accent-color);
+        transition: transform 0.2s ease;
+      }
+      
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+      
+      .btn {
+        display: inline-block;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        margin-top: 0.75rem;
+        transition: background 0.2s ease;
+      }
+      
+      .btn:hover {
+        background: var(--secondary-color);
+      }
+      
+      .toc {
+        grid-area: toc;
+        background: white;
+        border-left: 1px solid var(--border-color);
+        padding: 2rem 1rem;
+        position: sticky;
+        top: 80px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+      }
+      
+      .toc h4 {
+        font-size: 0.9rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      
+      .toc ul {
+        list-style: none;
+      }
+      
+      .toc li {
+        margin-bottom: 0.5rem;
+      }
+      
+      .toc a {
+        color: var(--text-color);
+        text-decoration: none;
+        font-size: 0.85rem;
+        display: block;
+        padding: 0.25rem 0;
+        transition: color 0.2s ease;
+      }
+      
+      .toc a:hover {
+        color: var(--primary-color);
+      }
+      
+      .footer {
+        grid-area: footer;
+        background: var(--sidebar-bg);
+        border-top: 1px solid var(--border-color);
+        padding: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #666;
+      }
+      
+      /* レスポンシブ対応 */
+      @media (max-width: 1200px) {
+        .main-layout {
+          grid-template-columns: 200px 1fr;
+          grid-template-areas: 
+            "header header"
+            "sidebar content"
+            "footer footer";
+        }
+        .toc { display: none; }
+      }
+      
+      @media (max-width: 768px) {
+        .main-layout {
+          grid-template-columns: 1fr;
+          grid-template-areas: 
+            "header"
+            "content"
+            "footer";
+        }
+        .sidebar { display: none; }
+        .content { padding: 1rem; }
+      }
+    </style>
   </head>
   <body>
-    <div class="container-lg px-3 my-5 markdown-body">
-      {% if site.title and site.title != page.title %}
-      <h1><a href="{{ "/" | relative_url }}">{{ site.title }}</a></h1>
-      {% endif %}
-
-      <nav class="site-nav">
-        <a href="{{ "/" | relative_url }}">Home</a>
-        <a href="{{ "/issues-summary.html" | relative_url }}">Issues</a>
-        <a href="{{ "/troubleshooting.html" | relative_url }}">Troubleshooting</a>
-        <a href="{{ "/learning-path.html" | relative_url }}">Learning Path</a>
+    <div class="main-layout">
+      <!-- ヘッダー -->
+      <header class="header">
+        <h1>
+          <a href="{{ "/" | relative_url }}">🦫 {{ site.title }}</a>
+        </h1>
+        <div class="subtitle">AI駆動型ナレッジベース | {{ site.beaver.version }}</div>
+      </header>
+      
+      <!-- 左サイドバー -->
+      <nav class="sidebar">
+        {% for section in site.nav_structure %}
+        <div class="nav-section">
+          <h3>{{ section.icon }} {{ section.title }}</h3>
+          <ul>
+            {% if section.children %}
+              {% for child in section.children %}
+              <li><a href="{{ child.url | relative_url }}">{{ child.title }}</a></li>
+              {% endfor %}
+            {% else %}
+              <li><a href="{{ section.url | relative_url }}">{{ section.title }}</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        {% endfor %}
       </nav>
-
-      {{ content }}
+      
+      <!-- メインコンテンツ -->
+      <main class="content">
+        {{ content }}
+      </main>
+      
+      <!-- 右サイドバー（目次） -->
+      <aside class="toc">
+        <h4>📖 ページ内目次</h4>
+        <div id="toc-container">
+          <!-- JavaScriptで動的生成 -->
+        </div>
+        
+        <div style="margin-top: 2rem;">
+          <h4>⚡ クイックアクション</h4>
+          <a href="#" class="btn" style="display: block; margin: 0.5rem 0;">📝 フィードバック</a>
+          <a href="#" class="btn" style="display: block; margin: 0.5rem 0;">🔄 共有</a>
+          <a href="javascript:window.print()" class="btn" style="display: block; margin: 0.5rem 0;">🖨️ 印刷</a>
+        </div>
+      </aside>
+      
+      <!-- フッター -->
+      <footer class="footer">
+        <p>🦫 このナレッジベースは <a href="https://github.com/nyasuto/beaver">Beaver</a> によって自動生成されています</p>
+        <p>最終更新: {{ site.beaver.generated_at | date: "%Y年%m月%d日 %H:%M" }}</p>
+      </footer>
     </div>
+    
+    <!-- 目次生成スクリプト -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const tocContainer = document.getElementById('toc-container');
+        const headings = document.querySelectorAll('.content h2, .content h3');
+        
+        if (headings.length > 0) {
+          const tocList = document.createElement('ul');
+          
+          headings.forEach(function(heading, index) {
+            const id = 'heading-' + index;
+            heading.id = id;
+            
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#' + id;
+            a.textContent = heading.textContent;
+            a.style.paddingLeft = heading.tagName === 'H3' ? '1rem' : '0';
+            
+            li.appendChild(a);
+            tocList.appendChild(li);
+          });
+          
+          tocContainer.appendChild(tocList);
+        } else {
+          tocContainer.innerHTML = '<p style="color: #999; font-size: 0.8rem;">このページには見出しがありません</p>';
+        }
+      });
+    </script>
   </body>
 </html>
 `
@@ -407,9 +840,9 @@ func (p *GitHubPagesPublisher) PublishPages(ctx context.Context, pages []*WikiPa
 
 	// Phase 2: Full deployment workflow (only if working directory is a git repository)
 	if p.isGitRepository() {
-		// Commit changes with descriptive message
-		commitMessage := fmt.Sprintf("Update wiki pages: %d pages updated by Beaver\n\nAuto-generated from GitHub Issues\nTimestamp: %s",
-			len(pages), time.Now().Format(time.RFC3339))
+		// Commit changes with descriptive Japanese message
+		commitMessage := fmt.Sprintf("feat: ナレッジベース更新 - %dページをBeaverが自動更新\n\n📋 GitHub Issuesから自動生成\n🤖 Beaver AI による知識ダム建設\n🕐 更新日時: %s\n\n🦫 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>",
+			len(pages), time.Now().Format("2006年01月02日 15:04:05 JST"))
 
 		if err := p.Commit(ctx, commitMessage); err != nil {
 			return fmt.Errorf("failed to commit changes: %w", err)
@@ -420,9 +853,9 @@ func (p *GitHubPagesPublisher) PublishPages(ctx context.Context, pages []*WikiPa
 			return fmt.Errorf("failed to push changes: %w", err)
 		}
 
-		fmt.Printf("✅ Successfully published %d pages to GitHub Pages\n", len(pages))
+		fmt.Printf("✅ GitHub Pages に %d ページを正常に公開しました\n", len(pages))
 	} else {
-		fmt.Printf("✅ Successfully generated %d Jekyll pages (no git repository for deployment)\n", len(pages))
+		fmt.Printf("✅ Jekyll ページを %d ファイル正常に生成しました（デプロイ用 git リポジトリなし）\n", len(pages))
 	}
 
 	return nil
@@ -469,34 +902,73 @@ func (p *GitHubPagesPublisher) convertAndSaveWikiPage(page *WikiPage) error {
 	return nil
 }
 
-// generateJekyllFrontMatter generates Jekyll front matter for a wiki page
+// generateJekyllFrontMatter generates Jekyll front matter for a wiki page with Japanese metadata
 func (p *GitHubPagesPublisher) generateJekyllFrontMatter(page *WikiPage) string {
+	// 日本語カテゴリマッピング
+	categoryMap := map[string]string{
+		"issues":          "課題",
+		"strategy":        "戦略",
+		"learning":        "学習",
+		"troubleshooting": "トラブルシューティング",
+		"development":     "開発",
+		"ai":              "AI機能",
+	}
+
+	japaneseCategory := page.Category
+	if mapped, exists := categoryMap[strings.ToLower(page.Category)]; exists {
+		japaneseCategory = mapped
+	}
+
 	frontMatter := fmt.Sprintf(`---
 layout: default
 title: "%s"
+description: "%s"
+lang: ja-JP
 generated_at: %s
-beaver_auto_generated: true`,
+updated_at: %s
+beaver_auto_generated: true
+beaver_version: "Phase 2.0"`,
 		strings.ReplaceAll(page.Title, `"`, `\"`),
+		strings.ReplaceAll(page.Summary, `"`, `\"`),
+		time.Now().Format("2006年01月02日 15:04:05"),
 		time.Now().Format(time.RFC3339),
 	)
 
-	if page.Summary != "" {
+	if japaneseCategory != "" {
 		frontMatter += fmt.Sprintf(`
-description: "%s"`, strings.ReplaceAll(page.Summary, `"`, `\"`))
-	}
-
-	if page.Category != "" {
-		frontMatter += fmt.Sprintf(`
-category: "%s"`, page.Category)
+category: "%s"
+category_en: "%s"`, japaneseCategory, page.Category)
 	}
 
 	if len(page.Tags) > 0 {
 		frontMatter += "\ntags:"
 		for _, tag := range page.Tags {
+			// タグも可能であれば日本語化
+			japaneseTag := tag
+			tagMap := map[string]string{
+				"bug":           "バグ",
+				"feature":       "機能",
+				"enhancement":   "改善",
+				"documentation": "ドキュメント",
+				"ai":            "AI",
+				"analysis":      "分析",
+				"strategy":      "戦略",
+			}
+			if mapped, exists := tagMap[strings.ToLower(tag)]; exists {
+				japaneseTag = mapped
+			}
+
 			frontMatter += fmt.Sprintf(`
-  - "%s"`, tag)
+  - "%s"`, japaneseTag)
 		}
 	}
+
+	// SEO と検索性向上のためのメタデータ
+	frontMatter += fmt.Sprintf(`
+author: "Beaver AI"
+keywords: "Beaver, AI, ナレッジベース, GitHub Issues, %s"
+robots: "index, follow"
+og_image: "/assets/images/beaver-logo.png"`, japaneseCategory)
 
 	frontMatter += "\n---"
 	return frontMatter
