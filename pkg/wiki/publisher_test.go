@@ -26,10 +26,10 @@ func NewMockWikiPublisher() *MockWikiPublisher {
 			LastUpdate:     time.Now(),
 			TotalPages:     0,
 			PendingChanges: 0,
-			RepositoryURL:  "https://github.com/test/repo.wiki.git",
+			RepositoryURL:  "https://github.com/test/repo.git",
 			WorkingDir:     "/tmp/test-wiki",
 			LastCommitSHA:  "abc123",
-			BranchName:     "master",
+			BranchName:     "gh-pages",
 			HasUncommitted: false,
 		},
 	}
@@ -253,7 +253,7 @@ func TestPublisherConfig_GetRepositoryURL(t *testing.T) {
 		Repository: "testrepo",
 	}
 
-	expected := "https://github.com/testowner/testrepo.wiki.git"
+	expected := "https://github.com/testowner/testrepo.git"
 	actual := config.GetRepositoryURL()
 
 	if actual != expected {
@@ -268,7 +268,7 @@ func TestPublisherConfig_GetAuthenticatedURL(t *testing.T) {
 		Token:      "testtoken",
 	}
 
-	expected := "https://testtoken@github.com/testowner/testrepo.wiki.git"
+	expected := "https://x-access-token:testtoken@github.com/testowner/testrepo.git"
 	actual := config.GetAuthenticatedURL()
 
 	if actual != expected {
@@ -487,12 +487,12 @@ func TestNewPublisherConfig_URLGeneration(t *testing.T) {
 
 	// Test repository URL generation
 	repoURL := config.GetRepositoryURL()
-	expectedURL := "https://github.com/testowner/testrepo.wiki.git"
+	expectedURL := "https://github.com/testowner/testrepo.git"
 	assert.Equal(t, expectedURL, repoURL)
 
 	// Test authenticated URL generation
 	authURL := config.GetAuthenticatedURL()
-	expectedAuthURL := "https://testtoken@github.com/testowner/testrepo.wiki.git"
+	expectedAuthURL := "https://x-access-token:testtoken@github.com/testowner/testrepo.git"
 	assert.Equal(t, expectedAuthURL, authURL)
 }
 
