@@ -338,7 +338,7 @@ output:
 
         # Test access to high-profile repository with limited page size to avoid timeouts
         env = {"GITHUB_TOKEN": github_token}
-        result = runner.run_command(["fetch", "issues", "microsoft/vscode", "--per-page", "5", "--state", "open"], env=env, timeout=60)
+        result = runner.run_command(["fetch", "issues", "microsoft/vscode", "--per-page", "1", "--state", "open"], env=env, timeout=30)
 
         # Should handle permission issues gracefully
         assert "panic" not in result.stderr.lower(), (
