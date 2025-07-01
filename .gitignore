@@ -69,6 +69,9 @@ wiki/
 # Jekyll build output
 _site/
 
+# Generated site output
+site/
+
 # Generated Beaver documentation files (not source)
 beaver-*.md
 

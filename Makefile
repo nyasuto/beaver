@@ -228,3 +228,19 @@ release-minor:
 release-major:
 	@echo "🏷️ メジャーバージョンリリースを作成中..."
 	@./scripts/release.sh major
+
+## site-build: Generate static site contents
+site-build: build
+	@echo "🌐 静的サイトを生成中..."
+	$(BUILD_DIR)/$(BINARY_NAME) site build
+	@echo "✅ サイト生成完了"
+
+## site-serve: Serve the generated site locally
+site-serve: site-build
+	@echo "🚀 ローカルサーバーを起動中..."
+	$(BUILD_DIR)/$(BINARY_NAME) site serve
+
+## site-deploy: Deploy site to GitHub Pages
+site-deploy: site-build
+	@echo "🚀 GitHub Pagesにデプロイ中..."
+	$(BUILD_DIR)/$(BINARY_NAME) site deploy
