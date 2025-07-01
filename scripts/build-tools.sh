@@ -251,14 +251,17 @@ build_binary() {
     
     local build_cmd=(
         go build
-        -ldflags "$ldflags"
-        -o "$binary_path"
-        ./cmd/beaver
     )
     
     if [[ "$VERBOSE" == "true" ]]; then
         build_cmd+=(-v)
     fi
+    
+    build_cmd+=(
+        -ldflags "$ldflags"
+        -o "$binary_path"
+        ./cmd/beaver
+    )
     
     execute_cmd "${build_cmd[@]}"
     
@@ -329,14 +332,17 @@ cross_build() {
             GOARCH="$goarch"
             CGO_ENABLED=0
             go build
-            -ldflags "$ldflags"
-            -o "$output_path"
-            ./cmd/beaver
         )
         
         if [[ "$VERBOSE" == "true" ]]; then
             build_cmd+=(-v)
         fi
+        
+        build_cmd+=(
+            -ldflags "$ldflags"
+            -o "$output_path"
+            ./cmd/beaver
+        )
         
         if execute_cmd "${build_cmd[@]}"; then
             if [[ "$DRY_RUN" != "true" && -f "$output_path" ]]; then
