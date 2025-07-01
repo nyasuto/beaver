@@ -1,7 +1,13 @@
 name: 🔗 Integration Tests
 
+# Integration tests can be triggered:
+# 1. Manually via GitHub Actions UI (workflow_dispatch)
+# 2. Automatically on PRs when integration-related files change
+# 3. Automatically on main branch pushes
+# 4. Weekly scheduled runs
+
 on:
-  # Manual trigger with options
+  # Manual trigger with options - allows testing in any branch/PR
   workflow_dispatch:
     inputs:
       test_scope:
@@ -18,6 +24,15 @@ on:
         required: false
         default: ''
         type: string
+
+  # Manual trigger on pull requests
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/run-integration-tests.sh'
+      - 'tests/integration/**'
+      - '.github/workflows/integration.yml'
+      - 'services/ai/**'
 
   # Auto-trigger on main branch
   push:
@@ -40,8 +55,12 @@ jobs:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_scope != 'performance' &&
-      (github.event_name != 'workflow_dispatch' || github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'quick')
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'workflow_dispatch' && 
+       github.event.inputs.test_scope != 'performance' && 
+       (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'quick'))
 
     environment: integration-testing
 
@@ -178,8 +197,12 @@ jobs:
     name: 🐍 Python Integration Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_scope != 'performance' &&
-      (github.event_name != 'workflow_dispatch' || github.event.inputs.test_scope == 'all')
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'workflow_dispatch' && 
+       github.event.inputs.test_scope != 'performance' && 
+       github.event.inputs.test_scope == 'all')
 
     environment: integration-testing
 
