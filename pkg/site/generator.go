@@ -24,6 +24,7 @@ type SiteConfig struct {
 	Title       string `yaml:"title"`
 	Description string `yaml:"description"`
 	BaseURL     string `yaml:"base_url"`
+	BasePath    string `yaml:"base_path"`
 	OutputDir   string `yaml:"output_dir"`
 	Theme       string `yaml:"theme"`
 	Language    string `yaml:"language"`
@@ -112,6 +113,7 @@ type PageData struct {
 	SiteTitle       string
 	SiteDescription string
 	BaseURL         string
+	BasePath        string
 	Language        string
 
 	// Theme data
@@ -206,7 +208,7 @@ func (g *HTMLGenerator) createInlineTemplates() error {
 <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="{{ .BasePath }}/assets/css/style.css">
 </head>
 <body>
     <header class="header">
@@ -251,7 +253,7 @@ func (g *HTMLGenerator) createInlineTemplates() error {
 <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="{{ .BasePath }}/assets/css/style.css">
 </head>
 <body>
     <header class="header">
@@ -294,7 +296,7 @@ func (g *HTMLGenerator) createInlineTemplates() error {
 <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="{{ .BasePath }}/assets/css/style.css">
 </head>
 <body>
     <header class="header">
@@ -329,7 +331,7 @@ func (g *HTMLGenerator) createInlineTemplates() error {
 <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="{{ .BasePath }}/assets/css/style.css">
 </head>
 <body>
     <header class="header">
@@ -499,12 +501,13 @@ func (g *HTMLGenerator) createHomePageData(issues []models.Issue, projectName st
 		Title:           "🦫 " + projectName + " ナレッジベース",
 		Description:     "AI駆動型ナレッジベース - GitHub Issues から自動生成",
 		Content:         g.generateHomeContent(issues),
-		URL:             "/",
+		URL:             g.config.BasePath + "/",
 		Date:            time.Now(),
 		Navigation:      g.config.Navigation,
 		SiteTitle:       g.config.Title,
 		SiteDescription: g.config.Description,
 		BaseURL:         g.config.BaseURL,
+		BasePath:        g.config.BasePath,
 		Language:        g.config.Language,
 		Theme:           g.theme,
 		Issues:          issues,
@@ -519,12 +522,13 @@ func (g *HTMLGenerator) createIssuesPageData(issues []models.Issue, projectName 
 		Title:           "課題サマリー - " + projectName,
 		Description:     "プロジェクトの課題とタスクの一覧",
 		Content:         g.generateIssuesContent(issues),
-		URL:             "/issues.html",
+		URL:             g.config.BasePath + "/issues.html",
 		Date:            time.Now(),
 		Navigation:      g.config.Navigation,
 		SiteTitle:       g.config.Title,
 		SiteDescription: g.config.Description,
 		BaseURL:         g.config.BaseURL,
+		BasePath:        g.config.BasePath,
 		Language:        g.config.Language,
 		Theme:           g.theme,
 		Issues:          issues,
@@ -538,12 +542,13 @@ func (g *HTMLGenerator) createStrategyPageData(issues []models.Issue, projectNam
 		Title:           "開発戦略 - " + projectName,
 		Description:     "プロジェクトの開発戦略と学習パス",
 		Content:         g.generateStrategyContent(issues),
-		URL:             "/strategy.html",
+		URL:             g.config.BasePath + "/strategy.html",
 		Date:            time.Now(),
 		Navigation:      g.config.Navigation,
 		SiteTitle:       g.config.Title,
 		SiteDescription: g.config.Description,
 		BaseURL:         g.config.BaseURL,
+		BasePath:        g.config.BasePath,
 		Language:        g.config.Language,
 		Theme:           g.theme,
 		Issues:          issues,
@@ -556,12 +561,13 @@ func (g *HTMLGenerator) createTroubleshootingPageData(issues []models.Issue, pro
 		Title:           "トラブルシューティング - " + projectName,
 		Description:     "よくある問題と解決方法",
 		Content:         g.generateTroubleshootingContent(issues),
-		URL:             "/troubleshooting.html",
+		URL:             g.config.BasePath + "/troubleshooting.html",
 		Date:            time.Now(),
 		Navigation:      g.config.Navigation,
 		SiteTitle:       g.config.Title,
 		SiteDescription: g.config.Description,
 		BaseURL:         g.config.BaseURL,
+		BasePath:        g.config.BasePath,
 		Language:        g.config.Language,
 		Theme:           g.theme,
 		Issues:          issues,
@@ -611,16 +617,21 @@ func (g *HTMLGenerator) calculateHealthScore(_ []models.Issue) int {
 
 // generateServiceWorker creates a service worker for PWA functionality
 func (g *HTMLGenerator) generateServiceWorker() error {
+	basePath := g.config.BasePath
+	if basePath == "" {
+		basePath = ""
+	}
+
 	sw := `// Beaver Knowledge Base Service Worker
 const CACHE_NAME = 'beaver-kb-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/issues.html',
-  '/strategy.html',
-  '/troubleshooting.html',
-  '/assets/css/style.css',
-  '/assets/js/main.js'
+  '` + basePath + `/',
+  '` + basePath + `/index.html',
+  '` + basePath + `/issues.html',
+  '` + basePath + `/strategy.html',
+  '` + basePath + `/troubleshooting.html',
+  '` + basePath + `/assets/css/style.css',
+  '` + basePath + `/assets/js/main.js'
 ];
 
 self.addEventListener('install', function(event) {

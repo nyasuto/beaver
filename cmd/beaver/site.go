@@ -125,20 +125,28 @@ func runSiteBuildCommand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("📊 取得したIssues: %d件\n", result.FetchedCount)
 
+	// Determine base path for GitHub Pages deployment
+	var basePath string
+	if owner != "" && repo != "" {
+		// For GitHub Pages, use repo name as base path
+		basePath = "/" + repo
+	}
+
 	// Create site configuration
 	siteConfig := &site.SiteConfig{
 		Title:       cfg.Project.Name + " ナレッジベース",
 		Description: "AI駆動型ナレッジベース - GitHub Issues から自動生成",
 		BaseURL:     "https://" + owner + ".github.io/" + repo,
+		BasePath:    basePath,
 		OutputDir:   outputDir,
 		Theme:       "beaver",
 		Language:    "ja",
 		Author:      owner,
 		Navigation: []site.NavItem{
-			{Title: "ホーム", URL: "/", Icon: "🏠"},
-			{Title: "課題", URL: "/issues.html", Icon: "📋"},
-			{Title: "戦略", URL: "/strategy.html", Icon: "🎯"},
-			{Title: "解決策", URL: "/troubleshooting.html", Icon: "🔧"},
+			{Title: "ホーム", URL: basePath + "/", Icon: "🏠"},
+			{Title: "課題", URL: basePath + "/issues.html", Icon: "📋"},
+			{Title: "戦略", URL: basePath + "/strategy.html", Icon: "🎯"},
+			{Title: "解決策", URL: basePath + "/troubleshooting.html", Icon: "🔧"},
 		},
 		ServiceWorker: true,
 		Minify:        true,
