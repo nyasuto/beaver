@@ -205,16 +205,11 @@ jobs:
           MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
         run: |
           echo "🚀 === GitHub Pages Deployment Process ==="
-          echo "📄 Generating Jekyll site for GitHub Pages"
+          echo "📄 Generating site using Go HTML generator"
           echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
 
-          # Generate GitHub Pages content
-          ./scripts/ci-beaver.sh github-pages \
-            --repository "${{ needs.preflight.outputs.repository }}" \
-            --max-items "$MAX_ITEMS" \
-            --theme "minima" \
-            --enable-search \
-            --verbose
+          # Generate site content using Beaver's Go HTML generator
+          ./bin/beaver site build --output _site
             
           echo "✅ GitHub Pages content generated successfully"
 
@@ -223,7 +218,7 @@ jobs:
         run: |
           echo "📊 GitHub Pages Deployment Report"
           echo "================================="
-          echo "🚀 Target: GitHub Pages Jekyll site"
+          echo "🚀 Target: GitHub Pages (Go HTML generator)"
           echo "🎯 Trigger: ${{ github.event_name }}"
           echo "🔄 Update Type: ${{ needs.preflight.outputs.update_type }}"
           echo "📁 Repository: ${{ needs.preflight.outputs.repository }}"
@@ -287,10 +282,11 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: "./_site"
-          destination: "./output"
+        run: |
+          echo "📦 Preparing site for deployment"
+          # Copy generated site to output directory
+          mkdir -p ./output
+          cp -r ./_site/* ./output/
           
       - name: 📤 Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
