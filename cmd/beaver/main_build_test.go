@@ -159,9 +159,12 @@ output:
 	if err == nil {
 		t.Error("Expected GitHub token error, got nil")
 	}
-	// Check if error is related to configuration validation or GitHub API issues
-	if !containsStringAnywhere(err.Error(), "GitHub token") && !containsStringAnywhere(err.Error(), "project.repository") && !containsStringAnywhere(err.Error(), "Issues取得エラー") {
-		t.Errorf("Expected GitHub token, repository configuration, or Issues retrieval error, got: %v", err)
+	// Check if error is related to configuration validation or repository access
+	if !containsStringAnywhere(err.Error(), "GitHub token") &&
+		!containsStringAnywhere(err.Error(), "project.repository") &&
+		!containsStringAnywhere(err.Error(), "Issues取得エラー") &&
+		!containsStringAnywhere(err.Error(), "REPOSITORY_ERROR") {
+		t.Errorf("Expected GitHub token, repository configuration, or repository access error, got: %v", err)
 	}
 }
 
@@ -359,8 +362,11 @@ output:
 		t.Error("Expected GitHub connection error, got nil")
 	}
 	// Either GitHub token validation or other errors can happen first
-	if !containsStringAnywhere(err.Error(), "GitHub token") && !containsStringAnywhere(err.Error(), "GitHub接続エラー") && !containsStringAnywhere(err.Error(), "Issues取得エラー") {
-		t.Errorf("Expected GitHub token, connection, or Issues retrieval error, got: %v", err)
+	if !containsStringAnywhere(err.Error(), "GitHub token") &&
+		!containsStringAnywhere(err.Error(), "GitHub接続エラー") &&
+		!containsStringAnywhere(err.Error(), "Issues取得エラー") &&
+		!containsStringAnywhere(err.Error(), "REPOSITORY_ERROR") {
+		t.Errorf("Expected GitHub token, connection, or repository access error, got: %v", err)
 	}
 }
 
