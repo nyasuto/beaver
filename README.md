@@ -4,7 +4,7 @@
 
 BeaverはAIエージェント開発の軌跡を自動的に整理された永続的な知識に変換します。散在するGitHub Issues、コミットログ、AI実験記録を構造化されたGitHub Pagesドキュメントに変換します。
 
-**v1.0**: GitHub Pages特化 - JekyllベースのWebサイトとして知識を自動生成・デプロイ
+**v1.0**: GitHub Pages特化 - カスタムGo HTMLジェネレーターによるWebサイトとして知識を自動生成・デプロイ
 
 ## 🎯 解決する課題
 
@@ -117,6 +117,11 @@ beaver generate troubleshooting <repository> # トラブルシューティング
 beaver wiki generate <repository>            # Wiki生成
 beaver wiki publish <repository>             # GitHub Pages公開
 beaver wiki list                             # Wiki一覧表示
+
+# サイト生成 (新機能)
+beaver site build --output <dir>             # 静的サイト生成
+beaver site serve --port 8080                # ローカル開発サーバー
+beaver site deploy                           # GitHub Pagesデプロイ
 ```
 
 **実装済み技術スタック:**
@@ -125,7 +130,7 @@ beaver wiki list                             # Wiki一覧表示
 - ✅ **AI処理エンジン**: OpenAI/Anthropic/ローカルモデル対応
 - ✅ **ハイブリッド分類**: AI+ルールベースの高精度分類システム
 - ✅ **パターン分析**: 機械学習による開発パターン抽出
-- ✅ **自動Wiki生成**: Jekyll/GitHub Pages完全統合
+- ✅ **自動サイト生成**: カスタムGo HTMLジェネレーター/GitHub Pages完全統合
 - ✅ **インクリメンタル処理**: 高速な増分更新システム
 - ✅ **並列処理**: 大規模リポジトリ対応の並列実行
 - ✅ **包括的テスト**: モック・統合・E2Eテスト完備
