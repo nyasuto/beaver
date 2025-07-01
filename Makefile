@@ -50,7 +50,7 @@ clean:
 ## test: Run unit tests only (fast, no external dependencies)
 test:
 	@echo "🧪 ユニットテストを実行中..."
-	go test -short -v ./...
+	go test -v ./...
 
 ## test-unit: Alias for test (unit tests only)
 test-unit: test
@@ -58,7 +58,7 @@ test-unit: test
 ## test-cov: Run unit tests with coverage
 test-cov:
 	@echo "🧪 カバレッジ付きユニットテストを実行中..."
-	go test -short -v -coverprofile=coverage.out ./...
+	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "📊 カバレッジレポート: coverage.html"
 
@@ -126,8 +126,8 @@ fmt:
 workflow-lint:
 	@echo "🔍 GitHub Actionsワークフロー検証中..."
 	@if command -v actionlint >/dev/null 2>&1; then \
-		actionlint .github/workflows/*.yml || true; \
-		echo "ℹ️ ワークフロー構文チェック完了（警告は無視）"; \
+		actionlint -shellcheck= .github/workflows/*.yml; \
+		echo "ℹ️ ワークフロー構文チェック完了（shellcheck無効、警告は無視）"; \
 	else \
 		echo "⚠️ actionlint がインストールされていません"; \
 		echo "インストール: go install github.com/rhysd/actionlint/cmd/actionlint@latest"; \
