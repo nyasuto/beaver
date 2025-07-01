@@ -216,6 +216,8 @@ runs:
         echo "🔨 Building binary..."
         
         # Always build the binary regardless of test settings
+        mkdir -p bin
+        
         if [[ -f "scripts/ci-checks.sh" ]]; then
           chmod +x scripts/ci-checks.sh
           if ! ./scripts/ci-checks.sh build-test; then
@@ -226,33 +228,34 @@ runs:
             fi
           fi
         else
-          # Direct build
+          # Direct build - always build regardless of test settings
+          echo "Building beaver binary..."
           if ! go build -o bin/beaver ./cmd/beaver; then
+            echo "❌ Failed to build binary"
             echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
             echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
             if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
               exit 1
             fi
-          fi
-          
-          # Only test binary if not skipping tests
-          if [[ "${{ inputs.skip-tests }}" == "false" && "${{ inputs.run-tests }}" == "true" ]]; then
-            if [[ -f "bin/beaver" ]]; then
-              chmod +x bin/beaver
+          else
+            echo "✅ Binary built successfully"
+            chmod +x bin/beaver
+            
+            # Only test binary functionality if tests are enabled
+            if [[ "${{ inputs.skip-tests }}" == "false" && "${{ inputs.run-tests }}" == "true" ]]; then
+              echo "Testing binary functionality..."
               if ! ./bin/beaver --help >/dev/null 2>&1; then
-                echo "❌ Binary test failed"
+                echo "❌ Binary functionality test failed"
                 echo "BINARY_TEST_FAILED=true" >> $GITHUB_ENV
                 echo "FAILED_STEPS=${FAILED_STEPS},binary-test" >> $GITHUB_ENV
                 if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
                   exit 1
                 fi
+              else
+                echo "✅ Binary functionality test passed"
               fi
-            fi
-          else
-            echo "📦 Binary built successfully (testing skipped)"
-            if [[ -f "bin/beaver" ]]; then
-              chmod +x bin/beaver
-              echo "✅ Binary is executable"
+            else
+              echo "📦 Binary built successfully (functionality testing skipped)"
             fi
           fi
         fi
