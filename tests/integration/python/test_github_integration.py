@@ -276,7 +276,9 @@ output:
 
         # Test with clearly invalid token using fetch command that requires GitHub access
         env = {"GITHUB_TOKEN": "invalid_token_12345"}
-        result = runner.run_command(["fetch", "issues", "nyasuto/beaver", "--per-page", "1"], env=env, timeout=30)
+        result = runner.run_command(
+            ["fetch", "issues", "nyasuto/beaver", "--per-page", "1"], env=env, timeout=30
+        )
 
         # Should handle invalid token gracefully
         assert "panic" not in result.stderr.lower(), f"Invalid token caused panic: {result.stderr}"
@@ -339,7 +341,11 @@ output:
 
         # Test access to high-profile repository with limited page size to avoid timeouts
         env = {"GITHUB_TOKEN": github_token}
-        result = runner.run_command(["fetch", "issues", "octocat/Hello-World", "--per-page", "1", "--state", "open"], env=env, timeout=30)
+        result = runner.run_command(
+            ["fetch", "issues", "octocat/Hello-World", "--per-page", "1", "--state", "open"],
+            env=env,
+            timeout=30,
+        )
 
         # Should handle permission issues gracefully
         assert "panic" not in result.stderr.lower(), (

@@ -1770,10 +1770,10 @@ func TestMain_CommandlineIntegration(t *testing.T) {
 
 	t.Run("Invalid command", func(t *testing.T) {
 		cmd := &cobra.Command{
-			Use: "beaver",
+			Use:          "beaver",
 			SilenceUsage: false,
 		}
-		
+
 		// Add a valid subcommand to make Cobra recognize invalid ones
 		versionCmd := &cobra.Command{
 			Use:   "version",
@@ -1791,22 +1791,22 @@ func TestMain_CommandlineIntegration(t *testing.T) {
 
 		err := cmd.Execute()
 		output := buf.String()
-		
+
 		// With subcommands present, Cobra should now properly detect invalid commands
 		hasError := err != nil
-		hasErrorInOutput := strings.Contains(output, "unknown command") || 
-						  strings.Contains(output, "Unknown command") ||
-						  strings.Contains(output, "not found") ||
-						  strings.Contains(output, "invalid") ||
-						  strings.Contains(output, "Error:")
-		
+		hasErrorInOutput := strings.Contains(output, "unknown command") ||
+			strings.Contains(output, "Unknown command") ||
+			strings.Contains(output, "not found") ||
+			strings.Contains(output, "invalid") ||
+			strings.Contains(output, "Error:")
+
 		if hasError {
-			hasErrorInOutput = hasErrorInOutput || 
-						   strings.Contains(err.Error(), "unknown command") ||
-						   strings.Contains(err.Error(), "Unknown command") ||
-						   strings.Contains(err.Error(), "invalid")
+			hasErrorInOutput = hasErrorInOutput ||
+				strings.Contains(err.Error(), "unknown command") ||
+				strings.Contains(err.Error(), "Unknown command") ||
+				strings.Contains(err.Error(), "invalid")
 		}
-		
+
 		assert.True(t, hasError || hasErrorInOutput,
 			"Expected error or error message in output for invalid command, got: %s, err: %v", output, err)
 	})

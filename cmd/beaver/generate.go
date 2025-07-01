@@ -86,9 +86,9 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 	log.Printf("🛠️ Beaver Troubleshooting Guide Generator - %s", repoPath)
 
 	// Parse owner/repo
-	owner, repo, err := parseRepoPath(repoPath)
-	if err != nil {
-		return fmt.Errorf("無効なリポジトリパス: %w", err)
+	owner, repo := parseOwnerRepo(repoPath)
+	if owner == "" || repo == "" {
+		return fmt.Errorf("無効なリポジトリパス: %s (正しい形式: owner/repo)", repoPath)
 	}
 
 	// Load configuration

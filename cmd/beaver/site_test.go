@@ -260,9 +260,9 @@ func TestRunSiteBuildCommand_NoConfig(t *testing.T) {
 	}
 
 	// Check for either config loading error or validation error
-	if !strings.Contains(err.Error(), "設定が無効です") && 
-	   !strings.Contains(err.Error(), "設定読み込みエラー") &&
-	   !strings.Contains(err.Error(), "Issues取得エラー") {
+	if !strings.Contains(err.Error(), "設定が無効です") &&
+		!strings.Contains(err.Error(), "設定読み込みエラー") &&
+		!strings.Contains(err.Error(), "Issues取得エラー") {
 		t.Errorf("Expected config or GitHub error, got: %s", err.Error())
 	}
 }
@@ -327,7 +327,7 @@ func TestRunSiteDeployCommand_NoSite(t *testing.T) {
 	} else {
 		// Check for config loading error or repository format error
 		if !strings.Contains(err.Error(), "リポジトリ形式が無効です") &&
-		   !strings.Contains(err.Error(), "設定読み込みエラー") {
+			!strings.Contains(err.Error(), "設定読み込みエラー") {
 			t.Errorf("Expected repository format or config error, got: %s", err.Error())
 		}
 	}
