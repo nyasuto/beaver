@@ -191,50 +191,8 @@ func (g *HTMLGenerator) GenerateSite(issues []models.Issue, projectName string) 
 
 // loadTemplates loads HTML templates
 func (g *HTMLGenerator) loadTemplates() error {
-	// Try multiple possible template directories
-	possibleDirs := []string{
-		filepath.Join("pkg", "site", "templates"),
-		"templates",
-		filepath.Join("..", "..", "templates"),
-	}
-
-	var templateDir string
-	for _, dir := range possibleDirs {
-		if _, err := os.Stat(filepath.Join(dir, "base.html")); err == nil {
-			templateDir = dir
-			break
-		}
-	}
-
-	// If no templates found, use inline templates
-	if templateDir == "" {
-		return g.createInlineTemplates()
-	}
-
-	// Template files to load
-	templates := map[string][]string{
-		"base":            {"base.html"},
-		"home":            {"base.html", "home.html"},
-		"issues":          {"base.html", "issues.html"},
-		"strategy":        {"base.html", "strategy.html"},
-		"troubleshooting": {"base.html", "troubleshooting.html"},
-	}
-
-	for name, files := range templates {
-		var templateFiles []string
-		for _, file := range files {
-			templateFiles = append(templateFiles, filepath.Join(templateDir, file))
-		}
-
-		tmpl, err := template.New(name).Funcs(g.getTemplateFuncs()).ParseFiles(templateFiles...)
-		if err != nil {
-			return fmt.Errorf("failed to parse template %s: %w", name, err)
-		}
-
-		g.templates[name] = tmpl
-	}
-
-	return nil
+	// Always use inline templates for now (external templates need base template system)
+	return g.createInlineTemplates()
 }
 
 // createInlineTemplates creates simple inline templates for testing
