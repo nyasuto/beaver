@@ -52,6 +52,11 @@ func (g *HTMLGenerator) generateAssets() error {
 		return fmt.Errorf("failed to generate favicon: %w", err)
 	}
 
+	// Generate PWA manifest
+	if err := g.generateManifest(); err != nil {
+		return fmt.Errorf("failed to generate PWA manifest: %w", err)
+	}
+
 	return nil
 }
 
@@ -59,7 +64,7 @@ func (g *HTMLGenerator) generateAssets() error {
 func (g *HTMLGenerator) generateMainCSS() error {
 	css := g.buildBeaverCSS()
 
-	outputPath := filepath.Join(g.config.OutputDir, "assets", "css", "style.css")
+	outputPath := filepath.Join(g.config.OutputDir, "assets", "css", "beaver-theme.css")
 	if err := os.WriteFile(outputPath, []byte(css), 0600); err != nil {
 		return fmt.Errorf("failed to write CSS file: %w", err)
 	}
@@ -157,32 +162,44 @@ a:hover {
 
 // generateMainJS creates the main JavaScript file
 func (g *HTMLGenerator) generateMainJS() error {
-	js := `// Beaver Knowledge Base - Main JavaScript
+	js := g.buildBeaverJS()
+
+	outputPath := filepath.Join(g.config.OutputDir, "assets", "js", "main.js")
+	if err := os.WriteFile(outputPath, []byte(js), 0600); err != nil {
+		return fmt.Errorf("failed to write JS file: %w", err)
+	}
+
+	return nil
+}
+
+// buildBeaverJS generates the complete Beaver JavaScript
+func (g *HTMLGenerator) buildBeaverJS() string {
+	// Try multiple possible paths for the JS file
+	possiblePaths := []string{
+		filepath.Join("pkg", "site", "assets", "main.js"),
+		filepath.Join("assets", "main.js"),
+		"main.js",
+		filepath.Join("..", "..", "assets", "main.js"),
+	}
+
+	var jsContent []byte
+	var err error
+
+	for _, jsPath := range possiblePaths {
+		jsContent, err = os.ReadFile(jsPath)
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		// If external JS file doesn't exist in any location, return basic JS as fallback
+		return `// Beaver Knowledge Base - Basic JavaScript Fallback
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize navigation
-    initNavigation();
+    console.log('Beaver Knowledge Base loaded');
     
-    // Initialize card animations
-    initCardAnimations();
-    
-    // Initialize search if available
-    initSearch();
-    
-    // Initialize service worker if supported
-    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('ServiceWorker registered:', registration.scope);
-            })
-            .catch(function(error) {
-                console.log('ServiceWorker registration failed:', error);
-            });
-    }
-});
-
-function initNavigation() {
-    // Highlight current page in navigation
+    // Basic navigation highlighting
     const currentPath = window.location.pathname;
     const navLinks = document.querySelectorAll('.nav a');
     
@@ -192,114 +209,10 @@ function initNavigation() {
             link.classList.add('active');
         }
     });
-}
-
-function initCardAnimations() {
-    // Add fade-in animation to cards when they come into view
-    const cards = document.querySelectorAll('.beaver-card');
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-up');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    });
-    
-    cards.forEach(card => {
-        observer.observe(card);
-    });
-}
-
-function initSearch() {
-    // Simple search functionality (can be enhanced)
-    const searchInput = document.querySelector('#search');
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.toLowerCase();
-        const searchableElements = document.querySelectorAll('[data-searchable]');
-        
-        searchableElements.forEach(element => {
-            const text = element.textContent.toLowerCase();
-            const isVisible = text.includes(query);
-            element.style.display = isVisible ? '' : 'none';
-        });
-    });
-}
-
-// Utility functions
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
-
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showNotification('クリップボードにコピーしました');
-    }).catch(err => {
-        console.error('Failed to copy:', err);
-    });
-}
-
-function showNotification(message, type = 'info') {
-    // Simple notification system
-    const notification = document.createElement('div');
-    notification.className = 'notification notification-' + type;
-    notification.textContent = message;
-    notification.style.cssText = ` + "`" + `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--beaver-primary);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px var(--beaver-shadow);
-        z-index: 1000;
-        animation: slideInRight 0.3s ease;
-    ` + "`" + `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
-
-// Add CSS for notification animations
-const style = document.createElement('style');
-style.textContent = ` + "`" + `
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOutRight {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-` + "`" + `;
-document.head.appendChild(style);
-`
-
-	outputPath := filepath.Join(g.config.OutputDir, "assets", "js", "main.js")
-	if err := os.WriteFile(outputPath, []byte(js), 0600); err != nil {
-		return fmt.Errorf("failed to write JS file: %w", err)
+});`
 	}
 
-	return nil
+	return string(jsContent)
 }
 
 // generateFavicon creates a simple text-based favicon
@@ -312,6 +225,78 @@ func (g *HTMLGenerator) generateFavicon() error {
 	outputPath := filepath.Join(g.config.OutputDir, "favicon.html")
 	if err := os.WriteFile(outputPath, []byte(faviconContent), 0600); err != nil {
 		return fmt.Errorf("failed to write favicon placeholder: %w", err)
+	}
+
+	return nil
+}
+
+// generateManifest creates a PWA manifest.json file
+func (g *HTMLGenerator) generateManifest() error {
+	manifest := fmt.Sprintf(`{
+  "name": "%s",
+  "short_name": "Beaver KB",
+  "description": "%s",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "%s",
+  "background_color": "%s",
+  "icons": [
+    {
+      "src": "/assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "education"],
+  "lang": "%s",
+  "dir": "auto",
+  "orientation": "any",
+  "scope": "/",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "課題一覧",
+      "short_name": "Issues",
+      "description": "プロジェクトの課題一覧を表示",
+      "url": "/issues.html",
+      "icons": [
+        {
+          "src": "/assets/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "開発戦略",
+      "short_name": "Strategy",
+      "description": "開発戦略とロードマップを表示",
+      "url": "/strategy.html",
+      "icons": [
+        {
+          "src": "/assets/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}`,
+		g.config.Title,
+		g.config.Description,
+		g.theme.PrimaryColor,
+		g.theme.BackgroundColor,
+		g.config.Language,
+	)
+
+	outputPath := filepath.Join(g.config.OutputDir, "manifest.json")
+	if err := os.WriteFile(outputPath, []byte(manifest), 0600); err != nil {
+		return fmt.Errorf("failed to write manifest file: %w", err)
 	}
 
 	return nil
