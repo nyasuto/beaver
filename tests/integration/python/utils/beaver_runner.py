@@ -6,7 +6,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 
 class BeaverRunner:
@@ -19,9 +19,9 @@ class BeaverRunner:
 
     def run_command(
         self,
-        args: List[str],
+        args: list[str],
         timeout: Optional[int] = None,
-        env: Optional[Dict[str, str]] = None,
+        env: Optional[dict[str, str]] = None,
         capture_output: bool = True,
         check: bool = False,
     ) -> subprocess.CompletedProcess:
@@ -64,7 +64,7 @@ class BeaverRunner:
                 f"Command timed out after {timeout or self.default_timeout}s: {' '.join(cmd)}"
             ) from e
 
-    def init_project(self, timeout: int = 30) -> Tuple[bool, str, str]:
+    def init_project(self, timeout: int = 30) -> tuple[bool, str, str]:
         """
         Initialize a beaver project
 
@@ -74,7 +74,7 @@ class BeaverRunner:
         result = self.run_command(["init"], timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
 
-    def get_status(self, timeout: int = 30) -> Tuple[bool, str, str]:
+    def get_status(self, timeout: int = 30) -> tuple[bool, str, str]:
         """
         Get beaver project status
 
@@ -90,7 +90,7 @@ class BeaverRunner:
         force_rebuild: bool = False,
         max_items: Optional[int] = None,
         timeout: int = 120,
-    ) -> Tuple[bool, str, str]:
+    ) -> tuple[bool, str, str]:
         """
         Build wiki content
 
@@ -117,7 +117,7 @@ class BeaverRunner:
         result = self.run_command(args, timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
 
-    def fetch_issues(self, repository: str, timeout: int = 60) -> Tuple[bool, str, str]:
+    def fetch_issues(self, repository: str, timeout: int = 60) -> tuple[bool, str, str]:
         """
         Fetch issues from repository
 
@@ -131,7 +131,7 @@ class BeaverRunner:
         result = self.run_command(["fetch", "issues", repository], timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
 
-    def classify_issues(self, repository: str, timeout: int = 90) -> Tuple[bool, str, str]:
+    def classify_issues(self, repository: str, timeout: int = 90) -> tuple[bool, str, str]:
         """
         Classify issues using AI
 
@@ -145,7 +145,7 @@ class BeaverRunner:
         result = self.run_command(["classify", "issues", repository], timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
 
-    def generate_wiki(self, repository: str, timeout: int = 120) -> Tuple[bool, str, str]:
+    def generate_wiki(self, repository: str, timeout: int = 120) -> tuple[bool, str, str]:
         """
         Generate wiki content
 
@@ -159,7 +159,7 @@ class BeaverRunner:
         result = self.run_command(["wiki", "generate", repository], timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
 
-    def build_site(self, output_dir: str = "_site", timeout: int = 120) -> Tuple[bool, str, str]:
+    def build_site(self, output_dir: str = "_site", timeout: int = 120) -> tuple[bool, str, str]:
         """
         Build static site
 
@@ -173,7 +173,7 @@ class BeaverRunner:
         result = self.run_command(["site", "build", "--output", output_dir], timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
 
-    def get_version(self) -> Tuple[bool, str, str]:
+    def get_version(self) -> tuple[bool, str, str]:
         """
         Get beaver version information
 
@@ -204,7 +204,7 @@ class BeaverRunner:
 
         return False
 
-    def cleanup_output_files(self, patterns: List[str]):
+    def cleanup_output_files(self, patterns: list[str]):
         """
         Clean up output files matching patterns
 

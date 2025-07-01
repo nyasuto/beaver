@@ -7,23 +7,13 @@ Usage: python pattern_analyzer.py < input.json > output.json
 """
 
 import json
-
-# Configure structlog to write to stderr to avoid mixing with JSON output
 import logging
 import sys
 import traceback
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import structlog
-
-logging.basicConfig(
-    stream=sys.stderr, level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
-)
-structlog.configure(
-    logger_factory=lambda: logging.getLogger(),
-    cache_logger_on_first_use=True,
-)
 
 # Import our pattern recognition modules
 from analytics import DevelopmentAnalytics
@@ -32,8 +22,17 @@ from patterns import (
     PatternRecognitionEngine,
 )
 
+# Configure structlog to write to stderr to avoid mixing with JSON output
+logging.basicConfig(
+    stream=sys.stderr, level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
+structlog.configure(
+    logger_factory=lambda: logging.getLogger(),
+    cache_logger_on_first_use=True,
+)
 
-def convert_input_to_development_events(input_data: Dict[str, Any]) -> List[DevelopmentEvent]:
+
+def convert_input_to_development_events(input_data: dict[str, Any]) -> list[DevelopmentEvent]:
     """Convert input JSON to DevelopmentEvent objects"""
     events = []
 
@@ -66,7 +65,7 @@ def convert_input_to_development_events(input_data: Dict[str, Any]) -> List[Deve
     return events
 
 
-def analyze_patterns(input_data: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_patterns(input_data: dict[str, Any]) -> dict[str, Any]:
     """Main pattern analysis function"""
     try:
         # Convert input to development events

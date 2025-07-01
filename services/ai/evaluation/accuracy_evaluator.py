@@ -12,7 +12,7 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import structlog
 
@@ -28,10 +28,10 @@ class AccuracyEvaluator:
 
     def __init__(self, classification_service: EnhancedClassificationService):
         self.classification_service = classification_service
-        self.test_cases: List[Tuple[Issue, str]] = []
-        self.evaluation_history: List[ClassificationMetrics] = []
+        self.test_cases: list[tuple[Issue, str]] = []
+        self.evaluation_history: list[ClassificationMetrics] = []
 
-    def create_benchmark_test_cases(self) -> List[Tuple[Issue, str]]:
+    def create_benchmark_test_cases(self) -> list[tuple[Issue, str]]:
         """ベンチマーク用テストケースの作成"""
 
         benchmark_cases = [
@@ -209,9 +209,9 @@ class AccuracyEvaluator:
 
     async def _calculate_detailed_metrics(
         self,
-        test_issues: List[Issue],
-        expected_categories: List[str],
-        results: List[Optional[ClassificationResult]],
+        test_issues: list[Issue],
+        expected_categories: list[str],
+        results: list[Optional[ClassificationResult]],
         evaluation_time: float,
     ) -> ClassificationMetrics:
         """詳細メトリクスの計算"""
@@ -290,7 +290,7 @@ class AccuracyEvaluator:
         )
 
     async def _generate_evaluation_report(
-        self, metrics: ClassificationMetrics, results: List[Optional[ClassificationResult]]
+        self, metrics: ClassificationMetrics, results: list[Optional[ClassificationResult]]
     ) -> None:
         """評価レポートの生成"""
 
@@ -350,7 +350,7 @@ class AccuracyEvaluator:
             report, report_path / f"classification_evaluation_{timestamp_str}.csv"
         )
 
-    async def _generate_csv_report(self, report: Dict[str, Any], csv_path: Path) -> None:
+    async def _generate_csv_report(self, report: dict[str, Any], csv_path: Path) -> None:
         """CSV形式のレポート生成"""
 
         with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
@@ -374,7 +374,7 @@ class AccuracyEvaluator:
 
         logger.info(f"CSV evaluation report saved to {csv_path}")
 
-    def get_evaluation_trends(self) -> Dict[str, Any]:
+    def get_evaluation_trends(self) -> dict[str, Any]:
         """評価傾向の分析"""
 
         if len(self.evaluation_history) < 2:

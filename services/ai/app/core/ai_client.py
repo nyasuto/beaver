@@ -8,7 +8,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import anthropic
 import httpx
@@ -163,7 +163,7 @@ Specific next steps or solutions"""
         temperature: Optional[float] = None,
         include_comments: bool = True,
         language: str = "ja",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Summarize a GitHub issue using AI"""
         start_time = time.time()
 
@@ -211,7 +211,7 @@ Specific next steps or solutions"""
 
     async def _summarize_with_openai(
         self, prompt: str, model: str, max_tokens: int, temperature: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Summarize using OpenAI API with comprehensive error handling"""
         client = self._get_client(AIProvider.OPENAI)
 
@@ -292,7 +292,7 @@ Specific next steps or solutions"""
 
     async def _summarize_with_anthropic(
         self, prompt: str, model: str, max_tokens: int, temperature: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Summarize using Anthropic API with comprehensive error handling"""
         client = self._get_client(AIProvider.ANTHROPIC)
 
@@ -369,7 +369,7 @@ Specific next steps or solutions"""
 
         raise ValueError("Anthropic API failed after all retry attempts")
 
-    def _parse_summarization_response(self, content: str) -> Dict[str, Any]:
+    def _parse_summarization_response(self, content: str) -> dict[str, Any]:
         """Parse structured AI response into components"""
         result = {
             "summary": "",

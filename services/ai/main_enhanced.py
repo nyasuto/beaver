@@ -11,7 +11,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import structlog
 import uvicorn
@@ -155,7 +155,7 @@ def get_accuracy_evaluator() -> AccuracyEvaluator:
 
 
 @app.get("/health/enhanced", response_model=dict)
-async def enhanced_health_check() -> Dict[str, Any]:
+async def enhanced_health_check() -> dict[str, Any]:
     """拡張ヘルスチェック"""
     try:
         service = get_enhanced_classification_service()
@@ -182,7 +182,7 @@ async def enhanced_health_check() -> Dict[str, Any]:
 async def classify_issue_enhanced(
     request: EnhancedClassificationRequest,
     service: EnhancedClassificationService = Depends(get_enhanced_classification_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """拡張Issue分類（Few-shot学習対応）"""
     start_time = time.time()
 
@@ -239,7 +239,7 @@ async def batch_classify_issues_enhanced(
     request: BatchClassificationRequest,
     use_few_shot: bool = Query(default=True, description="Few-shot学習を使用するか"),
     service: EnhancedClassificationService = Depends(get_enhanced_classification_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """拡張バッチIssue分類"""
     start_time = time.time()
 
@@ -363,7 +363,7 @@ async def get_performance_metrics(
 @app.post("/evaluation/run", response_model=dict)
 async def run_accuracy_evaluation(
     request: EvaluationRequest, evaluator: AccuracyEvaluator = Depends(get_accuracy_evaluator)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """分類精度評価の実行"""
     try:
         logger.info("Starting accuracy evaluation", full_evaluation=request.run_full_evaluation)
@@ -414,7 +414,7 @@ async def run_accuracy_evaluation(
 @app.get("/evaluation/trends", response_model=dict)
 async def get_evaluation_trends(
     evaluator: AccuracyEvaluator = Depends(get_accuracy_evaluator),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """評価傾向の取得"""
     try:
         trends = evaluator.get_evaluation_trends()
@@ -429,7 +429,7 @@ async def get_evaluation_trends(
 
 
 @app.get("/categories/enhanced", response_model=dict)
-async def get_enhanced_categories() -> Dict[str, Any]:
+async def get_enhanced_categories() -> dict[str, Any]:
     """拡張カテゴリ情報の取得"""
     try:
         service = get_enhanced_classification_service()

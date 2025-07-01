@@ -7,7 +7,7 @@ Zero-shot分類とFew-shot学習をサポート
 
 import asyncio
 import time
-from typing import List, Optional
+from typing import Optional
 
 import psutil
 import structlog
@@ -116,7 +116,7 @@ class ClassificationService:
                 HumanMessage(content="Say 'Hello' if you can respond."),
             ]
 
-            response = await self.llm.ainvoke(test_messages)
+            await self.llm.ainvoke(test_messages)
             logger.info("OpenAI API connection test successful")
 
         except Exception as e:
@@ -125,7 +125,7 @@ class ClassificationService:
 
     def _create_classification_prompt(
         self, issue: Issue, config: Optional[ClassificationConfig] = None
-    ) -> List[BaseMessage]:
+    ) -> list[BaseMessage]:
         """Create classification prompt for the issue"""
 
         # Prepare categories description
@@ -274,10 +274,10 @@ class ClassificationService:
 
     async def batch_classify_issues(
         self,
-        issues: List[Issue],
+        issues: list[Issue],
         config: Optional[ClassificationConfig] = None,
         parallel: bool = True,
-    ) -> List[ClassificationResult]:
+    ) -> list[ClassificationResult]:
         """Classify multiple issues in batch"""
 
         if not issues:

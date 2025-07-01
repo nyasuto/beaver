@@ -12,7 +12,7 @@ import statistics
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import structlog
@@ -40,9 +40,9 @@ class AnalyticsMetrics:
     pattern_diversity: float  # パターンの多様性
     consistency_score: float  # 一貫性スコア
     trend_direction: str  # "improving", "stable", "declining"
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_events": self.total_events,
             "unique_patterns": self.unique_patterns,
@@ -59,14 +59,14 @@ class AnalyticsMetrics:
 class VisualizationData:
     """可視化用データ"""
 
-    timeline_chart: Dict[str, Any]
-    pattern_distribution: Dict[str, int]
-    learning_curve: List[Dict[str, Any]]
-    success_trend: List[Dict[str, Any]]
-    skill_radar: Dict[str, float]
-    heatmap_data: List[List[float]]
+    timeline_chart: dict[str, Any]
+    pattern_distribution: dict[str, int]
+    learning_curve: list[dict[str, Any]]
+    success_trend: list[dict[str, Any]]
+    skill_radar: dict[str, float]
+    heatmap_data: list[list[float]]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "timeline_chart": self.timeline_chart,
             "pattern_distribution": self.pattern_distribution,
@@ -81,13 +81,13 @@ class VisualizationData:
 class PredictiveInsights:
     """予測的洞察"""
 
-    next_learning_opportunities: List[str]
-    risk_areas: List[str]
-    recommended_focus: List[str]
+    next_learning_opportunities: list[str]
+    risk_areas: list[str]
+    recommended_focus: list[str]
     predicted_trajectory: LearningStage
     confidence: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "next_learning_opportunities": self.next_learning_opportunities,
             "risk_areas": self.risk_areas,
@@ -103,7 +103,7 @@ class DevelopmentAnalytics:
     def __init__(self):
         self.logger = structlog.get_logger()
 
-    def analyze_patterns(self, patterns: List[LearningPattern]) -> AnalyticsMetrics:
+    def analyze_patterns(self, patterns: list[LearningPattern]) -> AnalyticsMetrics:
         """パターンの統計分析"""
         if not patterns:
             return AnalyticsMetrics(
@@ -151,7 +151,7 @@ class DevelopmentAnalytics:
         )
 
     def generate_learning_trajectory(
-        self, person: str, patterns: List[LearningPattern], events: List[DevelopmentEvent]
+        self, person: str, patterns: list[LearningPattern], events: list[DevelopmentEvent]
     ) -> LearningTrajectory:
         """学習軌跡を生成"""
         if not patterns or not events:
@@ -191,7 +191,7 @@ class DevelopmentAnalytics:
         )
 
     def generate_predictive_insights(
-        self, trajectory: LearningTrajectory, recent_patterns: List[LearningPattern]
+        self, trajectory: LearningTrajectory, recent_patterns: list[LearningPattern]
     ) -> PredictiveInsights:
         """予測的洞察を生成"""
         # 次の学習機会を予測
@@ -219,8 +219,8 @@ class DevelopmentAnalytics:
 
     def generate_visualization_data(
         self,
-        patterns: List[LearningPattern],
-        events: List[DevelopmentEvent],
+        patterns: list[LearningPattern],
+        events: list[DevelopmentEvent],
         trajectory: LearningTrajectory,
     ) -> VisualizationData:
         """可視化用データを生成"""
@@ -252,7 +252,7 @@ class DevelopmentAnalytics:
             heatmap_data=heatmap_data,
         )
 
-    def _calculate_learning_velocity(self, patterns: List[LearningPattern]) -> float:
+    def _calculate_learning_velocity(self, patterns: list[LearningPattern]) -> float:
         """学習速度を計算（月あたりのパターン数）"""
         if not patterns:
             return 0.0
@@ -271,7 +271,7 @@ class DevelopmentAnalytics:
 
         return len(patterns) / max(months, 1)
 
-    def _calculate_pattern_diversity(self, patterns: List[LearningPattern]) -> float:
+    def _calculate_pattern_diversity(self, patterns: list[LearningPattern]) -> float:
         """パターンの多様性を計算（Shannon多様性指数）"""
         if not patterns:
             return 0.0
@@ -291,7 +291,7 @@ class DevelopmentAnalytics:
         max_diversity = np.log2(len(PatternType))
         return diversity / max_diversity if max_diversity > 0 else 0.0
 
-    def _calculate_consistency_score(self, patterns: List[LearningPattern]) -> float:
+    def _calculate_consistency_score(self, patterns: list[LearningPattern]) -> float:
         """一貫性スコアを計算"""
         if not patterns:
             return 0.0
@@ -308,7 +308,7 @@ class DevelopmentAnalytics:
 
         return min(1.0, consistency)
 
-    def _analyze_trend_direction(self, patterns: List[LearningPattern]) -> str:
+    def _analyze_trend_direction(self, patterns: list[LearningPattern]) -> str:
         """トレンド方向を分析"""
         if len(patterns) < 3:
             return "stable"
@@ -336,7 +336,7 @@ class DevelopmentAnalytics:
         else:
             return "stable"
 
-    def _calculate_confidence_interval(self, success_rates: List[float]) -> Tuple[float, float]:
+    def _calculate_confidence_interval(self, success_rates: list[float]) -> tuple[float, float]:
         """成功率の信頼区間を計算"""
         if not success_rates:
             return (0.0, 0.0)
@@ -357,8 +357,8 @@ class DevelopmentAnalytics:
         return (max(0.0, mean - margin), min(1.0, mean + margin))
 
     def _extract_learning_stages(
-        self, patterns: List[LearningPattern]
-    ) -> List[Tuple[LearningStage, datetime, str]]:
+        self, patterns: list[LearningPattern]
+    ) -> list[tuple[LearningStage, datetime, str]]:
         """パターンから学習段階を抽出"""
         stages = []
 
@@ -373,7 +373,7 @@ class DevelopmentAnalytics:
         return stages
 
     def _calculate_progress_score(
-        self, patterns: List[LearningPattern], events: List[DevelopmentEvent]
+        self, patterns: list[LearningPattern], events: list[DevelopmentEvent]
     ) -> float:
         """進歩スコアを計算"""
         if not patterns:
@@ -399,7 +399,7 @@ class DevelopmentAnalytics:
 
         return min(1.0, progress_score)
 
-    def _identify_key_milestones(self, patterns: List[LearningPattern]) -> List[str]:
+    def _identify_key_milestones(self, patterns: list[LearningPattern]) -> list[str]:
         """主要マイルストーンを特定"""
         milestones = []
 
@@ -412,7 +412,7 @@ class DevelopmentAnalytics:
 
         return milestones
 
-    def _infer_primary_domain(self, events: List[DevelopmentEvent]) -> str:
+    def _infer_primary_domain(self, events: list[DevelopmentEvent]) -> str:
         """主要ドメインを推定"""
         domain_keywords = {
             "frontend": ["frontend", "ui", "react", "vue", "angular", "css", "html"],
@@ -438,8 +438,8 @@ class DevelopmentAnalytics:
         return "general"
 
     def _predict_learning_opportunities(
-        self, trajectory: LearningTrajectory, recent_patterns: List[LearningPattern]
-    ) -> List[str]:
+        self, trajectory: LearningTrajectory, recent_patterns: list[LearningPattern]
+    ) -> list[str]:
         """次の学習機会を予測"""
         opportunities = []
 
@@ -468,8 +468,8 @@ class DevelopmentAnalytics:
         return opportunities[:5]
 
     def _identify_risk_areas(
-        self, trajectory: LearningTrajectory, recent_patterns: List[LearningPattern]
-    ) -> List[str]:
+        self, trajectory: LearningTrajectory, recent_patterns: list[LearningPattern]
+    ) -> list[str]:
         """リスク領域を特定"""
         risks = []
 
@@ -493,8 +493,8 @@ class DevelopmentAnalytics:
         return risks
 
     def _recommend_focus_areas(
-        self, trajectory: LearningTrajectory, recent_patterns: List[LearningPattern]
-    ) -> List[str]:
+        self, trajectory: LearningTrajectory, recent_patterns: list[LearningPattern]
+    ) -> list[str]:
         """推奨フォーカス領域"""
         focus_areas = []
 
@@ -535,7 +535,7 @@ class DevelopmentAnalytics:
         return stage_progression.get(current_stage, LearningStage.EXPLORATION)
 
     def _calculate_prediction_confidence(
-        self, trajectory: LearningTrajectory, recent_patterns: List[LearningPattern]
+        self, trajectory: LearningTrajectory, recent_patterns: list[LearningPattern]
     ) -> float:
         """予測信頼度を計算"""
         confidence_factors = []
@@ -559,8 +559,8 @@ class DevelopmentAnalytics:
         return statistics.mean(confidence_factors) if confidence_factors else 0.5
 
     def _create_timeline_chart_data(
-        self, events: List[DevelopmentEvent], patterns: List[LearningPattern]
-    ) -> Dict[str, Any]:
+        self, events: list[DevelopmentEvent], patterns: list[LearningPattern]
+    ) -> dict[str, Any]:
         """タイムライン チャート用データを作成"""
         chart_data = {
             "events": [],
@@ -600,12 +600,12 @@ class DevelopmentAnalytics:
 
         return chart_data
 
-    def _create_pattern_distribution(self, patterns: List[LearningPattern]) -> Dict[str, int]:
+    def _create_pattern_distribution(self, patterns: list[LearningPattern]) -> dict[str, int]:
         """パターン分布データを作成"""
         distribution = Counter(p.type.value for p in patterns)
         return dict(distribution)
 
-    def _create_learning_curve_data(self, trajectory: LearningTrajectory) -> List[Dict[str, Any]]:
+    def _create_learning_curve_data(self, trajectory: LearningTrajectory) -> list[dict[str, Any]]:
         """学習曲線データを作成"""
         curve_data = []
 
@@ -622,7 +622,7 @@ class DevelopmentAnalytics:
 
         return curve_data
 
-    def _create_success_trend_data(self, patterns: List[LearningPattern]) -> List[Dict[str, Any]]:
+    def _create_success_trend_data(self, patterns: list[LearningPattern]) -> list[dict[str, Any]]:
         """成功トレンドデータを作成"""
         trend_data = []
 
@@ -645,7 +645,7 @@ class DevelopmentAnalytics:
 
         return trend_data
 
-    def _create_skill_radar_data(self, patterns: List[LearningPattern]) -> Dict[str, float]:
+    def _create_skill_radar_data(self, patterns: list[LearningPattern]) -> dict[str, float]:
         """スキルレーダーデータを作成"""
         skill_domains = {
             "technical": 0.0,
@@ -691,7 +691,7 @@ class DevelopmentAnalytics:
 
         return skill_domains
 
-    def _create_heatmap_data(self, events: List[DevelopmentEvent]) -> List[List[float]]:
+    def _create_heatmap_data(self, events: list[DevelopmentEvent]) -> list[list[float]]:
         """ヒートマップデータを作成（曜日×時間の活動分布）"""
         # 7日 x 24時間のマトリックス
         heatmap = [[0.0 for _ in range(24)] for _ in range(7)]

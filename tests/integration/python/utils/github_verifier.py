@@ -3,7 +3,7 @@ Utility for verifying GitHub API interactions and results
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 
@@ -36,7 +36,7 @@ class GitHubVerifier:
         except requests.RequestException:
             return False
 
-    def get_repository_info(self, repository: str) -> Optional[Dict[str, Any]]:
+    def get_repository_info(self, repository: str) -> Optional[dict[str, Any]]:
         """
         Get repository information
 
@@ -56,7 +56,7 @@ class GitHubVerifier:
 
     def get_issues(
         self, repository: str, state: str = "all", per_page: int = 30, page: int = 1
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get repository issues
 
@@ -78,7 +78,7 @@ class GitHubVerifier:
         except requests.RequestException:
             return []
 
-    def get_rate_limit(self) -> Dict[str, Any]:
+    def get_rate_limit(self) -> dict[str, Any]:
         """
         Get current rate limit status
 
@@ -143,7 +143,7 @@ class GitHubVerifier:
         except requests.RequestException:
             return False
 
-    def get_repository_languages(self, repository: str) -> Dict[str, int]:
+    def get_repository_languages(self, repository: str) -> dict[str, int]:
         """
         Get repository programming languages
 
@@ -161,7 +161,7 @@ class GitHubVerifier:
         except requests.RequestException:
             return {}
 
-    def verify_repository_access(self, repository: str) -> Dict[str, Any]:
+    def verify_repository_access(self, repository: str) -> dict[str, Any]:
         """
         Comprehensive verification of repository access
 

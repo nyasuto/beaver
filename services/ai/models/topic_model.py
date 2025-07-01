@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import structlog
 from langchain.schema import BaseMessage, HumanMessage, SystemMessage
@@ -45,9 +45,9 @@ class ClassificationMetrics:
     """分類精度評価メトリクス"""
 
     accuracy: float
-    precision_per_category: Dict[str, float]
-    recall_per_category: Dict[str, float]
-    f1_score_per_category: Dict[str, float]
+    precision_per_category: dict[str, float]
+    recall_per_category: dict[str, float]
+    f1_score_per_category: dict[str, float]
     average_f1_score: float
     average_response_time_ms: float
     total_classified: int
@@ -58,8 +58,8 @@ class EnhancedTopicModel:
     """高度なトピック分類モデル"""
 
     def __init__(self):
-        self.few_shot_examples: List[FewShotExample] = []
-        self.classification_history: List[Tuple[Issue, ClassificationResult]] = []
+        self.few_shot_examples: list[FewShotExample] = []
+        self.classification_history: list[tuple[Issue, ClassificationResult]] = []
 
         # カテゴリ定義の拡張
         self.enhanced_categories = {
@@ -248,7 +248,7 @@ class EnhancedTopicModel:
         else:
             return Language.ENGLISH
 
-    def create_few_shot_examples(self) -> List[FewShotExample]:
+    def create_few_shot_examples(self) -> list[FewShotExample]:
         """Few-shot学習用の高品質サンプルデータを作成"""
 
         examples = [
@@ -393,7 +393,7 @@ class EnhancedTopicModel:
         logger.info(f"Created {len(examples)} few-shot examples")
         return examples
 
-    def create_enhanced_prompt(self, issue: Issue, use_few_shot: bool = True) -> List[BaseMessage]:
+    def create_enhanced_prompt(self, issue: Issue, use_few_shot: bool = True) -> list[BaseMessage]:
         """拡張されたプロンプトを作成（Few-shot学習対応）"""
 
         language = self.detect_language(f"{issue.title} {issue.body}")
@@ -599,7 +599,7 @@ Repository: {issue.repository or "N/A"}"""
             )
 
     def evaluate_classification_accuracy(
-        self, test_cases: List[Tuple[Issue, str]]
+        self, test_cases: list[tuple[Issue, str]]
     ) -> ClassificationMetrics:
         """分類精度を評価"""
         # 実装は分類サービスと連携して行う
@@ -623,7 +623,7 @@ Repository: {issue.repository or "N/A"}"""
 
         return metrics
 
-    def get_optimization_recommendations(self) -> Dict[str, Any]:
+    def get_optimization_recommendations(self) -> dict[str, Any]:
         """分類精度向上のための推奨事項を生成"""
 
         recommendations = {

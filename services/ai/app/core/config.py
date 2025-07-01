@@ -6,7 +6,7 @@ Handles environment variables, settings validation, and configuration defaults.
 
 import os
 from functools import lru_cache
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Logging level")
 
     # CORS settings
-    allowed_origins: List[str] = Field(
+    allowed_origins: list[str] = Field(
         default=["http://localhost:3000", "http://127.0.0.1:3000"],
         description="Allowed CORS origins",
     )

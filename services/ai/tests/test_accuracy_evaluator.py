@@ -543,7 +543,7 @@ class TestBenchmarkTestCases:
         for case in test_cases:
             issue, expected_category = case
             title_lower = issue.title.lower()
-            body_lower = issue.body.lower()
+            issue.body.lower()
 
             # Cases that might be ambiguous between categories
             if (
