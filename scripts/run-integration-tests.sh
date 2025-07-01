@@ -248,14 +248,16 @@ run_tests() {
             print_status "Running Python integration tests..."
             echo
             
-            # Check if pytest is available
-            if ! command -v python &> /dev/null; then
-                print_warning "Python not available, skipping Python integration tests"
-            elif ! python -m pytest --version &> /dev/null; then
-                print_warning "pytest not available, skipping Python integration tests"
+            # Check if uv is available
+            if ! command -v uv &> /dev/null; then
+                print_warning "uv not available, skipping Python integration tests"
             else
                 cd tests/integration/python
-                if ! python -m pytest -v --tb=short; then
+                # Install dependencies with uv
+                if ! uv sync; then
+                    print_error "Failed to install Python dependencies with uv"
+                    test_results=1
+                elif ! uv run pytest -v --tb=short; then
                     print_error "Python integration tests failed!"
                     test_results=1
                 else

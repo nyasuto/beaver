@@ -217,22 +217,26 @@ jobs:
           skip-tests: true
 
       - name: 🐍 Setup Python
-        if: hashFiles('tests/integration/python/requirements.txt') != ''
+        if: hashFiles('tests/integration/python/pyproject.toml') != ''
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-          cache: 'pip'
-          cache-dependency-path: tests/integration/python/requirements.txt
+
+      - name: 📦 Install uv
+        if: hashFiles('tests/integration/python/pyproject.toml') != ''
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
 
       - name: 📦 Install Python dependencies
-        if: hashFiles('tests/integration/python/requirements.txt') != ''
+        if: hashFiles('tests/integration/python/pyproject.toml') != ''
         run: |
-          echo "📦 Installing Python integration test dependencies"
+          echo "📦 Installing Python integration test dependencies with uv"
           cd tests/integration/python
-          pip install -r requirements.txt
+          uv sync
 
       - name: 🧪 Run Python Integration Tests
-        if: hashFiles('tests/integration/python/requirements.txt') != ''
+        if: hashFiles('tests/integration/python/pyproject.toml') != ''
         env:
           GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
           BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
@@ -247,10 +251,10 @@ jobs:
           fi
           
           cd tests/integration/python
-          python -m pytest -v --tb=short --html=integration-report.html --self-contained-html
+          uv run pytest -v --tb=short --html=integration-report.html --self-contained-html
 
       - name: 📤 Upload Python Integration Test Results
-        if: always() && hashFiles('tests/integration/python/requirements.txt') != ''
+        if: always() && hashFiles('tests/integration/python/pyproject.toml') != ''
         uses: actions/upload-artifact@v4
         with:
           name: python-integration-results-${{ github.run_id }}-${{ github.job }}
