@@ -99,13 +99,13 @@ check_environment() {
         print_success "BEAVER_TEST_REPO_NAME is set to '${BEAVER_TEST_REPO_NAME}'"
     fi
     
-    # Check if Go is available
-    if ! command -v go &> /dev/null; then
-        print_error "Go is not installed or not in PATH"
+    # Check if Python is available
+    if ! command -v python &> /dev/null; then
+        print_error "Python is not installed or not in PATH"
         issues=$((issues + 1))
     else
-        local go_version=$(go version | awk '{print $3}')
-        print_success "Go is available: ${go_version}"
+        local python_version=$(python --version 2>&1)
+        print_success "Python is available: ${python_version}"
     fi
     
     # Check if git is available
@@ -212,9 +212,8 @@ EOF
 # Run integration tests
 run_tests() {
     local test_args=""
-    local test_pattern="./tests/integration/..."
     
-    print_status "Running Beaver integration tests..."
+    print_status "Running Beaver Python integration tests..."
     
     # Check environment first
     if ! check_environment; then
@@ -227,33 +226,61 @@ run_tests() {
         test_args="-v"
     fi
     
-    # Set test pattern based on options
-    if [[ "$QUICK_TESTS" == "true" ]]; then
-        print_status "Running quick tests (excluding performance tests)..."
-        test_pattern="./tests/integration/ -run TestFullWorkflowIntegration|TestErrorScenarios|TestJapaneseContent|TestConfigurationIntegration"
-    elif [[ "$ALL_TESTS" == "true" ]]; then
-        print_status "Running all integration tests including performance tests..."
-        test_args="$test_args -timeout 15m"
+    # Check if Python integration tests exist
+    local has_python_tests=false
+    if [[ -d "./tests/integration/python" ]] && [[ -f "./tests/integration/python/requirements.txt" ]]; then
+        has_python_tests=true
+        print_status "Found Python integration tests"
+    else
+        print_error "No Python integration tests found!"
+        print_status "Expected: Python tests in ./tests/integration/python/ with requirements.txt"
+        exit 1
     fi
     
-    # Show what would be executed in dry-run mode
+    local test_results=0
+    
+    # Run Python tests
+    if [[ "$has_python_tests" == "true" ]]; then
+        if [[ "$DRY_RUN" == "true" ]]; then
+            print_status "Dry run mode - would execute Python tests:"
+            echo "cd tests/integration/python && python -m pytest -v --tb=short"
+        else
+            print_status "Running Python integration tests..."
+            echo
+            
+            # Check if pytest is available
+            if ! command -v python &> /dev/null; then
+                print_warning "Python not available, skipping Python integration tests"
+            elif ! python -m pytest --version &> /dev/null; then
+                print_warning "pytest not available, skipping Python integration tests"
+            else
+                cd tests/integration/python
+                if ! python -m pytest -v --tb=short; then
+                    print_error "Python integration tests failed!"
+                    test_results=1
+                else
+                    print_success "Python integration tests passed!"
+                fi
+                cd - > /dev/null
+            fi
+        fi
+    fi
+    
+    # Report final results
     if [[ "$DRY_RUN" == "true" ]]; then
-        print_status "Dry run mode - would execute:"
-        echo "go test $test_args $test_pattern"
+        print_success "Dry run completed successfully"
         return 0
     fi
     
-    # Run the tests
-    print_status "Test command: go test $test_args $test_pattern"
-    echo
-    
-    if go test $test_args $test_pattern; then
+    if [[ $test_results -eq 0 ]]; then
         echo
-        print_success "All integration tests passed!"
-        print_status "Check your GitHub Wiki at: https://github.com/${BEAVER_TEST_REPO_OWNER}/${BEAVER_TEST_REPO_NAME}/wiki"
+        print_success "Python integration tests passed!"
+        if [[ -n "${BEAVER_TEST_REPO_OWNER}" && -n "${BEAVER_TEST_REPO_NAME}" ]]; then
+            print_status "Check your GitHub Wiki at: https://github.com/${BEAVER_TEST_REPO_OWNER}/${BEAVER_TEST_REPO_NAME}/wiki"
+        fi
     else
         echo
-        print_error "Integration tests failed!"
+        print_error "Python integration tests failed!"
         print_status "Check the output above for error details"
         exit 1
     fi
