@@ -312,7 +312,7 @@ func TestGenerateSite_Success(t *testing.T) {
 		"issues.html",
 		"strategy.html",
 		"troubleshooting.html",
-		"assets/css/beaver-theme.css",
+		"assets/css/style.css",
 		"assets/js/main.js",
 		"manifest.json",
 		"sw.js",
@@ -344,10 +344,10 @@ func TestGenerateSite_Success(t *testing.T) {
 	}
 
 	// Verify CSS file contains Beaver theme
-	cssPath := filepath.Join(tempDir, "assets", "css", "beaver-theme.css")
+	cssPath := filepath.Join(tempDir, "assets", "css", "style.css")
 	cssContent, err := os.ReadFile(cssPath)
 	if err != nil {
-		t.Fatalf("Failed to read beaver-theme.css: %v", err)
+		t.Fatalf("Failed to read style.css: %v", err)
 	}
 
 	cssStr := string(cssContent)

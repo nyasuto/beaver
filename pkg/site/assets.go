@@ -64,7 +64,7 @@ func (g *HTMLGenerator) generateAssets() error {
 func (g *HTMLGenerator) generateMainCSS() error {
 	css := g.buildBeaverCSS()
 
-	outputPath := filepath.Join(g.config.OutputDir, "assets", "css", "beaver-theme.css")
+	outputPath := filepath.Join(g.config.OutputDir, "assets", "css", "style.css")
 	if err := os.WriteFile(outputPath, []byte(css), 0600); err != nil {
 		return fmt.Errorf("failed to write CSS file: %w", err)
 	}
@@ -76,10 +76,10 @@ func (g *HTMLGenerator) generateMainCSS() error {
 func (g *HTMLGenerator) buildBeaverCSS() string {
 	// Try multiple possible paths for the CSS file
 	possiblePaths := []string{
-		filepath.Join("pkg", "site", "assets", "beaver-theme.css"),
-		filepath.Join("assets", "beaver-theme.css"),
-		"beaver-theme.css",
-		filepath.Join("..", "..", "assets", "beaver-theme.css"),
+		filepath.Join("pkg", "site", "assets", "style.css"),
+		filepath.Join("assets", "style.css"),
+		"style.css",
+		filepath.Join("..", "..", "assets", "style.css"),
 	}
 
 	var cssContent []byte

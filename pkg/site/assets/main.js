@@ -587,8 +587,8 @@ class BeaverUI {
     setupResourcePreloading() {
         // Preload critical resources
         const criticalResources = [
-            '/assets/css/style.css',
-            '/assets/js/main.js'
+            'assets/css/style.css',
+            'assets/js/main.js'
         ];
         
         criticalResources.forEach(resource => {
@@ -769,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Service Worker registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('sw.js')
             .then(registration => {
                 console.log('SW registered: ', registration);
             })
