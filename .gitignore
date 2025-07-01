@@ -85,6 +85,16 @@ services/ai/htmlcov/
 services/ai/.mypy_cache/
 services/ai/.venv/
 services/ai/venv/
+services/ai/*.egg-info/
+
+# Python integration tests
+tests/integration/python/.venv/
+tests/integration/python/__pycache__/
+tests/integration/python/*.pyc
+tests/integration/python/.pytest_cache/
+tests/integration/python/.coverage
+tests/integration/python/htmlcov/
+tests/integration/python/.mypy_cache/
 
 # Node.js (if used for frontend in future)
 node_modules/
