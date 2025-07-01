@@ -7,17 +7,15 @@ Provides endpoints for summarization, classification, and other AI-powered featu
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Dict, Any
 
-from fastapi import FastAPI, HTTPException
+import uvicorn
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-import uvicorn
 
 from app.core.config import get_settings
 from app.core.logging import setup_logging
-from app.routers import health, summarization, classification
-
+from app.routers import classification, health, summarization
 
 # Setup logging
 setup_logging()
@@ -29,13 +27,13 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     logger.info("🚀 Beaver AI Services starting up...")
     settings = get_settings()
-    
+
     # Startup tasks
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"API Version: {settings.api_version}")
-    
+
     yield
-    
+
     # Shutdown tasks
     logger.info("🛑 Beaver AI Services shutting down...")
 
@@ -43,7 +41,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     settings = get_settings()
-    
+
     app = FastAPI(
         title="🦫 Beaver AI Services",
         description="AI processing services for knowledge dam construction",
@@ -52,7 +50,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.environment != "production" else None,
         lifespan=lifespan,
     )
-    
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -61,17 +59,17 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Include routers
     app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
     app.include_router(summarization.router, prefix="/api/v1/summarize", tags=["ai"])
     app.include_router(classification.router, prefix="/api/v1/classify", tags=["ai"])
-    
+
     @app.get("/", include_in_schema=False)
     async def root():
         """Redirect root to docs"""
         return RedirectResponse(url="/docs")
-    
+
     @app.get("/api", include_in_schema=False)
     async def api_root():
         """API root endpoint"""
@@ -81,7 +79,7 @@ def create_app() -> FastAPI:
             "docs": "/docs",
             "health": "/api/v1/health",
         }
-    
+
     return app
 
 
@@ -92,7 +90,7 @@ app = create_app()
 def main():
     """Main entry point for running the server"""
     settings = get_settings()
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,

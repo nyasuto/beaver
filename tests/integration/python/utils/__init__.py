@@ -7,7 +7,7 @@ Focus is on real-world functionality and external interface verification.
 """
 
 from .beaver_runner import BeaverRunner
-from .github_verifier import GitHubVerifier  
+from .github_verifier import GitHubVerifier
 from .site_checker import SiteChecker
 
 __all__ = ["BeaverRunner", "GitHubVerifier", "SiteChecker"]

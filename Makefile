@@ -1,7 +1,7 @@
 # Beaver - AIエージェント知識ダム構築ツール
 # Makefile for development and build automation
 
-.PHONY: help build clean test test-unit test-integration test-integration-setup test-integration-quick test-all lint fmt deps install run dev quality test-integration
+.PHONY: help build clean test test-unit test-integration test-integration-setup test-integration-quick test-all lint lint-python format-python type-check-python test-python-unit quality-python fmt deps install run dev quality test-integration
 
 # Variables
 BINARY_NAME=beaver
@@ -75,27 +75,24 @@ test-integration:
 		exit 1; \
 	fi
 	@echo "📦 Python依存関係をチェック中..."
-	@cd tests/integration/python && pip install -r requirements.txt >/dev/null 2>&1 || { \
-		echo "❌ Python依存関係のインストールに失敗しました"; \
-		echo "💡 手動実行: cd tests/integration/python && pip install -r requirements.txt"; \
+	@cd tests/integration/python && uv sync >/dev/null 2>&1 || { \
+		echo "❌ Python依存関係の同期に失敗しました"; \
+		echo "💡 手動実行: cd tests/integration/python && uv sync"; \
 		exit 1; \
 	}
 	@echo "🧪 Python統合テスト実行中..."
-	cd tests/integration/python && python -m pytest -v
+	cd tests/integration/python && uv run pytest -v
 
 ## test-integration-setup: Setup Python integration test environment
 test-integration-setup:
 	@echo "⚙️ Python統合テスト環境をセットアップ中..."
-	@if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then \
-		echo "❌ Pythonがインストールされていません"; \
-		exit 1; \
-	fi
-	@if ! command -v pip >/dev/null 2>&1 && ! command -v pip3 >/dev/null 2>&1; then \
-		echo "❌ pipがインストールされていません"; \
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "❌ uvがインストールされていません"; \
+		echo "💡 インストール: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
 		exit 1; \
 	fi
 	@echo "📦 Python依存関係をインストール中..."
-	cd tests/integration/python && pip install -r requirements.txt
+	cd tests/integration/python && uv sync
 	@echo "✅ Python統合テスト環境セットアップ完了"
 
 ## test-integration-quick: Run quick integration tests (subset)
@@ -105,7 +102,7 @@ test-integration-quick:
 		echo "⚠️ GITHUB_TOKEN環境変数が設定されていません"; \
 		exit 0; \
 	fi
-	cd tests/integration/python && python -m pytest -v -m "not slow"
+	cd tests/integration/python && uv run pytest -v -m "not slow"
 
 ## lint: Run golangci-lint with integrated security checks
 lint:
@@ -116,6 +113,39 @@ lint:
 		echo "⚠️ golangci-lint がインストールされていません"; \
 		echo "インストール: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
 	fi
+
+## lint-python: Run Python linting with ruff
+lint-python:
+	@echo "🐍 Python品質チェック実行中..."
+	@echo "📦 AIサービスをチェック中..."
+	@cd services/ai && uv run --dev ruff check .
+	@echo "📦 統合テストをチェック中..."
+	@cd tests/integration/python && uv run --group dev ruff check .
+	@echo "✅ Python品質チェック完了"
+
+## format-python: Format Python code with ruff
+format-python:
+	@echo "🐍 Pythonコードフォーマット実行中..."
+	@cd services/ai && uv run --dev ruff format .
+	@cd tests/integration/python && uv run --group dev ruff format .
+	@echo "✅ Pythonコードフォーマット完了"
+
+## type-check-python: Run Python type checking with mypy
+type-check-python:
+	@echo "🐍 Python型チェック実行中..."
+	@cd services/ai && uv run --dev mypy .
+	@cd tests/integration/python && uv run --group dev mypy .
+	@echo "✅ Python型チェック完了"
+
+## test-python-unit: Run Python unit tests
+test-python-unit:
+	@echo "🧪 Python単体テスト実行中..."
+	@cd services/ai && uv run --dev pytest tests/
+	@echo "✅ Python単体テスト完了"
+
+## quality-python: Run all Python quality checks
+quality-python: lint-python format-python type-check-python test-python-unit
+	@echo "✅ Python品質チェック完了"
 
 ## fmt: Format code
 fmt:
@@ -139,9 +169,9 @@ workflow-lint:
 test-all: test-unit test-integration
 	@echo "✅ 全テスト完了"
 
-## quality: Run all quality checks (lint includes security + format + unit test + workflow validation)
+## quality: Run all quality checks (Go + Python + workflow validation)
 quality: fmt lint test-unit workflow-lint
-	@echo "✅ 品質チェック完了"
+	@echo "✅ 全品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible
 quality-fix: fmt

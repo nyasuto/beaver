@@ -4,11 +4,13 @@ Pydantic models for classification requests and responses
 
 from datetime import datetime
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class Issue(BaseModel):
     """GitHub Issue data model"""
+
     id: int
     title: str
     body: str
@@ -20,6 +22,7 @@ class Issue(BaseModel):
 
 class ClassificationConfig(BaseModel):
     """Classification configuration"""
+
     confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
     model: str = Field(default="gpt-3.5-turbo")
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
@@ -28,12 +31,14 @@ class ClassificationConfig(BaseModel):
 
 class ClassificationRequest(BaseModel):
     """Single issue classification request"""
+
     issue: Issue
     config: Optional[ClassificationConfig] = None
 
 
 class ClassificationResult(BaseModel):
     """Classification result for a single issue"""
+
     issue_id: int
     category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
@@ -45,6 +50,7 @@ class ClassificationResult(BaseModel):
 
 class ClassificationResponse(BaseModel):
     """Single issue classification response"""
+
     category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     reasoning: str
@@ -56,6 +62,7 @@ class ClassificationResponse(BaseModel):
 
 class BatchClassificationRequest(BaseModel):
     """Batch classification request"""
+
     issues: List[Issue]
     config: Optional[ClassificationConfig] = None
     parallel_processing: bool = True
@@ -63,6 +70,7 @@ class BatchClassificationRequest(BaseModel):
 
 class BatchSummary(BaseModel):
     """Batch processing summary"""
+
     total_processed: int
     successful: int
     failed: int
@@ -72,6 +80,7 @@ class BatchSummary(BaseModel):
 
 class BatchClassificationResponse(BaseModel):
     """Batch classification response"""
+
     results: List[ClassificationResult]
     summary: BatchSummary
     timestamp: datetime = Field(default_factory=datetime.now)
@@ -79,6 +88,7 @@ class BatchClassificationResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response"""
+
     status: str
     model_loaded: bool
     api_accessible: bool
