@@ -1,0 +1,248 @@
+name: 🔗 Integration Tests
+
+on:
+  # Manual trigger with options
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - quick
+          - performance
+      repository:
+        description: 'Override test repository'
+        required: false
+        default: ''
+        type: string
+
+  # Auto-trigger on main branch
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/ci.yml'
+
+  # Weekly comprehensive run
+  schedule:
+    - cron: "0 9 * * 1" # Every Monday at 9 AM UTC
+
+env:
+  GO_VERSION: "stable"
+
+jobs:
+  # Quick integration tests
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_scope != 'performance' &&
+      (github.event_name != 'workflow_dispatch' || github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'quick')
+
+    environment: integration-testing
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🦫 Setup Beaver Environment
+        uses: ./.github/actions/build-and-test
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          skip-tests: true
+
+      - name: ⚙️ Setup integration environment
+        run: |
+          chmod +x ./scripts/run-integration-tests.sh
+
+      - name: 🔗 Run integration tests
+        env:
+          BEAVER_INTEGRATION_TESTS: true
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+          BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+          BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
+          BEAVER_DEBUG: true
+          TARGET_REPOSITORY: ${{ github.event.inputs.repository || format('{0}/{1}', github.repository_owner, github.event.repository.name) }}
+        run: |
+          echo "🧪 Running integration tests..."
+          echo "🎯 Target repository: $TARGET_REPOSITORY"
+          echo "🔍 Test scope: ${{ github.event.inputs.test_scope || 'quick' }}"
+          
+          # Pre-flight checks
+          ./scripts/run-integration-tests.sh --check
+          
+          # Run tests based on scope
+          case "${{ github.event.inputs.test_scope || 'quick' }}" in
+            "quick"|"")
+              ./scripts/run-integration-tests.sh --quick --run
+              ;;
+            "all")
+              ./scripts/run-integration-tests.sh --all --run
+              ;;
+          esac
+        timeout-minutes: 15
+
+      - name: 📤 Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results-${{ github.run_id }}
+          path: |
+            *.log
+            .env.integration
+            tests/integration/python/*.html
+          retention-days: 7
+
+  # Performance tests (separate job for resource isolation)
+  performance-tests:
+    name: 🚀 Performance Tests
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'performance')) ||
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    environment: integration-testing
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🦫 Setup Beaver Environment
+        uses: ./.github/actions/build-and-test
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          skip-tests: true
+
+      - name: 🚀 Run performance tests
+        env:
+          BEAVER_INTEGRATION_TESTS: true
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+          BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+          BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
+          TARGET_REPOSITORY: ${{ github.event.inputs.repository || format('{0}/{1}', github.repository_owner, github.event.repository.name) }}
+        run: |
+          echo "🚀 Running performance tests..."
+          echo "🎯 Target repository: $TARGET_REPOSITORY"
+          
+          chmod +x ./scripts/run-integration-tests.sh
+          ./scripts/run-integration-tests.sh --all --run
+        timeout-minutes: 30
+
+      - name: 📤 Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results-${{ github.run_id }}
+          path: |
+            *.log
+            performance-*.json
+            tests/integration/python/*.html
+          retention-days: 30
+
+  # Python integration tests (if they exist)
+  python-integration-tests:
+    name: 🐍 Python Integration Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_scope != 'performance' &&
+      (github.event_name != 'workflow_dispatch' || github.event.inputs.test_scope == 'all')
+
+    environment: integration-testing
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🦫 Setup Beaver Environment
+        uses: ./.github/actions/build-and-test
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          skip-tests: true
+
+      - name: 🐍 Setup Python
+        if: hashFiles('tests/integration/python/requirements.txt') != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+          cache-dependency-path: tests/integration/python/requirements.txt
+
+      - name: 📦 Install Python dependencies
+        if: hashFiles('tests/integration/python/requirements.txt') != ''
+        run: |
+          echo "📦 Installing Python integration test dependencies"
+          cd tests/integration/python
+          pip install -r requirements.txt
+
+      - name: 🧪 Run Python Integration Tests
+        if: hashFiles('tests/integration/python/requirements.txt') != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN }}
+          BEAVER_TEST_REPO_OWNER: ${{ vars.BEAVER_TEST_REPO_OWNER }}
+          BEAVER_TEST_REPO_NAME: ${{ vars.BEAVER_TEST_REPO_NAME }}
+        run: |
+          echo "🧪 Running Python integration tests"
+          echo "🎯 Repository: $BEAVER_TEST_REPO_OWNER/$BEAVER_TEST_REPO_NAME"
+          
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "⚠️ No GitHub token available - skipping integration tests"
+            exit 0
+          fi
+          
+          cd tests/integration/python
+          python -m pytest -v --tb=short --html=integration-report.html --self-contained-html
+
+      - name: 📤 Upload Python Integration Test Results
+        if: always() && hashFiles('tests/integration/python/requirements.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-integration-results-${{ github.run_id }}
+          path: |
+            tests/integration/python/integration-report.html
+            tests/integration/python/pytest.log
+          retention-days: 7
+
+  # Integration test summary
+  integration-complete:
+    name: ✅ Integration Tests Complete
+    runs-on: ubuntu-latest
+    needs: [integration-tests, performance-tests, python-integration-tests]
+    if: always()
+
+    steps:
+      - name: 📊 Report Integration Test Results
+        run: |
+          echo "📊 Integration Test Pipeline Results:"
+          echo "🔗 Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "🚀 Performance Tests: ${{ needs.performance-tests.result }}"
+          echo "🐍 Python Integration Tests: ${{ needs.python-integration-tests.result }}"
+          
+          # Check for any failures
+          if [[ "${{ needs.integration-tests.result }}" == "failure" || 
+                "${{ needs.performance-tests.result }}" == "failure" || 
+                "${{ needs.python-integration-tests.result }}" == "failure" ]]; then
+            echo "❌ Some integration tests failed!"
+            echo "ℹ️ Check individual job logs for details"
+          else
+            echo "✅ All integration tests completed successfully!"
+          fi
+
+      - name: 📝 Integration Test Summary
+        if: always()
+        run: |
+          echo "## Integration Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Tests | ${{ needs.performance-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Python Integration | ${{ needs.python-integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Scope:** ${{ github.event.inputs.test_scope || 'auto' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** ${{ github.event.inputs.repository || github.repository }}" >> $GITHUB_STEP_SUMMARY

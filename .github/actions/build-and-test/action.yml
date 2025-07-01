@@ -3,6 +3,18 @@ description: 'Run comprehensive build and testing pipeline for Beaver'
 author: 'Beaver Team'
 
 inputs:
+  go-version:
+    description: 'Go version to use'
+    required: false
+    default: 'stable'
+  run-tests:
+    description: 'Whether to run tests'
+    required: false
+    default: 'true'
+  skip-tests:
+    description: 'Whether to skip tests (overrides run-tests)'
+    required: false
+    default: 'false'
   test-type:
     description: 'Type of tests to run: unit, integration, performance, all'
     required: false
@@ -18,7 +30,7 @@ inputs:
   platforms:
     description: 'Platforms for cross-compilation (comma-separated)'
     required: false
-    default: 'linux/amd64,darwin/amd64'
+    default: ''
   upload-artifacts:
     description: 'Upload build artifacts and test results'
     required: false
@@ -42,10 +54,22 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: 📋 Initialize test pipeline
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
+
+    - name: 📋 Initialize pipeline
       shell: bash
       run: |
-        echo "🔍 Build and Test Pipeline"
+        echo "🦫 Beaver Build and Test Pipeline"
+        echo "Go version: ${{ inputs.go-version }}"
+        echo "Run tests: ${{ inputs.run-tests }}"
+        echo "Skip tests: ${{ inputs.skip-tests }}"
         echo "Test type: ${{ inputs.test-type }}"
         echo "Coverage threshold: ${{ inputs.coverage-threshold }}%"
         echo "Timeout: ${{ inputs.timeout }}"
@@ -125,7 +149,7 @@ runs:
         fi
 
     - name: 🧪 Unit tests
-      if: inputs.test-type == 'unit' || inputs.test-type == 'all'
+      if: (inputs.run-tests == 'true' && inputs.skip-tests == 'false') && (inputs.test-type == 'unit' || inputs.test-type == 'all')
       shell: bash
       run: |
         echo "🧪 Running unit tests..."
@@ -152,7 +176,7 @@ runs:
 
     - name: 📊 Coverage analysis
       id: coverage
-      if: inputs.test-type == 'unit' || inputs.test-type == 'all'
+      if: (inputs.run-tests == 'true' && inputs.skip-tests == 'false') && (inputs.test-type == 'unit' || inputs.test-type == 'all')
       shell: bash
       run: |
         echo "📊 Analyzing test coverage..."
