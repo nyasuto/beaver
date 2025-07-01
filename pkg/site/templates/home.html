@@ -1,0 +1,139 @@
+{{ define "content" }}
+
+<div class="page-header">
+    <h1>{{ .Title }}</h1>
+    <p>{{ .Description }}</p>
+</div>
+
+<!-- Project Statistics -->
+<section class="stats-section">
+    <div class="beaver-layout">
+        <div class="beaver-card">
+            <h3>📊 プロジェクト統計</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">{{ .Statistics.total_issues }}</span>
+                    <span class="stat-label">総Issues</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ .Statistics.open_issues }}</span>
+                    <span class="stat-label">オープン</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ .Statistics.closed_issues }}</span>
+                    <span class="stat-label">クローズ</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>🏥 プロジェクト健全性</h3>
+            <div class="health-score">
+                <span class="score-number">{{ .HealthScore }}</span>
+                <div class="score-bar">
+                    <div class="score-fill" style="width: {{ .HealthScore }}%"></div>
+                </div>
+                <span class="score-label">/100</span>
+            </div>
+            <p class="health-description">
+                {{ if ge .HealthScore 80 }}
+                <span class="status-indicator healthy">良好</span>
+                プロジェクトは健全な状態です
+                {{ else if ge .HealthScore 60 }}
+                <span class="status-indicator warning">注意</span>
+                いくつかの改善点があります
+                {{ else }}
+                <span class="status-indicator error">要改善</span>
+                プロジェクトの見直しが必要です
+                {{ end }}
+            </p>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>⚡ 最新の活動</h3>
+            <ul class="activity-list">
+                {{ range .Issues | truncateSlice 5 }}
+                <li>
+                    <a href="/issues.html#issue-{{ .Number }}">
+                        #{{ .Number }}: {{ .Title | truncate 50 }}
+                    </a>
+                    <span class="activity-date">{{ formatDate .CreatedAt }}</span>
+                </li>
+                {{ else }}
+                <li>アクティビティがありません</li>
+                {{ end }}
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Main Navigation Cards -->
+<section class="main-nav-section">
+    <div class="beaver-layout">
+        <div class="beaver-card">
+            <h3>🎯 開発戦略</h3>
+            <p>プロジェクトの方向性、技術選択、アーキテクチャ決定の記録</p>
+            <ul>
+                <li><a href="/strategy.html">技術戦略ロードマップ</a></li>
+                <li><a href="/strategy.html#architecture">アーキテクチャ決定記録</a></li>
+                <li><a href="/strategy.html#patterns">学習パターン分析</a></li>
+            </ul>
+            <div class="card-action">
+                <a href="/strategy.html" class="btn btn-primary">戦略を見る →</a>
+            </div>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>📋 課題サマリー</h3>
+            <p>進行中のタスク、バグ報告、機能リクエストの整理</p>
+            <ul>
+                <li><a href="/issues.html">全Issues一覧</a></li>
+                <li><a href="/issues.html#priority">優先度別分類</a></li>
+                <li><a href="/issues.html#labels">ラベル別分析</a></li>
+            </ul>
+            <div class="card-action">
+                <a href="/issues.html" class="btn btn-primary">課題を見る →</a>
+            </div>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>🔧 トラブルシューティング</h3>
+            <p>よくある問題の解決方法と予防策の知識ベース</p>
+            <ul>
+                <li><a href="/troubleshooting.html">よくある問題</a></li>
+                <li><a href="/troubleshooting.html#solutions">解決方法集</a></li>
+                <li><a href="/troubleshooting.html#prevention">予防策ガイド</a></li>
+            </ul>
+            <div class="card-action">
+                <a href="/troubleshooting.html" class="btn btn-primary">解決策を見る →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Links -->
+<section class="quick-links-section">
+    <div class="beaver-card">
+        <h3>🔗 クイックリンク</h3>
+        <div class="quick-links-grid">
+            <a href="https://github.com/{{ .SiteTitle }}" class="quick-link" target="_blank">
+                <span class="link-icon">📱</span>
+                <span class="link-text">GitHubリポジトリ</span>
+            </a>
+            <a href="/issues.html" class="quick-link">
+                <span class="link-icon">📋</span>
+                <span class="link-text">Issues一覧</span>
+            </a>
+            <a href="/strategy.html" class="quick-link">
+                <span class="link-icon">🎯</span>
+                <span class="link-text">開発戦略</span>
+            </a>
+            <a href="/troubleshooting.html" class="quick-link">
+                <span class="link-icon">🔧</span>
+                <span class="link-text">トラブルシューティング</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+{{ end }}

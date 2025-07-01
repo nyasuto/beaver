@@ -1,0 +1,283 @@
+{{ define "content" }}
+
+<div class="page-header">
+    <h1>{{ .Title }}</h1>
+    <p>{{ .Description }}</p>
+</div>
+
+<!-- Quick Solutions -->
+<section class="quick-solutions">
+    <div class="beaver-card">
+        <h3>🚀 クイック解決策</h3>
+        <div class="quick-links-grid">
+            <a href="#github-actions" class="quick-link">
+                <span class="link-icon">⚙️</span>
+                <span class="link-text">GitHub Actions</span>
+            </a>
+            <a href="#build-errors" class="quick-link">
+                <span class="link-icon">🔨</span>
+                <span class="link-text">ビルドエラー</span>
+            </a>
+            <a href="#api-issues" class="quick-link">
+                <span class="link-icon">🌐</span>
+                <span class="link-text">API問題</span>
+            </a>
+            <a href="#configuration" class="quick-link">
+                <span class="link-icon">⚙️</span>
+                <span class="link-text">設定問題</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- GitHub Actions Issues -->
+<section id="github-actions" class="troubleshooting-section">
+    <h2>⚙️ GitHub Actions のトラブルシューティング</h2>
+    
+    <div class="problem-card">
+        <h3>🔴 問題: GitHub Pages デプロイが失敗する</h3>
+        <div class="problem-details">
+            <h4>症状</h4>
+            <ul>
+                <li>デプロイアクションが404エラーで失敗</li>
+                <li>feature ブランチからのデプロイ試行</li>
+                <li>branch protection rule によるブロック</li>
+            </ul>
+            
+            <h4>原因</h4>
+            <p>GitHub Actionsワークフローが main ブランチ以外からもデプロイを試行していたため、ブランチ保護ルールに違反していました。</p>
+            
+            <h4>解決方法</h4>
+            <div class="solution-steps">
+                <h5>1. ワークフローファイルの修正</h5>
+                <pre><code># .github/workflows/beaver.yml
+deploy-pages:
+  if: {{ `${{` }} needs.preflight.outputs.should_update == 'true' && github.ref == 'refs/heads/main' {{ `}}` }}
+  needs: [preflight, build-and-test]
+  # ... 他の設定</code></pre>
+                
+                <h5>2. 条件の追加確認</h5>
+                <p>以下の場所にも同様の条件を追加:</p>
+                <ul>
+                    <li>Line 148: Upload to GitHub Pages</li>
+                    <li>Line 286: GitHub Pages deployment</li>
+                    <li>Line 330: Final deployment step</li>
+                </ul>
+            </div>
+            
+            <h4>予防策</h4>
+            <ul>
+                <li>ワークフローでのブランチ条件確認</li>
+                <li>プルリクエストでの事前テスト</li>
+                <li>デプロイ条件の明示的な定義</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="problem-card">
+        <h3>🟡 問題: テストカバレッジが低い</h3>
+        <div class="problem-details">
+            <h4>症状</h4>
+            <ul>
+                <li>全体的なテストカバレッジが79.8%</li>
+                <li>一部の関数でカバレッジが0%</li>
+                <li>エラーハンドリングのテスト不足</li>
+            </ul>
+            
+            <h4>解決アプローチ</h4>
+            <div class="solution-steps">
+                <h5>Phase 1: Easy Wins (目標: 85%)</h5>
+                <ul>
+                    <li>0%カバレッジ関数の基本テスト追加</li>
+                    <li>エラーヘルパー関数のテスト実装</li>
+                    <li>バージョンコマンドのテスト充実</li>
+                </ul>
+                
+                <h5>Phase 2: Critical Paths (目標: 90%)</h5>
+                <ul>
+                    <li>メインワークフローのテスト</li>
+                    <li>GitHub統合のモックテスト</li>
+                    <li>設定管理のエラーケース</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Build Errors -->
+<section id="build-errors" class="troubleshooting-section">
+    <h2>🔨 ビルドエラーのトラブルシューティング</h2>
+    
+    <div class="problem-card">
+        <h3>🔴 問題: Go mod tidy エラー</h3>
+        <div class="problem-details">
+            <h4>一般的な原因と解決方法</h4>
+            <div class="solution-steps">
+                <h5>1. 依存関係の競合</h5>
+                <pre><code>go clean -modcache
+go mod tidy</code></pre>
+                
+                <h5>2. プロキシ設定の問題</h5>
+                <pre><code>export GOPROXY=direct
+go mod download</code></pre>
+                
+                <h5>3. バージョン制約の確認</h5>
+                <pre><code>go mod graph | grep 問題のモジュール
+go mod why 問題のモジュール</code></pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="problem-card">
+        <h3>🟡 問題: テスト実行の失敗</h3>
+        <div class="problem-details">
+            <h4>チェックリスト</h4>
+            <ul>
+                <li>✅ 環境変数の設定確認</li>
+                <li>✅ テストファイルの命名規則</li>
+                <li>✅ import パスの確認</li>
+                <li>✅ モックファイルの生成</li>
+            </ul>
+            
+            <h4>よくある解決方法</h4>
+            <pre><code>go test -v ./...
+go test -cover ./...
+go test -race ./...</code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- API Issues -->
+<section id="api-issues" class="troubleshooting-section">
+    <h2>🌐 API問題のトラブルシューティング</h2>
+    
+    <div class="problem-card">
+        <h3>🔴 問題: GitHub API レート制限</h3>
+        <div class="problem-details">
+            <h4>症状</h4>
+            <ul>
+                <li>API calls exceeded error</li>
+                <li>403 Forbidden responses</li>
+                <li>X-RateLimit-Remaining: 0</li>
+            </ul>
+            
+            <h4>対策</h4>
+            <div class="solution-steps">
+                <h5>1. トークンの確認</h5>
+                <ul>
+                    <li>Personal Access Token の権限確認</li>
+                    <li>Organization の制限確認</li>
+                    <li>トークンの有効期限確認</li>
+                </ul>
+                
+                <h5>2. リクエスト最適化</h5>
+                <ul>
+                    <li>ページネーション効率化</li>
+                    <li>必要なフィールドのみ取得</li>
+                    <li>キャッシュ機能の活用</li>
+                </ul>
+                
+                <h5>3. レート制限監視</h5>
+                <pre><code>curl -H "Authorization: token YOUR_TOKEN" \
+  https://api.github.com/rate_limit</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Configuration Issues -->
+<section id="configuration" class="troubleshooting-section">
+    <h2>⚙️ 設定問題のトラブルシューティング</h2>
+    
+    <div class="problem-card">
+        <h3>🔴 問題: beaver.yml が読み込めない</h3>
+        <div class="problem-details">
+            <h4>チェックポイント</h4>
+            <ul>
+                <li>ファイルの存在確認: <code>ls -la beaver.yml</code></li>
+                <li>YAML構文の確認: <code>yaml-lint beaver.yml</code></li>
+                <li>権限の確認: <code>ls -la beaver.yml</code></li>
+                <li>文字エンコーディング確認</li>
+            </ul>
+            
+            <h4>修復手順</h4>
+            <div class="solution-steps">
+                <h5>1. 設定ファイルの再生成</h5>
+                <pre><code>beaver init
+# 既存の設定を beaver.yml.backup にバックアップ</code></pre>
+                
+                <h5>2. 段階的な設定復元</h5>
+                <ul>
+                    <li>基本設定から開始</li>
+                    <li>一つずつ設定項目を追加</li>
+                    <li>各段階で動作確認</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="problem-card">
+        <h3>🟡 問題: 環境変数が認識されない</h3>
+        <div class="problem-details">
+            <h4>確認コマンド</h4>
+            <pre><code>echo $GITHUB_TOKEN
+echo $OPENAI_API_KEY
+env | grep -E "(GITHUB|OPENAI)"</code></pre>
+            
+            <h4>設定方法</h4>
+            <div class="solution-steps">
+                <h5>1. 一時的な設定</h5>
+                <pre><code>export GITHUB_TOKEN="your_token_here"</code></pre>
+                
+                <h5>2. 永続的な設定</h5>
+                <pre><code># ~/.bashrc または ~/.zshrc に追加
+export GITHUB_TOKEN="your_token_here"</code></pre>
+                
+                <h5>3. GitHub Actions での設定</h5>
+                <pre><code># .github/workflows/beaver.yml
+env:
+  GITHUB_TOKEN: {{ `${{` }} secrets.GITHUB_TOKEN {{ `}}` }}
+  OPENAI_API_KEY: {{ `${{` }} secrets.OPENAI_API_KEY {{ `}}` }}</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Prevention Guide -->
+<section class="prevention-section">
+    <h2>🛡️ 問題予防ガイド</h2>
+    
+    <div class="beaver-layout">
+        <div class="beaver-card">
+            <h3>📋 開発前チェックリスト</h3>
+            <ul>
+                <li>✅ 環境変数の設定確認</li>
+                <li>✅ 依存関係の最新性確認</li>
+                <li>✅ テストの実行確認</li>
+                <li>✅ ブランチ戦略の確認</li>
+            </ul>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>🔧 デプロイ前チェックリスト</h3>
+            <ul>
+                <li>✅ ローカルでのビルド成功</li>
+                <li>✅ テストカバレッジの確認</li>
+                <li>✅ 設定ファイルの検証</li>
+                <li>✅ API制限の余裕確認</li>
+            </ul>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>📊 定期メンテナンス</h3>
+            <ul>
+                <li>🗓️ 週次: 依存関係の更新</li>
+                <li>🗓️ 月次: テストカバレッジ評価</li>
+                <li>🗓️ 四半期: セキュリティ監査</li>
+                <li>🗓️ 半期: アーキテクチャ見直し</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+{{ end }}

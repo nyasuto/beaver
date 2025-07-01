@@ -1,0 +1,211 @@
+{{ define "content" }}
+
+<div class="page-header">
+    <h1>{{ .Title }}</h1>
+    <p>{{ .Description }}</p>
+</div>
+
+<!-- Issues Summary -->
+<section class="issues-summary">
+    <div class="beaver-layout">
+        <div class="beaver-card">
+            <h3>📊 Issues統計</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">{{ len .Issues }}</span>
+                    <span class="stat-label">総Issues</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ countByState .Issues "open" }}</span>
+                    <span class="stat-label">オープン</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ countByState .Issues "closed" }}</span>
+                    <span class="stat-label">クローズ</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>🏷️ ラベル分布</h3>
+            <div class="label-stats">
+                {{ range $label, $count := .Statistics.by_label }}
+                <div class="label-stat">
+                    <span class="label-name">{{ $label }}</span>
+                    <span class="label-count">{{ $count }}</span>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        
+        <div class="beaver-card">
+            <h3>⏱️ 処理時間分析</h3>
+            <div class="time-stats">
+                <div class="time-stat">
+                    <span class="time-label">平均オープン期間</span>
+                    <span class="time-value">7.5日</span>
+                </div>
+                <div class="time-stat">
+                    <span class="time-label">最古のオープンIssue</span>
+                    <span class="time-value">{{ oldestOpenIssue .Issues }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search and Filter -->
+<section class="search-section">
+    <div class="search-controls">
+        <input type="text" id="issue-search" placeholder="Issuesを検索..." class="search-input">
+        <select id="label-filter" class="filter-select">
+            <option value="">すべてのラベル</option>
+            {{ range $label, $count := .Statistics.by_label }}
+            <option value="{{ $label }}">{{ $label }} ({{ $count }})</option>
+            {{ end }}
+        </select>
+        <select id="state-filter" class="filter-select">
+            <option value="">すべての状態</option>
+            <option value="open">オープン</option>
+            <option value="closed">クローズ</option>
+        </select>
+    </div>
+</section>
+
+<!-- Issues List -->
+<section class="issues-list" id="issues-list">
+    {{ range .Issues }}
+    <div class="issue-card" data-searchable data-state="{{ .State }}" data-labels="{{ joinLabels .Labels }}">
+        <div class="issue-header">
+            <div class="issue-meta">
+                <span class="issue-number">#{{ .Number }}</span>
+                <span class="issue-state state-{{ .State }}">{{ .State | upper }}</span>
+                <span class="issue-date">{{ formatDate .CreatedAt }}</span>
+            </div>
+            <div class="issue-actions">
+                <a href="{{ .HTMLURL }}" target="_blank" class="btn btn-small">GitHubで見る</a>
+            </div>
+        </div>
+        
+        <h3 class="issue-title">
+            <a href="{{ .HTMLURL }}" target="_blank">{{ .Title }}</a>
+        </h3>
+        
+        {{ if .Body }}
+        <div class="issue-body">
+            {{ .Body | truncate 200 | markdown }}
+        </div>
+        {{ end }}
+        
+        <div class="issue-footer">
+            <div class="issue-labels">
+                {{ range .Labels }}
+                <span class="label" style="background-color: #{{ .Color }}; color: {{ contrastColor .Color }}">
+                    {{ .Name }}
+                </span>
+                {{ end }}
+            </div>
+            
+            <div class="issue-assignees">
+                {{ if .Assignees }}
+                <span class="assignees-label">担当:</span>
+                {{ range .Assignees }}
+                <span class="assignee">{{ .Login }}</span>
+                {{ end }}
+                {{ end }}
+            </div>
+        </div>
+        
+        {{ if .Comments }}
+        <div class="issue-comments">
+            <details>
+                <summary>💬 コメント ({{ len .Comments }})</summary>
+                <div class="comments-list">
+                    {{ range .Comments }}
+                    <div class="comment">
+                        <div class="comment-header">
+                            <strong>{{ .User.Login }}</strong>
+                            <span class="comment-date">{{ formatDateTime .CreatedAt }}</span>
+                        </div>
+                        <div class="comment-body">
+                            {{ .Body | truncate 300 | markdown }}
+                        </div>
+                    </div>
+                    {{ end }}
+                </div>
+            </details>
+        </div>
+        {{ end }}
+    </div>
+    {{ else }}
+    <div class="no-issues">
+        <p>Issuesが見つかりませんでした。</p>
+    </div>
+    {{ end }}
+</section>
+
+<!-- Load more button -->
+<div class="load-more-section">
+    <button id="load-more" class="btn btn-secondary" style="display: none;">
+        さらに読み込む
+    </button>
+</div>
+
+<script>
+// Issues search and filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('issue-search');
+    const labelFilter = document.getElementById('label-filter');
+    const stateFilter = document.getElementById('state-filter');
+    const issueCards = document.querySelectorAll('.issue-card');
+    
+    function filterIssues() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedLabel = labelFilter.value;
+        const selectedState = stateFilter.value;
+        
+        let visibleCount = 0;
+        
+        issueCards.forEach(card => {
+            const title = card.querySelector('.issue-title').textContent.toLowerCase();
+            const body = card.querySelector('.issue-body')?.textContent?.toLowerCase() || '';
+            const labels = card.dataset.labels;
+            const state = card.dataset.state;
+            
+            const matchesSearch = title.includes(searchTerm) || body.includes(searchTerm);
+            const matchesLabel = !selectedLabel || labels.includes(selectedLabel);
+            const matchesState = !selectedState || state === selectedState;
+            
+            if (matchesSearch && matchesLabel && matchesState) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Update results count
+        updateResultsCount(visibleCount);
+    }
+    
+    function updateResultsCount(count) {
+        let resultsInfo = document.getElementById('results-info');
+        if (!resultsInfo) {
+            resultsInfo = document.createElement('div');
+            resultsInfo.id = 'results-info';
+            resultsInfo.className = 'results-info';
+            document.querySelector('.search-section').appendChild(resultsInfo);
+        }
+        resultsInfo.textContent = `${count}件のIssuesが見つかりました`;
+    }
+    
+    searchInput.addEventListener('input', filterIssues);
+    labelFilter.addEventListener('change', filterIssues);
+    stateFilter.addEventListener('change', filterIssues);
+    
+    // Initialize
+    filterIssues();
+});
+</script>
+
+{{ end }}
