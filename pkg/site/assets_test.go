@@ -69,7 +69,7 @@ func TestGenerateAssets(t *testing.T) {
 
 	// Verify files were created
 	expectedFiles := []string{
-		"assets/css/beaver-theme.css",
+		"assets/css/style.css",
 		"assets/js/main.js",
 		"favicon.html",  // placeholder for now
 		"manifest.json", // PWA manifest
@@ -110,9 +110,9 @@ func TestGenerateMainCSS(t *testing.T) {
 	}
 
 	// Verify CSS file was created
-	cssPath := filepath.Join(tempDir, "assets", "css", "beaver-theme.css")
+	cssPath := filepath.Join(tempDir, "assets", "css", "style.css")
 	if _, err := os.Stat(cssPath); os.IsNotExist(err) {
-		t.Fatal("beaver-theme.css was not created")
+		t.Fatal("style.css was not created")
 	}
 
 	// Read and verify CSS content

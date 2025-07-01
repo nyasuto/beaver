@@ -156,7 +156,7 @@ func TestSiteGenerationIntegration(t *testing.T) {
 		"issues.html",
 		"strategy.html",
 		"troubleshooting.html",
-		"assets/css/beaver-theme.css",
+		"assets/css/style.css",
 		"assets/js/main.js",
 		"sw.js",
 		"robots.txt",
@@ -257,7 +257,7 @@ func TestSiteGenerationIntegration(t *testing.T) {
 	}
 
 	// Test 6: Verify CSS content and Beaver theme
-	cssContent := readFileContent(t, filepath.Join(tempDir, "assets", "css", "beaver-theme.css"))
+	cssContent := readFileContent(t, filepath.Join(tempDir, "assets", "css", "style.css"))
 
 	cssChecks := []string{
 		"--beaver-primary: #8B4513",
@@ -274,7 +274,7 @@ func TestSiteGenerationIntegration(t *testing.T) {
 
 	for _, check := range cssChecks {
 		if !strings.Contains(cssContent, check) {
-			t.Errorf("beaver-theme.css should contain '%s'", check)
+			t.Errorf("style.css should contain '%s'", check)
 		}
 	}
 
@@ -440,7 +440,7 @@ func TestSiteGenerationWithMinimalData(t *testing.T) {
 		"issues.html",
 		"strategy.html",
 		"troubleshooting.html",
-		"assets/css/beaver-theme.css",
+		"assets/css/style.css",
 	}
 
 	for _, file := range expectedFiles {
