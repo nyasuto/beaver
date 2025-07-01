@@ -1308,9 +1308,9 @@ output:
 		err = runBuildCommand(cmd, args)
 		require.Error(t, err)
 		// Either GitHub token validation or repository access error can happen first
-		assert.True(t, strings.Contains(err.Error(), "GitHub token") || 
-					 strings.Contains(err.Error(), "Issues取得エラー") || 
-					 strings.Contains(err.Error(), "REPOSITORY_ERROR"), 
+		assert.True(t, strings.Contains(err.Error(), "GitHub token") ||
+			strings.Contains(err.Error(), "Issues取得エラー") ||
+			strings.Contains(err.Error(), "REPOSITORY_ERROR"),
 			fmt.Sprintf("Expected GitHub token or repository error, got: %v", err))
 	})
 
