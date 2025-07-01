@@ -69,9 +69,10 @@ func TestGenerateAssets(t *testing.T) {
 
 	// Verify files were created
 	expectedFiles := []string{
-		"assets/css/style.css",
+		"assets/css/beaver-theme.css",
 		"assets/js/main.js",
-		"favicon.html", // placeholder for now
+		"favicon.html",  // placeholder for now
+		"manifest.json", // PWA manifest
 	}
 
 	for _, file := range expectedFiles {
@@ -109,9 +110,9 @@ func TestGenerateMainCSS(t *testing.T) {
 	}
 
 	// Verify CSS file was created
-	cssPath := filepath.Join(tempDir, "assets", "css", "style.css")
+	cssPath := filepath.Join(tempDir, "assets", "css", "beaver-theme.css")
 	if _, err := os.Stat(cssPath); os.IsNotExist(err) {
-		t.Fatal("style.css was not created")
+		t.Fatal("beaver-theme.css was not created")
 	}
 
 	// Read and verify CSS content
@@ -264,14 +265,14 @@ func TestGenerateMainJS(t *testing.T) {
 
 	jsContent := string(content)
 
-	// Check for main functions
+	// Check for main classes and functions from PR #332
 	expectedFunctions := []string{
-		"initNavigation",
-		"initCardAnimations",
-		"initSearch",
-		"formatDate",
-		"copyToClipboard",
-		"showNotification",
+		"class BeaverUI",
+		"class BeaverSocial",
+		"setupThemeToggle",
+		"setupSearch",
+		"setupTableOfContents",
+		"performSearch",
 	}
 
 	for _, function := range expectedFunctions {
@@ -295,9 +296,9 @@ func TestGenerateMainJS(t *testing.T) {
 		t.Error("JS should contain IntersectionObserver for animations")
 	}
 
-	// Check for Japanese date formatting
-	if !strings.Contains(jsContent, "ja-JP") {
-		t.Error("JS should contain Japanese locale for date formatting")
+	// Check for Japanese search support
+	if !strings.Contains(jsContent, "検索... (Japanese/English)") {
+		t.Error("JS should contain Japanese search placeholder")
 	}
 }
 

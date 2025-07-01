@@ -65,8 +65,9 @@ func TestSimpleGeneration(t *testing.T) {
 
 	// Verify files exist
 	expectedFiles := []string{
-		"assets/css/style.css",
+		"assets/css/beaver-theme.css",
 		"assets/js/main.js",
+		"manifest.json",
 		"sw.js",
 		"robots.txt",
 		"sitemap.xml",
@@ -80,7 +81,7 @@ func TestSimpleGeneration(t *testing.T) {
 	}
 
 	// Test CSS content
-	cssPath := filepath.Join(tempDir, "assets", "css", "style.css")
+	cssPath := filepath.Join(tempDir, "assets", "css", "beaver-theme.css")
 	cssContent, err := os.ReadFile(cssPath)
 	if err != nil {
 		t.Fatalf("Failed to read CSS file: %v", err)
