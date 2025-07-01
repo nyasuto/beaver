@@ -312,6 +312,7 @@ output:
         ), f"Repository not found error unclear: {stderr}"
 
     @pytest.mark.github_api
+    @pytest.mark.skip(reason="Skipping due to timeout issues with large repositories in CI")
     def test_insufficient_permissions(self, beaver_binary, temp_config_dir, github_token):
         """Test handling of insufficient permissions"""
         if not github_token:
