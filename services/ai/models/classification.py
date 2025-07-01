@@ -3,7 +3,7 @@ Pydantic models for classification requests and responses
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class Issue(BaseModel):
     id: int
     title: str
     body: str
-    labels: List[str] = Field(default_factory=list)
+    labels: list[str] = Field(default_factory=list)
     state: Optional[str] = "open"
     created_at: Optional[datetime] = None
     repository: Optional[str] = None
@@ -43,7 +43,7 @@ class ClassificationResult(BaseModel):
     category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     reasoning: str
-    suggested_tags: List[str] = Field(default_factory=list)
+    suggested_tags: list[str] = Field(default_factory=list)
     processing_time_ms: int = 0
     model_used: str = "unknown"
 
@@ -54,7 +54,7 @@ class ClassificationResponse(BaseModel):
     category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     reasoning: str
-    suggested_tags: List[str] = Field(default_factory=list)
+    suggested_tags: list[str] = Field(default_factory=list)
     processing_time_ms: int
     model_used: str
     timestamp: datetime = Field(default_factory=datetime.now)
@@ -63,7 +63,7 @@ class ClassificationResponse(BaseModel):
 class BatchClassificationRequest(BaseModel):
     """Batch classification request"""
 
-    issues: List[Issue]
+    issues: list[Issue]
     config: Optional[ClassificationConfig] = None
     parallel_processing: bool = True
 
@@ -81,7 +81,7 @@ class BatchSummary(BaseModel):
 class BatchClassificationResponse(BaseModel):
     """Batch classification response"""
 
-    results: List[ClassificationResult]
+    results: list[ClassificationResult]
     summary: BatchSummary
     timestamp: datetime = Field(default_factory=datetime.now)
 

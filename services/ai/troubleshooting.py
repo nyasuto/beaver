@@ -14,7 +14,7 @@ import sys
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +30,7 @@ class IssueData:
     title: str
     body: str
     state: str
-    labels: List[str]
+    labels: list[str]
     author: str
     created_at: str
     updated_at: str
@@ -48,8 +48,8 @@ class AIDetectedPattern:
     frequency: int
     severity: str
     category: str
-    indicators: List[str]
-    correlations: List[str]
+    indicators: list[str]
+    correlations: list[str]
 
 
 @dataclass
@@ -60,7 +60,7 @@ class AISolutionStrategy:
     title: str
     description: str
     approach: str
-    steps: List[str]
+    steps: list[str]
     effectiveness: float
     complexity: str
 
@@ -73,8 +73,8 @@ class AIRootCause:
     description: str
     category: str
     likelihood: float
-    evidence: List[str]
-    mitigation: List[str]
+    evidence: list[str]
+    mitigation: list[str]
 
 
 @dataclass
@@ -84,7 +84,7 @@ class AIPreventionSuggestion:
     suggestion_id: str
     title: str
     description: str
-    actions: List[str]
+    actions: list[str]
     frequency: str
     impact: str
     effort: str
@@ -108,13 +108,13 @@ class AITroubleshootingResult:
 
     analyzed_at: str
     processing_time_seconds: float
-    patterns_detected: List[AIDetectedPattern]
-    solution_strategies: List[AISolutionStrategy]
-    root_cause_analysis: List[AIRootCause]
-    prevention_suggestions: List[AIPreventionSuggestion]
-    insights: List[AIInsight]
+    patterns_detected: list[AIDetectedPattern]
+    solution_strategies: list[AISolutionStrategy]
+    root_cause_analysis: list[AIRootCause]
+    prevention_suggestions: list[AIPreventionSuggestion]
+    insights: list[AIInsight]
     confidence: float
-    recommendations: List[str]
+    recommendations: list[str]
 
 
 class TroubleshootingAnalyzer:
@@ -126,7 +126,7 @@ class TroubleshootingAnalyzer:
         self.solution_templates = self._initialize_solution_templates()
         self.root_cause_patterns = self._initialize_root_cause_patterns()
 
-    def _initialize_error_patterns(self) -> Dict[str, Dict[str, Any]]:
+    def _initialize_error_patterns(self) -> dict[str, dict[str, Any]]:
         """Initialize error pattern recognition database."""
         return {
             "api_errors": {
@@ -211,7 +211,7 @@ class TroubleshootingAnalyzer:
             },
         }
 
-    def _initialize_solution_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _initialize_solution_templates(self) -> dict[str, dict[str, Any]]:
         """Initialize solution strategy templates."""
         return {
             "api_errors": {
@@ -267,7 +267,7 @@ class TroubleshootingAnalyzer:
             },
         }
 
-    def _initialize_root_cause_patterns(self) -> Dict[str, List[str]]:
+    def _initialize_root_cause_patterns(self) -> dict[str, list[str]]:
         """Initialize root cause analysis patterns."""
         return {
             "timing_issues": [
@@ -292,7 +292,7 @@ class TroubleshootingAnalyzer:
             ],
         }
 
-    def analyze_issues(self, issues: List[IssueData]) -> AITroubleshootingResult:
+    def analyze_issues(self, issues: list[IssueData]) -> AITroubleshootingResult:
         """Perform comprehensive AI analysis of troubleshooting patterns."""
         start_time = datetime.now()
 
@@ -339,7 +339,7 @@ class TroubleshootingAnalyzer:
             recommendations=recommendations,
         )
 
-    def _detect_patterns(self, issues: List[IssueData]) -> List[AIDetectedPattern]:
+    def _detect_patterns(self, issues: list[IssueData]) -> list[AIDetectedPattern]:
         """Detect error patterns in issues using NLP and pattern matching."""
         patterns = []
         pattern_counts = defaultdict(int)
@@ -386,8 +386,8 @@ class TroubleshootingAnalyzer:
         return sorted(patterns, key=lambda p: (p.confidence, p.frequency), reverse=True)
 
     def _generate_solution_strategies(
-        self, patterns: List[AIDetectedPattern], issues: List[IssueData]
-    ) -> List[AISolutionStrategy]:
+        self, patterns: list[AIDetectedPattern], issues: list[IssueData]
+    ) -> list[AISolutionStrategy]:
         """Generate solution strategies based on detected patterns."""
         strategies = []
 
@@ -419,8 +419,8 @@ class TroubleshootingAnalyzer:
         return strategies
 
     def _perform_root_cause_analysis(
-        self, issues: List[IssueData], patterns: List[AIDetectedPattern]
-    ) -> List[AIRootCause]:
+        self, issues: list[IssueData], patterns: list[AIDetectedPattern]
+    ) -> list[AIRootCause]:
         """Perform root cause analysis based on patterns and issue content."""
         root_causes = []
 
@@ -490,8 +490,8 @@ class TroubleshootingAnalyzer:
         return root_causes
 
     def _generate_prevention_suggestions(
-        self, patterns: List[AIDetectedPattern], root_causes: List[AIRootCause]
-    ) -> List[AIPreventionSuggestion]:
+        self, patterns: list[AIDetectedPattern], root_causes: list[AIRootCause]
+    ) -> list[AIPreventionSuggestion]:
         """Generate prevention suggestions based on analysis."""
         suggestions = []
 
@@ -555,10 +555,10 @@ class TroubleshootingAnalyzer:
 
     def _generate_insights(
         self,
-        issues: List[IssueData],
-        patterns: List[AIDetectedPattern],
-        strategies: List[AISolutionStrategy],
-    ) -> List[AIInsight]:
+        issues: list[IssueData],
+        patterns: list[AIDetectedPattern],
+        strategies: list[AISolutionStrategy],
+    ) -> list[AIInsight]:
         """Generate actionable insights from the analysis."""
         insights = []
 
@@ -608,7 +608,7 @@ class TroubleshootingAnalyzer:
         return insights
 
     def _calculate_confidence(
-        self, patterns: List[AIDetectedPattern], strategies: List[AISolutionStrategy]
+        self, patterns: list[AIDetectedPattern], strategies: list[AISolutionStrategy]
     ) -> float:
         """Calculate overall confidence in the analysis."""
         if not patterns:
@@ -624,10 +624,10 @@ class TroubleshootingAnalyzer:
 
     def _generate_recommendations(
         self,
-        patterns: List[AIDetectedPattern],
-        strategies: List[AISolutionStrategy],
-        insights: List[AIInsight],
-    ) -> List[str]:
+        patterns: list[AIDetectedPattern],
+        strategies: list[AISolutionStrategy],
+        insights: list[AIInsight],
+    ) -> list[str]:
         """Generate high-level recommendations based on analysis."""
         recommendations = []
 
@@ -681,7 +681,7 @@ class TroubleshootingAnalyzer:
         combined = f"{pattern_id}_{title}"
         return f"strategy_{hashlib.md5(combined.encode()).hexdigest()[:8]}"
 
-    def _find_pattern_correlations(self, pattern_name: str, issues: List[IssueData]) -> List[str]:
+    def _find_pattern_correlations(self, pattern_name: str, issues: list[IssueData]) -> list[str]:
         """Find correlations between patterns."""
         correlations = []
 
@@ -695,7 +695,7 @@ class TroubleshootingAnalyzer:
 
         return correlations
 
-    def _extract_pattern_indicators(self, issues: List[IssueData]) -> List[str]:
+    def _extract_pattern_indicators(self, issues: list[IssueData]) -> list[str]:
         """Extract specific indicators from issues."""
         indicators = []
 
@@ -721,8 +721,8 @@ class TroubleshootingAnalyzer:
         return indicators
 
     def _customize_solution_steps(
-        self, template_steps: List[str], pattern: AIDetectedPattern, issues: List[IssueData]
-    ) -> List[str]:
+        self, template_steps: list[str], pattern: AIDetectedPattern, issues: list[IssueData]
+    ) -> list[str]:
         """Customize solution steps based on specific pattern and issues."""
         customized = template_steps.copy()
 
@@ -736,7 +736,7 @@ class TroubleshootingAnalyzer:
 
         return customized
 
-    def _analyze_resolution_times(self, closed_issues: List[IssueData]) -> Dict[str, float]:
+    def _analyze_resolution_times(self, closed_issues: list[IssueData]) -> dict[str, float]:
         """Analyze resolution times for closed issues."""
         resolution_times = []
 

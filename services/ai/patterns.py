@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import structlog
@@ -48,9 +48,9 @@ class DevelopmentEvent:
     title: str
     description: str
     author: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    labels: List[str] = field(default_factory=list)
-    related_events: List[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    labels: list[str] = field(default_factory=list)
+    related_events: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -62,15 +62,15 @@ class LearningPattern:
     title: str
     description: str
     confidence: float
-    evidence: List[str]
-    timeline: List[DevelopmentEvent]
-    insights: List[str]
+    evidence: list[str]
+    timeline: list[DevelopmentEvent]
+    insights: list[str]
     stage: LearningStage
     success_rate: float
     frequency: int
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "pattern_id": self.pattern_id,
             "type": self.type.value,
@@ -95,12 +95,12 @@ class LearningTrajectory:
     domain: str
     start_date: datetime
     end_date: datetime
-    stages: List[Tuple[LearningStage, datetime, str]]  # (stage, date, evidence)
-    patterns: List[LearningPattern]
+    stages: list[tuple[LearningStage, datetime, str]]  # (stage, date, evidence)
+    patterns: list[LearningPattern]
     progress_score: float
-    key_milestones: List[str]
+    key_milestones: list[str]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "person": self.person,
             "domain": self.domain,
@@ -177,7 +177,7 @@ class PatternRecognitionEngine:
             "update",
         ]
 
-    def analyze_development_patterns(self, events: List[DevelopmentEvent]) -> List[LearningPattern]:
+    def analyze_development_patterns(self, events: list[DevelopmentEvent]) -> list[LearningPattern]:
         """開発イベントからパターンを分析"""
         logger.info(f"Analyzing patterns from {len(events)} development events")
 
@@ -196,7 +196,7 @@ class PatternRecognitionEngine:
         logger.info(f"Detected {len(patterns)} patterns")
         return patterns
 
-    def _detect_success_patterns(self, events: List[DevelopmentEvent]) -> List[LearningPattern]:
+    def _detect_success_patterns(self, events: list[DevelopmentEvent]) -> list[LearningPattern]:
         """成功パターンの検出"""
         patterns = []
 
@@ -236,7 +236,7 @@ class PatternRecognitionEngine:
 
         return patterns
 
-    def _detect_learning_patterns(self, events: List[DevelopmentEvent]) -> List[LearningPattern]:
+    def _detect_learning_patterns(self, events: list[DevelopmentEvent]) -> list[LearningPattern]:
         """学習パターンの検出"""
         patterns = []
 
@@ -262,8 +262,8 @@ class PatternRecognitionEngine:
         return patterns
 
     def _detect_failure_recovery_patterns(
-        self, events: List[DevelopmentEvent]
-    ) -> List[LearningPattern]:
+        self, events: list[DevelopmentEvent]
+    ) -> list[LearningPattern]:
         """失敗からの回復パターンの検出"""
         patterns = []
 
@@ -295,7 +295,7 @@ class PatternRecognitionEngine:
 
         return patterns
 
-    def _detect_repetition_patterns(self, events: List[DevelopmentEvent]) -> List[LearningPattern]:
+    def _detect_repetition_patterns(self, events: list[DevelopmentEvent]) -> list[LearningPattern]:
         """反復パターンの検出"""
         patterns = []
 
@@ -329,7 +329,7 @@ class PatternRecognitionEngine:
 
         return patterns
 
-    def _detect_evolution_patterns(self, events: List[DevelopmentEvent]) -> List[LearningPattern]:
+    def _detect_evolution_patterns(self, events: list[DevelopmentEvent]) -> list[LearningPattern]:
         """進化パターンの検出"""
         patterns = []
 
@@ -354,7 +354,7 @@ class PatternRecognitionEngine:
 
         return patterns
 
-    def _find_quick_resolutions(self, events: List[DevelopmentEvent]) -> List[DevelopmentEvent]:
+    def _find_quick_resolutions(self, events: list[DevelopmentEvent]) -> list[DevelopmentEvent]:
         """24時間以内に解決されたIssueを検出"""
         quick_resolutions = []
 
@@ -370,7 +370,7 @@ class PatternRecognitionEngine:
                     issues[issue_id]["closed"] = event
 
         # 24時間以内解決をチェック
-        for issue_id, data in issues.items():
+        for _issue_id, data in issues.items():
             if data["created"] and data["closed"]:
                 resolution_time = data["closed"].timestamp - data["created"].timestamp
                 if resolution_time <= timedelta(hours=24):
@@ -378,7 +378,7 @@ class PatternRecognitionEngine:
 
         return quick_resolutions
 
-    def _find_consistent_success(self, events: List[DevelopmentEvent]) -> Optional[LearningPattern]:
+    def _find_consistent_success(self, events: list[DevelopmentEvent]) -> Optional[LearningPattern]:
         """継続的成功パターンを検出"""
         success_events = []
 
@@ -407,7 +407,7 @@ class PatternRecognitionEngine:
 
         return None
 
-    def _find_learning_cycles(self, events: List[DevelopmentEvent]) -> List[Dict[str, Any]]:
+    def _find_learning_cycles(self, events: list[DevelopmentEvent]) -> list[dict[str, Any]]:
         """学習サイクルを検出"""
         cycles = []
 
@@ -445,8 +445,8 @@ class PatternRecognitionEngine:
         return cycles
 
     def _find_failure_recovery_sequences(
-        self, events: List[DevelopmentEvent]
-    ) -> List[Dict[str, Any]]:
+        self, events: list[DevelopmentEvent]
+    ) -> list[dict[str, Any]]:
         """失敗からの回復シーケンスを検出"""
         recoveries = []
 
@@ -487,7 +487,7 @@ class PatternRecognitionEngine:
 
         return recoveries
 
-    def _find_repetitive_issues(self, events: List[DevelopmentEvent]) -> List[Dict[str, Any]]:
+    def _find_repetitive_issues(self, events: list[DevelopmentEvent]) -> list[dict[str, Any]]:
         """反復的な問題を検出"""
         if not events:
             return []
@@ -532,7 +532,7 @@ class PatternRecognitionEngine:
             logger.warning(f"Failed to analyze repetitive patterns: {e}")
             return []
 
-    def _find_skill_evolutions(self, events: List[DevelopmentEvent]) -> List[Dict[str, Any]]:
+    def _find_skill_evolutions(self, events: list[DevelopmentEvent]) -> list[dict[str, Any]]:
         """スキル進化パターンを検出"""
         evolutions = []
 
@@ -550,7 +550,7 @@ class PatternRecognitionEngine:
 
         return evolutions
 
-    def _extract_domains(self, events: List[DevelopmentEvent]) -> Dict[str, List[DevelopmentEvent]]:
+    def _extract_domains(self, events: list[DevelopmentEvent]) -> dict[str, list[DevelopmentEvent]]:
         """イベントからドメインを抽出してグループ化"""
         domains = {}
 
@@ -576,7 +576,7 @@ class PatternRecognitionEngine:
 
         return domains
 
-    def _analyze_learning_stages(self, events: List[DevelopmentEvent]) -> List[str]:
+    def _analyze_learning_stages(self, events: list[DevelopmentEvent]) -> list[str]:
         """学習段階を分析"""
         stages = []
 
@@ -597,7 +597,7 @@ class PatternRecognitionEngine:
 
         return stages
 
-    def _determine_current_stage(self, stages: List[str]) -> LearningStage:
+    def _determine_current_stage(self, stages: list[str]) -> LearningStage:
         """現在の学習段階を判定"""
         if not stages:
             return LearningStage.EXPLORATION
@@ -613,7 +613,7 @@ class PatternRecognitionEngine:
         else:
             return LearningStage.EXPLORATION
 
-    def _calculate_domain_success_rate(self, events: List[DevelopmentEvent]) -> float:
+    def _calculate_domain_success_rate(self, events: list[DevelopmentEvent]) -> float:
         """ドメインでの成功率を計算"""
         success_count = 0
 
@@ -624,7 +624,7 @@ class PatternRecognitionEngine:
 
         return success_count / len(events) if events else 0
 
-    def _extract_theme(self, events: List[DevelopmentEvent]) -> str:
+    def _extract_theme(self, events: list[DevelopmentEvent]) -> str:
         """イベントグループからテーマを抽出"""
         # 最も頻出する単語をテーマとして抽出
         all_text = " ".join([event.title for event in events]).lower()
@@ -642,7 +642,7 @@ class PatternRecognitionEngine:
 
         return "Unknown"
 
-    def _analyze_improvement_trend(self, events: List[DevelopmentEvent]) -> float:
+    def _analyze_improvement_trend(self, events: list[DevelopmentEvent]) -> float:
         """改善トレンドを分析"""
         # 時系列順にソートして解決時間の変化を分析
         sorted_events = sorted(events, key=lambda x: x.timestamp)
@@ -671,8 +671,8 @@ class PatternRecognitionEngine:
         return max(0, min(1, (correlation + 1) / 2))  # -1,1 を 0,1 に正規化
 
     def _extract_tech_domains(
-        self, events: List[DevelopmentEvent]
-    ) -> Dict[str, List[DevelopmentEvent]]:
+        self, events: list[DevelopmentEvent]
+    ) -> dict[str, list[DevelopmentEvent]]:
         """技術ドメインを抽出"""
         tech_domains = {}
 
@@ -697,8 +697,8 @@ class PatternRecognitionEngine:
         return tech_domains
 
     def _analyze_skill_evolution(
-        self, domain: str, events: List[DevelopmentEvent]
-    ) -> Optional[Dict[str, Any]]:
+        self, domain: str, events: list[DevelopmentEvent]
+    ) -> Optional[dict[str, Any]]:
         """特定ドメインでのスキル進化を分析"""
         if len(events) < 5:
             return None
@@ -756,8 +756,8 @@ class PatternRecognitionEngine:
 
 
 def create_development_events_from_issues(
-    issues_data: List[Dict[str, Any]],
-) -> List[DevelopmentEvent]:
+    issues_data: list[dict[str, Any]],
+) -> list[DevelopmentEvent]:
     """GitHub Issues データから DevelopmentEvent を作成"""
     events = []
 

@@ -6,7 +6,7 @@ Defines request/response models for all API endpoints.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, validator
 
@@ -35,8 +35,8 @@ class IssueData(BaseModel):
     title: str
     body: str
     state: str
-    labels: List[str] = []
-    comments: List[IssueComment] = []
+    labels: list[str] = []
+    comments: list[IssueComment] = []
     created_at: datetime
     updated_at: datetime
     user: str
@@ -64,13 +64,13 @@ class SummarizationResponse(BaseModel):
     """Response from summarization"""
 
     summary: str
-    key_points: List[str]
+    key_points: list[str]
     category: Optional[str] = None
     complexity: str = Field(description="low, medium, high")
     processing_time: float = Field(description="Processing time in seconds")
     provider_used: AIProvider
     model_used: str
-    token_usage: Optional[Dict[str, int]] = None
+    token_usage: Optional[dict[str, int]] = None
 
 
 class ClassificationRequest(BaseModel):
@@ -79,7 +79,7 @@ class ClassificationRequest(BaseModel):
     content: str
     provider: Optional[AIProvider] = AIProvider.OPENAI
     model: Optional[str] = None
-    categories: Optional[List[str]] = None  # Custom categories
+    categories: Optional[list[str]] = None  # Custom categories
 
     @validator("content")
     def validate_content_length(cls, v):
@@ -93,8 +93,8 @@ class ClassificationResponse(BaseModel):
 
     primary_category: str
     confidence: float = Field(ge=0.0, le=1.0)
-    all_categories: Dict[str, float] = Field(description="All categories with confidence scores")
-    tags: List[str] = []
+    all_categories: dict[str, float] = Field(description="All categories with confidence scores")
+    tags: list[str] = []
     processing_time: float
     provider_used: AIProvider
     model_used: str
@@ -107,8 +107,8 @@ class HealthResponse(BaseModel):
     timestamp: datetime
     version: str
     environment: str
-    ai_providers: Dict[str, bool] = Field(description="Available AI providers")
-    features: Dict[str, bool] = Field(description="Enabled features")
+    ai_providers: dict[str, bool] = Field(description="Available AI providers")
+    features: dict[str, bool] = Field(description="Enabled features")
 
 
 class ErrorResponse(BaseModel):
@@ -123,7 +123,7 @@ class ErrorResponse(BaseModel):
 class BatchSummarizationRequest(BaseModel):
     """Request for batch summarization of multiple issues"""
 
-    issues: List[IssueData]
+    issues: list[IssueData]
     provider: Optional[AIProvider] = AIProvider.OPENAI
     model: Optional[str] = None
     max_tokens: Optional[int] = None
@@ -141,11 +141,11 @@ class BatchSummarizationRequest(BaseModel):
 class BatchSummarizationResponse(BaseModel):
     """Response from batch summarization"""
 
-    results: List[SummarizationResponse]
+    results: list[SummarizationResponse]
     total_processed: int
     total_failed: int
     processing_time: float
-    failed_issues: List[Dict[str, Any]] = Field(description="Issues that failed processing")
+    failed_issues: list[dict[str, Any]] = Field(description="Issues that failed processing")
 
 
 class TroubleshootingRequest(BaseModel):
@@ -162,10 +162,10 @@ class TroubleshootingResponse(BaseModel):
     """Response from troubleshooting generation"""
 
     problem_summary: str
-    symptoms: List[str]
+    symptoms: list[str]
     root_cause: str
-    solution_steps: List[str]
-    prevention_tips: List[str] = []
+    solution_steps: list[str]
+    prevention_tips: list[str] = []
     difficulty_level: str = Field(description="beginner, intermediate, advanced")
     estimated_time: str = Field(description="Estimated time to resolve")
     processing_time: float

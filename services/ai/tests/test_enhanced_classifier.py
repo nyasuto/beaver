@@ -294,7 +294,7 @@ class TestTopicModelIntegration:
 
         assert len(topic_model.enhanced_categories) == 5
 
-        for cat_id, cat_info in topic_model.enhanced_categories.items():
+        for _cat_id, cat_info in topic_model.enhanced_categories.items():
             assert "name_ja" in cat_info
             assert "name_en" in cat_info
             assert "description_ja" in cat_info

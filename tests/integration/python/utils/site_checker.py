@@ -4,7 +4,7 @@ Utility for verifying generated site content and structure
 
 import re
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -16,7 +16,7 @@ class SiteChecker:
         self.site_directory = Path(site_directory)
         self.encoding = "utf-8"
 
-    def verify_site_structure(self) -> Dict[str, Any]:
+    def verify_site_structure(self) -> dict[str, Any]:
         """
         Verify the basic structure of generated site
 
@@ -73,7 +73,7 @@ class SiteChecker:
 
         return results
 
-    def verify_html_content(self, file_path: str = "index.html") -> Dict[str, Any]:
+    def verify_html_content(self, file_path: str = "index.html") -> dict[str, Any]:
         """
         Verify HTML content of a specific file
 
@@ -149,7 +149,7 @@ class SiteChecker:
 
         return results
 
-    def verify_css_assets(self) -> Dict[str, Any]:
+    def verify_css_assets(self) -> dict[str, Any]:
         """
         Verify CSS assets are present and valid
 
@@ -181,7 +181,7 @@ class SiteChecker:
 
         return results
 
-    def verify_beaver_specific_content(self) -> Dict[str, Any]:
+    def verify_beaver_specific_content(self) -> dict[str, Any]:
         """
         Verify Beaver-specific content and functionality
 
@@ -243,7 +243,7 @@ class SiteChecker:
 
         return results
 
-    def verify_github_pages_compatibility(self) -> Dict[str, Any]:
+    def verify_github_pages_compatibility(self) -> dict[str, Any]:
         """
         Verify GitHub Pages compatibility
 
@@ -292,7 +292,7 @@ class SiteChecker:
 
         return results
 
-    def generate_verification_report(self) -> Dict[str, Any]:
+    def generate_verification_report(self) -> dict[str, Any]:
         """
         Generate comprehensive verification report
 

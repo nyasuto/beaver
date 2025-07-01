@@ -113,7 +113,7 @@ class TestGitHubAPIIntegration:
 
         # Make a few API calls
         for i in range(3):
-            issues = verifier.get_issues(test_repository, per_page=1, page=i + 1)
+            verifier.get_issues(test_repository, per_page=1, page=i + 1)
             time.sleep(0.5)  # Small delay between requests
 
         # Check rate limit after requests

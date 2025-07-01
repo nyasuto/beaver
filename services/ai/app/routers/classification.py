@@ -7,7 +7,6 @@ Provides AI-powered content classification and categorization.
 import asyncio
 import logging
 import time
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -70,7 +69,7 @@ async def _real_ai_classification(
     # Convert request to IssueData format
     from datetime import datetime
 
-    issue_data = IssueData(
+    IssueData(
         id=1,  # Dummy ID for classification
         number=1,  # Dummy number for classification
         title=getattr(
@@ -138,7 +137,7 @@ async def _real_ai_classification(
         return await _mock_classification(request, settings)
 
 
-def _create_classification_prompt(content: str, categories: List[str]) -> str:
+def _create_classification_prompt(content: str, categories: list[str]) -> str:
     """Create a prompt for AI classification"""
     categories_str = ", ".join(categories)
 
@@ -221,7 +220,7 @@ async def _classify_with_anthropic(
 
 
 def _parse_ai_classification_response(
-    response: str, available_categories: List[str]
+    response: str, available_categories: list[str]
 ) -> tuple[str, float, str]:
     """Parse AI response to extract category, confidence, and reasoning"""
     lines = response.strip().split("\n")
@@ -254,7 +253,7 @@ def _parse_ai_classification_response(
     return category, confidence, reasoning
 
 
-def _generate_tags_from_ai_response(content: str, reasoning: str) -> List[str]:
+def _generate_tags_from_ai_response(content: str, reasoning: str) -> list[str]:
     """Generate tags based on content and AI reasoning"""
     tags = []
 

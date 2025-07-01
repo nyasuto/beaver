@@ -11,7 +11,7 @@ Enhanced Classification Service with Topic Model Integration
 import asyncio
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import psutil
 import structlog
@@ -39,8 +39,8 @@ class EnhancedClassificationService:
         self.topic_model.create_few_shot_examples()
 
         # 分類履歴とメトリクス
-        self.classification_history: List[Tuple[Issue, ClassificationResult]] = []
-        self.performance_metrics: Dict[str, Any] = {}
+        self.classification_history: list[tuple[Issue, ClassificationResult]] = []
+        self.performance_metrics: dict[str, Any] = {}
 
         logger.info("Enhanced Classification Service initialized with topic model")
 
@@ -94,7 +94,7 @@ class EnhancedClassificationService:
                 {"role": "user", "content": "Say 'Hello' if you can respond."},
             ]
 
-            response = await self.llm.ainvoke(test_messages)
+            await self.llm.ainvoke(test_messages)
             logger.info("Enhanced API connection test successful")
 
         except Exception as e:
@@ -161,11 +161,11 @@ class EnhancedClassificationService:
 
     async def batch_classify_issues_enhanced(
         self,
-        issues: List[Issue],
+        issues: list[Issue],
         config: Optional[ClassificationConfig] = None,
         parallel: bool = True,
         use_few_shot: bool = True,
-    ) -> List[ClassificationResult]:
+    ) -> list[ClassificationResult]:
         """拡張バッチ分類処理"""
 
         if not issues:
@@ -242,7 +242,7 @@ class EnhancedClassificationService:
             ]
             self.performance_metrics["confidences"] = self.performance_metrics["confidences"][-100:]
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """性能サマリーの取得"""
         if not self.performance_metrics.get("response_times"):
             return {"status": "no_data"}
@@ -264,7 +264,7 @@ class EnhancedClassificationService:
         }
 
     async def evaluate_classification_accuracy(
-        self, test_issues: List[Issue], expected_categories: List[str]
+        self, test_issues: list[Issue], expected_categories: list[str]
     ) -> ClassificationMetrics:
         """分類精度の評価"""
 
@@ -289,7 +289,7 @@ class EnhancedClassificationService:
                 "false_negative": 0,
             }
 
-        for i, (expected, result) in enumerate(zip(expected_categories, test_results)):
+        for _i, (expected, result) in enumerate(zip(expected_categories, test_results)):
             if result is None:
                 continue
 
@@ -356,7 +356,7 @@ class EnhancedClassificationService:
 
         return metrics
 
-    async def health_check_enhanced(self) -> Dict[str, Any]:
+    async def health_check_enhanced(self) -> dict[str, Any]:
         """拡張ヘルスチェック"""
         try:
             base_health = await self._basic_health_check()
