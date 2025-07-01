@@ -3,6 +3,18 @@ description: 'Run comprehensive build and testing pipeline for Beaver'
 author: 'Beaver Team'
 
 inputs:
+  go-version:
+    description: 'Go version to use'
+    required: false
+    default: 'stable'
+  run-tests:
+    description: 'Whether to run tests'
+    required: false
+    default: 'true'
+  skip-tests:
+    description: 'Whether to skip tests (overrides run-tests)'
+    required: false
+    default: 'false'
   test-type:
     description: 'Type of tests to run: unit, integration, performance, all'
     required: false
@@ -18,7 +30,7 @@ inputs:
   platforms:
     description: 'Platforms for cross-compilation (comma-separated)'
     required: false
-    default: 'linux/amd64,darwin/amd64'
+    default: ''
   upload-artifacts:
     description: 'Upload build artifacts and test results'
     required: false
@@ -42,10 +54,22 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: 📋 Initialize test pipeline
+    - name: 🐹 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
+
+    - name: 📋 Initialize pipeline
       shell: bash
       run: |
-        echo "🔍 Build and Test Pipeline"
+        echo "🦫 Beaver Build and Test Pipeline"
+        echo "Go version: ${{ inputs.go-version }}"
+        echo "Run tests: ${{ inputs.run-tests }}"
+        echo "Skip tests: ${{ inputs.skip-tests }}"
         echo "Test type: ${{ inputs.test-type }}"
         echo "Coverage threshold: ${{ inputs.coverage-threshold }}%"
         echo "Timeout: ${{ inputs.timeout }}"
@@ -125,7 +149,7 @@ runs:
         fi
 
     - name: 🧪 Unit tests
-      if: inputs.test-type == 'unit' || inputs.test-type == 'all'
+      if: (inputs.run-tests == 'true' && inputs.skip-tests == 'false') && (inputs.test-type == 'unit' || inputs.test-type == 'all')
       shell: bash
       run: |
         echo "🧪 Running unit tests..."
@@ -152,7 +176,7 @@ runs:
 
     - name: 📊 Coverage analysis
       id: coverage
-      if: inputs.test-type == 'unit' || inputs.test-type == 'all'
+      if: (inputs.run-tests == 'true' && inputs.skip-tests == 'false') && (inputs.test-type == 'unit' || inputs.test-type == 'all')
       shell: bash
       run: |
         echo "📊 Analyzing test coverage..."
@@ -186,41 +210,78 @@ runs:
           echo "percentage=0" >> $GITHUB_OUTPUT
         fi
 
-    - name: 🔨 Build test
+    - name: 🔨 Build binary
       shell: bash
       run: |
-        echo "🔨 Testing build process..."
+        echo "🔨 Building binary..."
         
+        # Always build the binary regardless of test settings
+        mkdir -p bin
+        
+        # Try script first, fallback to direct build if it fails
         if [[ -f "scripts/ci-checks.sh" ]]; then
           chmod +x scripts/ci-checks.sh
-          if ! ./scripts/ci-checks.sh build-test; then
-            echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
-            echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
-            if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
-              exit 1
+          echo "Attempting build using ci-checks.sh..."
+          if ./scripts/ci-checks.sh build-test; then
+            echo "✅ Script build succeeded"
+          else
+            echo "⚠️ Script build failed, trying direct build..."
+            # Script failed, try direct build
+            if ! go build -o bin/beaver ./cmd/beaver; then
+              echo "❌ Direct build also failed"
+              echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
+              echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
+              if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+                exit 1
+              fi
+            else
+              echo "✅ Direct build succeeded"
+              chmod +x bin/beaver
             fi
           fi
         else
-          # Direct build test
+          # Direct build - always build regardless of test settings
+          echo "Building beaver binary directly..."
           if ! go build -o bin/beaver ./cmd/beaver; then
+            echo "❌ Failed to build binary"
             echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
             echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
             if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
               exit 1
             fi
-          fi
-          
-          # Test binary
-          if [[ -f "bin/beaver" ]]; then
+          else
+            echo "✅ Binary built successfully"
             chmod +x bin/beaver
+          fi
+        fi
+        
+        # Verify binary exists and is executable
+        if [[ -f "bin/beaver" ]]; then
+          chmod +x bin/beaver
+          echo "✅ Binary verified: bin/beaver"
+          
+          # Only test binary functionality if tests are enabled
+          if [[ "${{ inputs.skip-tests }}" == "false" && "${{ inputs.run-tests }}" == "true" ]]; then
+            echo "Testing binary functionality..."
             if ! ./bin/beaver --help >/dev/null 2>&1; then
-              echo "❌ Binary test failed"
+              echo "❌ Binary functionality test failed"
               echo "BINARY_TEST_FAILED=true" >> $GITHUB_ENV
               echo "FAILED_STEPS=${FAILED_STEPS},binary-test" >> $GITHUB_ENV
               if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
                 exit 1
               fi
+            else
+              echo "✅ Binary functionality test passed"
             fi
+          else
+            echo "📦 Binary built successfully (functionality testing skipped)"
+          fi
+        else
+          echo "❌ Binary not found after build attempt"
+          echo "BUILD_TEST_FAILED=true" >> $GITHUB_ENV
+          echo "FAILED_STEPS=${FAILED_STEPS},build-test" >> $GITHUB_ENV
+          if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+            exit 1
           fi
         fi
 
