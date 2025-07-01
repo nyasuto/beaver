@@ -1,7 +1,7 @@
 # Beaver - AIエージェント知識ダム構築ツール
 # Makefile for development and build automation
 
-.PHONY: help build clean test lint fmt deps install run dev quality test-integration
+.PHONY: help build clean test test-unit test-integration test-integration-setup test-integration-quick test-all lint fmt deps install run dev quality test-integration
 
 # Variables
 BINARY_NAME=beaver
@@ -47,45 +47,65 @@ clean:
 	rm -rf $(BUILD_DIR)
 	go clean
 
-## test: Run tests
+## test: Run unit tests only (fast, no external dependencies)
 test:
-	@echo "🧪 テストを実行中..."
-	go test -v ./...
+	@echo "🧪 ユニットテストを実行中..."
+	go test -short -v ./...
 
-## test-cov: Run tests with coverage
+## test-unit: Alias for test (unit tests only)
+test-unit: test
+
+## test-cov: Run unit tests with coverage
 test-cov:
-	@echo "🧪 カバレッジ付きテストを実行中..."
-	go test -v -coverprofile=coverage.out ./...
+	@echo "🧪 カバレッジ付きユニットテストを実行中..."
+	go test -short -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "📊 カバレッジレポート: coverage.html"
 
-## test-integration: Run integration tests
+## test-integration: Run Python integration tests (slow, requires GitHub token)
 test-integration:
-	@echo "🔗 統合テストを実行中..."
-	@if [ -f "./scripts/run-integration-tests.sh" ]; then \
-		./scripts/run-integration-tests.sh --check && ./scripts/run-integration-tests.sh --run; \
-	else \
-		echo "⚠️ 統合テストスクリプトが見つかりません"; \
-		echo "手動実行: go test -v ./tests/integration/..."; \
+	@echo "🔗 Python統合テストを実行中..."
+	@if [ -z "$$GITHUB_TOKEN" ]; then \
+		echo "⚠️ GITHUB_TOKEN環境変数が設定されていません"; \
+		echo "💡 統合テストをスキップします"; \
+		exit 0; \
 	fi
+	@if [ ! -d "./tests/integration/python" ]; then \
+		echo "❌ Python統合テストディレクトリが見つかりません"; \
+		exit 1; \
+	fi
+	@echo "📦 Python依存関係をチェック中..."
+	@cd tests/integration/python && pip install -r requirements.txt >/dev/null 2>&1 || { \
+		echo "❌ Python依存関係のインストールに失敗しました"; \
+		echo "💡 手動実行: cd tests/integration/python && pip install -r requirements.txt"; \
+		exit 1; \
+	}
+	@echo "🧪 Python統合テスト実行中..."
+	cd tests/integration/python && python -m pytest -v
 
-## test-integration-setup: Setup integration test environment
+## test-integration-setup: Setup Python integration test environment
 test-integration-setup:
-	@echo "⚙️ 統合テスト環境をセットアップ中..."
-	@if [ -f "./scripts/run-integration-tests.sh" ]; then \
-		./scripts/run-integration-tests.sh --setup; \
-	else \
-		echo "⚠️ 統合テストスクリプトが見つかりません"; \
+	@echo "⚙️ Python統合テスト環境をセットアップ中..."
+	@if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then \
+		echo "❌ Pythonがインストールされていません"; \
+		exit 1; \
 	fi
+	@if ! command -v pip >/dev/null 2>&1 && ! command -v pip3 >/dev/null 2>&1; then \
+		echo "❌ pipがインストールされていません"; \
+		exit 1; \
+	fi
+	@echo "📦 Python依存関係をインストール中..."
+	cd tests/integration/python && pip install -r requirements.txt
+	@echo "✅ Python統合テスト環境セットアップ完了"
 
-## test-integration-quick: Run quick integration tests
+## test-integration-quick: Run quick integration tests (subset)
 test-integration-quick:
-	@echo "⚡ クイック統合テストを実行中..."
-	@if [ -f "./scripts/run-integration-tests.sh" ]; then \
-		./scripts/run-integration-tests.sh --quick --run; \
-	else \
-		echo "⚠️ 統合テストスクリプトが見つかりません"; \
+	@echo "⚡ クイックPython統合テストを実行中..."
+	@if [ -z "$$GITHUB_TOKEN" ]; then \
+		echo "⚠️ GITHUB_TOKEN環境変数が設定されていません"; \
+		exit 0; \
 	fi
+	cd tests/integration/python && python -m pytest -v -m "not slow"
 
 ## lint: Run golangci-lint with integrated security checks
 lint:
@@ -115,8 +135,12 @@ workflow-lint:
 	fi
 
 
-## quality: Run all quality checks (lint includes security + format + test + workflow validation)
-quality: fmt lint test workflow-lint
+## test-all: Run both unit tests and integration tests
+test-all: test-unit test-integration
+	@echo "✅ 全テスト完了"
+
+## quality: Run all quality checks (lint includes security + format + unit test + workflow validation)
+quality: fmt lint test-unit workflow-lint
 	@echo "✅ 品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible
