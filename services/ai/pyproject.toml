@@ -2,6 +2,10 @@
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "models*", "services*", "evaluation*", "config*"]
+
 [project]
 name = "ai-classification-service"
 version = "2.0.0"
@@ -46,6 +50,14 @@ dev = [
 
 [project.scripts]
 ai-classify = "main_enhanced:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.16.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "ruff>=0.12.1",
+]
 
 # Ruff configuration
 [tool.ruff]

@@ -1,12 +1,14 @@
 """
 pytest configuration for Beaver integration tests
 """
+
 import os
-import pytest
+import shutil
 import subprocess
 import tempfile
-import shutil
 from pathlib import Path
+
+import pytest
 
 
 def pytest_configure(config):
@@ -22,11 +24,11 @@ def pytest_collection_modifyitems(config, items):
         # Add slow marker to tests that likely take time
         if "workflow" in item.name or "publishing" in item.name:
             item.add_marker(pytest.mark.slow)
-        
+
         # Add github_api marker to tests using GitHub API
         if "github" in item.name or "api" in item.name:
             item.add_marker(pytest.mark.github_api)
-        
+
         # Add wiki marker to tests involving wiki operations
         if "wiki" in item.name or "publishing" in item.name:
             item.add_marker(pytest.mark.wiki)
@@ -37,25 +39,20 @@ def beaver_binary():
     """Ensure beaver binary exists and return path"""
     repo_root = Path(__file__).parent.parent.parent.parent
     binary_path = repo_root / "bin" / "beaver"
-    
+
     if not binary_path.exists():
         # Try to build the binary
-        result = subprocess.run(
-            ["make", "build"], 
-            cwd=repo_root, 
-            capture_output=True, 
-            text=True
-        )
+        result = subprocess.run(["make", "build"], cwd=repo_root, capture_output=True, text=True)
         if result.returncode != 0:
             pytest.fail(f"Failed to build beaver binary: {result.stderr}")
-    
+
     if not binary_path.exists():
         pytest.fail(f"Beaver binary not found at {binary_path}")
-    
+
     return str(binary_path)
 
 
-@pytest.fixture(scope="session") 
+@pytest.fixture(scope="session")
 def github_token():
     """Get GitHub token from environment"""
     token = os.getenv("GITHUB_TOKEN")
@@ -108,23 +105,20 @@ ai:
     categorization: true
     troubleshooting: true
 """
-    
+
     config_path = Path(temp_config_dir) / "beaver.yml"
     config_path.write_text(config_content)
-    
+
     # Set environment variables
     original_env = {}
-    env_vars = {
-        "BEAVER_CONFIG_FILE": str(config_path),
-        "GITHUB_TOKEN": github_token
-    }
-    
+    env_vars = {"BEAVER_CONFIG_FILE": str(config_path), "GITHUB_TOKEN": github_token}
+
     for key, value in env_vars.items():
         original_env[key] = os.getenv(key)
         os.environ[key] = value
-    
+
     yield str(config_path)
-    
+
     # Restore environment
     for key, original_value in original_env.items():
         if original_value is None:
@@ -137,9 +131,9 @@ ai:
 def cleanup_test_files():
     """Cleanup test files after test execution"""
     test_files = []
-    
+
     yield test_files
-    
+
     # Cleanup files created during test
     for file_path in test_files:
         try:

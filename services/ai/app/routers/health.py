@@ -6,7 +6,6 @@ Provides system health, status, and capability information.
 
 import logging
 from datetime import datetime
-from typing import Dict
 
 from fastapi import APIRouter, Depends
 
@@ -21,24 +20,24 @@ router = APIRouter()
 async def health_check(settings: Settings = Depends(get_settings)):
     """
     Health check endpoint
-    
+
     Returns system status, available AI providers, and feature flags.
     """
     logger.debug("Health check requested")
-    
+
     # Check AI provider availability
     ai_providers = {
         "openai": settings.has_openai,
         "anthropic": settings.has_anthropic,
     }
-    
+
     # Check feature availability
     features = {
         "summarization": settings.enable_summarization,
         "classification": settings.enable_classification,
         "troubleshooting": settings.enable_troubleshooting,
     }
-    
+
     response = HealthResponse(
         status="healthy",
         timestamp=datetime.now(),
@@ -47,7 +46,7 @@ async def health_check(settings: Settings = Depends(get_settings)):
         ai_providers=ai_providers,
         features=features,
     )
-    
+
     logger.info(f"Health check completed - Status: {response.status}")
     return response
 
@@ -56,14 +55,14 @@ async def health_check(settings: Settings = Depends(get_settings)):
 async def readiness_check(settings: Settings = Depends(get_settings)):
     """
     Readiness check endpoint
-    
+
     Returns whether the service is ready to accept requests.
     """
     # Check if at least one AI provider is available
     ready = settings.has_openai or settings.has_anthropic
-    
+
     status = "ready" if ready else "not_ready"
-    
+
     return {
         "status": status,
         "timestamp": datetime.now(),
@@ -76,7 +75,7 @@ async def readiness_check(settings: Settings = Depends(get_settings)):
 async def liveness_check():
     """
     Liveness check endpoint
-    
+
     Simple endpoint to verify the service is running.
     """
     return {
