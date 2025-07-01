@@ -210,12 +210,6 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🦫 Setup Beaver Environment
-        uses: ./.github/actions/build-and-test
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          skip-tests: true
-
       - name: 🐍 Setup Python
         if: hashFiles('tests/integration/python/pyproject.toml') != ''
         uses: actions/setup-python@v5
