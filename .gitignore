@@ -75,26 +75,26 @@ _site/
 # Generated Beaver documentation files (not source)
 beaver-*.md
 
+# Python files (global patterns)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
 # Python AI services
 services/ai/.env
-services/ai/__pycache__/
-services/ai/*.pyc
-services/ai/.pytest_cache/
-services/ai/.coverage
-services/ai/htmlcov/
-services/ai/.mypy_cache/
 services/ai/.venv/
 services/ai/venv/
-services/ai/*.egg-info/
 
 # Python integration tests
+tests/integration/python/.env
 tests/integration/python/.venv/
-tests/integration/python/__pycache__/
-tests/integration/python/*.pyc
-tests/integration/python/.pytest_cache/
-tests/integration/python/.coverage
-tests/integration/python/htmlcov/
-tests/integration/python/.mypy_cache/
 
 # Node.js (if used for frontend in future)
 node_modules/
