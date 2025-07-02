@@ -40,7 +40,7 @@ func TestCreateWorkspace(t *testing.T) {
 
 func TestInMemoryFileOperations(t *testing.T) {
 	client := NewInMemoryGitClient()
-
+	
 	repo, fs, err := client.CreateWorkspace()
 	require.NoError(t, err)
 
@@ -49,7 +49,12 @@ func TestInMemoryFileOperations(t *testing.T) {
 	require.NoError(t, err)
 	err = client.AddFiles(repo, fs, []string{"initial.txt"})
 	require.NoError(t, err)
-	_, err = client.CommitChanges(repo, "Initial commit", nil)
+	_, err = client.CommitChanges(repo, "Initial commit", &CommitOptions{
+		Author: &CommitAuthor{
+			Name:  "Test User",
+			Email: "test@example.com",
+		},
+	})
 	require.NoError(t, err)
 
 	// Test writing a file
@@ -118,7 +123,12 @@ func TestInMemoryBranchOperations(t *testing.T) {
 	require.NoError(t, err)
 	err = client.AddFiles(repo, fs, []string{"branch-test.txt"})
 	require.NoError(t, err)
-	_, err = client.CommitChanges(repo, "Initial commit", nil)
+	_, err = client.CommitChanges(repo, "Initial commit", &CommitOptions{
+		Author: &CommitAuthor{
+			Name:  "Test User",
+			Email: "test@example.com",
+		},
+	})
 	require.NoError(t, err)
 
 	// Test current branch
@@ -369,7 +379,12 @@ func BenchmarkInMemoryCommit(b *testing.B) {
 			b.Fatalf("Failed to add file: %v", err)
 		}
 
-		_, err = client.CommitChanges(repo, fmt.Sprintf("Benchmark commit %d", i), nil)
+		_, err = client.CommitChanges(repo, fmt.Sprintf("Benchmark commit %d", i), &CommitOptions{
+			Author: &CommitAuthor{
+				Name:  "Test User",
+				Email: "test@example.com",
+			},
+		})
 		if err != nil {
 			b.Fatalf("Failed to commit: %v", err)
 		}
