@@ -19,7 +19,7 @@ from services.classifier import ClassificationService
 
 
 @pytest.fixture
-def mock_settings():
+def mock_settings() -> Settings:
     """Mock settings for testing"""
     return Settings(
         openai_api_key="test-key",
@@ -33,7 +33,7 @@ def mock_settings():
 
 
 @pytest.fixture
-def sample_issue():
+def sample_issue() -> Issue:
     """Sample issue for testing"""
     return Issue(
         id=123,
@@ -45,7 +45,7 @@ def sample_issue():
 
 
 @pytest.fixture
-def classification_service(mock_settings):
+def classification_service(mock_settings: Settings) -> ClassificationService:
     """Classification service for testing"""
     service = ClassificationService(mock_settings)
     return service
@@ -54,7 +54,7 @@ def classification_service(mock_settings):
 class TestClassificationService:
     """Test ClassificationService class"""
 
-    def test_init(self, mock_settings):
+    def test_init(self, mock_settings: Settings) -> None:
         """Test service initialization"""
         service = ClassificationService(mock_settings)
 
@@ -67,7 +67,9 @@ class TestClassificationService:
         assert "feature-request" in service.categories
 
     @pytest.mark.asyncio
-    async def test_initialize_success(self, classification_service, mock_settings):
+    async def test_initialize_success(
+        self, classification_service: ClassificationService, mock_settings: Settings
+    ) -> None:
         """Test successful initialization"""
         with patch.object(classification_service, "_test_api_connection") as mock_test:
             mock_test.return_value = None
@@ -79,7 +81,7 @@ class TestClassificationService:
             assert classification_service._api_accessible
 
     @pytest.mark.asyncio
-    async def test_initialize_no_api_key(self, mock_settings):
+    async def test_initialize_no_api_key(self, mock_settings: Settings) -> None:
         """Test initialization without API key"""
         mock_settings.openai_api_key = ""
         service = ClassificationService(mock_settings)
@@ -87,7 +89,9 @@ class TestClassificationService:
         with pytest.raises(ValueError, match="OpenAI API key is required"):
             await service.initialize()
 
-    def test_create_classification_prompt(self, classification_service, sample_issue):
+    def test_create_classification_prompt(
+        self, classification_service: ClassificationService, sample_issue: Issue
+    ) -> None:
         """Test prompt creation"""
         messages = classification_service._create_classification_prompt(sample_issue)
 
@@ -97,7 +101,9 @@ class TestClassificationService:
         assert sample_issue.body in messages[1].content
 
     @pytest.mark.asyncio
-    async def test_classify_issue_success(self, classification_service, sample_issue):
+    async def test_classify_issue_success(
+        self, classification_service: ClassificationService, sample_issue: Issue
+    ) -> None:
         """Test successful issue classification"""
         # Mock LLM response
         mock_response = AIMessage(
@@ -124,7 +130,9 @@ class TestClassificationService:
         assert "api" in result.suggested_tags
 
     @pytest.mark.asyncio
-    async def test_classify_issue_api_error(self, classification_service, sample_issue):
+    async def test_classify_issue_api_error(
+        self, classification_service: ClassificationService, sample_issue: Issue
+    ) -> None:
         """Test classification with API error"""
         classification_service.llm = AsyncMock()
         classification_service.llm.ainvoke.side_effect = Exception("API Error")
@@ -137,7 +145,9 @@ class TestClassificationService:
         assert result.confidence == 0.0
         assert "分類エラーが発生しました" in result.reasoning
 
-    def test_parse_classification_response_success(self, classification_service):
+    def test_parse_classification_response_success(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test successful response parsing"""
         response_text = """
         {
@@ -156,7 +166,9 @@ class TestClassificationService:
         assert result.reasoning == "新機能の提案です"
         assert result.suggested_tags == ["enhancement", "ui"]
 
-    def test_parse_classification_response_invalid_category(self, classification_service):
+    def test_parse_classification_response_invalid_category(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test parsing with invalid category"""
         response_text = """
         {
@@ -171,7 +183,9 @@ class TestClassificationService:
 
         assert result.category == "troubleshooting"  # Fallback
 
-    def test_parse_classification_response_invalid_json(self, classification_service):
+    def test_parse_classification_response_invalid_json(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test parsing with invalid JSON"""
         response_text = "This is not JSON"
 
@@ -183,7 +197,9 @@ class TestClassificationService:
         assert "レスポンス解析エラー" in result.reasoning
 
     @pytest.mark.asyncio
-    async def test_batch_classify_parallel(self, classification_service):
+    async def test_batch_classify_parallel(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test parallel batch classification"""
         issues = [
             Issue(id=1, title="Bug", body="Error occurred", labels=[], repository="test"),
@@ -214,7 +230,9 @@ class TestClassificationService:
             assert results[1].issue_id == 2
 
     @pytest.mark.asyncio
-    async def test_batch_classify_sequential(self, classification_service):
+    async def test_batch_classify_sequential(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test sequential batch classification"""
         issues = [Issue(id=1, title="Bug", body="Error", labels=[], repository="test")]
 
@@ -231,7 +249,9 @@ class TestClassificationService:
             assert results[0].issue_id == 1
 
     @pytest.mark.asyncio
-    async def test_health_check_success(self, classification_service):
+    async def test_health_check_success(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test successful health check"""
         classification_service.llm = AsyncMock()
         classification_service.llm.ainvoke.return_value = AIMessage(content="OK")
@@ -241,7 +261,9 @@ class TestClassificationService:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_health_check_failure(self, classification_service):
+    async def test_health_check_failure(
+        self, classification_service: ClassificationService
+    ) -> None:
         """Test health check failure"""
         classification_service.llm = AsyncMock()
         classification_service.llm.ainvoke.side_effect = Exception("Connection failed")
@@ -250,21 +272,21 @@ class TestClassificationService:
 
         assert result is False
 
-    def test_is_model_loaded(self, classification_service):
+    def test_is_model_loaded(self, classification_service: ClassificationService) -> None:
         """Test model loaded check"""
         assert not classification_service.is_model_loaded()
 
         classification_service._model_loaded = True
         assert classification_service.is_model_loaded()
 
-    def test_is_api_accessible(self, classification_service):
+    def test_is_api_accessible(self, classification_service: ClassificationService) -> None:
         """Test API accessible check"""
         assert not classification_service.is_api_accessible()
 
         classification_service._api_accessible = True
         assert classification_service.is_api_accessible()
 
-    def test_get_memory_usage(self, classification_service):
+    def test_get_memory_usage(self, classification_service: ClassificationService) -> None:
         """Test memory usage measurement"""
         memory = classification_service.get_memory_usage()
 
@@ -272,7 +294,7 @@ class TestClassificationService:
         assert memory is None or (isinstance(memory, float) and memory > 0)
 
     @pytest.mark.asyncio
-    async def test_cleanup(self, classification_service):
+    async def test_cleanup(self, classification_service: ClassificationService) -> None:
         """Test cleanup"""
         classification_service.llm = Mock()
         classification_service._model_loaded = True
@@ -286,7 +308,7 @@ class TestClassificationService:
 
 
 @pytest.mark.asyncio
-async def test_classification_integration():
+async def test_classification_integration() -> None:
     """Integration test for classification flow"""
     settings = Settings(openai_api_key="test-key", openai_model="gpt-3.5-turbo")
 

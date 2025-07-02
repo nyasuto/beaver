@@ -9,6 +9,7 @@ Enhanced AI Classification Service - FastAPI Application
 
 import logging
 import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Optional
@@ -39,8 +40,8 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Global service instances
-enhanced_classification_service: EnhancedClassificationService = None
-accuracy_evaluator: AccuracyEvaluator = None
+enhanced_classification_service: Optional[EnhancedClassificationService] = None
+accuracy_evaluator: Optional[AccuracyEvaluator] = None
 
 
 # Enhanced API Models
@@ -48,7 +49,7 @@ class EnhancedClassificationRequest(BaseModel):
     """拡張分類リクエスト"""
 
     issue: Issue
-    config: Optional[dict] = None
+    config: Optional[dict[str, Any]] = None
     use_few_shot: bool = True
     language_hint: Optional[str] = None
 
@@ -73,7 +74,7 @@ class PerformanceResponse(BaseModel):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager"""
     global enhanced_classification_service, accuracy_evaluator
 

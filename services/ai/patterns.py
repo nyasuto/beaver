@@ -116,7 +116,7 @@ class LearningTrajectory:
 class PatternRecognitionEngine:
     """パターン認識エンジン"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.vectorizer = TfidfVectorizer(
             max_features=1000, stop_words="english", ngram_range=(1, 2)
         )
@@ -552,7 +552,7 @@ class PatternRecognitionEngine:
 
     def _extract_domains(self, events: list[DevelopmentEvent]) -> dict[str, list[DevelopmentEvent]]:
         """イベントからドメインを抽出してグループ化"""
-        domains = {}
+        domains: dict[str, list[DevelopmentEvent]] = {}
 
         for event in events:
             # ラベルやタイトルからドメインを推定
@@ -631,13 +631,13 @@ class PatternRecognitionEngine:
         words = re.findall(r"\b\w+\b", all_text)
 
         # 頻度計算
-        word_freq = {}
+        word_freq: dict[str, int] = {}
         for word in words:
             if len(word) > 3:  # 短すぎる単語は除外
                 word_freq[word] = word_freq.get(word, 0) + 1
 
         if word_freq:
-            most_common = max(word_freq, key=word_freq.get)
+            most_common = max(word_freq, key=lambda x: word_freq[x])
             return most_common.capitalize()
 
         return "Unknown"
