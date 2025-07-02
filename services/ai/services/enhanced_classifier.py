@@ -94,6 +94,8 @@ class EnhancedClassificationService:
                 {"role": "user", "content": "Say 'Hello' if you can respond."},
             ]
 
+            if self.llm is None:
+                raise ValueError("LLM not initialized")
             await self.llm.ainvoke(test_messages)
             logger.info("Enhanced API connection test successful")
 
@@ -118,10 +120,13 @@ class EnhancedClassificationService:
             )
 
             # OpenAI API呼び出し
+            if self.llm is None:
+                raise ValueError("LLM not initialized")
             response = await self.llm.ainvoke(messages)
 
             # 拡張レスポンス解析
-            result = self.topic_model.parse_enhanced_response(response.content, issue.id)
+            content_str = str(response.content) if hasattr(response, 'content') else str(response)
+            result = self.topic_model.parse_enhanced_response(content_str, issue.id)
 
             processing_time = int((time.time() - start_time) * 1000)
             result.processing_time_ms = processing_time
@@ -191,11 +196,20 @@ class EnhancedClassificationService:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 例外処理
-            processed_results = []
+            processed_results: list[ClassificationResult] = []
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
                     logger.error(f"Failed to classify issue {issues[i].id}: {result}")
-                    processed_results.append(None)
+                    # Create fallback result
+                    fallback_result = ClassificationResult(
+                        issue_id=issues[i].id,
+                        category="troubleshooting",
+                        confidence=0.0,
+                        reasoning=f"Batch classification error: {str(result)}",
+                        suggested_tags=["error", "fallback"],
+                        processing_time_ms=0,
+                    )
+                    processed_results.append(fallback_result)
                 else:
                     processed_results.append(result)
 
@@ -412,7 +426,7 @@ class EnhancedClassificationService:
         """メモリ使用量の取得"""
         try:
             process = psutil.Process()
-            memory_mb = process.memory_info().rss / 1024 / 1024
+            memory_mb = float(process.memory_info().rss) / 1024 / 1024
             return round(memory_mb, 2)
         except Exception:
             return None
