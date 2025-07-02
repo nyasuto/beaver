@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -262,19 +265,14 @@ func runSiteDeployCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ リポジトリ形式が無効です: %s", cfg.Project.Repository)
 	}
 
-	// TODO: Implement actual GitHub Pages deployment
-	// This would typically involve:
-	// 1. Creating a gh-pages branch
-	// 2. Copying files to the branch
-	// 3. Pushing to GitHub
-	// 4. Setting up GitHub Pages configuration
+	// Implement GitHub Pages deployment using git commands
+	if err := deployToGitHubPages(outputDir, owner, repo, deployLogger); err != nil {
+		return fmt.Errorf("❌ GitHub Pagesデプロイエラー: %w", err)
+	}
 
-	fmt.Printf("⚠️  GitHub Pagesデプロイ機能は開発中です\n")
-	fmt.Printf("💡 手動でのデプロイ手順:\n")
-	fmt.Printf("   1. GitHub Actionsワークフローを設定\n")
-	fmt.Printf("   2. %s の内容をgh-pagesブランチにコピー\n", outputDir)
-	fmt.Printf("   3. リポジトリ設定でGitHub Pagesを有効化\n")
-	fmt.Printf("🌐 デプロイ先URL: https://%s.github.io/%s\n", owner, repo)
+	fmt.Printf("✅ GitHub Pagesデプロイ完了!\n")
+	fmt.Printf("🌐 サイトURL: https://%s.github.io/%s\n", owner, repo)
+	fmt.Printf("⏱️  反映まで数分かかる場合があります\n")
 
 	deployLogger.Info("Deploy command completed (manual deployment required)")
 	return nil
@@ -303,6 +301,170 @@ func calculateDirSize(dirPath string) (int64, int) {
 	}
 
 	return size, count
+}
+
+// deployToGitHubPages deploys the site to GitHub Pages using git commands
+func deployToGitHubPages(sourceDir, owner, repo string, deployLogger *slog.Logger) error {
+	deployLogger.Info("Starting GitHub Pages deployment", "source", sourceDir, "repo", fmt.Sprintf("%s/%s", owner, repo))
+
+	// Check if git is available
+	if _, err := exec.LookPath("git"); err != nil {
+		return fmt.Errorf("git command not found: %w", err)
+	}
+
+	// Check if we're in a git repository
+	if _, err := exec.Command("git", "rev-parse", "--git-dir").Output(); err != nil {
+		return fmt.Errorf("not in a git repository: %w", err)
+	}
+
+	// Get current branch to return to it later
+	currentBranchBytes, err := exec.Command("git", "branch", "--show-current").Output()
+	if err != nil {
+		return fmt.Errorf("failed to get current branch: %w", err)
+	}
+	currentBranch := strings.TrimSpace(string(currentBranchBytes))
+
+	fmt.Printf("📋 現在のブランチ: %s\n", currentBranch)
+
+	// Stash any uncommitted changes
+	fmt.Printf("💾 未コミット変更を一時保存中...\n")
+	//nolint:errcheck // Intentionally ignore stash errors
+	exec.Command("git", "stash", "push", "-m", "beaver-site-deploy-stash").Run()
+
+	// Cleanup function to return to original state
+	cleanup := func() {
+		fmt.Printf("🔄 元のブランチに戻っています...\n")
+		//nolint:errcheck // Intentionally ignore cleanup errors
+		exec.Command("git", "checkout", currentBranch).Run()
+		//nolint:errcheck // Intentionally ignore cleanup errors
+		exec.Command("git", "stash", "pop").Run()
+	}
+
+	// Check if gh-pages branch exists
+	fmt.Printf("🔍 gh-pages ブランチを確認中...\n")
+	_, err = exec.Command("git", "show-ref", "--verify", "--quiet", "refs/heads/gh-pages").Output()
+	ghPagesBranchExists := err == nil
+
+	if !ghPagesBranchExists {
+		fmt.Printf("🆕 gh-pages ブランチを作成中...\n")
+		// Create orphan gh-pages branch
+		if err := exec.Command("git", "checkout", "--orphan", "gh-pages").Run(); err != nil {
+			cleanup()
+			return fmt.Errorf("failed to create gh-pages branch: %w", err)
+		}
+
+		// Remove all files from the new branch
+		//nolint:errcheck // Intentionally ignore errors as branch might be empty
+		exec.Command("git", "rm", "-rf", ".").Run()
+	} else {
+		fmt.Printf("✅ 既存の gh-pages ブランチに切り替え中...\n")
+		if err := exec.Command("git", "checkout", "gh-pages").Run(); err != nil {
+			cleanup()
+			return fmt.Errorf("failed to checkout gh-pages branch: %w", err)
+		}
+
+		// Clear existing files (keep .git)
+		fmt.Printf("🧹 既存ファイルをクリア中...\n")
+		if err := exec.Command("git", "rm", "-rf", ".").Run(); err != nil {
+			// If git rm fails, try manual cleanup but preserve .git
+			entries, err := os.ReadDir(".")
+			if err == nil {
+				for _, entry := range entries {
+					if entry.Name() != ".git" {
+						_ = os.RemoveAll(entry.Name()) // Ignore errors in cleanup
+					}
+				}
+			}
+		}
+	}
+
+	// Copy site files to current directory (gh-pages branch)
+	fmt.Printf("📁 サイトファイルをコピー中...\n")
+	if err := copyDir(sourceDir, "."); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to copy site files: %w", err)
+	}
+
+	// Add all files
+	fmt.Printf("➕ ファイルを追加中...\n")
+	if err := exec.Command("git", "add", ".").Run(); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to add files: %w", err)
+	}
+
+	// Check if there are changes to commit
+	statusOutput, err := exec.Command("git", "status", "--porcelain").Output()
+	if err != nil {
+		cleanup()
+		return fmt.Errorf("failed to check git status: %w", err)
+	}
+
+	if len(strings.TrimSpace(string(statusOutput))) == 0 {
+		fmt.Printf("ℹ️  変更がないため、コミットをスキップします\n")
+		cleanup()
+		return nil
+	}
+
+	// Commit changes
+	commitMessage := fmt.Sprintf("Deploy site - %s", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Printf("💾 コミット中: %s\n", commitMessage)
+	if err := exec.Command("git", "commit", "-m", commitMessage).Run(); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to commit changes: %w", err)
+	}
+
+	// Push to origin
+	fmt.Printf("🚀 GitHub にプッシュ中...\n")
+	if err := exec.Command("git", "push", "origin", "gh-pages").Run(); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to push to GitHub: %w", err)
+	}
+
+	cleanup()
+	deployLogger.Info("GitHub Pages deployment completed successfully")
+	return nil
+}
+
+// copyDir recursively copies a directory
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Calculate destination path
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(destPath, info.Mode())
+		}
+
+		// Copy file
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		// Create destination directory if needed
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+
+		// Copy file content
+		_, err = destFile.ReadFrom(srcFile)
+		return err
+	})
 }
 
 func init() {
