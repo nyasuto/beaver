@@ -13,11 +13,10 @@ import time
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import SecretStr
-
 import psutil
 import structlog
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from config import Settings
 from models.classification import ClassificationConfig, ClassificationResult, Issue

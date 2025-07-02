@@ -85,7 +85,7 @@ class ClassificationService:
 
             # Initialize LangChain ChatOpenAI
             from pydantic import SecretStr
-            
+
             self.llm = ChatOpenAI(
                 model=self.settings.openai_model,
                 temperature=self.settings.openai_temperature,

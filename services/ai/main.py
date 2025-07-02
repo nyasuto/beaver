@@ -202,7 +202,7 @@ async def batch_classify_issues(
 
         # Filter out None results for response
         valid_results = [r for r in results if r is not None]
-        
+
         response = BatchClassificationResponse(
             results=valid_results,
             summary=summary,
