@@ -164,9 +164,7 @@ class TestAccuracyEvaluator:
             ),
         ]
 
-        accuracy_evaluator.classification_service.batch_classify_issues_enhanced.return_value = (
-            mock_results
-        )
+        accuracy_evaluator.classification_service.batch_classify_issues_enhanced.return_value = mock_results  # type: ignore[attr-defined]
 
         with patch.object(accuracy_evaluator, "_generate_evaluation_report") as mock_report:
             mock_report.return_value = None

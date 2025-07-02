@@ -231,7 +231,7 @@ async def _classify_with_anthropic(
 
     content = response.content[0]
     if hasattr(content, "text"):
-        return content.text
+        return str(content.text)
     else:
         return str(content)
 
