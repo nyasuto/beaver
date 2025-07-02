@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"time"
 
+	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/site"
 	"github.com/nyasuto/beaver/pkg/wiki"
 )
 
@@ -231,30 +235,253 @@ func (c *UnifiedPagesConfig) Validate() error {
 	return nil
 }
 
-// Helper methods to be implemented
+// Helper methods implementation
 func (p *UnifiedPagesPublisher) generateHTMLContent(issues []models.Issue) error {
-	// TODO: Migrate from pkg/site/generator.go
-	return fmt.Errorf("HTML content generation not yet implemented")
+	p.logger.Info("Generating HTML content using site generator")
+
+	// Convert UnifiedPagesConfig to SiteConfig
+	siteConfig := p.convertToSiteConfig()
+
+	// Create HTML generator
+	generator := site.NewHTMLGenerator(siteConfig)
+
+	// Generate the complete site
+	projectName := p.config.Site.Title
+	if projectName == "" {
+		projectName = p.config.Repository
+	}
+
+	if err := generator.GenerateSite(issues, projectName); err != nil {
+		return fmt.Errorf("failed to generate HTML site: %w", err)
+	}
+
+	p.logger.Info("HTML content generation completed", "output_dir", p.config.OutputDir)
+	return nil
 }
 
 func (p *UnifiedPagesPublisher) generateJekyllContent(issues []models.Issue) error {
-	// TODO: Migrate from pkg/wiki/github_pages_publisher.go
-	return fmt.Errorf("jekyll content generation not yet implemented")
+	p.logger.Info("Generating Jekyll content using wiki generator")
+
+	// Create publisher configuration
+	publisherConfig := wiki.NewPublisherConfig(p.config.Owner, p.config.Repository, "")
+
+	// Create GitHub Pages configuration
+	pagesConfig := config.GitHubPagesConfig{
+		Theme:        p.config.Wiki.Theme,
+		Branch:       p.config.GitHubPages.Branch,
+		Domain:       p.config.GitHubPages.Domain,
+		BaseURL:      p.config.GitHubPages.BaseURL,
+		Analytics:    p.config.GitHubPages.Analytics,
+		EnableSearch: p.config.GitHubPages.EnableSearch,
+	}
+
+	// Create GitHub Pages publisher
+	publisher, err := wiki.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create GitHub Pages publisher: %w", err)
+	}
+
+	// Generate and publish Jekyll wiki
+	ctx := context.Background()
+	projectName := p.config.Wiki.Title
+	if projectName == "" {
+		projectName = p.config.Repository
+	}
+
+	if err := publisher.GenerateAndPublishWiki(ctx, issues, projectName); err != nil {
+		return fmt.Errorf("failed to generate Jekyll content: %w", err)
+	}
+
+	p.logger.Info("Jekyll content generation completed", "output_dir", p.config.OutputDir)
+	return nil
 }
 
 func (p *UnifiedPagesPublisher) createOrphanBranch(ctx context.Context, deployDir, repoURL string) error {
-	// TODO: Implement orphan branch creation
-	return fmt.Errorf("orphan branch creation not yet implemented")
+	p.logger.Info("Creating orphan branch for GitHub Pages", "branch", p.config.GitHubPages.Branch)
+
+	// Initialize a new git repository in the deploy directory
+	if err := os.MkdirAll(deployDir, 0755); err != nil {
+		return fmt.Errorf("failed to create deploy directory: %w", err)
+	}
+
+	// Clone the repository with minimal depth
+	if err := p.gitClient.Clone(ctx, repoURL, deployDir, &wiki.CloneOptions{
+		Depth: 1,
+	}); err != nil {
+		return fmt.Errorf("failed to clone repository: %w", err)
+	}
+
+	// Create and checkout orphan branch
+	if err := p.gitClient.CreateOrphanBranch(ctx, deployDir, p.config.GitHubPages.Branch); err != nil {
+		return fmt.Errorf("failed to create orphan branch: %w", err)
+	}
+
+	// Remove all existing files from the orphan branch
+	if err := p.gitClient.RemoveFiles(ctx, deployDir, []string{"."}, true); err != nil {
+		// If git rm fails, manually clean directory but preserve .git
+		entries, err := os.ReadDir(deployDir)
+		if err == nil {
+			for _, entry := range entries {
+				if entry.Name() != ".git" {
+					_ = os.RemoveAll(filepath.Join(deployDir, entry.Name()))
+				}
+			}
+		}
+	}
+
+	p.logger.Info("Orphan branch created successfully", "branch", p.config.GitHubPages.Branch)
+	return nil
 }
 
 func (p *UnifiedPagesPublisher) copyGeneratedContent(deployDir string) error {
-	// TODO: Implement content copying
-	return fmt.Errorf("content copying not yet implemented")
+	p.logger.Info("Copying generated content to deployment directory", "source", p.config.OutputDir, "dest", deployDir)
+
+	// Copy all files from output directory to deployment directory
+	err := filepath.Walk(p.config.OutputDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Calculate relative path
+		relPath, err := filepath.Rel(p.config.OutputDir, path)
+		if err != nil {
+			return err
+		}
+
+		// Skip the root directory itself
+		if relPath == "." {
+			return nil
+		}
+
+		// Calculate destination path
+		destPath := filepath.Join(deployDir, relPath)
+
+		if info.IsDir() {
+			// Create directory
+			return os.MkdirAll(destPath, info.Mode())
+		}
+
+		// Copy file
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		// Ensure destination directory exists
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+
+		// Copy file content
+		_, err = destFile.ReadFrom(srcFile)
+		return err
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to copy content: %w", err)
+	}
+
+	p.logger.Info("Content copying completed successfully")
+	return nil
 }
 
 func (p *UnifiedPagesPublisher) commitAndPush(ctx context.Context, deployDir string) error {
-	// TODO: Implement commit and push
-	return fmt.Errorf("commit and push not yet implemented")
+	p.logger.Info("Committing and pushing changes to GitHub Pages")
+
+	// Add all files to git
+	if err := p.gitClient.Add(ctx, deployDir, []string{"."}); err != nil {
+		return fmt.Errorf("failed to add files to git: %w", err)
+	}
+
+	// Check if there are changes to commit
+	status, err := p.gitClient.Status(ctx, deployDir)
+	if err != nil {
+		return fmt.Errorf("failed to check git status: %w", err)
+	}
+
+	if status.IsClean {
+		p.logger.Info("No changes to commit, skipping deployment")
+		return nil
+	}
+
+	// Create commit message with timestamp
+	commitMessage := fmt.Sprintf("Deploy %s - %s", p.config.Mode, time.Now().Format("2006-01-02 15:04:05"))
+
+	// Commit changes
+	if err := p.gitClient.Commit(ctx, deployDir, commitMessage, nil); err != nil {
+		return fmt.Errorf("failed to commit changes: %w", err)
+	}
+
+	// Push to GitHub Pages branch
+	pushOptions := &wiki.PushOptions{
+		Remote: "origin",
+		Branch: p.config.GitHubPages.Branch,
+		Force:  false,
+	}
+
+	if err := p.gitClient.Push(ctx, deployDir, pushOptions); err != nil {
+		return fmt.Errorf("failed to push to GitHub: %w", err)
+	}
+
+	p.logger.Info("Successfully committed and pushed changes", "branch", p.config.GitHubPages.Branch)
+	return nil
+}
+
+// convertToSiteConfig converts UnifiedPagesConfig to site.SiteConfig for HTML generation
+func (p *UnifiedPagesPublisher) convertToSiteConfig() *site.SiteConfig {
+	// Build base URL and path
+	baseURL := p.config.GitHubPages.BaseURL
+	if baseURL == "" {
+		baseURL = fmt.Sprintf("https://%s.github.io/%s", p.config.Owner, p.config.Repository)
+	}
+
+	basePath := "/" + p.config.Repository
+	if p.config.GitHubPages.Domain != "" {
+		basePath = "" // Custom domain doesn't need repo path
+	}
+
+	// Convert navigation items
+	var navigation []site.NavItem
+	for _, nav := range p.config.Site.Navigation {
+		navigation = append(navigation, site.NavItem{
+			Title: nav.Name,
+			URL:   basePath + nav.URL,
+			Icon:  nav.Icon,
+		})
+	}
+
+	// Default navigation if none specified
+	if len(navigation) == 0 {
+		navigation = []site.NavItem{
+			{Title: "ホーム", URL: basePath + "/", Icon: "🏠"},
+			{Title: "課題", URL: basePath + "/issues.html", Icon: "📋"},
+			{Title: "戦略", URL: basePath + "/strategy.html", Icon: "🎯"},
+			{Title: "解決策", URL: basePath + "/troubleshooting.html", Icon: "🔧"},
+		}
+	}
+
+	// Build site configuration
+	return &site.SiteConfig{
+		Title:         p.config.Site.Title,
+		Description:   fmt.Sprintf("AI駆動型ナレッジベース - %s から自動生成", p.config.Repository),
+		BaseURL:       baseURL,
+		BasePath:      basePath,
+		OutputDir:     p.config.OutputDir,
+		Theme:         p.config.Site.Theme,
+		Language:      "ja",
+		Author:        p.config.Owner,
+		Navigation:    navigation,
+		ServiceWorker: p.config.Site.Features.ServiceWorker,
+		Minify:        p.config.Site.Features.MinifyHTML,
+		Analytics:     p.config.GitHubPages.Analytics,
+	}
 }
 
 // LoadConfigFromDeploymentConfig loads pages configuration from deployment-config.yml
