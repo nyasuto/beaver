@@ -2,11 +2,24 @@ package classification
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TestMain sets up the test environment
+func TestMain(m *testing.M) {
+	// Set log level to WARN for tests to reduce noise
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+
+	// Run tests
+	os.Exit(m.Run())
+}
 
 func TestNewRuleEngine(t *testing.T) {
 	tests := []struct {

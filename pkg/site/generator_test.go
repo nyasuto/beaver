@@ -1,6 +1,7 @@
 package site
 
 import (
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,17 @@ import (
 
 	"github.com/nyasuto/beaver/internal/models"
 )
+
+// TestMain sets up the test environment
+func TestMain(m *testing.M) {
+	// Set log level to WARN for tests to reduce noise
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+
+	// Run tests
+	os.Exit(m.Run())
+}
 
 func TestNewHTMLGenerator(t *testing.T) {
 	config := &SiteConfig{

@@ -2,15 +2,28 @@ package github
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/google/go-github/v60/github"
 	"github.com/nyasuto/beaver/internal/models"
 )
+
+// TestMain sets up the test environment
+func TestMain(m *testing.M) {
+	// Set log level to WARN for tests to reduce noise
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+
+	// Run tests
+	os.Exit(m.Run())
+}
 
 func TestNewService(t *testing.T) {
 	service := NewService("test_token")
