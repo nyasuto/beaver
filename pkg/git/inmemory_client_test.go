@@ -10,6 +10,7 @@ import (
 )
 
 func TestNewInMemoryGitClient(t *testing.T) {
+	// Test creating a new in-memory Git client without authentication
 	client := NewInMemoryGitClient()
 	assert.NotNil(t, client)
 
@@ -40,7 +41,7 @@ func TestCreateWorkspace(t *testing.T) {
 
 func TestInMemoryFileOperations(t *testing.T) {
 	client := NewInMemoryGitClient()
-	
+
 	repo, fs, err := client.CreateWorkspace()
 	require.NoError(t, err)
 
