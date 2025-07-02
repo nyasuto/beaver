@@ -19,7 +19,7 @@ from services.enhanced_classifier import EnhancedClassificationService
 
 
 @pytest.fixture
-def mock_enhanced_service():
+def mock_enhanced_service() -> Mock:
     """Mock enhanced classification service"""
     service = Mock(spec=EnhancedClassificationService)
     service.batch_classify_issues_enhanced = AsyncMock()
@@ -27,13 +27,13 @@ def mock_enhanced_service():
 
 
 @pytest.fixture
-def accuracy_evaluator(mock_enhanced_service):
+def accuracy_evaluator(mock_enhanced_service: Mock) -> AccuracyEvaluator:
     """Accuracy evaluator for testing"""
     return AccuracyEvaluator(mock_enhanced_service)
 
 
 @pytest.fixture
-def sample_test_cases():
+def sample_test_cases() -> list[tuple[Issue, str]]:
     """Sample test cases for evaluation"""
     return [
         (
@@ -72,7 +72,7 @@ def sample_test_cases():
 class TestAccuracyEvaluator:
     """Test AccuracyEvaluator class"""
 
-    def test_init(self, mock_enhanced_service):
+    def test_init(self, mock_enhanced_service: Mock) -> None:
         """Test evaluator initialization"""
         evaluator = AccuracyEvaluator(mock_enhanced_service)
 
@@ -80,7 +80,7 @@ class TestAccuracyEvaluator:
         assert evaluator.test_cases == []
         assert evaluator.evaluation_history == []
 
-    def test_create_benchmark_test_cases(self, accuracy_evaluator):
+    def test_create_benchmark_test_cases(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test benchmark test cases creation"""
         test_cases = accuracy_evaluator.create_benchmark_test_cases()
 
@@ -100,7 +100,7 @@ class TestAccuracyEvaluator:
                 "troubleshooting",
             ]
 
-    def test_benchmark_test_cases_diversity(self, accuracy_evaluator):
+    def test_benchmark_test_cases_diversity(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test benchmark test cases diversity"""
         test_cases = accuracy_evaluator.create_benchmark_test_cases()
 
@@ -130,7 +130,9 @@ class TestAccuracyEvaluator:
         assert len(english_issues) > 0
 
     @pytest.mark.asyncio
-    async def test_run_comprehensive_evaluation(self, accuracy_evaluator, sample_test_cases):
+    async def test_run_comprehensive_evaluation(
+        self, accuracy_evaluator: AccuracyEvaluator, sample_test_cases: list[tuple[Issue, str]]
+    ) -> None:
         """Test comprehensive evaluation execution"""
         accuracy_evaluator.test_cases = sample_test_cases
 
@@ -178,8 +180,8 @@ class TestAccuracyEvaluator:
 
     @pytest.mark.asyncio
     async def test_calculate_detailed_metrics_perfect_accuracy(
-        self, accuracy_evaluator, sample_test_cases
-    ):
+        self, accuracy_evaluator: AccuracyEvaluator, sample_test_cases: list[tuple[Issue, str]]
+    ) -> None:
         """Test metrics calculation with perfect accuracy"""
         test_issues = [case[0] for case in sample_test_cases]
         expected_categories = [case[1] for case in sample_test_cases]
@@ -228,8 +230,8 @@ class TestAccuracyEvaluator:
 
     @pytest.mark.asyncio
     async def test_calculate_detailed_metrics_with_errors(
-        self, accuracy_evaluator, sample_test_cases
-    ):
+        self, accuracy_evaluator: AccuracyEvaluator, sample_test_cases: list[tuple[Issue, str]]
+    ) -> None:
         """Test metrics calculation with classification errors"""
         test_issues = [case[0] for case in sample_test_cases]
         expected_categories = [case[1] for case in sample_test_cases]
@@ -281,8 +283,8 @@ class TestAccuracyEvaluator:
 
     @pytest.mark.asyncio
     async def test_calculate_detailed_metrics_with_failures(
-        self, accuracy_evaluator, sample_test_cases
-    ):
+        self, accuracy_evaluator: AccuracyEvaluator, sample_test_cases: list[tuple[Issue, str]]
+    ) -> None:
         """Test metrics calculation with some failed classifications"""
         test_issues = [case[0] for case in sample_test_cases]
         expected_categories = [case[1] for case in sample_test_cases]
@@ -316,12 +318,14 @@ class TestAccuracyEvaluator:
         assert metrics.total_classified == 2  # Only 2 valid results
         assert metrics.average_response_time_ms == 1050.0  # Average of 1000 and 1100
 
-    def test_get_evaluation_trends_insufficient_data(self, accuracy_evaluator):
+    def test_get_evaluation_trends_insufficient_data(
+        self, accuracy_evaluator: AccuracyEvaluator
+    ) -> None:
         """Test evaluation trends with insufficient data"""
         trends = accuracy_evaluator.get_evaluation_trends()
         assert trends["status"] == "insufficient_data"
 
-    def test_get_evaluation_trends_with_data(self, accuracy_evaluator):
+    def test_get_evaluation_trends_with_data(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test evaluation trends with sufficient data"""
         # Add mock evaluation history
         accuracy_evaluator.evaluation_history = [
@@ -357,7 +361,9 @@ class TestAccuracyEvaluator:
 
         assert trends["response_time"]["trend"] == "improving"  # 2000 -> 1800 (lower is better)
 
-    def test_export_import_test_cases(self, accuracy_evaluator, sample_test_cases):
+    def test_export_import_test_cases(
+        self, accuracy_evaluator: AccuracyEvaluator, sample_test_cases: list[tuple[Issue, str]]
+    ) -> None:
         """Test test cases export and import"""
         accuracy_evaluator.test_cases = sample_test_cases
 

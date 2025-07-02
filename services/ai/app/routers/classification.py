@@ -97,9 +97,13 @@ async def _real_ai_classification(
         # Call AI for classification
         logger.info(f"Using AI provider: {provider} with model: {model or 'default'}")
         if provider == AIProvider.OPENAI:
-            ai_response = await _classify_with_openai(ai_client, prompt, model, settings)
+            ai_response = await _classify_with_openai(
+                ai_client, prompt, model or settings.default_openai_model, settings
+            )
         elif provider == AIProvider.ANTHROPIC:
-            ai_response = await _classify_with_anthropic(ai_client, prompt, model, settings)
+            ai_response = await _classify_with_anthropic(
+                ai_client, prompt, model or settings.default_anthropic_model, settings
+            )
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
@@ -184,6 +188,8 @@ async def _classify_with_openai(
         )
 
         content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("OpenAI API returned empty content")
         logger.info(f"OpenAI API call successful, received {len(content)} characters")
         return content
 

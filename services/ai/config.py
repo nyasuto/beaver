@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     """Application settings with environment variable support"""
 
     # Server Configuration
-    host: str = Field(default="0.0.0.0", env="AI_SERVICE_HOST")
-    port: int = Field(default=8000, env="AI_SERVICE_PORT")
+    host: str = Field(default="0.0.0.0", description="AI service host")
+    port: int = Field(default=8000, description="AI service port")
     debug: bool = Field(default=False, env="AI_SERVICE_DEBUG")
 
     # OpenAI Configuration
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     @field_validator("categories")
     @classmethod
-    def parse_categories(cls, v):
+    def parse_categories(cls, v) -> list[str]:
         """Parse categories from string or list"""
         if isinstance(v, str):
             # Handle comma-separated string
