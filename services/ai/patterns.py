@@ -650,9 +650,9 @@ class PatternRecognitionEngine:
         success_scores = []
         for event in sorted_events:
             text = (event.title + " " + event.description).lower()
-            score = 0
+            score = 0.0
             if any(keyword in text for keyword in self.success_keywords):
-                score += 1
+                score += 1.0
             if any(keyword in text for keyword in self.improvement_keywords):
                 score += 0.5
             success_scores.append(score)
@@ -667,14 +667,14 @@ class PatternRecognitionEngine:
         if np.std(y) == 0:
             return 0.5
 
-        correlation = np.corrcoef(x, y)[0, 1]
-        return max(0, min(1, (correlation + 1) / 2))  # -1,1 を 0,1 に正規化
+        correlation = float(np.corrcoef(x, y)[0, 1])
+        return max(0.0, min(1.0, (correlation + 1) / 2))  # -1,1 を 0,1 に正規化
 
     def _extract_tech_domains(
         self, events: list[DevelopmentEvent]
     ) -> dict[str, list[DevelopmentEvent]]:
         """技術ドメインを抽出"""
-        tech_domains = {}
+        tech_domains: dict[str, list[DevelopmentEvent]] = {}
 
         tech_keywords = {
             "python": ["python", "django", "flask", "pandas"],

@@ -226,8 +226,8 @@ class TestClassificationService:
             results = await classification_service.batch_classify_issues(issues, parallel=True)
 
             assert len(results) == 2
-            assert results[0].issue_id == 1
-            assert results[1].issue_id == 2
+            assert results[0] is not None and results[0].issue_id == 1
+            assert results[1] is not None and results[1].issue_id == 2
 
     @pytest.mark.asyncio
     async def test_batch_classify_sequential(
@@ -246,7 +246,7 @@ class TestClassificationService:
             results = await classification_service.batch_classify_issues(issues, parallel=False)
 
             assert len(results) == 1
-            assert results[0].issue_id == 1
+            assert results[0] is not None and results[0].issue_id == 1
 
     @pytest.mark.asyncio
     async def test_health_check_success(

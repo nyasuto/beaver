@@ -200,8 +200,11 @@ async def batch_classify_issues(
             processing_time_ms=processing_time,
         )
 
+        # Filter out None results for response
+        valid_results = [r for r in results if r is not None]
+
         response = BatchClassificationResponse(
-            results=results,
+            results=valid_results,
             summary=summary,
             timestamp=datetime.now(),
         )

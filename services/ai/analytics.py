@@ -422,7 +422,7 @@ class DevelopmentAnalytics:
             "testing": ["test", "testing", "qa", "unit", "integration"],
         }
 
-        domain_scores = defaultdict(int)
+        domain_scores: dict[str, int] = defaultdict(int)
 
         for event in events:
             text = (event.title + " " + event.description + " " + " ".join(event.labels)).lower()
@@ -433,7 +433,7 @@ class DevelopmentAnalytics:
                         domain_scores[domain] += 1
 
         if domain_scores:
-            return max(domain_scores, key=domain_scores.get)
+            return max(domain_scores.keys(), key=lambda k: domain_scores[k])
 
         return "general"
 
@@ -562,7 +562,7 @@ class DevelopmentAnalytics:
         self, events: list[DevelopmentEvent], patterns: list[LearningPattern]
     ) -> dict[str, Any]:
         """タイムライン チャート用データを作成"""
-        chart_data = {
+        chart_data: dict[str, Any] = {
             "events": [],
             "patterns": [],
             "timeline": {

@@ -234,9 +234,9 @@ Specific next steps or solutions"""
                 return {
                     "content": response.choices[0].message.content,
                     "token_usage": {
-                        "prompt_tokens": response.usage.prompt_tokens,
-                        "completion_tokens": response.usage.completion_tokens,
-                        "total_tokens": response.usage.total_tokens,
+                        "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                        "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                        "total_tokens": response.usage.total_tokens if response.usage else 0,
                     },
                 }
 
@@ -295,6 +295,8 @@ Specific next steps or solutions"""
     ) -> dict[str, Any]:
         """Summarize using Anthropic API with comprehensive error handling"""
         client = self._get_client(AIProvider.ANTHROPIC)
+        if not isinstance(client, AsyncAnthropic):
+            raise ValueError("Invalid Anthropic client type")
 
         for attempt in range(3):  # Retry up to 3 times
             try:
@@ -371,7 +373,7 @@ Specific next steps or solutions"""
 
     def _parse_summarization_response(self, content: str) -> dict[str, Any]:
         """Parse structured AI response into components"""
-        result = {
+        result: dict[str, Any] = {
             "summary": "",
             "key_points": [],
             "category": "general",
