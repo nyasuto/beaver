@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/nyasuto/beaver/pkg/git"
 )
 
 // GitCommit represents a single Git commit
@@ -26,14 +27,21 @@ type GitCommit struct {
 
 // GitAnalyzer analyzes Git repository history
 type GitAnalyzer struct {
-	repoPath string
+	repoPath  string
+	gitClient git.GitClient
 }
 
 // NewGitAnalyzer creates a new Git analyzer
-func NewGitAnalyzer(repoPath string) *GitAnalyzer {
-	return &GitAnalyzer{
-		repoPath: repoPath,
+func NewGitAnalyzer(repoPath string) (*GitAnalyzer, error) {
+	gitClient, err := git.NewCmdGitClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create git client: %w", err)
 	}
+
+	return &GitAnalyzer{
+		repoPath:  repoPath,
+		gitClient: gitClient,
+	}, nil
 }
 
 // AnalyzeCommitHistory analyzes Git commit history and extracts development events
@@ -191,20 +199,14 @@ func (cp *CommitPatterns) calculateMetrics() {
 
 // getCommitHistory retrieves Git commit history
 func (ga *GitAnalyzer) getCommitHistory(ctx context.Context, since *time.Time, maxCommits int) ([]GitCommit, error) {
-	args := []string{"log", "--pretty=format:%H|%an|%ae|%ci|%s", "--numstat"}
-
-	if since != nil {
-		args = append(args, fmt.Sprintf("--since=%s", since.Format("2006-01-02")))
+	options := &git.CommitHistoryOptions{
+		Since:      since,
+		MaxCommits: maxCommits,
+		Format:     "%H|%an|%ae|%ci|%s",
+		NumStat:    true,
 	}
 
-	if maxCommits > 0 {
-		args = append(args, fmt.Sprintf("-%d", maxCommits))
-	}
-
-	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = ga.repoPath
-
-	output, err := cmd.Output()
+	output, err := ga.gitClient.GetCommitHistory(ctx, ga.repoPath, options)
 	if err != nil {
 		return nil, fmt.Errorf("git log command failed: %w", err)
 	}
@@ -326,59 +328,19 @@ type RepositoryMetrics struct {
 // Helper methods for repository metrics
 
 func (ga *GitAnalyzer) getTotalCommitCount(ctx context.Context) (int, error) {
-	cmd := exec.CommandContext(ctx, "git", "rev-list", "--count", "HEAD")
-	cmd.Dir = ga.repoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		return 0, err
-	}
-
-	count, err := strconv.Atoi(strings.TrimSpace(string(output)))
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
+	return ga.gitClient.GetCommitCount(ctx, ga.repoPath)
 }
 
 func (ga *GitAnalyzer) getContributorCount(ctx context.Context) (int, error) {
-	cmd := exec.CommandContext(ctx, "git", "shortlog", "-sn", "HEAD")
-	cmd.Dir = ga.repoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		return 0, err
-	}
-
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	return len(lines), nil
+	return ga.gitClient.GetContributorCount(ctx, ga.repoPath)
 }
 
 func (ga *GitAnalyzer) getFirstCommitDate(ctx context.Context) (time.Time, error) {
-	cmd := exec.CommandContext(ctx, "git", "log", "--reverse", "--pretty=format:%ci", "-1")
-	cmd.Dir = ga.repoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	dateStr := strings.TrimSpace(string(output))
-	return time.Parse("2006-01-02 15:04:05 -0700", dateStr)
+	return ga.gitClient.GetFirstCommitDate(ctx, ga.repoPath)
 }
 
 func (ga *GitAnalyzer) getBranchCount(ctx context.Context) (int, error) {
-	cmd := exec.CommandContext(ctx, "git", "branch", "-a")
-	cmd.Dir = ga.repoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		return 0, err
-	}
-
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	return len(lines), nil
+	return ga.gitClient.GetBranchCount(ctx, ga.repoPath)
 }
 
 // extractFileExtension extracts file extension from a file path

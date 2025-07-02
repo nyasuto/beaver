@@ -1,4 +1,4 @@
-package wiki
+package git
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,15 +21,10 @@ type CmdGitClient struct {
 }
 
 // NewCmdGitClient creates a new command-line Git client
-func NewCmdGitClient() (*CmdGitClient, error) {
+func NewCmdGitClient() (GitClient, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
-		return nil, NewWikiError(ErrorTypeGitOperation, "git_lookup", err,
-			"Gitコマンドが見つかりません", 0,
-			[]string{
-				"Gitをインストールしてください",
-				"PATHにGitが含まれているか確認してください",
-			})
+		return nil, fmt.Errorf("git command not found: %w", err)
 	}
 
 	return &CmdGitClient{
@@ -378,6 +374,263 @@ func (c *CmdGitClient) UnsetConfig(ctx context.Context, dir string, key string) 
 	}
 
 	return nil
+}
+
+// CreateOrphanBranch creates a new orphan branch
+func (c *CmdGitClient) CreateOrphanBranch(ctx context.Context, dir string, branch string) error {
+	slog.Info("Creating orphan branch", "branch", branch, "dir", dir)
+
+	args := []string{"checkout", "--orphan", branch}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create orphan branch '%s': %w", branch, err)
+	}
+
+	slog.Info("Orphan branch created successfully", "branch", branch)
+	return nil
+}
+
+// BranchExists checks if a branch exists in the repository
+func (c *CmdGitClient) BranchExists(ctx context.Context, dir string, branch string) error {
+	args := []string{"show-ref", "--verify", "--quiet", fmt.Sprintf("refs/heads/%s", branch)}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("branch '%s' does not exist: %w", branch, err)
+	}
+
+	return nil
+}
+
+// Stash saves current changes to the stash
+func (c *CmdGitClient) Stash(ctx context.Context, dir string, message string) error {
+	slog.Info("Creating git stash", "message", message, "dir", dir)
+
+	args := []string{"stash", "push", "-m", message}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create stash: %w", err)
+	}
+
+	slog.Info("Stash created successfully")
+	return nil
+}
+
+// StashPop applies the most recent stash
+func (c *CmdGitClient) StashPop(ctx context.Context, dir string) error {
+	slog.Info("Applying git stash", "dir", dir)
+
+	args := []string{"stash", "pop"}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to apply stash: %w", err)
+	}
+
+	slog.Info("Stash applied successfully")
+	return nil
+}
+
+// RemoveFiles removes files from the git repository
+func (c *CmdGitClient) RemoveFiles(ctx context.Context, dir string, paths []string, recursive bool) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	slog.Info("Removing files from git", "paths", paths, "recursive", recursive, "dir", dir)
+
+	args := []string{"rm"}
+	if recursive {
+		args = append(args, "-rf")
+	} else {
+		args = append(args, "-f")
+	}
+	args = append(args, paths...)
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to remove files: %w", err)
+	}
+
+	slog.Info("Files removed successfully", "count", len(paths))
+	return nil
+}
+
+// GetCommitHistory retrieves Git commit history with specified options
+func (c *CmdGitClient) GetCommitHistory(ctx context.Context, dir string, options *CommitHistoryOptions) ([]byte, error) {
+	slog.Info("Getting git commit history", "dir", dir)
+
+	args := []string{"log"}
+
+	if options != nil {
+		if options.Format != "" {
+			args = append(args, "--pretty=format:"+options.Format)
+		} else {
+			args = append(args, "--pretty=format:%H|%an|%ae|%ci|%s")
+		}
+
+		if options.NumStat {
+			args = append(args, "--numstat")
+		}
+
+		if options.Since != nil {
+			args = append(args, fmt.Sprintf("--since=%s", options.Since.Format("2006-01-02")))
+		}
+
+		if options.MaxCommits > 0 {
+			args = append(args, fmt.Sprintf("-%d", options.MaxCommits))
+		}
+	} else {
+		args = append(args, "--pretty=format:%H|%an|%ae|%ci|%s", "--numstat")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commit history: %w", err)
+	}
+
+	slog.Info("Commit history retrieved successfully", "size", len(output))
+	return output, nil
+}
+
+// GetCommitCount gets the total number of commits
+func (c *CmdGitClient) GetCommitCount(ctx context.Context, dir string) (int, error) {
+	slog.Info("Getting git commit count", "dir", dir)
+
+	args := []string{"rev-list", "--count", "HEAD"}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get commit count: %w", err)
+	}
+
+	count, err := strconv.Atoi(strings.TrimSpace(string(output)))
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse commit count: %w", err)
+	}
+
+	slog.Info("Commit count retrieved successfully", "count", count)
+	return count, nil
+}
+
+// GetContributorCount gets the number of unique contributors
+func (c *CmdGitClient) GetContributorCount(ctx context.Context, dir string) (int, error) {
+	slog.Info("Getting git contributor count", "dir", dir)
+
+	args := []string{"shortlog", "-sn", "HEAD"}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get contributor count: %w", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	count := len(lines)
+
+	// Empty repository case
+	if count == 1 && strings.TrimSpace(lines[0]) == "" {
+		count = 0
+	}
+
+	slog.Info("Contributor count retrieved successfully", "count", count)
+	return count, nil
+}
+
+// GetFirstCommitDate gets the date of the first commit
+func (c *CmdGitClient) GetFirstCommitDate(ctx context.Context, dir string) (time.Time, error) {
+	slog.Info("Getting first commit date", "dir", dir)
+
+	args := []string{"log", "--reverse", "--pretty=format:%ci", "-1"}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	output, err := cmd.Output()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to get first commit date: %w", err)
+	}
+
+	dateStr := strings.TrimSpace(string(output))
+	if dateStr == "" {
+		return time.Time{}, fmt.Errorf("commit history is empty")
+	}
+
+	date, err := time.Parse("2006-01-02 15:04:05 -0700", dateStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to parse commit date: %w", err)
+	}
+
+	slog.Info("First commit date retrieved successfully", "date", date)
+	return date, nil
+}
+
+// GetBranchCount gets the total number of branches
+func (c *CmdGitClient) GetBranchCount(ctx context.Context, dir string) (int, error) {
+	slog.Info("Getting git branch count", "dir", dir)
+
+	args := []string{"branch", "-a"}
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, c.gitPath, args...)
+	cmd.Dir = dir
+
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get branch count: %w", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	count := len(lines)
+
+	// Empty repository case
+	if count == 1 && strings.TrimSpace(lines[0]) == "" {
+		count = 0
+	}
+
+	slog.Info("Branch count retrieved successfully", "count", count)
+	return count, nil
 }
 
 // Helper methods

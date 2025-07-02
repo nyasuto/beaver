@@ -6,9 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -16,6 +14,7 @@ import (
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/github"
 	"github.com/nyasuto/beaver/pkg/site"
+	"github.com/nyasuto/beaver/pkg/wiki"
 	"github.com/spf13/cobra"
 )
 
@@ -303,69 +302,71 @@ func calculateDirSize(dirPath string) (int64, int) {
 	return size, count
 }
 
-// deployToGitHubPages deploys the site to GitHub Pages using git commands
+// deployToGitHubPages deploys the site to GitHub Pages using GitClient interface
 func deployToGitHubPages(sourceDir, owner, repo string, deployLogger *slog.Logger) error {
 	deployLogger.Info("Starting GitHub Pages deployment", "source", sourceDir, "repo", fmt.Sprintf("%s/%s", owner, repo))
 
-	// Check if git is available
-	if _, err := exec.LookPath("git"); err != nil {
-		return fmt.Errorf("git command not found: %w", err)
+	// Create GitClient
+	gitClient, err := wiki.NewCmdGitClient()
+	if err != nil {
+		return fmt.Errorf("failed to create git client: %w", err)
 	}
 
+	ctx := context.Background()
+	workingDir := "."
+
 	// Check if we're in a git repository
-	if _, err := exec.Command("git", "rev-parse", "--git-dir").Output(); err != nil {
-		return fmt.Errorf("not in a git repository: %w", err)
+	if !wiki.IsGitRepository(workingDir) {
+		return fmt.Errorf("not in a git repository")
 	}
 
 	// Get current branch to return to it later
-	currentBranchBytes, err := exec.Command("git", "branch", "--show-current").Output()
+	currentBranch, err := gitClient.GetCurrentBranch(ctx, workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to get current branch: %w", err)
 	}
-	currentBranch := strings.TrimSpace(string(currentBranchBytes))
 
 	fmt.Printf("📋 現在のブランチ: %s\n", currentBranch)
 
 	// Stash any uncommitted changes
 	fmt.Printf("💾 未コミット変更を一時保存中...\n")
-	//nolint:errcheck // Intentionally ignore stash errors
-	exec.Command("git", "stash", "push", "-m", "beaver-site-deploy-stash").Run()
+	//nolint:errcheck // Intentionally ignore stash errors (may have no changes)
+	gitClient.Stash(ctx, workingDir, "beaver-site-deploy-stash")
 
 	// Cleanup function to return to original state
 	cleanup := func() {
 		fmt.Printf("🔄 元のブランチに戻っています...\n")
 		//nolint:errcheck // Intentionally ignore cleanup errors
-		exec.Command("git", "checkout", currentBranch).Run()
+		gitClient.CheckoutBranch(ctx, workingDir, currentBranch)
 		//nolint:errcheck // Intentionally ignore cleanup errors
-		exec.Command("git", "stash", "pop").Run()
+		gitClient.StashPop(ctx, workingDir)
 	}
 
 	// Check if gh-pages branch exists
 	fmt.Printf("🔍 gh-pages ブランチを確認中...\n")
-	_, err = exec.Command("git", "show-ref", "--verify", "--quiet", "refs/heads/gh-pages").Output()
-	ghPagesBranchExists := err == nil
+	ghPagesBranchExists := gitClient.BranchExists(ctx, workingDir, "gh-pages") == nil
 
 	if !ghPagesBranchExists {
 		fmt.Printf("🆕 gh-pages ブランチを作成中...\n")
 		// Create orphan gh-pages branch
-		if err := exec.Command("git", "checkout", "--orphan", "gh-pages").Run(); err != nil {
+		if err := gitClient.CreateOrphanBranch(ctx, workingDir, "gh-pages"); err != nil {
 			cleanup()
 			return fmt.Errorf("failed to create gh-pages branch: %w", err)
 		}
 
 		// Remove all files from the new branch
 		//nolint:errcheck // Intentionally ignore errors as branch might be empty
-		exec.Command("git", "rm", "-rf", ".").Run()
+		gitClient.RemoveFiles(ctx, workingDir, []string{"."}, true)
 	} else {
 		fmt.Printf("✅ 既存の gh-pages ブランチに切り替え中...\n")
-		if err := exec.Command("git", "checkout", "gh-pages").Run(); err != nil {
+		if err := gitClient.CheckoutBranch(ctx, workingDir, "gh-pages"); err != nil {
 			cleanup()
 			return fmt.Errorf("failed to checkout gh-pages branch: %w", err)
 		}
 
 		// Clear existing files (keep .git)
 		fmt.Printf("🧹 既存ファイルをクリア中...\n")
-		if err := exec.Command("git", "rm", "-rf", ".").Run(); err != nil {
+		if err := gitClient.RemoveFiles(ctx, workingDir, []string{"."}, true); err != nil {
 			// If git rm fails, try manual cleanup but preserve .git
 			entries, err := os.ReadDir(".")
 			if err == nil {
@@ -387,19 +388,19 @@ func deployToGitHubPages(sourceDir, owner, repo string, deployLogger *slog.Logge
 
 	// Add all files
 	fmt.Printf("➕ ファイルを追加中...\n")
-	if err := exec.Command("git", "add", ".").Run(); err != nil {
+	if err := gitClient.Add(ctx, workingDir, []string{"."}); err != nil {
 		cleanup()
 		return fmt.Errorf("failed to add files: %w", err)
 	}
 
 	// Check if there are changes to commit
-	statusOutput, err := exec.Command("git", "status", "--porcelain").Output()
+	status, err := gitClient.Status(ctx, workingDir)
 	if err != nil {
 		cleanup()
 		return fmt.Errorf("failed to check git status: %w", err)
 	}
 
-	if len(strings.TrimSpace(string(statusOutput))) == 0 {
+	if status.IsClean {
 		fmt.Printf("ℹ️  変更がないため、コミットをスキップします\n")
 		cleanup()
 		return nil
@@ -408,14 +409,19 @@ func deployToGitHubPages(sourceDir, owner, repo string, deployLogger *slog.Logge
 	// Commit changes
 	commitMessage := fmt.Sprintf("Deploy site - %s", time.Now().Format("2006-01-02 15:04:05"))
 	fmt.Printf("💾 コミット中: %s\n", commitMessage)
-	if err := exec.Command("git", "commit", "-m", commitMessage).Run(); err != nil {
+	if err := gitClient.Commit(ctx, workingDir, commitMessage, nil); err != nil {
 		cleanup()
 		return fmt.Errorf("failed to commit changes: %w", err)
 	}
 
 	// Push to origin
 	fmt.Printf("🚀 GitHub にプッシュ中...\n")
-	if err := exec.Command("git", "push", "origin", "gh-pages").Run(); err != nil {
+	pushOptions := &wiki.PushOptions{
+		Remote: "origin",
+		Branch: "gh-pages",
+		Force:  false,
+	}
+	if err := gitClient.Push(ctx, workingDir, pushOptions); err != nil {
 		cleanup()
 		return fmt.Errorf("failed to push to GitHub: %w", err)
 	}
