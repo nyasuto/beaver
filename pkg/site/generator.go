@@ -11,6 +11,14 @@ import (
 	"github.com/nyasuto/beaver/internal/models"
 )
 
+// truncateText truncates text to specified length with ellipsis
+func truncateText(text string, maxLength int) string {
+	if len(text) <= maxLength {
+		return text
+	}
+	return text[:maxLength] + "..."
+}
+
 // HTMLGenerator generates static HTML sites from Beaver data
 type HTMLGenerator struct {
 	config    *SiteConfig
@@ -575,31 +583,369 @@ func (g *HTMLGenerator) createTroubleshootingPageData(issues []models.Issue, pro
 }
 
 // Helper methods for content generation (to be implemented)
-func (g *HTMLGenerator) generateHomeContent(_ []models.Issue) string {
-	// TODO: Implement home content generation
-	return "<div class=\"beaver-layout\"><div class=\"beaver-card\"><h3>🎯 開発戦略</h3><p>プロジェクトの方向性</p></div></div>"
+func (g *HTMLGenerator) generateHomeContent(issues []models.Issue) string {
+	openIssues := 0
+	closedIssues := 0
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openIssues++
+		} else {
+			closedIssues++
+		}
+	}
+
+	healthScore := g.calculateHealthScore(issues)
+	recentIssues := issues
+	if len(issues) > 5 {
+		recentIssues = issues[:5]
+	}
+
+	content := fmt.Sprintf(`<div class="beaver-home">
+		<div class="summary-cards">
+			<div class="card">
+				<h3>📊 プロジェクト統計</h3>
+				<p>総課題数: %d件</p>
+				<p>オープン: %d件 | クローズ: %d件</p>
+			</div>
+			<div class="card">
+				<h3>📈 健全性スコア</h3>
+				<p class="health-score">%d%%</p>
+			</div>
+			<div class="card">
+				<h3>🎯 開発状況</h3>
+				<p>アクティブな開発中</p>
+			</div>
+		</div>
+		<div class="recent-activity">
+			<h3>📋 最近の課題</h3>`, len(issues), openIssues, closedIssues, healthScore)
+
+	for _, issue := range recentIssues {
+		content += fmt.Sprintf(`
+			<div class="issue-preview">
+				<h4>%s</h4>
+				<p>%s</p>
+				<span class="issue-state %s">%s</span>
+			</div>`, issue.Title, truncateText(issue.Body, 100), issue.State, issue.State)
+	}
+
+	content += `
+		</div>
+	</div>`
+	return content
 }
 
-func (g *HTMLGenerator) generateIssuesContent(_ []models.Issue) string {
-	// TODO: Implement issues content generation
-	return "<div class=\"issues-list\">Issues content placeholder</div>"
+func (g *HTMLGenerator) generateIssuesContent(issues []models.Issue) string {
+	if len(issues) == 0 {
+		return "<div class=\"no-issues\"><p>課題が見つかりませんでした。</p></div>"
+	}
+
+	// Group issues by state
+	openIssues := []models.Issue{}
+	closedIssues := []models.Issue{}
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openIssues = append(openIssues, issue)
+		} else {
+			closedIssues = append(closedIssues, issue)
+		}
+	}
+
+	content := fmt.Sprintf(`<div class="issues-summary">
+		<h2>📊 課題サマリー</h2>
+		<div class="issue-stats">
+			<div class="stat-item open">オープン: %d件</div>
+			<div class="stat-item closed">クローズ: %d件</div>
+			<div class="stat-item total">総計: %d件</div>
+		</div>
+	</div>`, len(openIssues), len(closedIssues), len(issues))
+
+	// Open issues section
+	if len(openIssues) > 0 {
+		content += `<div class="issues-section"><h3>🔓 オープンな課題</h3><div class="issues-grid">`
+		for _, issue := range openIssues {
+			labels := ""
+			for _, label := range issue.Labels {
+				labels += fmt.Sprintf(`<span class="label" style="background-color: #%s">%s</span>`, label.Color, label.Name)
+			}
+			content += fmt.Sprintf(`
+				<div class="issue-card open">
+					<h4>%s</h4>
+					<p>%s</p>
+					<div class="issue-meta">
+						<span class="issue-number">#%d</span>
+						<span class="issue-date">%s</span>
+						<div class="labels">%s</div>
+					</div>
+				</div>`, issue.Title, truncateText(issue.Body, 150), issue.Number, issue.CreatedAt.Format("2006/01/02"), labels)
+		}
+		content += `</div></div>`
+	}
+
+	// Closed issues section (limited to recent 10)
+	if len(closedIssues) > 0 {
+		recentClosed := closedIssues
+		if len(closedIssues) > 10 {
+			recentClosed = closedIssues[:10]
+		}
+		content += `<div class="issues-section"><h3>✅ 最近クローズした課題</h3><div class="issues-grid">`
+		for _, issue := range recentClosed {
+			content += fmt.Sprintf(`
+				<div class="issue-card closed">
+					<h4>%s</h4>
+					<p>%s</p>
+					<div class="issue-meta">
+						<span class="issue-number">#%d</span>
+						<span class="issue-date">%s</span>
+					</div>
+				</div>`, issue.Title, truncateText(issue.Body, 150), issue.Number, issue.CreatedAt.Format("2006/01/02"))
+		}
+		content += `</div></div>`
+	}
+
+	return content
 }
 
-func (g *HTMLGenerator) generateStrategyContent(_ []models.Issue) string {
-	// TODO: Implement strategy content generation
-	return "<div class=\"strategy-content\">Strategy content placeholder</div>"
+func (g *HTMLGenerator) generateStrategyContent(issues []models.Issue) string {
+	// Analyze issues for strategy insights
+	labelCounts := make(map[string]int)
+	priorityCounts := make(map[string]int)
+	typeCounts := make(map[string]int)
+
+	for _, issue := range issues {
+		for _, label := range issue.Labels {
+			labelName := strings.ToLower(label.Name)
+			labelCounts[labelName]++
+
+			// Categorize by type
+			if strings.Contains(labelName, "bug") || strings.Contains(labelName, "fix") {
+				typeCounts["バグ修正"]++
+			} else if strings.Contains(labelName, "feature") || strings.Contains(labelName, "enhancement") {
+				typeCounts["機能開発"]++
+			} else if strings.Contains(labelName, "docs") || strings.Contains(labelName, "documentation") {
+				typeCounts["ドキュメント"]++
+			} else if strings.Contains(labelName, "test") {
+				typeCounts["テスト"]++
+			}
+
+			// Categorize by priority
+			if strings.Contains(labelName, "critical") || strings.Contains(labelName, "urgent") {
+				priorityCounts["緊急"]++
+			} else if strings.Contains(labelName, "high") {
+				priorityCounts["高"]++
+			} else if strings.Contains(labelName, "medium") {
+				priorityCounts["中"]++
+			} else if strings.Contains(labelName, "low") {
+				priorityCounts["低"]++
+			}
+		}
+	}
+
+	content := `<div class="strategy-analysis">
+		<h2>🎯 開発戦略分析</h2>
+		<div class="strategy-overview">
+			<p>プロジェクトの課題分析に基づく戦略的インサイトです。</p>
+		</div>`
+
+	// Work type distribution
+	if len(typeCounts) > 0 {
+		content += `<div class="analysis-section">
+			<h3>📊 作業タイプ分布</h3>
+			<div class="type-distribution">`
+		for workType, count := range typeCounts {
+			percentage := float64(count) / float64(len(issues)) * 100
+			content += fmt.Sprintf(`
+				<div class="type-item">
+					<span class="type-name">%s</span>
+					<span class="type-count">%d件 (%.1f%%)</span>
+				</div>`, workType, count, percentage)
+		}
+		content += `</div></div>`
+	}
+
+	// Priority distribution
+	if len(priorityCounts) > 0 {
+		content += `<div class="analysis-section">
+			<h3>⚡ 優先度分布</h3>
+			<div class="priority-distribution">`
+		for priority, count := range priorityCounts {
+			percentage := float64(count) / float64(len(issues)) * 100
+			content += fmt.Sprintf(`
+				<div class="priority-item priority-%s">
+					<span class="priority-name">%s優先度</span>
+					<span class="priority-count">%d件 (%.1f%%)</span>
+				</div>`, strings.ToLower(priority), priority, count, percentage)
+		}
+		content += `</div></div>`
+	}
+
+	// Strategic recommendations
+	content += `<div class="analysis-section">
+		<h3>💡 戦略的推奨事項</h3>
+		<div class="recommendations">`
+
+	if typeCounts["バグ修正"] > typeCounts["機能開発"] {
+		content += `<div class="recommendation">🔧 バグ修正に注力し、品質安定化を図る</div>`
+	} else {
+		content += `<div class="recommendation">🚀 新機能開発でプロダクト価値を向上</div>`
+	}
+
+	if priorityCounts["緊急"] > 0 || priorityCounts["高"] > 0 {
+		content += `<div class="recommendation">⚡ 高優先度課題への迅速な対応が必要</div>`
+	}
+
+	if typeCounts["ドキュメント"] < len(issues)/10 {
+		content += `<div class="recommendation">📚 ドキュメント整備でメンテナンス性向上</div>`
+	}
+
+	if typeCounts["テスト"] < len(issues)/5 {
+		content += `<div class="recommendation">🧪 テスト充実で品質保証強化</div>`
+	}
+
+	content += `</div></div></div>`
+	return content
 }
 
-func (g *HTMLGenerator) generateTroubleshootingContent(_ []models.Issue) string {
-	// TODO: Implement troubleshooting content generation
-	return "<div class=\"troubleshooting-content\">Troubleshooting content placeholder</div>"
+func (g *HTMLGenerator) generateTroubleshootingContent(issues []models.Issue) string {
+	// Extract bug issues and common problems
+	bugIssues := []models.Issue{}
+	errorKeywords := []string{"error", "エラー", "bug", "バグ", "fail", "失敗", "crash", "クラッシュ", "broken", "動かない"}
+	commonProblems := make(map[string][]models.Issue)
+
+	for _, issue := range issues {
+		isBug := false
+
+		// Check labels for bug-related content
+		for _, label := range issue.Labels {
+			labelName := strings.ToLower(label.Name)
+			if strings.Contains(labelName, "bug") || strings.Contains(labelName, "fix") || strings.Contains(labelName, "error") {
+				isBug = true
+				break
+			}
+		}
+
+		// Check title and body for error keywords
+		if !isBug {
+			titleAndBody := strings.ToLower(issue.Title + " " + issue.Body)
+			for _, keyword := range errorKeywords {
+				if strings.Contains(titleAndBody, keyword) {
+					isBug = true
+					break
+				}
+			}
+		}
+
+		if isBug {
+			bugIssues = append(bugIssues, issue)
+
+			// Categorize by problem type
+			titleLower := strings.ToLower(issue.Title)
+			if strings.Contains(titleLower, "install") || strings.Contains(titleLower, "インストール") {
+				commonProblems["インストール問題"] = append(commonProblems["インストール問題"], issue)
+			} else if strings.Contains(titleLower, "config") || strings.Contains(titleLower, "設定") {
+				commonProblems["設定問題"] = append(commonProblems["設定問題"], issue)
+			} else if strings.Contains(titleLower, "performance") || strings.Contains(titleLower, "パフォーマンス") || strings.Contains(titleLower, "slow") {
+				commonProblems["パフォーマンス問題"] = append(commonProblems["パフォーマンス問題"], issue)
+			} else if strings.Contains(titleLower, "api") {
+				commonProblems["API問題"] = append(commonProblems["API問題"], issue)
+			} else {
+				commonProblems["その他の問題"] = append(commonProblems["その他の問題"], issue)
+			}
+		}
+	}
+
+	content := `<div class="troubleshooting-guide">
+		<h2>🔧 トラブルシューティングガイド</h2>
+		<div class="troubleshooting-overview">
+			<p>よくある問題と解決方法をまとめました。問題解決の参考にしてください。</p>
+		</div>`
+
+	if len(bugIssues) == 0 {
+		content += `<div class="no-issues">
+			<p>🎉 現在、報告されている既知の問題はありません。</p>
+			<p>新しい問題を発見した場合は、GitHubでIssueを作成してください。</p>
+		</div>`
+	} else {
+		content += fmt.Sprintf(`<div class="problem-summary">
+			<p>📊 既知の問題: %d件</p>
+		</div>`, len(bugIssues))
+
+		// Group problems by category
+		for category, categoryIssues := range commonProblems {
+			if len(categoryIssues) > 0 {
+				content += fmt.Sprintf(`<div class="problem-category">
+					<h3>%s (%d件)</h3>
+					<div class="problem-list">`, category, len(categoryIssues))
+
+				for _, issue := range categoryIssues {
+					status := "未解決"
+					statusClass := "open"
+					if issue.State == "closed" {
+						status = "解決済み"
+						statusClass = "closed"
+					}
+
+					content += fmt.Sprintf(`
+						<div class="problem-item %s">
+							<h4>%s</h4>
+							<p>%s</p>
+							<div class="problem-meta">
+								<span class="issue-number">#%d</span>
+								<span class="status %s">%s</span>
+								<span class="date">%s</span>
+							</div>
+						</div>`, statusClass, issue.Title, truncateText(issue.Body, 200), issue.Number, statusClass, status, issue.CreatedAt.Format("2006/01/02"))
+				}
+
+				content += `</div></div>`
+			}
+		}
+
+		// General troubleshooting tips
+		content += `<div class="general-tips">
+			<h3>💡 一般的なトラブルシューティングのヒント</h3>
+			<ul>
+				<li>🔍 エラーメッセージを正確に記録し、検索してみる</li>
+				<li>📋 問題の再現手順を明確にする</li>
+				<li>🌐 環境情報（OS、ブラウザ、バージョン等）を確認</li>
+				<li>🔄 最新バージョンで問題が解決しているか確認</li>
+				<li>📖 ドキュメントやFAQを確認</li>
+				<li>🤝 コミュニティやサポートに質問する前に既存のIssueを検索</li>
+			</ul>
+		</div>`
+	}
+
+	content += `</div>`
+	return content
 }
 
 func (g *HTMLGenerator) generateStatistics(issues []models.Issue) map[string]interface{} {
+	openCount := 0
+	closedCount := 0
+	labelCounts := make(map[string]int)
+
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openCount++
+		} else {
+			closedCount++
+		}
+
+		for _, label := range issue.Labels {
+			labelCounts[label.Name]++
+		}
+	}
+
 	return map[string]interface{}{
 		"total_issues":  len(issues),
-		"open_issues":   0, // TODO: Calculate
-		"closed_issues": 0, // TODO: Calculate
+		"open_issues":   openCount,
+		"closed_issues": closedCount,
+		"label_counts":  labelCounts,
+		"completion_rate": func() float64 {
+			if len(issues) == 0 {
+				return 0.0
+			}
+			return float64(closedCount) / float64(len(issues)) * 100
+		}(),
 	}
 }
 
@@ -610,9 +956,76 @@ func (g *HTMLGenerator) generateIssueStatistics(_ []models.Issue) map[string]int
 	}
 }
 
-func (g *HTMLGenerator) calculateHealthScore(_ []models.Issue) int {
-	// TODO: Implement health score calculation
-	return 85
+func (g *HTMLGenerator) calculateHealthScore(issues []models.Issue) int {
+	if len(issues) == 0 {
+		return 100 // Perfect score with no issues
+	}
+
+	openCount := 0
+	closedCount := 0
+	oldIssuesCount := 0
+	highPriorityOpenCount := 0
+	currentTime := time.Now()
+
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openCount++
+
+			// Check if issue is old (more than 30 days)
+			if currentTime.Sub(issue.CreatedAt) > 30*24*time.Hour {
+				oldIssuesCount++
+			}
+
+			// Check for high priority labels
+			for _, label := range issue.Labels {
+				labelName := strings.ToLower(label.Name)
+				if strings.Contains(labelName, "critical") || strings.Contains(labelName, "urgent") || strings.Contains(labelName, "high") {
+					highPriorityOpenCount++
+					break
+				}
+			}
+		} else {
+			closedCount++
+		}
+	}
+
+	// Calculate health score (0-100)
+	score := 100
+
+	// Penalty for high ratio of open issues
+	if len(issues) > 0 {
+		openRatio := float64(openCount) / float64(len(issues))
+		if openRatio > 0.5 {
+			score -= int((openRatio - 0.5) * 40) // Up to -20 points
+		}
+	}
+
+	// Penalty for old open issues
+	if openCount > 0 {
+		oldRatio := float64(oldIssuesCount) / float64(openCount)
+		score -= int(oldRatio * 30) // Up to -30 points
+	}
+
+	// Penalty for high priority open issues
+	if openCount > 0 {
+		highPriorityRatio := float64(highPriorityOpenCount) / float64(openCount)
+		score -= int(highPriorityRatio * 25) // Up to -25 points
+	}
+
+	// Bonus for having issues (shows active development)
+	if len(issues) > 0 && len(issues) < 10 {
+		score += 5
+	}
+
+	// Ensure score is within bounds
+	if score < 0 {
+		score = 0
+	}
+	if score > 100 {
+		score = 100
+	}
+
+	return score
 }
 
 // generateServiceWorker creates a service worker for PWA functionality
