@@ -105,6 +105,10 @@ module = [
     "langchain_openai.*",
     "structlog.*",
     "psutil.*",
+    "numpy.*",
+    "sklearn.*",
+    "scipy.*",
+    "anthropic.*",
 ]
 ignore_missing_imports = true
 

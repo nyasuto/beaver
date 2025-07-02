@@ -84,11 +84,13 @@ class ClassificationService:
                 raise ValueError("OpenAI API key is required")
 
             # Initialize LangChain ChatOpenAI
+            from pydantic import SecretStr
+            
             self.llm = ChatOpenAI(
                 model=self.settings.openai_model,
                 temperature=self.settings.openai_temperature,
-                max_tokens=self.settings.openai_max_tokens,
-                api_key=self.settings.openai_api_key,
+                model_kwargs={"max_tokens": self.settings.openai_max_tokens},
+                api_key=SecretStr(self.settings.openai_api_key),
                 timeout=self.settings.request_timeout,
             )
 

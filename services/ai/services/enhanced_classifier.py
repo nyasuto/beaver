@@ -13,6 +13,8 @@ import time
 from datetime import datetime
 from typing import Any, Optional
 
+from pydantic import SecretStr
+
 import psutil
 import structlog
 from langchain_openai import ChatOpenAI
@@ -60,7 +62,7 @@ class EnhancedClassificationService:
             self.llm = ChatOpenAI(
                 model=self.settings.openai_model,
                 temperature=model_config["temperature"],
-                api_key=str(self.settings.openai_api_key),
+                api_key=SecretStr(self.settings.openai_api_key),
                 timeout=self.settings.request_timeout,
                 model_kwargs={
                     "max_tokens": model_config["max_tokens"],
