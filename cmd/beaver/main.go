@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -549,6 +551,13 @@ func runStatusCommand(cmd *cobra.Command, args []string) {
 }
 
 func init() {
+	// Set log level to WARN for tests to reduce noise
+	if strings.HasSuffix(os.Args[0], ".test") || strings.Contains(os.Args[0], "test") {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelWarn,
+		})))
+	}
+
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(statusCmd)
