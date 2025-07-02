@@ -215,7 +215,7 @@ class TestAccuracyEvaluator:
         ]
 
         metrics = await accuracy_evaluator._calculate_detailed_metrics(
-            test_issues, expected_categories, results, 3.0
+            test_issues, expected_categories, list(results), 3.0
         )
 
         assert metrics.accuracy == 1.0
@@ -265,7 +265,7 @@ class TestAccuracyEvaluator:
         ]
 
         metrics = await accuracy_evaluator._calculate_detailed_metrics(
-            test_issues, expected_categories, results, 3.0
+            test_issues, expected_categories, list(results), 3.0
         )
 
         assert metrics.accuracy == 2 / 3  # 2 out of 3 correct
@@ -399,7 +399,9 @@ class TestAccuracyEvaluator:
             Path(temp_file).unlink()
 
     @pytest.mark.asyncio
-    async def test_generate_evaluation_report(self, accuracy_evaluator, sample_test_cases):
+    async def test_generate_evaluation_report(
+        self, accuracy_evaluator: AccuracyEvaluator, sample_test_cases: list[tuple[Issue, str]]
+    ) -> None:
         """Test evaluation report generation"""
         accuracy_evaluator.test_cases = sample_test_cases
 
@@ -447,19 +449,21 @@ class TestAccuracyEvaluator:
 
             with patch("evaluation.accuracy_evaluator.Path") as mock_path:
                 mock_path.return_value = temp_path / "evaluation_reports"
-                mock_path.return_value.mkdir = Mock()
+                mock_path.return_value.mkdir.return_value = None
 
                 # Mock file operations
                 with patch("builtins.open", create=True) as mock_open:
                     mock_file = Mock()
                     mock_open.return_value.__enter__.return_value = mock_file
 
-                    await accuracy_evaluator._generate_evaluation_report(metrics, mock_results)
+                    await accuracy_evaluator._generate_evaluation_report(
+                        metrics, list(mock_results)
+                    )
 
                     # Verify file operations were called
                     assert mock_open.call_count >= 1  # JSON and CSV files
 
-    def test_create_accuracy_evaluator_factory(self, mock_enhanced_service):
+    def test_create_accuracy_evaluator_factory(self, mock_enhanced_service: Mock) -> None:
         """Test accuracy evaluator factory function"""
         evaluator = create_accuracy_evaluator(mock_enhanced_service)
 
@@ -470,7 +474,7 @@ class TestAccuracyEvaluator:
 class TestBenchmarkTestCases:
     """Test benchmark test cases quality"""
 
-    def test_benchmark_categories_coverage(self, accuracy_evaluator):
+    def test_benchmark_categories_coverage(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test that benchmark covers all categories"""
         test_cases = accuracy_evaluator.create_benchmark_test_cases()
         categories = [case[1] for case in test_cases]
@@ -486,7 +490,7 @@ class TestBenchmarkTestCases:
 
         assert actual_categories == expected_categories
 
-    def test_benchmark_language_coverage(self, accuracy_evaluator):
+    def test_benchmark_language_coverage(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test that benchmark covers multiple languages"""
         test_cases = accuracy_evaluator.create_benchmark_test_cases()
 
@@ -514,7 +518,7 @@ class TestBenchmarkTestCases:
         assert japanese_count >= 2
         assert english_count >= 2
 
-    def test_benchmark_complexity_levels(self, accuracy_evaluator):
+    def test_benchmark_complexity_levels(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test that benchmark includes various complexity levels"""
         test_cases = accuracy_evaluator.create_benchmark_test_cases()
 
@@ -539,7 +543,7 @@ class TestBenchmarkTestCases:
         assert len(long_issues) >= 2
         assert len(mixed_label_issues) >= 2
 
-    def test_benchmark_edge_cases(self, accuracy_evaluator):
+    def test_benchmark_edge_cases(self, accuracy_evaluator: AccuracyEvaluator) -> None:
         """Test that benchmark includes edge cases"""
         test_cases = accuracy_evaluator.create_benchmark_test_cases()
 
@@ -566,7 +570,7 @@ class TestBenchmarkTestCases:
 
 
 @pytest.mark.asyncio
-async def test_evaluator_integration():
+async def test_evaluator_integration() -> None:
     """Integration test for accuracy evaluator"""
     # Create mock service
     service = Mock(spec=EnhancedClassificationService)
@@ -599,7 +603,7 @@ async def test_evaluator_integration():
 
     # Calculate metrics
     metrics = await evaluator._calculate_detailed_metrics(
-        test_issues, expected_categories, mock_results, 3.0
+        test_issues, expected_categories, list(mock_results), 3.0
     )
 
     assert metrics.accuracy == 1.0

@@ -100,7 +100,7 @@ class PredictiveInsights:
 class DevelopmentAnalytics:
     """開発分析システム"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = structlog.get_logger()
 
     def analyze_patterns(self, patterns: list[LearningPattern]) -> AnalyticsMetrics:

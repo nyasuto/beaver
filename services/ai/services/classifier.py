@@ -14,8 +14,8 @@ import structlog
 from langchain.schema import BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from ..config import Settings
-from ..models.classification import ClassificationConfig, ClassificationResult, Issue
+from config import Settings
+from models.classification import ClassificationConfig, ClassificationResult, Issue
 
 logger = structlog.get_logger()
 
@@ -282,7 +282,7 @@ class ClassificationService:
         issues: list[Issue],
         config: Optional[ClassificationConfig] = None,
         parallel: bool = True,
-    ) -> list[ClassificationResult]:
+    ) -> list[Optional[ClassificationResult]]:
         """Classify multiple issues in batch"""
 
         if not issues:
@@ -308,21 +308,21 @@ class ClassificationService:
                     logger.error(f"Failed to classify issue {issues[i].id}: {result}")
                     processed_results.append(None)
                 else:
-                    processed_results.append(result)
+                    processed_results.append(result)  # type: ignore[arg-type]
 
             return processed_results
         else:
             # Sequential processing
-            results = []
+            sequential_results: list[Optional[ClassificationResult]] = []
             for issue in issues:
                 try:
                     result = await self.classify_issue(issue, config)
-                    results.append(result)
+                    sequential_results.append(result)
                 except Exception as e:
                     logger.error(f"Failed to classify issue {issue.id}: {e}")
-                    results.append(None)
+                    sequential_results.append(None)
 
-            return results
+            return sequential_results
 
     async def health_check(self) -> bool:
         """Perform health check"""

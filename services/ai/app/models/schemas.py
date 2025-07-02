@@ -42,7 +42,7 @@ class IssueData(BaseModel):
     user: str
 
     @validator("body", "title")
-    def validate_content_length(cls, v):
+    def validate_content_length(cls, v: str) -> str:
         if len(v) > 50000:  # Match MAX_CONTENT_LENGTH from config
             raise ValueError("Content too long for processing")
         return v
@@ -82,7 +82,7 @@ class ClassificationRequest(BaseModel):
     categories: Optional[list[str]] = None  # Custom categories
 
     @validator("content")
-    def validate_content_length(cls, v):
+    def validate_content_length(cls, v: str) -> str:
         if len(v) > 50000:
             raise ValueError("Content too long for processing")
         return v
@@ -132,7 +132,7 @@ class BatchSummarizationRequest(BaseModel):
     language: str = Field(default="ja", description="Output language (ja, en)")
 
     @validator("issues")
-    def validate_batch_size(cls, v):
+    def validate_batch_size(cls, v: list[Any]) -> list[Any]:
         if len(v) > 50:  # Reasonable batch limit
             raise ValueError("Batch size too large (max 50 issues)")
         return v

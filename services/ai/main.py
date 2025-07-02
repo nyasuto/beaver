@@ -6,8 +6,10 @@ GitHub Issues自動分類用のPython AIサービス
 
 import logging
 import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import Any, Optional
 
 import structlog
 import uvicorn
@@ -19,6 +21,7 @@ from config import get_settings
 from models.classification import (
     BatchClassificationRequest,
     BatchClassificationResponse,
+    BatchSummary,
     ClassificationRequest,
     ClassificationResponse,
     HealthResponse,
@@ -36,11 +39,11 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Global classification service instance
-classification_service: ClassificationService = None
+classification_service: Optional[ClassificationService] = None
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager"""
     global classification_service
 
@@ -187,17 +190,19 @@ async def batch_classify_issues(
         # Calculate summary statistics
         successful = len([r for r in results if r is not None])
         failed = len(results) - successful
-        avg_confidence = sum(r.confidence for r in results if r) / max(successful, 1)
+        avg_confidence = sum(r.confidence for r in results if r is not None) / max(successful, 1)
+
+        summary = BatchSummary(
+            total_processed=len(request.issues),
+            successful=successful,
+            failed=failed,
+            average_confidence=avg_confidence,
+            processing_time_ms=processing_time,
+        )
 
         response = BatchClassificationResponse(
             results=results,
-            summary={
-                "total_processed": len(request.issues),
-                "successful": successful,
-                "failed": failed,
-                "average_confidence": avg_confidence,
-                "processing_time_ms": processing_time,
-            },
+            summary=summary,
             timestamp=datetime.now(),
         )
 
@@ -221,7 +226,7 @@ async def batch_classify_issues(
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
+async def global_exception_handler(request: Any, exc: Exception) -> JSONResponse:
     """Global exception handler"""
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(

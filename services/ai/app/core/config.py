@@ -6,7 +6,7 @@ Handles environment variables, settings validation, and configuration defaults.
 
 import os
 from functools import lru_cache
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -62,11 +62,11 @@ class Settings(BaseSettings):
         default=True, description="Enable troubleshooting features"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._validate_ai_keys()
 
-    def _validate_ai_keys(self):
+    def _validate_ai_keys(self) -> None:
         """Validate that at least one AI API key is provided"""
         if not self.openai_api_key and not self.anthropic_api_key:
             # Check environment variables directly as fallback

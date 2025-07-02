@@ -14,7 +14,7 @@ from enum import Enum
 from typing import Any
 
 import structlog
-from langchain.schema import BaseMessage, HumanMessage, SystemMessage
+from langchain.schema import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
 from models.classification import ClassificationResult, Issue
 
@@ -57,7 +57,7 @@ class ClassificationMetrics:
 class EnhancedTopicModel:
     """高度なトピック分類モデル"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.few_shot_examples: list[FewShotExample] = []
         self.classification_history: list[tuple[Issue, ClassificationResult]] = []
 
@@ -486,7 +486,7 @@ class EnhancedTopicModel:
 }}
 ```"""
 
-        messages = [SystemMessage(content=system_prompt)]
+        messages: list[BaseMessage] = [SystemMessage(content=system_prompt)]
 
         # Few-shot例の追加
         if use_few_shot and self.few_shot_examples:
@@ -515,7 +515,7 @@ Repository: {example.issue.repository or "N/A"}"""
 ```"""
 
                 messages.extend(
-                    [HumanMessage(content=example_input), SystemMessage(content=example_output)]
+                    [HumanMessage(content=example_input), AIMessage(content=example_output)]
                 )
 
         # 実際のIssue入力
