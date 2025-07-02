@@ -73,6 +73,11 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("❌ リポジトリ形式が無効です: %s", cfg.Project.Repository)
 	}
 
+	// Early validation: check if we have any data sources available
+	if cfg.Sources.GitHub.Token == "" && !includeGit {
+		return fmt.Errorf("❌ 分析用のデータソースが見つかりません。GitHub Token を設定するか --include-git フラグを使用してください")
+	}
+
 	ctx := context.Background()
 
 	// Initialize analytics components
@@ -288,6 +293,11 @@ type AnalysisConfig struct {
 }
 
 func fetchGitHubEvents(ctx context.Context, cfg *config.Config, _, _ string) ([]analytics.TimelineEvent, error) {
+	// Early validation: check if token is available
+	if cfg.Sources.GitHub.Token == "" {
+		return nil, fmt.Errorf("GitHub token is required for fetching events")
+	}
+
 	githubService := github.NewService(cfg.Sources.GitHub.Token)
 
 	// Test connection
