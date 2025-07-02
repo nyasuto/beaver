@@ -222,7 +222,11 @@ async def _classify_with_anthropic(
         ],
     )
 
-    return response.content[0].text
+    content = response.content[0]
+    if hasattr(content, 'text'):
+        return content.text
+    else:
+        return str(content)
 
 
 def _parse_ai_classification_response(

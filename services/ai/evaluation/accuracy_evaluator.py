@@ -295,7 +295,7 @@ class AccuracyEvaluator:
         """評価レポートの生成"""
 
         # レポート作成
-        report = {
+        report: dict[str, Any] = {
             "evaluation_summary": {
                 "timestamp": metrics.timestamp.isoformat(),
                 "total_test_cases": len(self.test_cases),
