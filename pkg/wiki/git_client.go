@@ -1,117 +1,45 @@
 package wiki
 
 import (
-	"context"
-	"time"
+	"github.com/nyasuto/beaver/pkg/git"
 )
 
-// GitClient defines the interface for Git operations
-// This abstracts the actual Git implementation to support testing and different Git backends
-type GitClient interface {
-	// Repository Operations
-	Clone(ctx context.Context, url, dir string, options *CloneOptions) error
-	Pull(ctx context.Context, dir string) error
-	Push(ctx context.Context, dir string, options *PushOptions) error
+// GitClient is an alias for the git.GitClient interface
+type GitClient = git.GitClient
 
-	// File Operations
-	Add(ctx context.Context, dir string, files []string) error
-	Commit(ctx context.Context, dir string, message string, options *CommitOptions) error
+// Type aliases for git package types used by wiki package
+type CloneOptions = git.CloneOptions
+type PushOptions = git.PushOptions
+type CommitOptions = git.CommitOptions
+type CommitAuthor = git.CommitAuthor
+type GitStatus = git.GitStatus
+type CommitHistoryOptions = git.CommitHistoryOptions
 
-	// Status and Information
-	Status(ctx context.Context, dir string) (*GitStatus, error)
-	GetCurrentSHA(ctx context.Context, dir string) (string, error)
-	GetRemoteURL(ctx context.Context, dir string) (string, error)
-
-	// Branch Operations
-	GetCurrentBranch(ctx context.Context, dir string) (string, error)
-	CheckoutBranch(ctx context.Context, dir string, branch string) error
-
-	// Configuration
-	SetConfig(ctx context.Context, dir string, key, value string) error
-	GetConfig(ctx context.Context, dir string, key string) (string, error)
-	UnsetConfig(ctx context.Context, dir string, key string) error
+// NewCmdGitClient creates a new command-line Git client
+func NewCmdGitClient() (GitClient, error) {
+	return git.NewCmdGitClient()
 }
 
-// CloneOptions contains options for Git clone operations
-type CloneOptions struct {
-	Depth        int
-	Branch       string
-	SingleBranch bool
-	Bare         bool
-	Timeout      time.Duration
-}
+// Helper functions for creating default options
 
-// PushOptions contains options for Git push operations
-type PushOptions struct {
-	Remote  string
-	Branch  string
-	Force   bool
-	Timeout time.Duration
-}
-
-// CommitOptions contains options for Git commit operations
-type CommitOptions struct {
-	Author     *GitAuthor
-	Committer  *GitAuthor
-	SignOff    bool
-	AllowEmpty bool
-}
-
-// GitAuthor represents a Git author or committer
-type GitAuthor struct {
-	Name  string
-	Email string
-	When  time.Time
-}
-
-// GitStatus represents the current status of a Git repository
-type GitStatus struct {
-	IsClean        bool
-	HasUncommitted bool
-	HasUntracked   bool
-	ModifiedFiles  []string
-	UntrackedFiles []string
-	StagedFiles    []string
-	Branch         string
-	Ahead          int
-	Behind         int
-}
-
-// NewDefaultCloneOptions creates default clone options for Wiki repositories
-func NewDefaultCloneOptions() *CloneOptions {
-	return &CloneOptions{
-		Depth:        1,
-		Branch:       "master",
-		SingleBranch: true,
-		Bare:         false,
-		Timeout:      30 * time.Second,
+// NewDefaultCommitOptions creates default commit options
+func NewDefaultCommitOptions() *CommitOptions {
+	return &CommitOptions{
+		Author:     nil,
+		AllowEmpty: false,
 	}
 }
 
 // NewDefaultPushOptions creates default push options
 func NewDefaultPushOptions() *PushOptions {
 	return &PushOptions{
-		Remote:  "origin",
-		Branch:  "master",
-		Force:   false,
-		Timeout: 30 * time.Second,
+		Remote: "origin",
+		Branch: "",
+		Force:  false,
 	}
 }
 
-// NewDefaultCommitOptions creates default commit options for Beaver
-func NewDefaultCommitOptions() *CommitOptions {
-	return &CommitOptions{
-		Author: &GitAuthor{
-			Name:  "Beaver AI",
-			Email: "noreply@beaver.ai",
-			When:  time.Now(),
-		},
-		Committer: &GitAuthor{
-			Name:  "Beaver AI",
-			Email: "noreply@beaver.ai",
-			When:  time.Now(),
-		},
-		SignOff:    false,
-		AllowEmpty: false,
-	}
+// IsGitRepository checks if directory is a git repository
+func IsGitRepository(dir string) bool {
+	return git.IsGitRepository(dir)
 }

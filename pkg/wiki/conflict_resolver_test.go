@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nyasuto/beaver/pkg/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -80,6 +81,58 @@ func (m *ConflictResolverMockGitClient) UnsetConfig(ctx context.Context, dir str
 	return args.Error(0)
 }
 
+// New methods added for the extended GitClient interface
+func (m *ConflictResolverMockGitClient) CreateOrphanBranch(ctx context.Context, dir string, branch string) error {
+	args := m.Called(ctx, dir, branch)
+	return args.Error(0)
+}
+
+func (m *ConflictResolverMockGitClient) BranchExists(ctx context.Context, dir string, branch string) error {
+	args := m.Called(ctx, dir, branch)
+	return args.Error(0)
+}
+
+func (m *ConflictResolverMockGitClient) Stash(ctx context.Context, dir string, message string) error {
+	args := m.Called(ctx, dir, message)
+	return args.Error(0)
+}
+
+func (m *ConflictResolverMockGitClient) StashPop(ctx context.Context, dir string) error {
+	args := m.Called(ctx, dir)
+	return args.Error(0)
+}
+
+func (m *ConflictResolverMockGitClient) RemoveFiles(ctx context.Context, dir string, paths []string, recursive bool) error {
+	args := m.Called(ctx, dir, paths, recursive)
+	return args.Error(0)
+}
+
+// Analytics methods
+func (m *ConflictResolverMockGitClient) GetCommitHistory(ctx context.Context, dir string, options *git.CommitHistoryOptions) ([]byte, error) {
+	args := m.Called(ctx, dir, options)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *ConflictResolverMockGitClient) GetCommitCount(ctx context.Context, dir string) (int, error) {
+	args := m.Called(ctx, dir)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *ConflictResolverMockGitClient) GetContributorCount(ctx context.Context, dir string) (int, error) {
+	args := m.Called(ctx, dir)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *ConflictResolverMockGitClient) GetFirstCommitDate(ctx context.Context, dir string) (time.Time, error) {
+	args := m.Called(ctx, dir)
+	return args.Get(0).(time.Time), args.Error(1)
+}
+
+func (m *ConflictResolverMockGitClient) GetBranchCount(ctx context.Context, dir string) (int, error) {
+	args := m.Called(ctx, dir)
+	return args.Int(0), args.Error(1)
+}
+
 func TestConflictResolver_DefaultConfig(t *testing.T) {
 	config := DefaultConflictResolverConfig()
 
@@ -114,8 +167,8 @@ func TestConflictResolver_SafeUpdate_Success(t *testing.T) {
 	mockClient.On("Status", ctx, workDir).Return(&GitStatus{HasUncommitted: false}, nil)
 	mockClient.On("Pull", ctx, workDir).Return(nil)
 	mockClient.On("Add", ctx, workDir, files).Return(nil)
-	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*wiki.CommitOptions")).Return(nil)
-	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*wiki.PushOptions")).Return(nil)
+	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*git.CommitOptions")).Return(nil)
+	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*git.PushOptions")).Return(nil)
 
 	err := resolver.SafeUpdate(ctx, workDir, commitMessage, files)
 
@@ -139,16 +192,16 @@ func TestConflictResolver_SafeUpdate_ConflictResolution(t *testing.T) {
 	mockClient.On("Status", ctx, workDir).Return(&GitStatus{HasUncommitted: false}, nil).Once()
 	mockClient.On("Pull", ctx, workDir).Return(nil).Once()
 	mockClient.On("Add", ctx, workDir, files).Return(nil).Once()
-	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*wiki.CommitOptions")).Return(nil).Once()
+	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*git.CommitOptions")).Return(nil).Once()
 	pushConflictError := errors.New("failed to push some refs to 'origin'. Updates were rejected")
-	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*wiki.PushOptions")).Return(pushConflictError).Once()
+	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*git.PushOptions")).Return(pushConflictError).Once()
 
 	// Second attempt: success
 	mockClient.On("Status", ctx, workDir).Return(&GitStatus{HasUncommitted: false}, nil).Once()
 	mockClient.On("Pull", ctx, workDir).Return(nil).Once()
 	mockClient.On("Add", ctx, workDir, files).Return(nil).Once()
-	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*wiki.CommitOptions")).Return(nil).Once()
-	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*wiki.PushOptions")).Return(nil).Once()
+	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*git.CommitOptions")).Return(nil).Once()
+	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*git.PushOptions")).Return(nil).Once()
 
 	err := resolver.SafeUpdate(ctx, workDir, commitMessage, files)
 
@@ -175,8 +228,8 @@ func TestConflictResolver_SafeUpdate_MaxRetriesExceeded(t *testing.T) {
 		mockClient.On("Status", ctx, workDir).Return(&GitStatus{HasUncommitted: false}, nil).Once()
 		mockClient.On("Pull", ctx, workDir).Return(nil).Once()
 		mockClient.On("Add", ctx, workDir, files).Return(nil).Once()
-		mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*wiki.CommitOptions")).Return(nil).Once()
-		mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*wiki.PushOptions")).Return(pushConflictError).Once()
+		mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*git.CommitOptions")).Return(nil).Once()
+		mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*git.PushOptions")).Return(pushConflictError).Once()
 	}
 
 	err := resolver.SafeUpdate(ctx, workDir, commitMessage, files)
@@ -364,11 +417,11 @@ func TestConflictResolver_handleAbortStrategy(t *testing.T) {
 	mockClient.On("Status", ctx, workDir).Return(&GitStatus{HasUncommitted: false}, nil)
 	mockClient.On("Pull", ctx, workDir).Return(nil)
 	mockClient.On("Add", ctx, workDir, files).Return(nil)
-	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*wiki.CommitOptions")).Return(nil)
+	mockClient.On("Commit", ctx, workDir, commitMessage, mock.AnythingOfType("*git.CommitOptions")).Return(nil)
 
 	// Push fails with conflict
 	pushConflictError := errors.New("rejected: fetch first")
-	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*wiki.PushOptions")).Return(pushConflictError)
+	mockClient.On("Push", ctx, workDir, mock.AnythingOfType("*git.PushOptions")).Return(pushConflictError)
 
 	err := resolver.SafeUpdate(ctx, workDir, commitMessage, files)
 

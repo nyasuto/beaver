@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/nyasuto/beaver/internal/errors"
+	"github.com/nyasuto/beaver/pkg/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -82,6 +83,58 @@ func (m *MockRecoveryGitClient) GetConfig(ctx context.Context, dir, key string) 
 func (m *MockRecoveryGitClient) UnsetConfig(ctx context.Context, dir, key string) error {
 	args := m.Called(ctx, dir, key)
 	return args.Error(0)
+}
+
+// New methods added for the extended GitClient interface
+func (m *MockRecoveryGitClient) CreateOrphanBranch(ctx context.Context, dir string, branch string) error {
+	args := m.Called(ctx, dir, branch)
+	return args.Error(0)
+}
+
+func (m *MockRecoveryGitClient) BranchExists(ctx context.Context, dir string, branch string) error {
+	args := m.Called(ctx, dir, branch)
+	return args.Error(0)
+}
+
+func (m *MockRecoveryGitClient) Stash(ctx context.Context, dir string, message string) error {
+	args := m.Called(ctx, dir, message)
+	return args.Error(0)
+}
+
+func (m *MockRecoveryGitClient) StashPop(ctx context.Context, dir string) error {
+	args := m.Called(ctx, dir)
+	return args.Error(0)
+}
+
+func (m *MockRecoveryGitClient) RemoveFiles(ctx context.Context, dir string, paths []string, recursive bool) error {
+	args := m.Called(ctx, dir, paths, recursive)
+	return args.Error(0)
+}
+
+// Analytics methods
+func (m *MockRecoveryGitClient) GetCommitHistory(ctx context.Context, dir string, options *git.CommitHistoryOptions) ([]byte, error) {
+	args := m.Called(ctx, dir, options)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+func (m *MockRecoveryGitClient) GetCommitCount(ctx context.Context, dir string) (int, error) {
+	args := m.Called(ctx, dir)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockRecoveryGitClient) GetContributorCount(ctx context.Context, dir string) (int, error) {
+	args := m.Called(ctx, dir)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockRecoveryGitClient) GetFirstCommitDate(ctx context.Context, dir string) (time.Time, error) {
+	args := m.Called(ctx, dir)
+	return args.Get(0).(time.Time), args.Error(1)
+}
+
+func (m *MockRecoveryGitClient) GetBranchCount(ctx context.Context, dir string) (int, error) {
+	args := m.Called(ctx, dir)
+	return args.Int(0), args.Error(1)
 }
 
 func TestNewRecoveryManager(t *testing.T) {

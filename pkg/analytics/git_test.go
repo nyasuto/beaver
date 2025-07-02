@@ -13,8 +13,9 @@ import (
 )
 
 func TestNewGitAnalyzer(t *testing.T) {
-	analyzer := NewGitAnalyzer("/path/to/repo")
+	analyzer, err := NewGitAnalyzer("/path/to/repo")
 
+	assert.NoError(t, err)
 	assert.NotNil(t, analyzer)
 	assert.Equal(t, "/path/to/repo", analyzer.repoPath)
 }
@@ -25,7 +26,8 @@ func TestGitAnalyzer_AnalyzeCommitHistory(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	analyzer := NewGitAnalyzer(tempDir)
+	analyzer, err := NewGitAnalyzer(tempDir)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	t.Run("analyze non-git directory", func(t *testing.T) {
@@ -61,7 +63,8 @@ func TestGitAnalyzer_AnalyzeCommitPatterns(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	analyzer := NewGitAnalyzer(tempDir)
+	analyzer, err := NewGitAnalyzer(tempDir)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	t.Run("analyze empty commit list", func(t *testing.T) {
@@ -184,7 +187,8 @@ func TestGitAnalyzer_GetRepositoryMetrics(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	analyzer := NewGitAnalyzer(tempDir)
+	analyzer, err := NewGitAnalyzer(tempDir)
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	t.Run("get metrics from non-git directory", func(t *testing.T) {
@@ -202,7 +206,8 @@ func TestGitAnalyzer_GetRepositoryMetrics(t *testing.T) {
 		err := os.MkdirAll(gitDir, 0755)
 		require.NoError(t, err)
 
-		analyzer := NewGitAnalyzer(gitDir)
+		analyzer, err := NewGitAnalyzer(gitDir)
+		require.NoError(t, err)
 
 		// Even with git init, we might not have commits
 		metrics, err := analyzer.GetRepositoryMetrics(ctx)
@@ -432,7 +437,8 @@ func TestGitAnalyzer_Integration(t *testing.T) {
 		t.Skip("Not in a git repository, skipping integration test")
 	}
 
-	analyzer := NewGitAnalyzer(".")
+	analyzer, err := NewGitAnalyzer(".")
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	t.Run("analyze current repository", func(t *testing.T) {

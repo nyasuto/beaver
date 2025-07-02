@@ -338,7 +338,10 @@ func fetchGitEvents(ctx context.Context, sinceDate string, maxCommits int) ([]an
 	}
 
 	// Initialize Git analyzer
-	gitAnalyzer := analytics.NewGitAnalyzer(repoPath)
+	gitAnalyzer, err := analytics.NewGitAnalyzer(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create git analyzer: %w", err)
+	}
 
 	// Parse since date if provided
 	var since *time.Time
