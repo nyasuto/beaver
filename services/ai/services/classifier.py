@@ -14,8 +14,8 @@ import structlog
 from langchain.schema import BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from config import Settings
-from models.classification import ClassificationConfig, ClassificationResult, Issue
+from ..config import Settings
+from ..models.classification import ClassificationConfig, ClassificationResult, Issue
 
 logger = structlog.get_logger()
 
@@ -88,8 +88,8 @@ class ClassificationService:
                 model=self.settings.openai_model,
                 temperature=self.settings.openai_temperature,
                 max_tokens=self.settings.openai_max_tokens,
-                openai_api_key=self.settings.openai_api_key,
-                request_timeout=self.settings.request_timeout,
+                api_key=self.settings.openai_api_key,
+                timeout=self.settings.request_timeout,
             )
 
             # Test API connectivity
@@ -116,6 +116,8 @@ class ClassificationService:
                 HumanMessage(content="Say 'Hello' if you can respond."),
             ]
 
+            if self.llm is None:
+                raise ValueError("LLM not initialized")
             await self.llm.ainvoke(test_messages)
             logger.info("OpenAI API connection test successful")
 
@@ -182,10 +184,13 @@ class ClassificationService:
 
             # Call OpenAI API via LangChain
             logger.debug(f"Sending classification request for issue {issue.id}")
+            if self.llm is None:
+                raise ValueError("LLM not initialized")
             response = await self.llm.ainvoke(messages)
 
             # Parse response
-            result = self._parse_classification_response(response.content, issue.id)
+            content_str = str(response.content) if hasattr(response, "content") else str(response)
+            result = self._parse_classification_response(content_str, issue.id)
 
             processing_time = int((time.time() - start_time) * 1000)
             result.processing_time_ms = processing_time
@@ -297,7 +302,7 @@ class ClassificationService:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # Handle exceptions
-            processed_results = []
+            processed_results: list[Optional[ClassificationResult]] = []
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
                     logger.error(f"Failed to classify issue {issues[i].id}: {result}")
@@ -346,7 +351,7 @@ class ClassificationService:
         """Get current memory usage in MB"""
         try:
             process = psutil.Process()
-            memory_mb = process.memory_info().rss / 1024 / 1024
+            memory_mb = float(process.memory_info().rss) / 1024 / 1024
             return round(memory_mb, 2)
         except Exception:
             return None
