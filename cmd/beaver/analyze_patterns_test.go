@@ -154,6 +154,17 @@ output:
 	}()
 	os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
+	// Clear environment GitHub token to ensure we use only config file
+	originalGitHubToken := os.Getenv("GITHUB_TOKEN")
+	defer func() {
+		if originalGitHubToken != "" {
+			os.Setenv("GITHUB_TOKEN", originalGitHubToken)
+		} else {
+			os.Unsetenv("GITHUB_TOKEN")
+		}
+	}()
+	os.Unsetenv("GITHUB_TOKEN")
+
 	// Reset flags to default values
 	includeGit = false
 
@@ -161,10 +172,12 @@ output:
 	err = runAnalyzePatternsCommand(cmd, []string{})
 
 	if err == nil {
-		t.Error("Expected no events error, got nil")
+		t.Error("Expected data source error, got nil")
 	}
-	if !containsStringAnywhere(err.Error(), "設定が無効です") && !containsStringAnywhere(err.Error(), "分析用のイベントが見つかりません") {
-		t.Errorf("Expected config validation error or no events error, got: %v", err)
+	if !containsStringAnywhere(err.Error(), "設定が無効です") &&
+		!containsStringAnywhere(err.Error(), "分析用のデータソースが見つかりません") &&
+		!containsStringAnywhere(err.Error(), "分析用のイベントが見つかりません") {
+		t.Errorf("Expected config validation or data source error, got: %v", err)
 	}
 }
 

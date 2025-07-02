@@ -153,6 +153,17 @@ output:
 	}()
 	os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
+	// Clear environment GitHub token to ensure we use only config file
+	originalGitHubToken := os.Getenv("GITHUB_TOKEN")
+	defer func() {
+		if originalGitHubToken != "" {
+			os.Setenv("GITHUB_TOKEN", originalGitHubToken)
+		} else {
+			os.Unsetenv("GITHUB_TOKEN")
+		}
+	}()
+	os.Unsetenv("GITHUB_TOKEN")
+
 	cmd := &cobra.Command{}
 	err = runBuildCommand(cmd, []string{})
 
@@ -353,6 +364,17 @@ output:
 		}
 	}()
 	os.Setenv("BEAVER_CONFIG_PATH", configPath)
+
+	// Clear environment GitHub token to ensure we use only config file
+	originalGitHubToken := os.Getenv("GITHUB_TOKEN")
+	defer func() {
+		if originalGitHubToken != "" {
+			os.Setenv("GITHUB_TOKEN", originalGitHubToken)
+		} else {
+			os.Unsetenv("GITHUB_TOKEN")
+		}
+	}()
+	os.Unsetenv("GITHUB_TOKEN")
 
 	cmd := &cobra.Command{}
 	err = runBuildCommand(cmd, []string{})
