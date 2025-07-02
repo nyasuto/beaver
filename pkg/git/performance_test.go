@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func BenchmarkCreateInMemoryWorkspace(b *testing.B) {
+func BenchmarkCreateInMemoryWorkspaceGoGit(b *testing.B) {
 	client := NewGoGitClient()
 
 	b.ResetTimer()
