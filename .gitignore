@@ -64,7 +64,6 @@ generated-wiki/
 generated-wiki-*/
 wiki-output/
 *.wiki/
-wiki/
 
 # Jekyll build output
 _site/

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -83,7 +83,7 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	repoPath := args[0]
 
-	log.Printf("🛠️ Beaver Troubleshooting Guide Generator - %s", repoPath)
+	slog.Info("🛠️ Beaver Troubleshooting Guide Generator", "repo", repoPath)
 
 	// Parse owner/repo
 	owner, repo := parseOwnerRepo(repoPath)
@@ -94,7 +94,7 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 	// Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Printf("WARN Failed to load config, will use environment variables: %v", err)
+		slog.Warn("Failed to load config, will use environment variables", "error", err)
 		cfg = &config.Config{} // Use empty config, will fall back to environment variables
 	}
 
@@ -118,24 +118,24 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 	query.PerPage = maxIssuesForAnalysis
 
 	// Fetch issues
-	log.Printf("📥 Issues取得中: %s (%s状態)...", repoPath, query.State)
+	slog.Info("📥 Issues取得中", "repo", repoPath, "state", query.State)
 	result, err := githubService.FetchIssues(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to fetch issues: %w", err)
 	}
 
 	issues := result.Issues
-	log.Printf("📊 取得したIssues: %d件", len(issues))
+	slog.Info("📊 取得したIssues", "count", len(issues))
 
 	if len(issues) == 0 {
-		log.Printf("⚠️ 分析するIssueが見つかりません")
+		slog.Warn("⚠️ 分析するIssueが見つかりません")
 		return fmt.Errorf("no issues found for analysis")
 	}
 
 	// Create AI service if enhanced analysis is enabled
 	var aiService troubleshooting.AIService
 	if aiEnhanced {
-		log.Printf("🤖 AI分析サービスを初期化中...")
+		slog.Info("🤖 AI分析サービスを初期化中")
 		aiService = NewPythonAIService()
 	}
 
@@ -143,15 +143,14 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 	analyzer := troubleshooting.NewAnalyzer(aiService)
 
 	// Perform troubleshooting analysis
-	log.Printf("🔍 トラブルシューティング分析を実行中...")
+	slog.Info("🔍 トラブルシューティング分析を実行中")
 	projectName := fmt.Sprintf("%s/%s", owner, repo)
 	guide, err := analyzer.AnalyzeTroubleshooting(ctx, issues, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to analyze troubleshooting patterns: %w", err)
 	}
 
-	log.Printf("✅ 分析完了: %d個のエラーパターン、%d個のソリューションを検出",
-		len(guide.ErrorPatterns), len(guide.Solutions))
+	slog.Info("✅ 分析完了", "error_patterns", len(guide.ErrorPatterns), "solutions", len(guide.Solutions))
 
 	// Determine output filename
 	outputFile := troubleshootingOutput
@@ -170,34 +169,34 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to save troubleshooting guide: %w", err)
 	}
 
-	log.Printf("💾 トラブルシューティングガイドを保存: %s", outputFile)
+	slog.Info("💾 トラブルシューティングガイドを保存", "file", outputFile)
 
 	// Export wiki format if requested
 	if exportWiki && troubleshootingFormat != "wiki" && troubleshootingFormat != "markdown" {
 		wikiFile := fmt.Sprintf("%s-troubleshooting-guide.md", repo)
 		err = saveTroubleshootingGuide(guide, wikiFile, "wiki")
 		if err != nil {
-			log.Printf("WARN Failed to export wiki format: %v", err)
+			slog.Warn("Failed to export wiki format", "error", err)
 		} else {
-			log.Printf("📋 Wiki形式も保存: %s", wikiFile)
+			slog.Info("📋 Wiki形式も保存", "file", wikiFile)
 		}
 	}
 
 	// Display summary
-	log.Printf("\n📈 トラブルシューティングガイド統計:")
-	log.Printf("  📊 総Issue数: %d", guide.TotalIssues)
-	log.Printf("  ✅ 解決済み: %d", guide.SolvedIssues)
-	log.Printf("  🔍 エラーパターン: %d", len(guide.ErrorPatterns))
-	log.Printf("  💡 ソリューション: %d", len(guide.Solutions))
-	log.Printf("  🛡️ 予防策: %d", len(guide.PreventionGuides))
-	log.Printf("  🚨 緊急対応: %d", len(guide.EmergencyActions))
+	slog.Info("\n📈 トラブルシューティングガイド統計")
+	slog.Info("  📊 総Issue数", "total", guide.TotalIssues)
+	slog.Info("  ✅ 解決済み", "solved", guide.SolvedIssues)
+	slog.Info("  🔍 エラーパターン", "count", len(guide.ErrorPatterns))
+	slog.Info("  💡 ソリューション", "count", len(guide.Solutions))
+	slog.Info("  🛡️ 予防策", "count", len(guide.PreventionGuides))
+	slog.Info("  🚨 緊急対応", "count", len(guide.EmergencyActions))
 
 	if guide.AIInsights != nil {
-		log.Printf("  🤖 AI分析信頼度: %.1f%%", guide.AIInsights.Confidence*100)
-		log.Printf("  💭 AI推奨事項: %d", len(guide.AIInsights.Recommendations))
+		slog.Info("  🤖 AI分析信頼度", "confidence_percent", guide.AIInsights.Confidence*100)
+		slog.Info("  💭 AI推奨事項", "count", len(guide.AIInsights.Recommendations))
 	}
 
-	log.Printf("\n🛠️ トラブルシューティングガイド生成完了!")
+	slog.Info("\n🛠️ トラブルシューティングガイド生成完了")
 	return nil
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"strings"
 	"time"
@@ -68,16 +68,16 @@ func DefaultConflictResolverConfig() *ConflictResolverConfig {
 // SafeUpdate performs a safe update operation with conflict resolution
 // This implements the core pull-before-push strategy to handle concurrent modifications
 func (cr *ConflictResolver) SafeUpdate(ctx context.Context, workDir string, commitMessage string, files []string) error {
-	log.Printf("INFO ConflictResolver SafeUpdate starting: dir=%s, files=%d, strategy=%v", workDir, len(files), cr.strategy)
+	slog.Info("ConflictResolver SafeUpdate starting", "dir", workDir, "files", len(files), "strategy", cr.strategy)
 
 	for attempt := 0; attempt < cr.maxRetries; attempt++ {
 		if attempt > 0 {
-			log.Printf("INFO ConflictResolver retry attempt %d/%d", attempt+1, cr.maxRetries)
+			slog.Info("ConflictResolver retry attempt", "attempt", attempt+1, "max_retries", cr.maxRetries)
 		}
 
 		// Step 1: Pull latest changes to avoid conflicts
 		if err := cr.pullLatestChanges(ctx, workDir); err != nil {
-			log.Printf("WARN ConflictResolver pull failed on attempt %d: %v", attempt+1, err)
+			slog.Warn("ConflictResolver pull failed on attempt", "attempt", attempt+1, "error", err)
 			if attempt == cr.maxRetries-1 {
 				return fmt.Errorf("failed to pull latest changes after %d attempts: %w", cr.maxRetries, err)
 			}
@@ -99,11 +99,11 @@ func (cr *ConflictResolver) SafeUpdate(ctx context.Context, workDir string, comm
 		pushOptions := NewDefaultPushOptions()
 		if err := cr.gitClient.Push(ctx, workDir, pushOptions); err != nil {
 			if cr.isPushConflict(err) {
-				log.Printf("INFO ConflictResolver detected push conflict on attempt %d: %v", attempt+1, err)
+				slog.Info("ConflictResolver detected push conflict on attempt", "attempt", attempt+1, "error", err)
 
 				// Handle the conflict based on strategy
 				if err := cr.handlePushConflict(ctx, workDir, attempt); err != nil {
-					log.Printf("ERROR ConflictResolver conflict handling failed: %v", err)
+					slog.Error("ConflictResolver conflict handling failed", "error", err)
 
 					// For abort strategy, fail immediately without retrying
 					if cr.strategy == StrategyAbort {
@@ -118,7 +118,7 @@ func (cr *ConflictResolver) SafeUpdate(ctx context.Context, workDir string, comm
 				// Wait before retrying with exponential backoff + jitter
 				if attempt < cr.maxRetries-1 {
 					delay := cr.calculateBackoffDelay(attempt)
-					log.Printf("INFO ConflictResolver backing off for %v before retry", delay)
+					slog.Info("ConflictResolver backing off before retry", "delay", delay)
 					select {
 					case <-time.After(delay):
 						// Continue to next iteration
@@ -134,7 +134,7 @@ func (cr *ConflictResolver) SafeUpdate(ctx context.Context, workDir string, comm
 		}
 
 		// Success!
-		log.Printf("INFO ConflictResolver SafeUpdate completed successfully on attempt %d", attempt+1)
+		slog.Info("ConflictResolver SafeUpdate completed successfully on attempt", "attempt", attempt+1)
 		return nil
 	}
 
@@ -143,7 +143,7 @@ func (cr *ConflictResolver) SafeUpdate(ctx context.Context, workDir string, comm
 
 // pullLatestChanges safely pulls the latest changes from remote
 func (cr *ConflictResolver) pullLatestChanges(ctx context.Context, workDir string) error {
-	log.Printf("INFO ConflictResolver pulling latest changes: dir=%s", workDir)
+	slog.Info("ConflictResolver pulling latest changes", "dir", workDir)
 
 	// Check if we have any uncommitted changes first
 	status, err := cr.gitClient.Status(ctx, workDir)
@@ -152,7 +152,7 @@ func (cr *ConflictResolver) pullLatestChanges(ctx context.Context, workDir strin
 	}
 
 	if status.HasUncommitted {
-		log.Printf("WARN ConflictResolver found uncommitted changes, will need to handle carefully")
+		slog.Warn("ConflictResolver found uncommitted changes, will need to handle carefully")
 		// In CI environments, this shouldn't happen, but we'll handle it gracefully
 	}
 
@@ -161,13 +161,13 @@ func (cr *ConflictResolver) pullLatestChanges(ctx context.Context, workDir strin
 		// Check if it's a "no remote changes" situation (not an error)
 		if strings.Contains(err.Error(), "Already up to date") ||
 			strings.Contains(err.Error(), "up-to-date") {
-			log.Printf("INFO ConflictResolver repository already up to date")
+			slog.Info("ConflictResolver repository already up to date")
 			return nil
 		}
 		return fmt.Errorf("git pull failed: %w", err)
 	}
 
-	log.Printf("INFO ConflictResolver pull completed successfully")
+	slog.Info("ConflictResolver pull completed successfully")
 	return nil
 }
 
@@ -201,7 +201,7 @@ func (cr *ConflictResolver) isPushConflict(err error) bool {
 
 // handlePushConflict handles a push conflict based on the configured strategy
 func (cr *ConflictResolver) handlePushConflict(ctx context.Context, workDir string, attempt int) error {
-	log.Printf("INFO ConflictResolver handling push conflict with strategy: %v", cr.strategy)
+	slog.Info("ConflictResolver handling push conflict with strategy", "strategy", cr.strategy)
 
 	switch cr.strategy {
 	case StrategyMerge:
@@ -217,7 +217,7 @@ func (cr *ConflictResolver) handlePushConflict(ctx context.Context, workDir stri
 
 // handleMergeStrategy implements safe automatic merging
 func (cr *ConflictResolver) handleMergeStrategy(ctx context.Context, workDir string) error {
-	log.Printf("INFO ConflictResolver applying merge strategy")
+	slog.Info("ConflictResolver applying merge strategy")
 
 	// Reset the current commit to prepare for re-application
 	// This is equivalent to "git reset HEAD~1" to undo our commit
@@ -235,13 +235,13 @@ func (cr *ConflictResolver) handleMergeStrategy(ctx context.Context, workDir str
 	// For CI integration tests, the safest approach is to pull and retry
 	// since we're dealing with automated, non-conflicting content
 
-	log.Printf("INFO ConflictResolver merge strategy: will retry after pull")
+	slog.Info("ConflictResolver merge strategy: will retry after pull")
 	return nil
 }
 
 // handleOverwriteStrategy implements force push (use with caution)
 func (cr *ConflictResolver) handleOverwriteStrategy(ctx context.Context, workDir string) error {
-	log.Printf("WARN ConflictResolver applying overwrite strategy (force push)")
+	slog.Warn("ConflictResolver applying overwrite strategy (force push)")
 
 	pushOptions := &PushOptions{
 		Remote:  "origin",
@@ -254,7 +254,7 @@ func (cr *ConflictResolver) handleOverwriteStrategy(ctx context.Context, workDir
 		return fmt.Errorf("force push failed: %w", err)
 	}
 
-	log.Printf("INFO ConflictResolver overwrite strategy completed")
+	slog.Info("ConflictResolver overwrite strategy completed")
 	return nil
 }
 
@@ -289,7 +289,7 @@ func (cr *ConflictResolver) calculateBackoffDelay(attempt int) time.Duration {
 // SetStrategy allows changing the conflict resolution strategy
 func (cr *ConflictResolver) SetStrategy(strategy ConflictStrategy) {
 	cr.strategy = strategy
-	log.Printf("INFO ConflictResolver strategy changed to: %v", strategy)
+	slog.Info("ConflictResolver strategy changed to", "strategy", strategy)
 }
 
 // GetStrategy returns the current conflict resolution strategy

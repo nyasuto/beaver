@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -141,8 +141,8 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	repoPath := args[0]
 
-	log.Printf("🦫 Beaver Wiki Generator - %s", repoPath)
-	log.Printf("📁 出力先: %s", wikiOutput)
+	slog.Info("🦫 Beaver Wiki Generator", "repo", repoPath)
+	slog.Info("📁 出力先", "output", wikiOutput)
 
 	// Parse owner/repo
 	owner, repo, err := parseRepoPath(repoPath)
@@ -167,7 +167,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	query.State = "all" // Fetch both open and closed issues
 
 	// Fetch issues
-	log.Printf("📥 Fetching issues from %s/%s...", owner, repo)
+	slog.Info("📥 Fetching issues", "owner", owner, "repo", repo)
 	result, err := githubService.FetchIssues(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to fetch issues: %w", err)
@@ -178,9 +178,9 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	issues := allIssues
 	if wikiBatch > 0 && len(allIssues) > wikiBatch {
 		issues = allIssues[:wikiBatch]
-		log.Printf("📊 Processing %d of %d issues (batch mode)", wikiBatch, len(allIssues))
+		slog.Info("📊 Processing issues (batch mode)", "count", wikiBatch, "total", len(allIssues))
 	} else {
-		log.Printf("📊 Processing %d issues", len(issues))
+		slog.Info("📊 Processing issues", "count", len(issues))
 	}
 
 	// Create Wiki generator
@@ -188,7 +188,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	projectName := fmt.Sprintf("%s/%s", owner, repo)
 
 	// Generate Wiki pages
-	log.Printf("🔧 Generating Wiki pages...")
+	slog.Info("🔧 Generating Wiki pages")
 
 	// Create output directory
 	// #nosec G301 -- CLI tool needs standard directory permissions
@@ -200,7 +200,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	pages := make([]*wiki.WikiPage, 0, 4)
 
 	// Index page
-	log.Printf("  📄 Generating index page...")
+	slog.Info("  📄 Generating index page")
 	indexPage, err := generator.GenerateIndex(issues, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to generate index page: %w", err)
@@ -211,7 +211,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	pages = append(pages, indexPage)
 
 	// Issues summary
-	log.Printf("  📋 Generating issues summary...")
+	slog.Info("  📋 Generating issues summary")
 	summaryPage, err := generator.GenerateIssuesSummary(issues, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to generate issues summary: %w", err)
@@ -222,7 +222,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	pages = append(pages, summaryPage)
 
 	// Troubleshooting guide
-	log.Printf("  🛠️ Generating troubleshooting guide...")
+	slog.Info("  🛠️ Generating troubleshooting guide")
 	troubleshootingPage, err := generator.GenerateTroubleshootingGuide(issues, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to generate troubleshooting guide: %w", err)
@@ -233,7 +233,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	pages = append(pages, troubleshootingPage)
 
 	// Learning path
-	log.Printf("  📚 Generating learning path...")
+	slog.Info("  📚 Generating learning path")
 	learningPage, err := generator.GenerateLearningPath(issues, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to generate learning path: %w", err)
@@ -243,11 +243,11 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	}
 	pages = append(pages, learningPage)
 
-	log.Printf("✅ Wiki generation completed! %d pages created in %s", len(pages), wikiOutput)
+	slog.Info("✅ Wiki generation completed", "pages_created", len(pages), "output_dir", wikiOutput)
 
 	// Auto-publish if requested
 	if wikiPublish {
-		log.Printf("🚀 Deploying to GitHub Pages...")
+		slog.Info("🚀 Deploying to GitHub Pages")
 		publisherConfig := &wiki.PublisherConfig{
 			Owner:                    owner,
 			Repository:               repo,
@@ -269,7 +269,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 		}
 		defer func() {
 			if err := publisher.Cleanup(); err != nil {
-				log.Printf("WARN Failed to cleanup publisher: %v", err)
+				slog.Warn("Failed to cleanup publisher", "error", err)
 			}
 		}()
 
@@ -280,7 +280,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 		if err := publisher.PublishPages(ctx, pages); err != nil {
 			return fmt.Errorf("failed to deploy to GitHub Pages: %w", err)
 		}
-		log.Printf("✅ Successfully deployed to GitHub Pages!")
+		slog.Info("✅ Successfully deployed to GitHub Pages")
 	}
 
 	return nil
@@ -290,7 +290,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	repoPath := args[0]
 
-	log.Printf("🚀 Deploying to GitHub Pages: %s", repoPath)
+	slog.Info("🚀 Deploying to GitHub Pages", "repo", repoPath)
 
 	// Parse owner/repo
 	owner, repo, err := parseRepoPath(repoPath)
@@ -319,10 +319,10 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 
 	// Create WikiPages from files
 	var pages []*wiki.WikiPage
-	log.Printf("📤 Loading %d wiki pages...", len(wikiFiles))
+	slog.Info("📤 Loading wiki pages", "count", len(wikiFiles))
 	for i, wikiFile := range wikiFiles {
 		if wikiBatch > 0 && i >= wikiBatch {
-			log.Printf("⏸️ Reached batch limit of %d pages", wikiBatch)
+			slog.Info("⏸️ Reached batch limit", "limit", wikiBatch)
 			break
 		}
 
@@ -364,7 +364,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 	}
 	defer func() {
 		if err := publisher.Cleanup(); err != nil {
-			log.Printf("WARN Failed to cleanup publisher: %v", err)
+			slog.Warn("Failed to cleanup publisher", "error", err)
 		}
 	}()
 
@@ -372,12 +372,12 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize publisher: %w", err)
 	}
 
-	log.Printf("📤 Deploying %d pages to GitHub Pages...", len(pages))
+	slog.Info("📤 Deploying pages to GitHub Pages", "count", len(pages))
 	if err := publisher.PublishPages(ctx, pages); err != nil {
 		return fmt.Errorf("failed to deploy pages to GitHub Pages: %w", err)
 	}
 
-	log.Printf("✅ GitHub Pages deployment completed!")
+	slog.Info("✅ GitHub Pages deployment completed")
 	return nil
 }
 
@@ -422,7 +422,7 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 	}
 	defer func() {
 		if err := publisher.Cleanup(); err != nil {
-			log.Printf("WARN Failed to cleanup publisher: %v", err)
+			slog.Warn("Failed to cleanup publisher", "error", err)
 		}
 	}()
 
@@ -436,20 +436,20 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// List pages
-	log.Printf("📋 Listing GitHub Pages for %s/%s", owner, repo)
+	slog.Info("📋 Listing GitHub Pages", "owner", owner, "repo", repo)
 	pages, err := publisher.ListPages(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to list GitHub Pages: %w", err)
 	}
 
 	if len(pages) == 0 {
-		log.Printf("📄 No GitHub Pages found")
+		slog.Info("📄 No GitHub Pages found")
 		return nil
 	}
 
-	log.Printf("📄 Found %d GitHub Pages:", len(pages))
+	slog.Info("📄 Found GitHub Pages", "count", len(pages))
 	for _, page := range pages {
-		log.Printf("  - %s (%s)", page.Title, page.Filename)
+		slog.Info("  - Page", "title", page.Title, "filename", page.Filename)
 	}
 
 	return nil
