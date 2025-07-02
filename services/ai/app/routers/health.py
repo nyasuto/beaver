@@ -6,6 +6,7 @@ Provides system health, status, and capability information.
 
 import logging
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
@@ -17,7 +18,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=HealthResponse)
-async def health_check(settings: Settings = Depends(get_settings)):
+async def health_check(settings: Settings = Depends(get_settings)) -> HealthResponse:
     """
     Health check endpoint
 
@@ -52,7 +53,7 @@ async def health_check(settings: Settings = Depends(get_settings)):
 
 
 @router.get("/ready")
-async def readiness_check(settings: Settings = Depends(get_settings)):
+async def readiness_check(settings: Settings = Depends(get_settings)) -> dict[str, Any]:
     """
     Readiness check endpoint
 
@@ -72,7 +73,7 @@ async def readiness_check(settings: Settings = Depends(get_settings)):
 
 
 @router.get("/live")
-async def liveness_check():
+async def liveness_check() -> dict[str, Any]:
     """
     Liveness check endpoint
 

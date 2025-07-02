@@ -186,16 +186,19 @@ class AccuracyEvaluator:
         )
         evaluation_time = time.time() - evaluation_start_time
 
+        # Enhanced classifier returns non-optional results, but we need Optional for compatibility
+        optional_results: list[Optional[ClassificationResult]] = list(results)
+
         # 精度計算
         metrics = await self._calculate_detailed_metrics(
-            test_issues, expected_categories, results, evaluation_time
+            test_issues, expected_categories, optional_results, evaluation_time
         )
 
         # 評価履歴に追加
         self.evaluation_history.append(metrics)
 
         # 結果レポート生成
-        await self._generate_evaluation_report(metrics, results)
+        await self._generate_evaluation_report(metrics, optional_results)
 
         logger.info(
             "Comprehensive evaluation completed",

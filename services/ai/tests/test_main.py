@@ -18,13 +18,13 @@ from models.classification import ClassificationResult
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
     """Test client for FastAPI app"""
     return TestClient(app)
 
 
 @pytest.fixture
-def mock_classification_service():
+def mock_classification_service() -> Mock:
     """Mock classification service"""
     service = Mock()
     service.health_check = AsyncMock(return_value=True)
@@ -37,7 +37,9 @@ def mock_classification_service():
 class TestHealthEndpoint:
     """Test health check endpoint"""
 
-    def test_health_check_success(self, client, mock_classification_service):
+    def test_health_check_success(
+        self, client: TestClient, mock_classification_service: Mock
+    ) -> None:
         """Test successful health check"""
         with patch("main.classification_service", mock_classification_service):
             response = client.get("/health")
@@ -52,7 +54,9 @@ class TestHealthEndpoint:
             assert data["api_accessible"] is True
             assert data["memory_usage_mb"] == 128.5
 
-    def test_health_check_unhealthy(self, client, mock_classification_service):
+    def test_health_check_unhealthy(
+        self, client: TestClient, mock_classification_service: Mock
+    ) -> None:
         """Test unhealthy service"""
         mock_classification_service.health_check.return_value = False
         mock_classification_service.is_model_loaded.return_value = False
@@ -68,7 +72,7 @@ class TestHealthEndpoint:
 class TestClassifyEndpoint:
     """Test classification endpoint"""
 
-    def test_classify_success(self, client, mock_classification_service):
+    def test_classify_success(self, client: TestClient, mock_classification_service: Mock) -> None:
         """Test successful issue classification"""
         # Mock classification result
         mock_result = ClassificationResult(
@@ -104,19 +108,21 @@ class TestClassifyEndpoint:
             assert data["confidence"] == 0.9
             assert data["reasoning"] == "APIエラーが報告されています"
 
-    def test_classify_invalid_request(self, client):
+    def test_classify_invalid_request(self, client: TestClient) -> None:
         """Test classification with invalid request"""
         response = client.post("/classify", json={"invalid": "data"})
 
         assert response.status_code == 422  # Validation error
 
-    def test_classify_missing_fields(self, client):
+    def test_classify_missing_fields(self, client: TestClient) -> None:
         """Test classification with missing required fields"""
         response = client.post("/classify", json={"issue": {"title": "Missing ID"}})
 
         assert response.status_code == 422
 
-    def test_classify_service_error(self, client, mock_classification_service):
+    def test_classify_service_error(
+        self, client: TestClient, mock_classification_service: Mock
+    ) -> None:
         """Test classification with service error"""
         mock_classification_service.classify_issue = AsyncMock(
             side_effect=Exception("Service unavailable")
@@ -144,7 +150,9 @@ class TestClassifyEndpoint:
 class TestBatchClassifyEndpoint:
     """Test batch classification endpoint"""
 
-    def test_batch_classify_success(self, client, mock_classification_service):
+    def test_batch_classify_success(
+        self, client: TestClient, mock_classification_service: Mock
+    ) -> None:
         """Test successful batch classification"""
         # Mock batch results
         mock_results = [
@@ -201,7 +209,9 @@ class TestBatchClassifyEndpoint:
             assert data["summary"]["successful_classifications"] == 2
             assert data["summary"]["failed_classifications"] == 0
 
-    def test_batch_classify_empty_list(self, client, mock_classification_service):
+    def test_batch_classify_empty_list(
+        self, client: TestClient, mock_classification_service: Mock
+    ) -> None:
         """Test batch classification with empty issue list"""
         mock_classification_service.batch_classify_issues = AsyncMock(return_value=[])
 
@@ -213,7 +223,9 @@ class TestBatchClassifyEndpoint:
             assert data["results"] == []
             assert data["summary"]["total_issues"] == 0
 
-    def test_batch_classify_with_failures(self, client, mock_classification_service):
+    def test_batch_classify_with_failures(
+        self, client: TestClient, mock_classification_service: Mock
+    ) -> None:
         """Test batch classification with some failures"""
         mock_results = [
             ClassificationResult(
@@ -264,7 +276,7 @@ class TestApplicationLifespan:
     """Test application lifespan management"""
 
     @pytest.mark.asyncio
-    async def test_startup_event(self):
+    async def test_startup_event(self) -> None:
         """Test application startup"""
         with patch("main.classification_service") as mock_service:
             mock_service.initialize = AsyncMock()
@@ -277,7 +289,7 @@ class TestApplicationLifespan:
                 mock_service.initialize.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_shutdown_event(self):
+    async def test_shutdown_event(self) -> None:
         """Test application shutdown"""
         with patch("main.classification_service") as mock_service:
             mock_service.initialize = AsyncMock()

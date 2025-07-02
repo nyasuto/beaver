@@ -8,7 +8,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import anthropic
 import httpx
@@ -35,7 +35,7 @@ class APIError:
 class AIClient:
     """Unified AI client supporting OpenAI and Anthropic"""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings) -> None:
         self.settings = settings
         self._openai_client = None
         self._anthropic_client = None
@@ -49,7 +49,7 @@ class AIClient:
             self._anthropic_client = AsyncAnthropic(api_key=settings.anthropic_api_key)
             logger.info("Anthropic client initialized")
 
-    def _get_client(self, provider: AIProvider):
+    def _get_client(self, provider: AIProvider) -> Union[AsyncOpenAI, AsyncAnthropic]:
         """Get the appropriate client for the provider"""
         if provider == AIProvider.OPENAI:
             if not self._openai_client:

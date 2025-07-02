@@ -6,6 +6,7 @@ Provides AI-powered summarization of GitHub Issues and content.
 
 import logging
 import time
+from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
@@ -23,8 +24,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def _validate_ai_provider(provider: AIProvider, settings: Settings) -> None:
+async def _validate_ai_provider(provider: Optional[AIProvider], settings: Settings) -> None:
     """Validate that the requested AI provider is available"""
+    if provider is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="AI provider must be specified",
+        )
     if provider == AIProvider.OPENAI and not settings.has_openai:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -52,9 +58,11 @@ async def _real_summarization(
     ai_client = await _get_ai_client(settings)
 
     try:
+        # Ensure provider is not None (validated above)
+        provider = request.provider or AIProvider.OPENAI
         result = await ai_client.summarize_issue(
             issue=request.issue,
-            provider=request.provider,
+            provider=provider,
             model=request.model,
             max_tokens=request.max_tokens,
             temperature=request.temperature,
@@ -131,7 +139,7 @@ async def _fallback_summarization(
         category=category,
         complexity=complexity,
         processing_time=processing_time,
-        provider_used=request.provider,
+        provider_used=request.provider or AIProvider.OPENAI,
         model_used=request.model or settings.default_openai_model,
         token_usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
     )
@@ -140,7 +148,7 @@ async def _fallback_summarization(
 @router.post("/", response_model=SummarizationResponse)
 async def summarize_issue(
     request: SummarizationRequest, settings: Settings = Depends(get_settings)
-):
+) -> SummarizationResponse:
     """
     Summarize a GitHub issue using AI
 
@@ -186,7 +194,7 @@ async def summarize_issues_batch(
     request: BatchSummarizationRequest,
     background_tasks: BackgroundTasks,
     settings: Settings = Depends(get_settings),
-):
+) -> BatchSummarizationResponse:
     """
     Batch summarization of multiple issues
 

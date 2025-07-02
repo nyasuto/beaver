@@ -13,7 +13,7 @@ from app.core.config import get_settings
 class BeaverFormatter(logging.Formatter):
     """Custom formatter for Beaver AI Services"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Color codes for terminal output

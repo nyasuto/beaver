@@ -120,7 +120,7 @@ class AITroubleshootingResult:
 class TroubleshootingAnalyzer:
     """AI-powered troubleshooting analyzer."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the analyzer with pattern databases."""
         self.error_patterns = self._initialize_error_patterns()
         self.solution_templates = self._initialize_solution_templates()
@@ -342,7 +342,7 @@ class TroubleshootingAnalyzer:
     def _detect_patterns(self, issues: list[IssueData]) -> list[AIDetectedPattern]:
         """Detect error patterns in issues using NLP and pattern matching."""
         patterns = []
-        pattern_counts = defaultdict(int)
+        pattern_counts: defaultdict[str, int] = defaultdict(int)
         pattern_issues = defaultdict(list)
 
         for issue in issues:
@@ -760,7 +760,7 @@ class TroubleshootingAnalyzer:
         return {"avg_hours": 0, "min_hours": 0, "max_hours": 0}
 
 
-def main():
+def main() -> None:
     """Main function for command-line execution."""
     try:
         # Read input from stdin

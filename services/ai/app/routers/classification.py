@@ -7,6 +7,7 @@ Provides AI-powered content classification and categorization.
 import asyncio
 import logging
 import time
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -40,8 +41,13 @@ DEFAULT_CATEGORIES = [
 ]
 
 
-async def _validate_ai_provider(provider: AIProvider, settings: Settings) -> None:
+async def _validate_ai_provider(provider: Optional[AIProvider], settings: Settings) -> None:
     """Validate that the requested AI provider is available"""
+    if provider is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="AI provider must be specified",
+        )
     if provider == AIProvider.OPENAI and not settings.has_openai:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -66,10 +72,11 @@ async def _real_ai_classification(
     # Initialize AI client
     ai_client = AIClient(settings)
 
-    # Convert request to IssueData format
+    # Convert request to IssueData format (for future use)
     from datetime import datetime
 
-    IssueData(
+    # Note: IssueData creation for future AI client integration
+    _issue_data = IssueData(
         id=1,  # Dummy ID for classification
         number=1,  # Dummy number for classification
         title=getattr(
@@ -223,7 +230,7 @@ async def _classify_with_anthropic(
     )
 
     content = response.content[0]
-    if hasattr(content, 'text'):
+    if hasattr(content, "text"):
         return content.text
     else:
         return str(content)
@@ -370,7 +377,7 @@ async def _mock_classification(
         all_categories=dict(sorted_categories),
         tags=tags,
         processing_time=processing_time,
-        provider_used=request.provider,
+        provider_used=request.provider or AIProvider.OPENAI,
         model_used=request.model or settings.default_openai_model,
     )
 
@@ -378,7 +385,7 @@ async def _mock_classification(
 @router.post("/", response_model=ClassificationResponse)
 async def classify_content(
     request: ClassificationRequest, settings: Settings = Depends(get_settings)
-):
+) -> ClassificationResponse:
     """
     Classify content into predefined or custom categories
 
@@ -421,7 +428,7 @@ async def classify_content(
 @router.post("/enhanced", response_model=ClassificationResponse)
 async def classify_content_enhanced(
     request: ClassificationRequest, settings: Settings = Depends(get_settings)
-):
+) -> ClassificationResponse:
     """
     Enhanced AI-powered content classification
 
@@ -463,7 +470,7 @@ async def classify_content_enhanced(
 
 
 @router.get("/categories")
-async def get_available_categories():
+async def get_available_categories() -> dict[str, Any]:
     """
     Get list of available classification categories
 

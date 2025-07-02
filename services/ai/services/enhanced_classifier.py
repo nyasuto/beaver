@@ -17,9 +17,9 @@ import psutil
 import structlog
 from langchain_openai import ChatOpenAI
 
-from ..config import Settings
-from ..models.classification import ClassificationConfig, ClassificationResult, Issue
-from ..models.topic_model import ClassificationMetrics, get_enhanced_topic_model
+from config import Settings
+from models.classification import ClassificationConfig, ClassificationResult, Issue
+from models.topic_model import ClassificationMetrics, get_enhanced_topic_model
 
 logger = structlog.get_logger()
 
@@ -60,10 +60,10 @@ class EnhancedClassificationService:
             self.llm = ChatOpenAI(
                 model=self.settings.openai_model,
                 temperature=model_config["temperature"],
-                max_tokens=model_config["max_tokens"],
-                api_key=self.settings.openai_api_key,
+                api_key=str(self.settings.openai_api_key),
                 timeout=self.settings.request_timeout,
                 model_kwargs={
+                    "max_tokens": model_config["max_tokens"],
                     "top_p": model_config["top_p"],
                     "frequency_penalty": model_config["frequency_penalty"],
                 },
@@ -125,7 +125,7 @@ class EnhancedClassificationService:
             response = await self.llm.ainvoke(messages)
 
             # 拡張レスポンス解析
-            content_str = str(response.content) if hasattr(response, 'content') else str(response)
+            content_str = str(response.content) if hasattr(response, "content") else str(response)
             result = self.topic_model.parse_enhanced_response(content_str, issue.id)
 
             processing_time = int((time.time() - start_time) * 1000)
@@ -211,7 +211,8 @@ class EnhancedClassificationService:
                     )
                     processed_results.append(fallback_result)
                 else:
-                    processed_results.append(result)
+                    # result is ClassificationResult here (not an exception)
+                    processed_results.append(result)  # type: ignore[arg-type]
 
         else:
             # 逐次処理
@@ -222,7 +223,16 @@ class EnhancedClassificationService:
                     processed_results.append(result)
                 except Exception as e:
                     logger.error(f"Failed to classify issue {issue.id}: {e}")
-                    processed_results.append(None)
+                    # Create fallback result for failed classification
+                    fallback_result = ClassificationResult(
+                        issue_id=issue.id,
+                        category="troubleshooting",
+                        confidence=0.0,
+                        reasoning=f"Sequential classification error: {str(e)}",
+                        suggested_tags=["error", "fallback"],
+                        processing_time_ms=0,
+                    )
+                    processed_results.append(fallback_result)
 
         batch_processing_time = int((time.time() - batch_start_time) * 1000)
 

@@ -6,7 +6,9 @@ Provides endpoints for summarization, classification, and other AI-powered featu
 """
 
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager"""
     logger.info("🚀 Beaver AI Services starting up...")
     settings = get_settings()
@@ -66,12 +68,12 @@ def create_app() -> FastAPI:
     app.include_router(classification.router, prefix="/api/v1/classify", tags=["ai"])
 
     @app.get("/", include_in_schema=False)
-    async def root():
+    async def root() -> RedirectResponse:
         """Redirect root to docs"""
         return RedirectResponse(url="/docs")
 
     @app.get("/api", include_in_schema=False)
-    async def api_root():
+    async def api_root() -> dict[str, Any]:
         """API root endpoint"""
         return {
             "message": "🦫 Beaver AI Services API",
@@ -87,7 +89,7 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-def main():
+def main() -> None:
     """Main entry point for running the server"""
     settings = get_settings()
 

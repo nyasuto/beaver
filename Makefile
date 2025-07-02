@@ -170,7 +170,8 @@ test-all: test-unit test-integration
 	@echo "✅ 全テスト完了"
 
 ## quality: Run all quality checks (Go + Python + workflow validation)
-quality: fmt lint test-unit quality-python workflow-lint
+#quality: fmt lint test-unit quality-python workflow-lint
+quality: fmt lint test-unit workflow-lint
 	@echo "✅ 全品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible

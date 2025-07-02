@@ -16,7 +16,7 @@ from services.enhanced_classifier import EnhancedClassificationService
 
 
 @pytest.fixture
-def mock_settings():
+def mock_settings() -> Settings:
     """Mock settings for testing"""
     return Settings(
         openai_api_key="test-key",
@@ -30,7 +30,7 @@ def mock_settings():
 
 
 @pytest.fixture
-def sample_issue():
+def sample_issue() -> Issue:
     """Sample issue for testing"""
     return Issue(
         id=123,
@@ -42,7 +42,7 @@ def sample_issue():
 
 
 @pytest.fixture
-def enhanced_classification_service(mock_settings):
+def enhanced_classification_service(mock_settings: Settings) -> EnhancedClassificationService:
     """Enhanced classification service for testing"""
     service = EnhancedClassificationService(mock_settings)
     return service
@@ -51,7 +51,7 @@ def enhanced_classification_service(mock_settings):
 class TestEnhancedClassificationService:
     """Test Enhanced ClassificationService class"""
 
-    def test_init(self, mock_settings):
+    def test_init(self, mock_settings: Settings) -> None:
         """Test enhanced service initialization"""
         service = EnhancedClassificationService(mock_settings)
 
@@ -63,7 +63,9 @@ class TestEnhancedClassificationService:
         assert len(service.topic_model.few_shot_examples) > 0
 
     @pytest.mark.asyncio
-    async def test_initialize_success(self, enhanced_classification_service):
+    async def test_initialize_success(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test successful enhanced initialization"""
         with patch.object(enhanced_classification_service, "_test_api_connection") as mock_test:
             mock_test.return_value = None
@@ -76,8 +78,8 @@ class TestEnhancedClassificationService:
 
     @pytest.mark.asyncio
     async def test_classify_issue_enhanced_success(
-        self, enhanced_classification_service, sample_issue
-    ):
+        self, enhanced_classification_service: EnhancedClassificationService, sample_issue: Issue
+    ) -> None:
         """Test successful enhanced issue classification"""
         # Mock LLM response with enhanced format
         mock_response = AIMessage(
@@ -111,8 +113,8 @@ class TestEnhancedClassificationService:
 
     @pytest.mark.asyncio
     async def test_classify_issue_enhanced_with_few_shot(
-        self, enhanced_classification_service, sample_issue
-    ):
+        self, enhanced_classification_service: EnhancedClassificationService, sample_issue: Issue
+    ) -> None:
         """Test enhanced classification with few-shot learning"""
         # Mock LLM response
         mock_response = AIMessage(
@@ -141,7 +143,9 @@ class TestEnhancedClassificationService:
         assert len(enhanced_classification_service.classification_history) == 1
 
     @pytest.mark.asyncio
-    async def test_batch_classify_issues_enhanced(self, enhanced_classification_service):
+    async def test_batch_classify_issues_enhanced(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test enhanced batch classification"""
         issues = [
             Issue(id=1, title="Bug report", body="Error occurred", labels=[], repository="test"),
@@ -182,7 +186,9 @@ class TestEnhancedClassificationService:
             assert results[0].issue_id == 1
             assert results[1].issue_id == 2
 
-    def test_update_performance_metrics(self, enhanced_classification_service):
+    def test_update_performance_metrics(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test performance metrics update"""
         enhanced_classification_service._update_performance_metrics(1500, 0.85)
         enhanced_classification_service._update_performance_metrics(2000, 0.90)
@@ -193,7 +199,9 @@ class TestEnhancedClassificationService:
         assert 1500 in metrics["response_times"]
         assert 0.85 in metrics["confidences"]
 
-    def test_get_performance_summary(self, enhanced_classification_service):
+    def test_get_performance_summary(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test performance summary generation"""
         # Add some test data
         enhanced_classification_service._update_performance_metrics(1000, 0.9)
@@ -208,7 +216,9 @@ class TestEnhancedClassificationService:
         assert summary["high_confidence_ratio"] == 2 / 3  # 2 out of 3 >= 0.8
 
     @pytest.mark.asyncio
-    async def test_health_check_enhanced(self, enhanced_classification_service):
+    async def test_health_check_enhanced(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test enhanced health check"""
         enhanced_classification_service._model_loaded = True
         enhanced_classification_service._api_accessible = True
@@ -226,7 +236,9 @@ class TestEnhancedClassificationService:
             assert "performance" in health_status
 
     @pytest.mark.asyncio
-    async def test_evaluate_classification_accuracy(self, enhanced_classification_service):
+    async def test_evaluate_classification_accuracy(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test classification accuracy evaluation"""
         test_issues = [
             Issue(id=1, title="Bug", body="Error", labels=[], repository="test"),
@@ -268,12 +280,18 @@ class TestEnhancedClassificationService:
             assert metrics.average_response_time_ms == 1100.0
 
     @pytest.mark.asyncio
-    async def test_cleanup(self, enhanced_classification_service):
+    async def test_cleanup(
+        self, enhanced_classification_service: EnhancedClassificationService
+    ) -> None:
         """Test enhanced cleanup"""
         enhanced_classification_service.llm = Mock()
         enhanced_classification_service._model_loaded = True
         enhanced_classification_service._api_accessible = True
-        enhanced_classification_service.classification_history.append(("test", "result"))
+        test_issue = Issue(id=999, title="test", body="test", labels=[], repository="test")
+        test_result = ClassificationResult(
+            issue_id=999, category="test", confidence=0.9, reasoning="test", suggested_tags=[]
+        )
+        enhanced_classification_service.classification_history.append((test_issue, test_result))
         enhanced_classification_service.performance_metrics["test"] = "data"
 
         await enhanced_classification_service.cleanup()
@@ -288,7 +306,7 @@ class TestEnhancedClassificationService:
 class TestTopicModelIntegration:
     """Test topic model integration"""
 
-    def test_topic_model_categories(self):
+    def test_topic_model_categories(self) -> None:
         """Test enhanced categories structure"""
         topic_model = get_enhanced_topic_model()
 
@@ -303,7 +321,7 @@ class TestTopicModelIntegration:
             assert "keywords_en" in cat_info
             assert "indicators" in cat_info
 
-    def test_language_detection(self):
+    def test_language_detection(self) -> None:
         """Test language detection functionality"""
         topic_model = get_enhanced_topic_model()
 
@@ -319,7 +337,7 @@ class TestTopicModelIntegration:
         mixed_text = "This is テスト mixed text"
         assert topic_model.detect_language(mixed_text).value == "ja"
 
-    def test_few_shot_examples_creation(self):
+    def test_few_shot_examples_creation(self) -> None:
         """Test few-shot examples creation"""
         topic_model = get_enhanced_topic_model()
         examples = topic_model.create_few_shot_examples()
@@ -334,7 +352,7 @@ class TestTopicModelIntegration:
             assert hasattr(example, "reasoning")
             assert hasattr(example, "language")
 
-    def test_enhanced_prompt_creation(self, sample_issue):
+    def test_enhanced_prompt_creation(self, sample_issue: Issue) -> None:
         """Test enhanced prompt creation"""
         topic_model = get_enhanced_topic_model()
         topic_model.create_few_shot_examples()
@@ -348,7 +366,7 @@ class TestTopicModelIntegration:
         messages_no_fs = topic_model.create_enhanced_prompt(sample_issue, use_few_shot=False)
         assert len(messages_no_fs) == 2  # System + user only
 
-    def test_optimization_recommendations(self):
+    def test_optimization_recommendations(self) -> None:
         """Test optimization recommendations"""
         topic_model = get_enhanced_topic_model()
         recommendations = topic_model.get_optimization_recommendations()
@@ -365,7 +383,7 @@ class TestTopicModelIntegration:
 
 
 @pytest.mark.asyncio
-async def test_enhanced_integration():
+async def test_enhanced_integration() -> None:
     """Integration test for enhanced classification"""
     settings = Settings(openai_api_key="test-key", openai_model="gpt-3.5-turbo")
 

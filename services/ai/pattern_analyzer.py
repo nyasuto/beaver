@@ -195,7 +195,7 @@ def analyze_patterns(input_data: dict[str, Any]) -> dict[str, Any]:
         }
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     try:
         # Read input from stdin
