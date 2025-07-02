@@ -20,6 +20,16 @@ func NewCmdGitClient() (GitClient, error) {
 	return git.NewCmdGitClient()
 }
 
+// NewDefaultGitClient creates a new Git client with default configuration
+func NewDefaultGitClient() (GitClient, error) {
+	return git.NewDefaultGitClient()
+}
+
+// NewDefaultGitClientWithAuth creates a new Git client with authentication using default configuration
+func NewDefaultGitClientWithAuth(token string) (GitClient, error) {
+	return git.NewDefaultGitClientWithAuth(token)
+}
+
 // Helper functions for creating default options
 
 // NewDefaultCommitOptions creates default commit options

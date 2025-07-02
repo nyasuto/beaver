@@ -3,6 +3,9 @@ package git
 import (
 	"context"
 	"time"
+
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5"
 )
 
 // GitClient provides an interface for Git operations
@@ -41,6 +44,11 @@ type GitClient interface {
 	GetContributorCount(ctx context.Context, dir string) (int, error)
 	GetFirstCommitDate(ctx context.Context, dir string) (time.Time, error)
 	GetBranchCount(ctx context.Context, dir string) (int, error)
+
+	// In-Memory Operations (go-git based)
+	CloneInMemory(ctx context.Context, url string, options *CloneOptions) (*git.Repository, billy.Filesystem, error)
+	CreateInMemoryWorkspace() (*git.Repository, billy.Filesystem, error)
+	PushFromMemory(ctx context.Context, repo *git.Repository, options *PushOptions) error
 }
 
 // CloneOptions represents options for git clone operation

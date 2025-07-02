@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nyasuto/beaver/pkg/git"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5"
+	gitpkg "github.com/nyasuto/beaver/pkg/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -108,7 +110,7 @@ func (m *ConflictResolverMockGitClient) RemoveFiles(ctx context.Context, dir str
 }
 
 // Analytics methods
-func (m *ConflictResolverMockGitClient) GetCommitHistory(ctx context.Context, dir string, options *git.CommitHistoryOptions) ([]byte, error) {
+func (m *ConflictResolverMockGitClient) GetCommitHistory(ctx context.Context, dir string, options *gitpkg.CommitHistoryOptions) ([]byte, error) {
 	args := m.Called(ctx, dir, options)
 	return args.Get(0).([]byte), args.Error(1)
 }
@@ -131,6 +133,28 @@ func (m *ConflictResolverMockGitClient) GetFirstCommitDate(ctx context.Context, 
 func (m *ConflictResolverMockGitClient) GetBranchCount(ctx context.Context, dir string) (int, error) {
 	args := m.Called(ctx, dir)
 	return args.Int(0), args.Error(1)
+}
+
+// In-Memory Operations (required by the new interface)
+func (m *ConflictResolverMockGitClient) CloneInMemory(ctx context.Context, url string, options *CloneOptions) (*git.Repository, billy.Filesystem, error) {
+	args := m.Called(ctx, url, options)
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	return args.Get(0).(*git.Repository), args.Get(1).(billy.Filesystem), args.Error(2)
+}
+
+func (m *ConflictResolverMockGitClient) CreateInMemoryWorkspace() (*git.Repository, billy.Filesystem, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	return args.Get(0).(*git.Repository), args.Get(1).(billy.Filesystem), args.Error(2)
+}
+
+func (m *ConflictResolverMockGitClient) PushFromMemory(ctx context.Context, repo *git.Repository, options *PushOptions) error {
+	args := m.Called(ctx, repo, options)
+	return args.Error(0)
 }
 
 func TestConflictResolver_DefaultConfig(t *testing.T) {
