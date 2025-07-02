@@ -3,7 +3,7 @@ package wiki
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,7 +39,7 @@ func NewCmdGitClient() (*CmdGitClient, error) {
 
 // Clone clones a repository to the specified directory
 func (c *CmdGitClient) Clone(ctx context.Context, url, dir string, options *CloneOptions) error {
-	log.Printf("INFO Git clone starting: url=%s, dir=%s", sanitizeURL(url), dir)
+	slog.Info("Git clone starting", "url", sanitizeURL(url), "dir", dir)
 
 	// Build git clone command with options
 	args := []string{"clone"}
@@ -77,17 +77,17 @@ func (c *CmdGitClient) Clone(ctx context.Context, url, dir string, options *Clon
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git clone failed: %v, output: %s", err, string(output))
+		slog.Error("Git clone failed", "error", err, "output", string(output))
 		return c.handleGitError("clone", err, string(output))
 	}
 
-	log.Printf("INFO Git clone completed successfully")
+	slog.Info("Git clone completed successfully")
 	return nil
 }
 
 // Pull pulls the latest changes from the remote repository
 func (c *CmdGitClient) Pull(ctx context.Context, dir string) error {
-	log.Printf("INFO Git pull starting: dir=%s", dir)
+	slog.Info("Git pull starting", "dir", dir)
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
@@ -98,17 +98,17 @@ func (c *CmdGitClient) Pull(ctx context.Context, dir string) error {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git pull failed: %v, output: %s", err, string(output))
+		slog.Error("Git pull failed", "error", err, "output", string(output))
 		return c.handleGitError("pull", err, string(output))
 	}
 
-	log.Printf("INFO Git pull completed successfully")
+	slog.Info("Git pull completed successfully")
 	return nil
 }
 
 // Push pushes changes to the remote repository
 func (c *CmdGitClient) Push(ctx context.Context, dir string, options *PushOptions) error {
-	log.Printf("INFO Git push starting: dir=%s", dir)
+	slog.Info("Git push starting", "dir", dir)
 
 	args := []string{"push"}
 
@@ -139,17 +139,17 @@ func (c *CmdGitClient) Push(ctx context.Context, dir string, options *PushOption
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git push failed: %v, output: %s", err, string(output))
+		slog.Error("Git push failed", "error", err, "output", string(output))
 		return c.handleGitError("push", err, string(output))
 	}
 
-	log.Printf("INFO Git push completed successfully")
+	slog.Info("Git push completed successfully")
 	return nil
 }
 
 // Add adds files to the staging area
 func (c *CmdGitClient) Add(ctx context.Context, dir string, files []string) error {
-	log.Printf("INFO Git add starting: dir=%s, files=%d", dir, len(files))
+	slog.Info("Git add starting", "dir", dir, "files", len(files))
 
 	args := append([]string{"add"}, files...)
 
@@ -161,17 +161,17 @@ func (c *CmdGitClient) Add(ctx context.Context, dir string, files []string) erro
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git add failed: %v, output: %s", err, string(output))
+		slog.Error("Git add failed", "error", err, "output", string(output))
 		return c.handleGitError("add", err, string(output))
 	}
 
-	log.Printf("INFO Git add completed successfully")
+	slog.Info("Git add completed successfully")
 	return nil
 }
 
 // Commit creates a commit with the specified message
 func (c *CmdGitClient) Commit(ctx context.Context, dir string, message string, options *CommitOptions) error {
-	log.Printf("INFO Git commit starting: dir=%s, message length=%d", dir, len(message))
+	slog.Info("Git commit starting", "dir", dir, "message_length", len(message))
 
 	args := []string{"commit", "-m", message}
 
@@ -193,17 +193,17 @@ func (c *CmdGitClient) Commit(ctx context.Context, dir string, message string, o
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git commit failed: %v, output: %s", err, string(output))
+		slog.Error("Git commit failed", "error", err, "output", string(output))
 		return c.handleGitError("commit", err, string(output))
 	}
 
-	log.Printf("INFO Git commit completed successfully")
+	slog.Info("Git commit completed successfully")
 	return nil
 }
 
 // Status returns the current repository status
 func (c *CmdGitClient) Status(ctx context.Context, dir string) (*GitStatus, error) {
-	log.Printf("DEBUG Git status starting: dir=%s", dir)
+	slog.Debug("Git status starting", "dir", dir)
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
@@ -214,7 +214,7 @@ func (c *CmdGitClient) Status(ctx context.Context, dir string) (*GitStatus, erro
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git status failed: %v, output: %s", err, string(output))
+		slog.Error("Git status failed", "error", err, "output", string(output))
 		return nil, c.handleGitError("status", err, string(output))
 	}
 
@@ -256,7 +256,7 @@ func (c *CmdGitClient) Status(ctx context.Context, dir string) (*GitStatus, erro
 		status.Branch = branch
 	}
 
-	log.Printf("DEBUG Git status completed: clean=%v, uncommitted=%v", status.IsClean, status.HasUncommitted)
+	slog.Debug("Git status completed", "clean", status.IsClean, "uncommitted", status.HasUncommitted)
 	return status, nil
 }
 
@@ -310,7 +310,7 @@ func (c *CmdGitClient) GetCurrentBranch(ctx context.Context, dir string) (string
 
 // CheckoutBranch checks out the specified branch
 func (c *CmdGitClient) CheckoutBranch(ctx context.Context, dir string, branch string) error {
-	log.Printf("INFO Git checkout starting: dir=%s, branch=%s", dir, branch)
+	slog.Info("Git checkout starting", "dir", dir, "branch", branch)
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
@@ -320,11 +320,11 @@ func (c *CmdGitClient) CheckoutBranch(ctx context.Context, dir string, branch st
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("ERROR Git checkout failed: %v, output: %s", err, string(output))
+		slog.Error("Git checkout failed", "error", err, "output", string(output))
 		return c.handleGitError("checkout", err, string(output))
 	}
 
-	log.Printf("INFO Git checkout completed successfully")
+	slog.Info("Git checkout completed successfully")
 	return nil
 }
 

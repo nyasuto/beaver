@@ -3,7 +3,7 @@ package wiki
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,7 +91,7 @@ func (tm *TempManager) CreateTempDir(purpose string) (string, error) {
 
 	tm.directories[dirPath] = info
 
-	log.Printf("INFO Created temporary directory: %s (purpose: %s)", dirPath, purpose)
+	slog.Info("Created temporary directory", "path", dirPath, "purpose", purpose)
 	return dirPath, nil
 }
 
@@ -104,7 +104,7 @@ func (tm *TempManager) MarkInUse(dirPath string, inUse bool) {
 		info.InUse = inUse
 		info.LastUsed = time.Now()
 		if !inUse {
-			log.Printf("INFO Temporary directory marked as not in use: %s", dirPath)
+			slog.Info("Temporary directory marked as not in use", "path", dirPath)
 		}
 	}
 }
@@ -121,7 +121,7 @@ func (tm *TempManager) UpdateDirectorySize(dirPath string) error {
 
 	size, err := tm.calculateDirectorySize(dirPath)
 	if err != nil {
-		log.Printf("WARN Failed to calculate directory size for %s: %v", dirPath, err)
+		slog.Warn("Failed to calculate directory size", "path", dirPath, "error", err)
 		return err
 	}
 
@@ -138,25 +138,25 @@ func (tm *TempManager) CleanupDirectory(dirPath string) error {
 
 	info, exists := tm.directories[dirPath]
 	if !exists {
-		log.Printf("WARN Attempted to cleanup untracked directory: %s", dirPath)
+		slog.Warn("Attempted to cleanup untracked directory", "path", dirPath)
 		return nil
 	}
 
 	if info.InUse {
-		log.Printf("WARN Cannot cleanup directory in use: %s", dirPath)
+		slog.Warn("Cannot cleanup directory in use", "path", dirPath)
 		return nil
 	}
 
 	// Remove the directory
 	if err := os.RemoveAll(dirPath); err != nil {
-		log.Printf("ERROR Failed to remove temporary directory %s: %v", dirPath, err)
+		slog.Error("Failed to remove temporary directory", "path", dirPath, "error", err)
 		return err
 	}
 
 	// Remove from tracking
 	delete(tm.directories, dirPath)
 
-	log.Printf("INFO Cleaned up temporary directory: %s (purpose: %s)", dirPath, info.Purpose)
+	slog.Info("Cleaned up temporary directory", "path", dirPath, "purpose", info.Purpose)
 	return nil
 }
 
@@ -170,7 +170,7 @@ func (tm *TempManager) CleanupAll() error {
 
 	for dirPath, info := range tm.directories {
 		if info.InUse {
-			log.Printf("INFO Skipping cleanup of directory in use: %s", dirPath)
+			slog.Info("Skipping cleanup of directory in use", "path", dirPath)
 			continue
 		}
 
@@ -181,10 +181,10 @@ func (tm *TempManager) CleanupAll() error {
 
 		delete(tm.directories, dirPath)
 		cleaned++
-		log.Printf("INFO Cleaned up temporary directory: %s", dirPath)
+		slog.Info("Cleaned up temporary directory", "path", dirPath)
 	}
 
-	log.Printf("INFO Cleanup completed: %d directories removed", cleaned)
+	slog.Info("Cleanup completed", "directories_removed", cleaned)
 
 	if len(errors) > 0 {
 		return fmt.Errorf("cleanup errors: %s", strings.Join(errors, "; "))
@@ -210,7 +210,7 @@ func (tm *TempManager) startBackgroundCleanup() {
 		}
 	}()
 
-	log.Printf("INFO Background temp directory cleanup started (interval: 15 minutes)")
+	slog.Info("Background temp directory cleanup started (interval: 15 minutes)")
 }
 
 // backgroundCleanup performs periodic cleanup of old directories
@@ -242,7 +242,7 @@ func (tm *TempManager) backgroundCleanup() {
 	// Clean up old directories
 	for _, dirPath := range toCleanup {
 		if err := os.RemoveAll(dirPath); err != nil {
-			log.Printf("ERROR Background cleanup failed for %s: %v", dirPath, err)
+			slog.Error("Background cleanup failed", "path", dirPath, "error", err)
 			continue
 		}
 
@@ -252,19 +252,19 @@ func (tm *TempManager) backgroundCleanup() {
 
 	// Check total size limit
 	if totalSize > tm.maxSize {
-		log.Printf("WARN Total temp directory size (%d MB) exceeds limit (%d MB)",
-			totalSize/(1024*1024), tm.maxSize/(1024*1024))
+		slog.Warn("Total temp directory size exceeds limit",
+			"total_mb", totalSize/(1024*1024), "limit_mb", tm.maxSize/(1024*1024))
 
 		// Clean up additional directories starting with oldest
 		tm.cleanupBySize()
 	}
 
 	if cleaned > 0 {
-		log.Printf("INFO Background cleanup: removed %d old temporary directories", cleaned)
+		slog.Info("Background cleanup: removed old temporary directories", "count", cleaned)
 	}
 
-	log.Printf("DEBUG Temp directory stats: %d active, %d MB total size",
-		len(tm.directories), totalSize/(1024*1024))
+	slog.Debug("Temp directory stats",
+		"active_directories", len(tm.directories), "total_size_mb", totalSize/(1024*1024))
 }
 
 // cleanupBySize removes directories to get under size limit
@@ -311,7 +311,7 @@ func (tm *TempManager) cleanupBySize() {
 			if err := os.RemoveAll(dir.path); err == nil {
 				delete(tm.directories, dir.path)
 				currentSize -= dir.size
-				log.Printf("INFO Removed directory for size limit: %s", dir.path)
+				slog.Info("Removed directory for size limit", "path", dir.path)
 			}
 		}
 	}

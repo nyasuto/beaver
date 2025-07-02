@@ -2,7 +2,7 @@ package wiki
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"runtime"
 	"time"
 )
@@ -47,7 +47,7 @@ func (pm *PerformanceMonitor) Start(ctx context.Context) {
 		return
 	}
 
-	log.Printf("INFO Performance monitoring started")
+	slog.Info("Performance monitoring started")
 	pm.stats.StartTime = time.Now()
 
 	// Start background memory monitoring
@@ -84,14 +84,14 @@ func (pm *PerformanceMonitor) checkMemoryUsage() {
 
 	// Check if we should force garbage collection
 	if pm.threshold > 0 && m.Alloc > uint64(pm.threshold) { // #nosec G115 -- pm.threshold is always positive
-		log.Printf("INFO Memory usage (%d MB) exceeds threshold (%d MB), triggering GC",
-			m.Alloc/(1024*1024), pm.threshold/(1024*1024))
+		slog.Info("Memory usage exceeds threshold, triggering GC",
+			"alloc_mb", m.Alloc/(1024*1024), "threshold_mb", pm.threshold/(1024*1024))
 		pm.ForceGC()
 	}
 
 	if pm.enabled {
-		log.Printf("DEBUG Memory stats: Alloc=%d KB, Sys=%d KB, NumGC=%d",
-			m.Alloc/1024, m.Sys/1024, m.NumGC)
+		slog.Debug("Memory stats",
+			"alloc_kb", m.Alloc/1024, "sys_kb", m.Sys/1024, "num_gc", m.NumGC)
 	}
 }
 
@@ -105,7 +105,7 @@ func (pm *PerformanceMonitor) ForceGC() {
 	pm.stats.GCCount++
 
 	duration := time.Since(start)
-	log.Printf("INFO Forced GC completed in %v", duration)
+	slog.Info("Forced GC completed", "duration", duration)
 }
 
 // RecordPageProcessed increments the processed page counter
@@ -145,30 +145,30 @@ func (pm *PerformanceMonitor) LogSummary() {
 	}
 
 	stats := pm.GetStats()
-	log.Printf("INFO Performance Summary:")
-	log.Printf("  Total Duration: %v", stats.ProcessingDuration)
-	log.Printf("  Pages Processed: %d", stats.ProcessedPages)
-	log.Printf("  Peak Memory: %d MB", stats.PeakMemoryUsage/(1024*1024))
-	log.Printf("  Current Memory: %d MB", stats.CurrentMemoryUsage/(1024*1024))
-	log.Printf("  Total Allocations: %d MB", stats.TotalAllocations/(1024*1024))
-	log.Printf("  GC Cycles: %d", stats.GCCount)
-	log.Printf("  Git Operations Time: %v", stats.GitOperationTime)
-	log.Printf("  File Operations Time: %v", stats.FileOperationTime)
+	slog.Info("Performance Summary:")
+	slog.Info("  Total Duration", "duration", stats.ProcessingDuration)
+	slog.Info("  Pages Processed", "count", stats.ProcessedPages)
+	slog.Info("  Peak Memory", "mb", stats.PeakMemoryUsage/(1024*1024))
+	slog.Info("  Current Memory", "mb", stats.CurrentMemoryUsage/(1024*1024))
+	slog.Info("  Total Allocations", "mb", stats.TotalAllocations/(1024*1024))
+	slog.Info("  GC Cycles", "count", stats.GCCount)
+	slog.Info("  Git Operations Time", "duration", stats.GitOperationTime)
+	slog.Info("  File Operations Time", "duration", stats.FileOperationTime)
 
 	if stats.ProcessedPages > 0 {
 		avgTime := stats.ProcessingDuration / time.Duration(stats.ProcessedPages)
-		log.Printf("  Average Time Per Page: %v", avgTime)
+		slog.Info("  Average Time Per Page", "duration", avgTime)
 	}
 }
 
 // SetMemoryThreshold sets the memory threshold for triggering GC
 func (pm *PerformanceMonitor) SetMemoryThreshold(thresholdMB int64) {
 	pm.threshold = thresholdMB * 1024 * 1024
-	log.Printf("INFO Memory threshold set to %d MB", thresholdMB)
+	slog.Info("Memory threshold set", "mb", thresholdMB)
 }
 
 // SetGCInterval sets the garbage collection check interval
 func (pm *PerformanceMonitor) SetGCInterval(interval time.Duration) {
 	pm.gcInterval = interval
-	log.Printf("INFO GC interval set to %v", interval)
+	slog.Info("GC interval set", "interval", interval)
 }
