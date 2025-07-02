@@ -156,7 +156,7 @@ def get_accuracy_evaluator() -> AccuracyEvaluator:
 
 
 @app.get("/health/enhanced", response_model=dict)
-async def enhanced_health_check() -> dict[str, Any]:
+async def enhanced_health_check() -> JSONResponse:
     """拡張ヘルスチェック"""
     try:
         service = get_enhanced_classification_service()
@@ -465,7 +465,7 @@ async def get_enhanced_categories() -> dict[str, Any]:
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
+async def global_exception_handler(request: Any, exc: Exception) -> JSONResponse:
     """Global exception handler"""
     logger.error(f"Unhandled exception in enhanced service: {exc}", exc_info=True)
     return JSONResponse(
