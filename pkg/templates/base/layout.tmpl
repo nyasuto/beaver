@@ -1,0 +1,83 @@
+{{/* Base layout template for all pages */}}
+{{- $context := .Context -}}
+{{- $meta := .Meta -}}
+{{- $content := .Content -}}
+
+{{- if eq $context.Format "html" -}}
+<!DOCTYPE html>
+<html lang="{{default "ja" $context.Language}}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{$meta.Title}}{{if $meta.Title}} - {{end}}{{default "Beaver Knowledge Base" $context.Theme}}</title>
+    <meta name="description" content="{{$meta.Description}}">
+    {{if $meta.Keywords}}<meta name="keywords" content="{{range $meta.Keywords}}{{.}}, {{end}}">{{end}}
+    <meta name="author" content="{{$meta.Author}}">
+    
+    {{/* SEO Meta Tags */}}
+    <meta property="og:title" content="{{$meta.Title}}">
+    <meta property="og:description" content="{{$meta.Description}}">
+    <meta property="og:type" content="{{default "website" $meta.Type}}">
+    <meta property="og:url" content="{{$context.BaseURL}}{{$meta.URL}}">
+    
+    {{/* Favicon */}}
+    <link rel="icon" type="image/svg+xml" href="{{$context.BasePath}}/favicon.svg">
+    <link rel="icon" type="image/png" href="{{$context.BasePath}}/favicon.png">
+    
+    {{/* CSS */}}
+    <link rel="stylesheet" href="{{$context.BasePath}}/assets/css/main.css">
+    
+    {{/* Analytics */}}
+    {{if $context.Analytics}}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{$context.Analytics}}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{$context.Analytics}}');
+    </script>
+    {{end}}
+</head>
+<body>
+    {{template "navigation" .}}
+    
+    <main class="main-content">
+        {{template "content" .}}
+    </main>
+    
+    {{template "footer" .}}
+    
+    {{/* JavaScript */}}
+    <script src="{{$context.BasePath}}/assets/js/main.js"></script>
+    
+    {{/* Service Worker for PWA */}}
+    {{if has $context.Features "pwa"}}
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('{{$context.BasePath}}/sw.js');
+        }
+    </script>
+    {{end}}
+</body>
+</html>
+{{- else if eq $context.Format "markdown" -}}
+---
+title: "{{$meta.Title}}"
+description: "{{$meta.Description}}"
+{{if $meta.Keywords}}keywords: [{{range $meta.Keywords}}"{{.}}", {{end}}]{{end}}
+author: "{{$meta.Author}}"
+created: {{formatDate $meta.Created}}
+modified: {{formatDate $meta.Modified}}
+{{if $meta.Custom}}{{range $key, $value := $meta.Custom}}{{$key}}: "{{$value}}"
+{{end}}{{end}}
+---
+
+# {{$meta.Title}}
+
+{{template "content" .}}
+
+{{template "footer" .}}
+{{- else if eq $context.Format "yaml" -}}
+---
+{{template "content" .}}
+{{- end -}}

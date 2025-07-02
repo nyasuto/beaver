@@ -1,0 +1,43 @@
+{{/* Footer template */}}
+{{- $context := .Context -}}
+{{- $meta := .Meta -}}
+
+{{- if eq $context.Format "html" -}}
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h3>Beaver Knowledge Base</h3>
+            <p>AI駆動型ナレッジベース - GitHub Issues から自動生成</p>
+        </div>
+        
+        <div class="footer-section">
+            <h4>Links</h4>
+            <ul>
+                {{range $context.Navigation}}
+                <li><a href="{{.URL}}">{{.Title}}</a></li>
+                {{end}}
+            </ul>
+        </div>
+        
+        <div class="footer-section">
+            <h4>Information</h4>
+            <ul>
+                <li>Generated: {{formatDateTime now}}</li>
+                {{if $meta.Author}}<li>Author: {{$meta.Author}}</li>{{end}}
+                <li>Format: {{upper $context.Format}}</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; {{now.Year}} Generated with <a href="https://github.com/nyasuto/beaver">Beaver</a></p>
+    </div>
+</footer>
+{{- else if eq $context.Format "markdown" -}}
+
+---
+
+**Generated**: {{formatDateTime now}} | **Author**: {{default "Unknown" $meta.Author}} | **Format**: {{upper $context.Format}}
+
+*Generated with [Beaver](https://github.com/nyasuto/beaver) - AI駆動型ナレッジベース*
+{{- end -}}

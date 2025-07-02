@@ -1,0 +1,142 @@
+{{/* Home content template */}}
+{{- $issues := .Issues -}}
+{{- $context := .Context -}}
+{{- $meta := .Meta -}}
+{{- $stats := .Stats -}}
+
+{{- if eq $context.Format "html" -}}
+<div class="home-container">
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">{{$meta.Title}}</h1>
+            <p class="hero-description">{{$meta.Description}}</p>
+            
+            <div class="hero-actions">
+                <a href="{{$context.BasePath}}/issues.html" class="btn btn-primary">
+                    📋 View Issues
+                </a>
+                <a href="{{$context.BasePath}}/strategy.html" class="btn btn-secondary">
+                    🎯 Strategy
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <section class="overview">
+        <div class="overview-grid">
+            <div class="overview-card">
+                <div class="card-icon">📊</div>
+                <div class="card-content">
+                    <h3>Issues Overview</h3>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <span class="stat-number">{{len $issues}}</span>
+                            <span class="stat-label">Total</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">{{countByState $issues "open"}}</span>
+                            <span class="stat-label">Open</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">{{countByState $issues "closed"}}</span>
+                            <span class="stat-label">Closed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overview-card">
+                <div class="card-icon">🔧</div>
+                <div class="card-content">
+                    <h3>Quick Actions</h3>
+                    <ul class="action-list">
+                        <li><a href="{{$context.BasePath}}/troubleshooting.html">🛠️ Troubleshooting Guide</a></li>
+                        <li><a href="{{$context.BasePath}}/strategy.html">📈 Development Strategy</a></li>
+                        <li><a href="{{$context.BasePath}}/issues.html">📋 Browse All Issues</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="overview-card">
+                <div class="card-icon">⚡</div>
+                <div class="card-content">
+                    <h3>Recent Activity</h3>
+                    <div class="recent-issues">
+                        {{range $issues | slice 0 3}}
+                        <div class="recent-issue">
+                            <a href="{{.HTMLURL}}" target="_blank">
+                                <span class="issue-number">#{{.Number}}</span>
+                                <span class="issue-title">{{truncate .Title 40}}</span>
+                            </a>
+                            <span class="issue-date">{{formatDate .CreatedAt}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="features">
+        <h2>Features</h2>
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon">🤖</div>
+                <h3>AI-Powered Analysis</h3>
+                <p>Automatic pattern recognition and learning path generation</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <h3>Smart Analytics</h3>
+                <p>Comprehensive issue analysis and trend identification</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔄</div>
+                <h3>Real-time Sync</h3>
+                <p>Automatically updated from GitHub Issues</p>
+            </div>
+        </div>
+    </section>
+</div>
+{{- else if eq $context.Format "markdown" -}}
+# {{$meta.Title}}
+
+{{$meta.Description}}
+
+## Overview
+
+Welcome to the AI-driven knowledge base automatically generated from GitHub Issues.
+
+### Statistics
+
+- **Total Issues**: {{len $issues}}
+- **Open Issues**: {{countByState $issues "open"}}
+- **Closed Issues**: {{countByState $issues "closed"}}
+
+### Quick Navigation
+
+- [📋 Browse Issues](issues.md)
+- [🎯 Development Strategy](strategy.md)
+- [🛠️ Troubleshooting Guide](troubleshooting.md)
+
+## Recent Activity
+
+{{range $issues | slice 0 5}}
+- [#{{.Number}} {{.Title}}]({{.HTMLURL}}) - {{formatDate .CreatedAt}}
+{{end}}
+
+## Features
+
+### 🤖 AI-Powered Analysis
+Automatic pattern recognition and learning path generation from your development workflow.
+
+### 📊 Smart Analytics
+Comprehensive issue analysis and trend identification to improve your development process.
+
+### 🔄 Real-time Sync
+Automatically updated from GitHub Issues to keep your knowledge base current.
+
+---
+
+*This knowledge base is automatically generated and updated from GitHub Issues using Beaver.*
+{{- end -}}
