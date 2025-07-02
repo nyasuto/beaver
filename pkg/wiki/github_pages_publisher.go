@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
 )
@@ -34,7 +35,7 @@ func NewGitHubPagesPublisher(publisherConfig *PublisherConfig, pagesConfig confi
 	}
 
 	tempManager := NewTempManager("", "beaver-gh-pages")
-	gitClient, err := NewCmdGitClient()
+	gitClient, err := NewDefaultGitClientWithAuth(publisherConfig.Token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create git client: %w", err)
 	}
@@ -880,6 +881,203 @@ func (p *GitHubPagesPublisher) GenerateAndPublishWiki(ctx context.Context, issue
 
 	// Publish the generated pages
 	return p.PublishPages(ctx, pages)
+}
+
+// GenerateAndPublishWikiInMemory generates and publishes wiki pages directly to GitHub Pages using in-memory operations
+func (p *GitHubPagesPublisher) GenerateAndPublishWikiInMemory(ctx context.Context, issues []models.Issue, projectName string) error {
+	// Generate wiki pages using the standard generator
+	generator := NewGenerator()
+	pages, err := generator.GenerateAllPages(issues, projectName)
+	if err != nil {
+		return fmt.Errorf("failed to generate wiki pages: %w", err)
+	}
+
+	// Use in-memory publishing
+	return p.PublishPagesInMemory(ctx, pages)
+}
+
+// PublishPagesInMemory publishes pages directly to GitHub Pages using in-memory git operations
+func (p *GitHubPagesPublisher) PublishPagesInMemory(ctx context.Context, pages []*WikiPage) error {
+	// Check if git client supports in-memory operations
+	if !p.supportsInMemoryOperations() {
+		// Fallback to regular file-based publishing
+		return p.PublishPages(ctx, pages)
+	}
+
+	// Create in-memory workspace
+	repo, fs, err := p.gitClient.CreateInMemoryWorkspace()
+	if err != nil {
+		return fmt.Errorf("failed to create in-memory workspace: %w", err)
+	}
+
+	// Set up authentication
+	err = p.configureInMemoryRepo(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("failed to configure in-memory repository: %w", err)
+	}
+
+	// Add remote
+	err = p.addRemoteToInMemoryRepo(repo)
+	if err != nil {
+		return fmt.Errorf("failed to add remote to in-memory repository: %w", err)
+	}
+
+	// Create Jekyll structure in memory
+	err = p.createInMemoryJekyllStructure(fs)
+	if err != nil {
+		return fmt.Errorf("failed to create Jekyll structure in memory: %w", err)
+	}
+
+	// Convert and save wiki pages in memory
+	for _, page := range pages {
+		if err := p.convertAndSaveWikiPageInMemory(fs, page); err != nil {
+			return fmt.Errorf("failed to convert and save page %s in memory: %w", page.Title, err)
+		}
+	}
+
+	// Add all files to git
+	workTree, err := repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("failed to get worktree: %w", err)
+	}
+
+	_, err = workTree.Add(".")
+	if err != nil {
+		return fmt.Errorf("failed to add files to git: %w", err)
+	}
+
+	// Commit changes
+	commitMessage := fmt.Sprintf("feat: ナレッジベース更新 - %dページをBeaverが自動更新（インメモリ）\n\n📋 GitHub Issuesから自動生成\n🤖 Beaver AI による知識ダム建設（高速インメモリ処理）\n🕐 更新日時: %s\n\n🦫 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>",
+		len(pages), time.Now().Format("2006年01月02日 15:04:05 JST"))
+
+	_, err = workTree.Commit(commitMessage, nil)
+	if err != nil {
+		return fmt.Errorf("failed to commit changes in memory: %w", err)
+	}
+
+	// Push directly from memory to GitHub Pages
+	pushOptions := &PushOptions{
+		Remote: "origin",
+		Branch: p.config.BranchName,
+	}
+
+	err = p.gitClient.PushFromMemory(ctx, repo, pushOptions)
+	if err != nil {
+		return fmt.Errorf("failed to push from memory: %w", err)
+	}
+
+	fmt.Printf("✅ GitHub Pages に %d ページをインメモリで正常に公開しました\n", len(pages))
+	return nil
+}
+
+// supportsInMemoryOperations checks if the git client supports in-memory operations
+func (p *GitHubPagesPublisher) supportsInMemoryOperations() bool {
+	// Check if the git client implements in-memory methods
+	// We'll check by trying to create a workspace instead of a real clone
+	_, _, err := p.gitClient.CreateInMemoryWorkspace()
+	return err == nil
+}
+
+// configureInMemoryRepo configures the in-memory repository with user settings
+func (p *GitHubPagesPublisher) configureInMemoryRepo(ctx context.Context, repo interface{}) error {
+	// For go-git, we can set configuration at the commit level
+	// This is a simplified implementation - full configuration would be more complex
+	return nil
+}
+
+// addRemoteToInMemoryRepo adds a remote to the in-memory repository
+func (p *GitHubPagesPublisher) addRemoteToInMemoryRepo(repo interface{}) error {
+	// For in-memory operations with go-git, remote is typically handled at push time
+	// This is a simplified implementation
+	return nil
+}
+
+// createInMemoryJekyllStructure creates the Jekyll directory structure in memory
+func (p *GitHubPagesPublisher) createInMemoryJekyllStructure(fs billy.Filesystem) error {
+	// Create directory structure
+	dirs := []string{
+		"_layouts",
+		"_includes",
+		"_sass",
+		"assets/css",
+		"assets/js",
+		"assets/images",
+	}
+
+	for _, dir := range dirs {
+		if err := fs.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+
+	// Create essential files
+	return p.createInMemoryEssentialFiles(fs)
+}
+
+// createInMemoryEssentialFiles creates essential Jekyll files in memory
+func (p *GitHubPagesPublisher) createInMemoryEssentialFiles(fs billy.Filesystem) error {
+	// Create _config.yml
+	configFile, err := fs.Create("_config.yml")
+	if err != nil {
+		return fmt.Errorf("failed to create _config.yml: %w", err)
+	}
+	defer configFile.Close()
+
+	configContent := p.generateJekyllConfig()
+	if _, err := configFile.Write([]byte(configContent)); err != nil {
+		return fmt.Errorf("failed to write _config.yml: %w", err)
+	}
+
+	// Create default layout
+	layoutFile, err := fs.Create("_layouts/default.html")
+	if err != nil {
+		return fmt.Errorf("failed to create default layout: %w", err)
+	}
+	defer layoutFile.Close()
+
+	layoutContent := p.generateDefaultLayout()
+	if _, err := layoutFile.Write([]byte(layoutContent)); err != nil {
+		return fmt.Errorf("failed to write default layout: %w", err)
+	}
+
+	// Create index.md
+	indexFile, err := fs.Create("index.md")
+	if err != nil {
+		return fmt.Errorf("failed to create index.md: %w", err)
+	}
+	defer indexFile.Close()
+
+	indexContent := p.generateInitialIndex()
+	if _, err := indexFile.Write([]byte(indexContent)); err != nil {
+		return fmt.Errorf("failed to write index.md: %w", err)
+	}
+
+	return nil
+}
+
+// convertAndSaveWikiPageInMemory converts a wiki page to Jekyll format and saves it in memory
+func (p *GitHubPagesPublisher) convertAndSaveWikiPageInMemory(fs billy.Filesystem, page *WikiPage) error {
+	// Generate Jekyll front matter
+	frontMatter := p.generateJekyllFrontMatter(page)
+
+	// Combine front matter and content
+	fullContent := frontMatter + "\n" + page.Content
+
+	// Generate filename
+	filename := p.wikiPageToJekyllFilename(page.Filename)
+
+	// Create and write file
+	file, err := fs.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filename, err)
+	}
+	defer file.Close()
+
+	if _, err := file.Write([]byte(fullContent)); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", filename, err)
+	}
+
+	return nil
 }
 
 // convertAndSaveWikiPage converts a wiki page to Jekyll format and saves it

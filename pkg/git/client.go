@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5"
 	"github.com/nyasuto/beaver/internal/errors"
 )
 
@@ -663,4 +665,17 @@ func IsGitRepository(dir string) bool {
 		return true
 	}
 	return false
+}
+
+// In-Memory Operations - Not supported by CmdGitClient
+func (c *CmdGitClient) CloneInMemory(ctx context.Context, url string, options *CloneOptions) (*git.Repository, billy.Filesystem, error) {
+	return nil, nil, fmt.Errorf("in-memory operations not supported by command-line Git client")
+}
+
+func (c *CmdGitClient) CreateInMemoryWorkspace() (*git.Repository, billy.Filesystem, error) {
+	return nil, nil, fmt.Errorf("in-memory operations not supported by command-line Git client")
+}
+
+func (c *CmdGitClient) PushFromMemory(ctx context.Context, repo *git.Repository, options *PushOptions) error {
+	return fmt.Errorf("in-memory operations not supported by command-line Git client")
 }

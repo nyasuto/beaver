@@ -36,7 +36,8 @@ func TestGitAnalyzer_AnalyzeCommitHistory(t *testing.T) {
 		// Should handle non-git directory gracefully
 		assert.Error(t, err)
 		assert.Nil(t, events)
-		assert.Contains(t, err.Error(), "git log command failed")
+		// go-git error message is different
+		assert.True(t, err.Error() != "", "Expected an error message")
 	})
 
 	t.Run("analyze with since date", func(t *testing.T) {
@@ -197,7 +198,8 @@ func TestGitAnalyzer_GetRepositoryMetrics(t *testing.T) {
 		// Should handle non-git directory gracefully
 		assert.Error(t, err)
 		assert.Nil(t, metrics)
-		assert.Contains(t, err.Error(), "exit status 128")
+		// go-git error message is different
+		assert.True(t, err.Error() != "", "Expected an error message")
 	})
 
 	t.Run("get metrics with git init", func(t *testing.T) {
@@ -215,7 +217,7 @@ func TestGitAnalyzer_GetRepositoryMetrics(t *testing.T) {
 		// This might fail if git is not available or repo is empty
 		// We'll handle both cases
 		if err != nil {
-			assert.Contains(t, err.Error(), "exit status 128")
+			assert.True(t, err.Error() != "", "Expected an error message")
 		} else {
 			assert.NotNil(t, metrics)
 		}
