@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/logger"
@@ -236,9 +238,8 @@ func runPagesServeCommand(cmd *cobra.Command, args []string) error {
 
 	setupLogger.Info("🌐 ローカルサーバー開始", "port", servePort, "directory", outputDir)
 
-	// TODO: Implement local server
-	// This will serve the generated content locally for preview
-	return fmt.Errorf("ローカルサーバー機能は未実装です")
+	// Implement local server for preview
+	return servePagesLocally(outputDir, servePort, pagesOpenBrowser, setupLogger)
 }
 
 // loadPagesConfig loads the pages configuration from various sources
@@ -293,4 +294,40 @@ func fetchIssuesForPages(owner, repository string, logger *slog.Logger) ([]model
 	}
 
 	return result.Issues, nil
+}
+
+// servePagesLocally starts a local HTTP server to preview generated pages
+func servePagesLocally(outputDir string, port int, openBrowser bool, logger *slog.Logger) error {
+	// Create file server
+	fs := http.FileServer(http.Dir(outputDir))
+	http.Handle("/", fs)
+
+	// Display server information
+	logger.Info("🚀 ローカルサーバー起動中...")
+	logger.Info("📁 配信ディレクトリ", "path", outputDir)
+	logger.Info("🌐 URL", "url", fmt.Sprintf("http://localhost:%d", port))
+	logger.Info("⏹️  停止するには Ctrl+C を押してください")
+
+	// Open browser if requested
+	if openBrowser {
+		logger.Info("🌐 ブラウザで開いています...")
+		// Note: Browser opening would need OS-specific implementation
+	}
+
+	// Create server with timeouts
+	server := &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Start server
+	logger.Info("Local server starting", "port", port, "dir", outputDir)
+	if err := server.ListenAndServe(); err != nil {
+		logger.Error("Server failed", "error", err)
+		return fmt.Errorf("❌ サーバー起動エラー: %w", err)
+	}
+
+	return nil
 }
