@@ -245,6 +245,7 @@ func GetDefaultTemplateContent(templateName string) (string, bool) {
 		"quick-reference":      "External template file: pkg/wiki/templates/quick-reference.md.tmpl",
 		"processing-logs":      "External template file: pkg/wiki/templates/processing-logs.md.tmpl",
 		"development-strategy": "External template file: pkg/wiki/templates/development-strategy.md.tmpl",
+		"_sidebar":             "External template file: pkg/wiki/templates/_sidebar.md.tmpl",
 	}
 
 	content, exists := externalTemplates[templateName]
