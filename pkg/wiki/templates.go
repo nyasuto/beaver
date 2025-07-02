@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"path/filepath"
+	"reflect"
 	"text/template"
 )
 
@@ -46,6 +47,28 @@ func (tm *TemplateManager) LoadTemplate(name, content string) error {
 		},
 		"sub": func(a, b int) int {
 			return a - b
+		},
+		// Additional functions for Issue #367 template enhancements
+		"gt": func(a, b any) bool {
+			return compareValues(a, b) > 0
+		},
+		"lt": func(a, b any) bool {
+			return compareValues(a, b) < 0
+		},
+		"eq": func(a, b string) bool {
+			return a == b
+		},
+		"float64": func(v any) float64 {
+			switch val := v.(type) {
+			case int:
+				return float64(val)
+			case float64:
+				return val
+			case float32:
+				return float64(val)
+			default:
+				return 0.0
+			}
 		},
 	}
 
@@ -228,6 +251,45 @@ func (tm *TemplateManager) ListTemplates() []string {
 	}
 	slog.Debug("Listed available templates", "count", len(names), "templates", names)
 	return names
+}
+
+// compareValues compares two values that can be int or float64
+func compareValues(a, b any) int {
+	aVal := convertToFloat64(a)
+	bVal := convertToFloat64(b)
+
+	if aVal > bVal {
+		return 1
+	} else if aVal < bVal {
+		return -1
+	}
+	return 0
+}
+
+// convertToFloat64 converts various numeric types to float64
+func convertToFloat64(v any) float64 {
+	switch val := v.(type) {
+	case int:
+		return float64(val)
+	case int32:
+		return float64(val)
+	case int64:
+		return float64(val)
+	case float32:
+		return float64(val)
+	case float64:
+		return val
+	default:
+		// If we can't convert, try using reflection
+		rv := reflect.ValueOf(v)
+		if rv.Kind() == reflect.Int || rv.Kind() == reflect.Int8 || rv.Kind() == reflect.Int16 || rv.Kind() == reflect.Int32 || rv.Kind() == reflect.Int64 {
+			return float64(rv.Int())
+		}
+		if rv.Kind() == reflect.Float32 || rv.Kind() == reflect.Float64 {
+			return rv.Float()
+		}
+		return 0.0
+	}
 }
 
 // GetDefaultTemplateContent returns the content of a default template
