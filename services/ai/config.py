@@ -14,28 +14,31 @@ class Settings(BaseSettings):
     # Server Configuration
     host: str = Field(default="0.0.0.0", description="AI service host")
     port: int = Field(default=8000, description="AI service port")
-    debug: bool = Field(default=False, env="AI_SERVICE_DEBUG")
+    debug: bool = False
 
     # OpenAI Configuration
-    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
-    openai_model: str = Field(default="gpt-3.5-turbo", env="OPENAI_MODEL")
-    openai_temperature: float = Field(default=0.1, env="OPENAI_TEMPERATURE")
-    openai_max_tokens: int = Field(default=500, env="OPENAI_MAX_TOKENS")
+    openai_api_key: Optional[str] = None
+    openai_model: str = "gpt-3.5-turbo"
+    openai_temperature: float = 0.1
+    openai_max_tokens: int = 500
 
     # Classification Configuration
-    confidence_threshold: float = Field(default=0.7, env="CONFIDENCE_THRESHOLD")
-    max_retries: int = Field(default=3, env="MAX_RETRIES")
-    request_timeout: int = Field(default=30, env="REQUEST_TIMEOUT")
+    confidence_threshold: float = 0.7
+    max_retries: int = 3
+    request_timeout: int = 30
 
     # Categories Configuration
-    categories: Union[list[str], str] = Field(
-        default=["bug-fix", "feature-request", "architecture", "learning", "troubleshooting"],
-        env="CATEGORIES",
-    )
+    categories: Union[list[str], str] = [
+        "bug-fix",
+        "feature-request",
+        "architecture",
+        "learning",
+        "troubleshooting",
+    ]
 
     @field_validator("categories")
     @classmethod
-    def parse_categories(cls, v) -> list[str]:
+    def parse_categories(cls, v: Union[str, list[str]]) -> list[str]:
         """Parse categories from string or list"""
         if isinstance(v, str):
             # Handle comma-separated string
@@ -43,10 +46,10 @@ class Settings(BaseSettings):
         return v
 
     # API Security
-    api_key: Optional[str] = Field(default=None, env="AI_SERVICE_API_KEY")
+    api_key: Optional[str] = None
 
     # Logging
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    log_level: str = "INFO"
 
     model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
 

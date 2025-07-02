@@ -17,9 +17,9 @@ import psutil
 import structlog
 from langchain_openai import ChatOpenAI
 
-from config import Settings
-from models.classification import ClassificationConfig, ClassificationResult, Issue
-from models.topic_model import ClassificationMetrics, get_enhanced_topic_model
+from ..config import Settings
+from ..models.classification import ClassificationConfig, ClassificationResult, Issue
+from ..models.topic_model import ClassificationMetrics, get_enhanced_topic_model
 
 logger = structlog.get_logger()
 
@@ -61,8 +61,8 @@ class EnhancedClassificationService:
                 model=self.settings.openai_model,
                 temperature=model_config["temperature"],
                 max_tokens=model_config["max_tokens"],
-                openai_api_key=self.settings.openai_api_key,
-                request_timeout=self.settings.request_timeout,
+                api_key=self.settings.openai_api_key,
+                timeout=self.settings.request_timeout,
                 model_kwargs={
                     "top_p": model_config["top_p"],
                     "frequency_penalty": model_config["frequency_penalty"],
