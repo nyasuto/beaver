@@ -70,7 +70,7 @@ wiki/
 _site/
 
 # Generated site output
-site/
+/site/
 
 # Generated Beaver documentation files (not source)
 beaver-*.md
