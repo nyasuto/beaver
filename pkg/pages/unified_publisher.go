@@ -98,7 +98,7 @@ func NewUnifiedPagesPublisher(config *UnifiedPagesConfig) (*UnifiedPagesPublishe
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	gitClient, err := wiki.NewCmdGitClient()
+	gitClient, err := wiki.NewDefaultGitClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create git client: %w", err)
 	}
