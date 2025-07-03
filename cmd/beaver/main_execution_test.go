@@ -41,7 +41,7 @@ func TestMainFunction(t *testing.T) {
 		captured := string(capturedBytes)
 
 		// Verify default output - Custom Run function is executed
-		assert.Contains(t, captured, "🦫 Beaver - AIエージェント知識ダム構築ツール")
+		assert.Contains(t, captured, "🦫 Beaver - AI知識ダム")
 		assert.Contains(t, captured, "使用方法: beaver [command]")
 	})
 

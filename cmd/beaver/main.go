@@ -25,7 +25,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:     "beaver",
-	Short:   "🦫 Beaver - AIエージェント知識ダム構築ツール",
+	Short:   "🦫 Beaver - AI知識ダム",
 	Version: version,
 	Long: `Beaver は AI エージェント開発の軌跡を自動的に整理された永続的な知識に変換します。
 	
@@ -35,7 +35,7 @@ var rootCmd = &cobra.Command{
 }
 
 func runRootCommand(cmd *cobra.Command, args []string) {
-	fmt.Println("🦫 Beaver - AIエージェント知識ダム構築ツール")
+	fmt.Println("🦫 Beaver - AI知識ダム")
 	fmt.Println("使用方法: beaver [command]")
 	fmt.Println("詳細なヘルプ: beaver --help")
 }
