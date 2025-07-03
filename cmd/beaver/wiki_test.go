@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/nyasuto/beaver/internal/models"
-	"github.com/nyasuto/beaver/pkg/wiki"
+	"github.com/nyasuto/beaver/pkg/content"
 )
 
 // 完全なモック戦略によるAPI呼び出し回避
@@ -78,13 +78,13 @@ func TestWikiCompletelyMocked(t *testing.T) {
 
 		tests := []struct {
 			name        string
-			page        *wiki.WikiPage
+			page        *content.WikiPage
 			outputDir   string
 			expectError bool
 		}{
 			{
 				name: "normal save",
-				page: &wiki.WikiPage{
+				page: &content.WikiPage{
 					Title:    "Normal",
 					Filename: "Normal.md",
 					Content:  "# Normal Page\n\nContent",
@@ -94,7 +94,7 @@ func TestWikiCompletelyMocked(t *testing.T) {
 			},
 			{
 				name: "empty content",
-				page: &wiki.WikiPage{
+				page: &content.WikiPage{
 					Title:    "Empty",
 					Filename: "Empty.md",
 					Content:  "",
@@ -104,7 +104,7 @@ func TestWikiCompletelyMocked(t *testing.T) {
 			},
 			{
 				name: "large content",
-				page: &wiki.WikiPage{
+				page: &content.WikiPage{
 					Title:    "Large",
 					Filename: "Large.md",
 					Content:  generateLargeTestContent(10000),
@@ -114,7 +114,7 @@ func TestWikiCompletelyMocked(t *testing.T) {
 			},
 			{
 				name: "special characters",
-				page: &wiki.WikiPage{
+				page: &content.WikiPage{
 					Title:    "Special テスト",
 					Filename: "Special-Test.md",
 					Content:  "# テスト\n\n特殊文字コンテンツ",
@@ -124,7 +124,7 @@ func TestWikiCompletelyMocked(t *testing.T) {
 			},
 			{
 				name: "empty filename",
-				page: &wiki.WikiPage{
+				page: &content.WikiPage{
 					Title:    "No File",
 					Filename: "",
 					Content:  "Content",
@@ -134,7 +134,7 @@ func TestWikiCompletelyMocked(t *testing.T) {
 			},
 			{
 				name: "invalid directory",
-				page: &wiki.WikiPage{
+				page: &content.WikiPage{
 					Title:    "Invalid",
 					Filename: "Invalid.md",
 					Content:  "Content",
@@ -166,7 +166,7 @@ func TestWikiCompletelyMocked(t *testing.T) {
 	})
 
 	t.Run("wiki generator direct testing", func(t *testing.T) {
-		generator := wiki.NewGenerator()
+		generator := content.NewGenerator()
 		projectName := "test/repo"
 
 		// Test with comprehensive issue data
@@ -420,55 +420,55 @@ func generateLargeTestContent(size int) string {
 // MockWikiGenerator provides testable wiki generation
 type MockWikiGenerator struct {
 	generateErr      error
-	generatedPages   []*wiki.WikiPage
+	generatedPages   []*content.WikiPage
 	indexCallCount   int
 	summaryCallCount int
 	guideCallCount   int
 	pathCallCount    int
 }
 
-func (m *MockWikiGenerator) GenerateIndex(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+func (m *MockWikiGenerator) GenerateIndex(issues []models.Issue, projectName string) (*content.WikiPage, error) {
 	m.indexCallCount++
 	if m.generateErr != nil {
 		return nil, m.generateErr
 	}
-	return &wiki.WikiPage{
+	return &content.WikiPage{
 		Title:    "Home",
 		Filename: "Home.md",
 		Content:  fmt.Sprintf("# %s Wiki\n\nGenerated from %d issues", projectName, len(issues)),
 	}, nil
 }
 
-func (m *MockWikiGenerator) GenerateIssuesSummary(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+func (m *MockWikiGenerator) GenerateIssuesSummary(issues []models.Issue, projectName string) (*content.WikiPage, error) {
 	m.summaryCallCount++
 	if m.generateErr != nil {
 		return nil, m.generateErr
 	}
-	return &wiki.WikiPage{
+	return &content.WikiPage{
 		Title:    "Issues Summary",
 		Filename: "Issues-Summary.md",
 		Content:  "# Issues Summary\n\nSummary content",
 	}, nil
 }
 
-func (m *MockWikiGenerator) GenerateTroubleshootingGuide(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+func (m *MockWikiGenerator) GenerateTroubleshootingGuide(issues []models.Issue, projectName string) (*content.WikiPage, error) {
 	m.guideCallCount++
 	if m.generateErr != nil {
 		return nil, m.generateErr
 	}
-	return &wiki.WikiPage{
+	return &content.WikiPage{
 		Title:    "Troubleshooting Guide",
 		Filename: "Troubleshooting-Guide.md",
 		Content:  "# Troubleshooting Guide\n\nTroubleshooting content",
 	}, nil
 }
 
-func (m *MockWikiGenerator) GenerateLearningPath(issues []models.Issue, projectName string) (*wiki.WikiPage, error) {
+func (m *MockWikiGenerator) GenerateLearningPath(issues []models.Issue, projectName string) (*content.WikiPage, error) {
 	m.pathCallCount++
 	if m.generateErr != nil {
 		return nil, m.generateErr
 	}
-	return &wiki.WikiPage{
+	return &content.WikiPage{
 		Title:    "Learning Path",
 		Filename: "Learning-Path.md",
 		Content:  "# Learning Path\n\nLearning content",
@@ -481,7 +481,7 @@ type MockWikiPublisher struct {
 	cloneErr      error
 	publishErr    error
 	listErr       error
-	pages         []*wiki.WikiPageInfo
+	pages         []*content.WikiPageInfo
 	initCalled    bool
 	cloneCalled   bool
 	publishCalled bool
@@ -499,12 +499,12 @@ func (m *MockWikiPublisher) Clone(ctx context.Context) error {
 	return m.cloneErr
 }
 
-func (m *MockWikiPublisher) PublishPages(ctx context.Context, pages []*wiki.WikiPage) error {
+func (m *MockWikiPublisher) PublishPages(ctx context.Context, pages []*content.WikiPage) error {
 	m.publishCalled = true
 	return m.publishErr
 }
 
-func (m *MockWikiPublisher) ListPages(ctx context.Context) ([]*wiki.WikiPageInfo, error) {
+func (m *MockWikiPublisher) ListPages(ctx context.Context) ([]*content.WikiPageInfo, error) {
 	m.listCalled = true
 	if m.listErr != nil {
 		return nil, m.listErr
@@ -542,7 +542,7 @@ func TestRunGenerateWiki_FullWorkflow(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Test wiki page generation using actual generator
-		generator := wiki.NewGenerator()
+		generator := content.NewGenerator()
 		projectName := fmt.Sprintf("%s/%s", owner, repo)
 		testIssues := []models.Issue{
 			{
@@ -575,7 +575,7 @@ func TestRunGenerateWiki_FullWorkflow(t *testing.T) {
 		assert.Contains(t, learningPage.Title, "Learning Path")
 
 		// Test page saving
-		pages := []*wiki.WikiPage{indexPage, summaryPage, troubleshootingPage, learningPage}
+		pages := []*content.WikiPage{indexPage, summaryPage, troubleshootingPage, learningPage}
 		for _, page := range pages {
 			err = saveWikiPage(page, wikiOutput)
 			assert.NoError(t, err)
@@ -607,7 +607,7 @@ func TestRunGenerateWiki_FullWorkflow(t *testing.T) {
 		// Mock publisher workflow
 		mockPublisher := &MockWikiPublisher{}
 		ctx := context.Background()
-		testPages := []*wiki.WikiPage{
+		testPages := []*content.WikiPage{
 			{
 				Title:    "Test Page",
 				Filename: "Test-Page.md",
@@ -666,17 +666,17 @@ func TestRunPublishWiki_FullWorkflow(t *testing.T) {
 		assert.Equal(t, 3, len(wikiFiles))
 
 		// Test WikiPage creation from files
-		var pages []*wiki.WikiPage
+		var pages []*content.WikiPage
 		for _, wikiFile := range wikiFiles {
-			content, err := os.ReadFile(wikiFile)
+			fileContent, err := os.ReadFile(wikiFile)
 			assert.NoError(t, err)
 
 			filename := filepath.Base(wikiFile)
 			title := filename[:len(filename)-3] // Remove .md
 
-			page := &wiki.WikiPage{
+			page := &content.WikiPage{
 				Title:    title,
-				Content:  string(content),
+				Content:  string(fileContent),
 				Filename: filename,
 			}
 			pages = append(pages, page)
@@ -748,7 +748,7 @@ func TestRunListWiki_FullWorkflow(t *testing.T) {
 		assert.Equal(t, "repo", repo)
 
 		// Mock wiki pages
-		mockPages := []*wiki.WikiPageInfo{
+		mockPages := []*content.WikiPageInfo{
 			{
 				Title:        "Home",
 				Filename:     "Home.md",
@@ -797,7 +797,7 @@ func TestRunListWiki_FullWorkflow(t *testing.T) {
 
 		// Mock empty wiki
 		mockPublisher := &MockWikiPublisher{
-			pages: []*wiki.WikiPageInfo{}, // Empty pages
+			pages: []*content.WikiPageInfo{}, // Empty pages
 		}
 		ctx := context.Background()
 

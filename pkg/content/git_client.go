@@ -1,4 +1,4 @@
-package wiki
+package content
 
 import (
 	"github.com/nyasuto/beaver/pkg/git"

@@ -11,8 +11,8 @@ import (
 	"github.com/nyasuto/beaver/internal/logger"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/actions"
+	"github.com/nyasuto/beaver/pkg/content"
 	"github.com/nyasuto/beaver/pkg/github"
-	"github.com/nyasuto/beaver/pkg/wiki"
 	"github.com/spf13/cobra"
 )
 
@@ -70,7 +70,7 @@ var (
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "最新Issuesをwikiに処理",
+	Short: "最新Issuesをコンテンツ生成処理",
 	Long: `GitHub Issues を取得し、AI処理を実行して Wiki ドキュメントを生成します。
 
 インクリメンタルモード:
@@ -257,7 +257,7 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	// Generate Wiki content
 	buildLogger.Info("Generating Wiki content")
 	fmt.Printf("📝 Wiki生成中...\n")
-	wikiGenerator := wiki.NewGenerator()
+	wikiGenerator := content.NewGenerator()
 	wikiPages, err := wikiGenerator.GenerateAllPages(issuesForProcessing, cfg.Project.Name)
 	if err != nil {
 		buildLogger.Error("Failed to generate Wiki content", "error", err)

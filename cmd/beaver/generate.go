@@ -10,9 +10,9 @@ import (
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/content"
 	"github.com/nyasuto/beaver/pkg/github"
 	"github.com/nyasuto/beaver/pkg/troubleshooting"
-	"github.com/nyasuto/beaver/pkg/wiki"
 	"github.com/spf13/cobra"
 )
 
@@ -219,7 +219,7 @@ func saveTroubleshootingJSON(guide *troubleshooting.TroubleshootingGuide, filena
 		return fmt.Errorf("failed to marshal guide to JSON: %w", err)
 	}
 
-	err = wiki.WriteFileUTF8(filename, string(data), 0600)
+	err = content.WriteFileUTF8(filename, string(data), 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write JSON file: %w", err)
 	}
@@ -229,9 +229,9 @@ func saveTroubleshootingJSON(guide *troubleshooting.TroubleshootingGuide, filena
 
 // saveTroubleshootingWiki saves the guide as Wiki/Markdown format
 func saveTroubleshootingWiki(guide *troubleshooting.TroubleshootingGuide, filename string) error {
-	content := generateTroubleshootingWikiContent(guide)
+	wikiContent := generateTroubleshootingWikiContent(guide)
 
-	err := wiki.WriteFileUTF8(filename, content, 0600)
+	err := content.WriteFileUTF8(filename, wikiContent, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write wiki file: %w", err)
 	}
