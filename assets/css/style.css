@@ -33,12 +33,19 @@ body {
     position: relative;
 }
 
+/* コンテンツラッパー（ヘッダー後のコンテンツ） */
+.content-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
 /* メインコンテンツエリア */
 main {
-    clear: both;
+    flex: 1;
     padding-top: 20px;
-    margin-right: 320px; /* 目次サイドバー分のマージン確保 */
     min-height: 500px; /* 最小高度確保 */
+    order: 1;
 }
 
 /* ===== ヘッダー ===== */
@@ -253,9 +260,9 @@ pre code {
 .table-of-contents {
     position: sticky;
     top: 20px;
-    float: right;
     width: 280px;
-    margin: 0 0 20px 20px;
+    flex-shrink: 0;
+    order: 2;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid #e0e0e0;
     border-radius: 10px;
@@ -479,18 +486,23 @@ pre code {
         padding: 15px; 
     }
     
+    /* フレックスボックスレイアウトのタブレット対応 */
+    .content-wrapper {
+        flex-direction: column;
+    }
+    
     /* 目次のタブレット対応 */
     .table-of-contents {
         position: static;
-        float: none;
         width: 100%;
+        order: 2;
         margin: 20px 0;
         max-height: none;
     }
     
     /* メインエリアのタブレット対応 */
     main {
-        margin-right: 0; /* サイドバーマージン解除 */
+        order: 1;
     }
     
     .toc-list {
@@ -562,15 +574,21 @@ pre code {
         word-break: break-all;
     }
     
+    /* フレックスボックスレイアウトのモバイル対応 */
+    .content-wrapper {
+        flex-direction: column;
+    }
+    
     /* 目次のモバイル対応 */
     .table-of-contents {
         margin: 15px 0;
         border-radius: 6px;
+        order: 2;
     }
     
     /* メインエリアのモバイル対応 */
     main {
-        margin-right: 0; /* サイドバーマージン解除 */
+        order: 1;
     }
     
     .toc-header {
