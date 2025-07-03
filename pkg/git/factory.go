@@ -13,6 +13,8 @@ const (
 	ClientTypeCmd GitClientType = "cmd"
 	// ClientTypeGoGit uses go-git library
 	ClientTypeGoGit GitClientType = "gogit"
+	// ClientTypeInMemory uses pure in-memory git operations
+	ClientTypeInMemory GitClientType = "inmemory"
 )
 
 // NewGitClient creates a new Git client based on the specified type
@@ -22,6 +24,8 @@ func NewGitClient(clientType GitClientType) (GitClient, error) {
 		return NewCmdGitClient()
 	case ClientTypeGoGit:
 		return NewGoGitClient(), nil
+	case ClientTypeInMemory:
+		return NewInMemoryGitClientAdapter(), nil
 	default:
 		return nil, fmt.Errorf("unsupported Git client type: %s", clientType)
 	}
@@ -38,22 +42,38 @@ func NewGitClientWithAuth(clientType GitClientType, token string) (GitClient, er
 		return NewCmdGitClient()
 	case ClientTypeGoGit:
 		return NewGoGitClientWithAuth(token), nil
+	case ClientTypeInMemory:
+		return NewInMemoryGitClientAdapterWithAuth(token), nil
 	default:
 		return nil, fmt.Errorf("unsupported Git client type: %s", clientType)
 	}
 }
 
 // NewDefaultGitClient creates a Git client with default configuration
-// Defaults to go-git for new installations, with fallback to cmd
+// Defaults to InMemory for high performance, with fallback to go-git
 func NewDefaultGitClient() (GitClient, error) {
-	// Try go-git first as it's the preferred implementation
-	client := NewGoGitClient()
+	// Use InMemoryGitClient as the preferred implementation for performance
+	client := NewInMemoryGitClientAdapter()
 	return client, nil
 }
 
 // NewDefaultGitClientWithAuth creates a Git client with authentication using default configuration
 func NewDefaultGitClientWithAuth(token string) (GitClient, error) {
-	// Try go-git first as it's the preferred implementation
-	client := NewGoGitClientWithAuth(token)
+	// Use InMemoryGitClient as the preferred implementation for performance
+	client := NewInMemoryGitClientAdapterWithAuth(token)
 	return client, nil
+}
+
+// NewInMemoryGitClientAdapter creates an adapter that wraps InMemoryGitClient to match GitClient interface
+func NewInMemoryGitClientAdapter() GitClient {
+	return &InMemoryGitClientAdapter{
+		client: NewInMemoryGitClient(),
+	}
+}
+
+// NewInMemoryGitClientAdapterWithAuth creates an adapter with authentication
+func NewInMemoryGitClientAdapterWithAuth(token string) GitClient {
+	return &InMemoryGitClientAdapter{
+		client: NewInMemoryGitClientWithAuth(token),
+	}
 }

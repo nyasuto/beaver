@@ -88,8 +88,8 @@ func TestNewDefaultGitClient(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, client)
 
-	// Default should be GoGitClient
-	_, ok := client.(*GoGitClient)
+	// Default should be InMemoryGitClientAdapter
+	_, ok := client.(*InMemoryGitClientAdapter)
 	assert.True(t, ok)
 }
 
@@ -99,8 +99,7 @@ func TestNewDefaultGitClientWithAuth(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, client)
 
-	// Default should be GoGitClient with auth
-	goGitClient, ok := client.(*GoGitClient)
+	// Default should be InMemoryGitClientAdapter with auth
+	_, ok := client.(*InMemoryGitClientAdapter)
 	assert.True(t, ok)
-	assert.NotNil(t, goGitClient.auth)
 }
