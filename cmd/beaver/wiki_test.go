@@ -559,7 +559,7 @@ func TestRunGenerateWiki_FullWorkflow(t *testing.T) {
 		// Generate all page types
 		indexPage, err := generator.GenerateIndex(testIssues, projectName)
 		assert.NoError(t, err)
-		assert.Contains(t, indexPage.Title, "Home")
+		assert.Contains(t, indexPage.Title, "Developer Dashboard")
 		assert.Contains(t, indexPage.Content, projectName)
 
 		summaryPage, err := generator.GenerateIssuesSummary(testIssues, projectName)

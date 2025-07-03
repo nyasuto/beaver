@@ -206,8 +206,8 @@ func TestGenerateIndex(t *testing.T) {
 		t.Errorf("Expected filename 'Home.md', got '%s'", page.Filename)
 	}
 
-	if page.Category != "Index" {
-		t.Errorf("Expected category 'Index', got '%s'", page.Category)
+	if page.Category != "Dashboard" {
+		t.Errorf("Expected category 'Dashboard', got '%s'", page.Category)
 	}
 }
 
