@@ -260,18 +260,18 @@ release-major:
 	@echo "🏷️ メジャーバージョンリリースを作成中..."
 	@./scripts/release.sh major
 
-## site-build: Generate static site contents
+## site-build: Generate knowledge base content (using beaver build)
 site-build: build
-	@echo "🌐 静的サイトを生成中..."
-	$(BUILD_DIR)/$(BINARY_NAME) site build
-	@echo "✅ サイト生成完了"
+	@echo "🌐 知識ベースを生成中..."
+	$(BUILD_DIR)/$(BINARY_NAME) build --incremental
+	@echo "✅ 知識ベース生成完了"
 
-## site-serve: Serve the generated site locally
-site-serve: site-build
-	@echo "🚀 ローカルサーバーを起動中..."
-	$(BUILD_DIR)/$(BINARY_NAME) site serve
+## site-build-full: Generate full knowledge base rebuild
+site-build-full: build
+	@echo "🌐 完全知識ベース再構築中..."
+	$(BUILD_DIR)/$(BINARY_NAME) build --force-rebuild
+	@echo "✅ 完全再構築完了"
 
-## site-deploy: Deploy site to GitHub Pages
-site-deploy: site-build
-	@echo "🚀 GitHub Pagesにデプロイ中..."
-	$(BUILD_DIR)/$(BINARY_NAME) site deploy
+## pr-ready: Ensure code is ready for pull request submission
+pr-ready: quality
+	@echo "🎯 PR準備チェック完了 - 全品質基準をクリアしました"
