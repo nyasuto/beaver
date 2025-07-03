@@ -197,6 +197,12 @@ Please check that pkg/wiki/templates/processing-logs.md.tmpl exists.`,
 > **Error**: Could not load external template file
 
 Please check that pkg/wiki/templates/development-strategy.md.tmpl exists.`,
+
+		"developer-dashboard": `# 🦫 {{.ProjectName}} - Developer Dashboard
+> **Generated**: {{.GeneratedAt.Format "2006-01-02 15:04:05"}}
+> **Error**: Could not load external template file
+
+Please check that pkg/wiki/templates/developer-dashboard.md.tmpl exists.`,
 	}
 
 	for name, content := range fallbackTemplates {
@@ -245,6 +251,7 @@ func GetDefaultTemplateContent(templateName string) (string, bool) {
 		"quick-reference":      "External template file: pkg/wiki/templates/quick-reference.md.tmpl",
 		"processing-logs":      "External template file: pkg/wiki/templates/processing-logs.md.tmpl",
 		"development-strategy": "External template file: pkg/wiki/templates/development-strategy.md.tmpl",
+		"developer-dashboard":  "External template file: pkg/wiki/templates/developer-dashboard.md.tmpl",
 		"_sidebar":             "External template file: pkg/wiki/templates/_sidebar.md.tmpl",
 	}
 
