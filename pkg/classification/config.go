@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -218,15 +217,6 @@ func (cm *ConfigManager) validateRule(rule Rule) error {
 	return nil
 }
 
-// HybridClassificationConfig defines configuration for hybrid classification
-type HybridClassificationConfig struct {
-	AIWeight         float64       `yaml:"ai_weight" json:"ai_weight"`
-	RuleWeight       float64       `yaml:"rule_weight" json:"rule_weight"`
-	MinConfidence    float64       `yaml:"min_confidence" json:"min_confidence"`
-	AIServiceURL     string        `yaml:"ai_service_url" json:"ai_service_url"`
-	AIServiceTimeout time.Duration `yaml:"ai_service_timeout" json:"ai_service_timeout"`
-}
-
 // validateClassificationConfig validates classification configuration
 func (cm *ConfigManager) validateClassificationConfig(config *ClassificationConfig) error {
 	if config == nil {
@@ -238,109 +228,6 @@ func (cm *ConfigManager) validateClassificationConfig(config *ClassificationConf
 	}
 
 	return nil
-}
-
-// validateHybridConfig validates hybrid classification configuration
-func (cm *ConfigManager) validateHybridConfig(config *HybridClassificationConfig) error {
-	if config == nil {
-		return fmt.Errorf("hybrid config cannot be nil")
-	}
-
-	if config.AIWeight < 0 || config.AIWeight > 1 {
-		return fmt.Errorf("AI weight must be between 0 and 1")
-	}
-
-	if config.RuleWeight < 0 || config.RuleWeight > 1 {
-		return fmt.Errorf("rule weight must be between 0 and 1")
-	}
-
-	if config.AIWeight+config.RuleWeight == 0 {
-		return fmt.Errorf("at least one of AI weight or rule weight must be greater than 0")
-	}
-
-	if config.MinConfidence < 0 || config.MinConfidence > 1 {
-		return fmt.Errorf("minimum confidence must be between 0 and 1")
-	}
-
-	if config.AIServiceURL == "" {
-		return fmt.Errorf("AI service URL is required")
-	}
-
-	if config.AIServiceTimeout <= 0 {
-		config.AIServiceTimeout = 30 * time.Second
-	}
-
-	return nil
-}
-
-// LoadHybridConfig loads hybrid classification configuration
-func (cm *ConfigManager) LoadHybridConfig() (*HybridClassificationConfig, error) {
-	configDir := filepath.Dir(cm.configPath)
-	hybridConfigPath := filepath.Join(configDir, "hybrid-config.yml")
-
-	if _, err := os.Stat(hybridConfigPath); os.IsNotExist(err) {
-		// If config file doesn't exist, create default and return it
-		defaultConfig := GetDefaultHybridConfig()
-		if err := cm.SaveHybridConfig(&defaultConfig); err != nil {
-			return nil, fmt.Errorf("failed to save default hybrid config: %w", err)
-		}
-		return &defaultConfig, nil
-	}
-
-	data, err := os.ReadFile(hybridConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read hybrid config file: %w", err)
-	}
-
-	var config HybridClassificationConfig
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse hybrid config YAML: %w", err)
-	}
-
-	// Validate configuration
-	if err := cm.validateHybridConfig(&config); err != nil {
-		return nil, fmt.Errorf("invalid hybrid configuration: %w", err)
-	}
-
-	return &config, nil
-}
-
-// SaveHybridConfig saves hybrid classification configuration
-func (cm *ConfigManager) SaveHybridConfig(config *HybridClassificationConfig) error {
-	configDir := filepath.Dir(cm.configPath)
-	hybridConfigPath := filepath.Join(configDir, "hybrid-config.yml")
-
-	// Ensure directory exists
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-
-	// Validate before saving
-	if err := cm.validateHybridConfig(config); err != nil {
-		return fmt.Errorf("invalid hybrid configuration: %w", err)
-	}
-
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal hybrid config to YAML: %w", err)
-	}
-
-	if err := os.WriteFile(hybridConfigPath, data, 0600); err != nil {
-		return fmt.Errorf("failed to write hybrid config file: %w", err)
-	}
-
-	return nil
-}
-
-// GetDefaultHybridConfig returns default configuration for hybrid classification
-func GetDefaultHybridConfig() HybridClassificationConfig {
-	return HybridClassificationConfig{
-		AIWeight:         0.7,
-		RuleWeight:       0.3,
-		MinConfidence:    0.5,
-		AIServiceURL:     "http://localhost:8080",
-		AIServiceTimeout: 30 * time.Second,
-	}
 }
 
 // AddRule adds a new rule to the rule set

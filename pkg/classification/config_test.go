@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,57 +83,6 @@ func TestConfigManager_SaveAndLoadRuleSet(t *testing.T) {
 	assert.Len(t, loadedRuleSet.Rules, 1)
 	assert.Equal(t, originalRuleSet.Rules[0].ID, loadedRuleSet.Rules[0].ID)
 	assert.Equal(t, originalRuleSet.Rules[0].Name, loadedRuleSet.Rules[0].Name)
-}
-
-func TestConfigManager_LoadHybridConfig_FileNotExists(t *testing.T) {
-	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "test-config.yml")
-
-	cm := NewConfigManager(configPath)
-
-	// File doesn't exist, should create default and return it
-	config, err := cm.LoadHybridConfig()
-	assert.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Equal(t, 0.7, config.AIWeight)
-	assert.Equal(t, 0.3, config.RuleWeight)
-
-	// File should now exist
-	hybridConfigPath := filepath.Join(tempDir, "hybrid-config.yml")
-	_, err = os.Stat(hybridConfigPath)
-	assert.NoError(t, err)
-}
-
-func TestConfigManager_SaveAndLoadHybridConfig(t *testing.T) {
-	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "test-config.yml")
-
-	cm := NewConfigManager(configPath)
-
-	// Create a test hybrid config
-	originalConfig := &HybridClassificationConfig{
-		AIWeight:         0.8,
-		RuleWeight:       0.2,
-		MinConfidence:    0.6,
-		AIServiceURL:     "http://test.example.com",
-		AIServiceTimeout: 45 * time.Second,
-	}
-
-	// Save the config
-	err := cm.SaveHybridConfig(originalConfig)
-	assert.NoError(t, err)
-
-	// Load it back
-	loadedConfig, err := cm.LoadHybridConfig()
-	assert.NoError(t, err)
-	assert.NotNil(t, loadedConfig)
-
-	// Verify it matches
-	assert.Equal(t, originalConfig.AIWeight, loadedConfig.AIWeight)
-	assert.Equal(t, originalConfig.RuleWeight, loadedConfig.RuleWeight)
-	assert.Equal(t, originalConfig.MinConfidence, loadedConfig.MinConfidence)
-	assert.Equal(t, originalConfig.AIServiceURL, loadedConfig.AIServiceURL)
-	assert.Equal(t, originalConfig.AIServiceTimeout, loadedConfig.AIServiceTimeout)
 }
 
 func TestConfigManager_ValidateRuleSet(t *testing.T) {
@@ -354,102 +302,6 @@ func TestConfigManager_ValidateRule(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := cm.validateRule(tt.rule)
-			if tt.expectError {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.errorMsg)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestConfigManager_ValidateHybridConfig(t *testing.T) {
-	cm := NewConfigManager("test-config.yml")
-
-	tests := []struct {
-		name        string
-		config      *HybridClassificationConfig
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name:        "nil config",
-			config:      nil,
-			expectError: true,
-			errorMsg:    "hybrid config cannot be nil",
-		},
-		{
-			name: "invalid AI weight",
-			config: &HybridClassificationConfig{
-				AIWeight:      1.5, // Invalid
-				RuleWeight:    0.3,
-				MinConfidence: 0.5,
-				AIServiceURL:  "http://example.com",
-			},
-			expectError: true,
-			errorMsg:    "AI weight must be between 0 and 1",
-		},
-		{
-			name: "invalid rule weight",
-			config: &HybridClassificationConfig{
-				AIWeight:      0.7,
-				RuleWeight:    1.5, // Invalid
-				MinConfidence: 0.5,
-				AIServiceURL:  "http://example.com",
-			},
-			expectError: true,
-			errorMsg:    "rule weight must be between 0 and 1",
-		},
-		{
-			name: "zero weights",
-			config: &HybridClassificationConfig{
-				AIWeight:      0.0,
-				RuleWeight:    0.0, // Both zero
-				MinConfidence: 0.5,
-				AIServiceURL:  "http://example.com",
-			},
-			expectError: true,
-			errorMsg:    "at least one of AI weight or rule weight must be greater than 0",
-		},
-		{
-			name: "invalid min confidence",
-			config: &HybridClassificationConfig{
-				AIWeight:      0.7,
-				RuleWeight:    0.3,
-				MinConfidence: 1.5, // Invalid
-				AIServiceURL:  "http://example.com",
-			},
-			expectError: true,
-			errorMsg:    "minimum confidence must be between 0 and 1",
-		},
-		{
-			name: "empty AI service URL",
-			config: &HybridClassificationConfig{
-				AIWeight:      0.7,
-				RuleWeight:    0.3,
-				MinConfidence: 0.5,
-				AIServiceURL:  "", // Empty
-			},
-			expectError: true,
-			errorMsg:    "AI service URL is required",
-		},
-		{
-			name: "valid config",
-			config: &HybridClassificationConfig{
-				AIWeight:         0.7,
-				RuleWeight:       0.3,
-				MinConfidence:    0.5,
-				AIServiceURL:     "http://example.com",
-				AIServiceTimeout: 30 * time.Second,
-			},
-			expectError: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := cm.validateHybridConfig(tt.config)
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.errorMsg)
