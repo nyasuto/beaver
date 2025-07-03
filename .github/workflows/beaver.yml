@@ -266,18 +266,18 @@ jobs:
             done
             
             # Create _config.yml for Jekyll
-            cat > _site/_config.yml << 'EOF'
-title: Beaver Knowledge Base
-description: AIエージェント知識ダム - 自動生成ナレッジベース
-theme: minima
-plugins:
-  - jekyll-feed
-  - jekyll-sitemap
-markdown: kramdown
-highlighter: rouge
-baseurl: /beaver
-url: https://nyasuto.github.io
-EOF
+            {
+              echo "title: Beaver Knowledge Base"
+              echo "description: AIエージェント知識ダム - 自動生成ナレッジベース"
+              echo "theme: minima"
+              echo "plugins:"
+              echo "  - jekyll-feed"
+              echo "  - jekyll-sitemap"
+              echo "markdown: kramdown"
+              echo "highlighter: rouge"
+              echo "baseurl: /beaver"
+              echo "url: https://nyasuto.github.io"
+            } > _site/_config.yml
             
             echo "🔧 Created Jekyll configuration"
           fi
