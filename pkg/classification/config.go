@@ -75,42 +75,42 @@ func (cm *ConfigManager) SaveRuleSet(ruleSet *RuleSet) error {
 	return nil
 }
 
-// LoadHybridConfig loads hybrid classification configuration
-func (cm *ConfigManager) LoadHybridConfig() (*HybridClassificationConfig, error) {
+// LoadClassificationConfig loads classification configuration
+func (cm *ConfigManager) LoadClassificationConfig() (*ClassificationConfig, error) {
 	configDir := filepath.Dir(cm.configPath)
-	hybridConfigPath := filepath.Join(configDir, "hybrid-config.yml")
+	classificationConfigPath := filepath.Join(configDir, "classification-config.yml")
 
-	if _, err := os.Stat(hybridConfigPath); os.IsNotExist(err) {
+	if _, err := os.Stat(classificationConfigPath); os.IsNotExist(err) {
 		// If config file doesn't exist, create default and return it
-		defaultConfig := GetDefaultHybridConfig()
-		if err := cm.SaveHybridConfig(&defaultConfig); err != nil {
-			return nil, fmt.Errorf("failed to save default hybrid config: %w", err)
+		defaultConfig := GetDefaultConfig()
+		if err := cm.SaveClassificationConfig(&defaultConfig); err != nil {
+			return nil, fmt.Errorf("failed to save default classification config: %w", err)
 		}
 		return &defaultConfig, nil
 	}
 
-	data, err := os.ReadFile(hybridConfigPath)
+	data, err := os.ReadFile(classificationConfigPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read hybrid config file: %w", err)
+		return nil, fmt.Errorf("failed to read classification config file: %w", err)
 	}
 
-	var config HybridClassificationConfig
+	var config ClassificationConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse hybrid config YAML: %w", err)
+		return nil, fmt.Errorf("failed to parse classification config YAML: %w", err)
 	}
 
 	// Validate configuration
-	if err := cm.validateHybridConfig(&config); err != nil {
-		return nil, fmt.Errorf("invalid hybrid configuration: %w", err)
+	if err := cm.validateClassificationConfig(&config); err != nil {
+		return nil, fmt.Errorf("invalid classification configuration: %w", err)
 	}
 
 	return &config, nil
 }
 
-// SaveHybridConfig saves hybrid classification configuration
-func (cm *ConfigManager) SaveHybridConfig(config *HybridClassificationConfig) error {
+// SaveClassificationConfig saves classification configuration
+func (cm *ConfigManager) SaveClassificationConfig(config *ClassificationConfig) error {
 	configDir := filepath.Dir(cm.configPath)
-	hybridConfigPath := filepath.Join(configDir, "hybrid-config.yml")
+	classificationConfigPath := filepath.Join(configDir, "classification-config.yml")
 
 	// Ensure directory exists
 	if err := os.MkdirAll(configDir, 0755); err != nil {
@@ -118,17 +118,17 @@ func (cm *ConfigManager) SaveHybridConfig(config *HybridClassificationConfig) er
 	}
 
 	// Validate before saving
-	if err := cm.validateHybridConfig(config); err != nil {
-		return fmt.Errorf("invalid hybrid configuration: %w", err)
+	if err := cm.validateClassificationConfig(config); err != nil {
+		return fmt.Errorf("invalid classification configuration: %w", err)
 	}
 
 	data, err := yaml.Marshal(config)
 	if err != nil {
-		return fmt.Errorf("failed to marshal hybrid config to YAML: %w", err)
+		return fmt.Errorf("failed to marshal classification config to YAML: %w", err)
 	}
 
-	if err := os.WriteFile(hybridConfigPath, data, 0600); err != nil {
-		return fmt.Errorf("failed to write hybrid config file: %w", err)
+	if err := os.WriteFile(classificationConfigPath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write classification config file: %w", err)
 	}
 
 	return nil
@@ -218,6 +218,28 @@ func (cm *ConfigManager) validateRule(rule Rule) error {
 	return nil
 }
 
+// HybridClassificationConfig defines configuration for hybrid classification
+type HybridClassificationConfig struct {
+	AIWeight         float64       `yaml:"ai_weight" json:"ai_weight"`
+	RuleWeight       float64       `yaml:"rule_weight" json:"rule_weight"`
+	MinConfidence    float64       `yaml:"min_confidence" json:"min_confidence"`
+	AIServiceURL     string        `yaml:"ai_service_url" json:"ai_service_url"`
+	AIServiceTimeout time.Duration `yaml:"ai_service_timeout" json:"ai_service_timeout"`
+}
+
+// validateClassificationConfig validates classification configuration
+func (cm *ConfigManager) validateClassificationConfig(config *ClassificationConfig) error {
+	if config == nil {
+		return fmt.Errorf("classification config cannot be nil")
+	}
+
+	if config.MinConfidence < 0 || config.MinConfidence > 1 {
+		return fmt.Errorf("minimum confidence must be between 0 and 1")
+	}
+
+	return nil
+}
+
 // validateHybridConfig validates hybrid classification configuration
 func (cm *ConfigManager) validateHybridConfig(config *HybridClassificationConfig) error {
 	if config == nil {
@@ -249,6 +271,76 @@ func (cm *ConfigManager) validateHybridConfig(config *HybridClassificationConfig
 	}
 
 	return nil
+}
+
+// LoadHybridConfig loads hybrid classification configuration
+func (cm *ConfigManager) LoadHybridConfig() (*HybridClassificationConfig, error) {
+	configDir := filepath.Dir(cm.configPath)
+	hybridConfigPath := filepath.Join(configDir, "hybrid-config.yml")
+
+	if _, err := os.Stat(hybridConfigPath); os.IsNotExist(err) {
+		// If config file doesn't exist, create default and return it
+		defaultConfig := GetDefaultHybridConfig()
+		if err := cm.SaveHybridConfig(&defaultConfig); err != nil {
+			return nil, fmt.Errorf("failed to save default hybrid config: %w", err)
+		}
+		return &defaultConfig, nil
+	}
+
+	data, err := os.ReadFile(hybridConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read hybrid config file: %w", err)
+	}
+
+	var config HybridClassificationConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse hybrid config YAML: %w", err)
+	}
+
+	// Validate configuration
+	if err := cm.validateHybridConfig(&config); err != nil {
+		return nil, fmt.Errorf("invalid hybrid configuration: %w", err)
+	}
+
+	return &config, nil
+}
+
+// SaveHybridConfig saves hybrid classification configuration
+func (cm *ConfigManager) SaveHybridConfig(config *HybridClassificationConfig) error {
+	configDir := filepath.Dir(cm.configPath)
+	hybridConfigPath := filepath.Join(configDir, "hybrid-config.yml")
+
+	// Ensure directory exists
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Validate before saving
+	if err := cm.validateHybridConfig(config); err != nil {
+		return fmt.Errorf("invalid hybrid configuration: %w", err)
+	}
+
+	data, err := yaml.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal hybrid config to YAML: %w", err)
+	}
+
+	if err := os.WriteFile(hybridConfigPath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write hybrid config file: %w", err)
+	}
+
+	return nil
+}
+
+// GetDefaultHybridConfig returns default configuration for hybrid classification
+func GetDefaultHybridConfig() HybridClassificationConfig {
+	return HybridClassificationConfig{
+		AIWeight:         0.7,
+		RuleWeight:       0.3,
+		MinConfidence:    0.5,
+		AIServiceURL:     "http://localhost:8080",
+		AIServiceTimeout: 30 * time.Second,
+	}
 }
 
 // AddRule adds a new rule to the rule set

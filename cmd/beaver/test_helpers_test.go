@@ -8,8 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/nyasuto/beaver/internal/ai"
 )
 
 func TestTestHelpers(t *testing.T) {
@@ -285,42 +283,6 @@ func TestTestFixtures(t *testing.T) {
 		}
 	})
 
-	t.Run("CreateTestAIResponse creates valid response", func(t *testing.T) {
-		fixtures := NewTestFixtures()
-
-		response := fixtures.CreateTestAIResponse()
-
-		assert.Equal(t, "This is a test AI summary", response.Summary)
-		assert.Equal(t, []string{"Key point 1", "Key point 2"}, response.KeyPoints)
-		assert.NotNil(t, response.Category)
-		assert.Equal(t, "feature", *response.Category)
-		assert.Equal(t, "medium", response.Complexity)
-		assert.Equal(t, ai.ProviderOpenAI, response.ProviderUsed)
-		assert.Equal(t, "gpt-4", response.ModelUsed)
-		assert.Equal(t, 1.5, response.ProcessingTime)
-		assert.NotNil(t, response.TokenUsage)
-		assert.Equal(t, 100, response.TokenUsage["prompt_tokens"])
-	})
-
-	t.Run("CreateTestBatchAIResponse creates valid batch response", func(t *testing.T) {
-		fixtures := NewTestFixtures()
-
-		resultCount := 2
-		batchResponse := fixtures.CreateTestBatchAIResponse(resultCount)
-
-		assert.Equal(t, resultCount, batchResponse.TotalProcessed)
-		assert.Equal(t, 0, batchResponse.TotalFailed)
-		assert.Equal(t, 3.5, batchResponse.ProcessingTime)
-		assert.Len(t, batchResponse.Results, resultCount)
-		assert.Empty(t, batchResponse.FailedIssues)
-
-		// Verify each result has unique summary
-		for i, result := range batchResponse.Results {
-			expectedSummary := fmt.Sprintf("Summary for issue %d", i+1)
-			assert.Equal(t, expectedSummary, result.Summary)
-		}
-	})
-
 	t.Run("CreateTestConfig creates valid configuration", func(t *testing.T) {
 		fixtures := NewTestFixtures()
 
@@ -346,15 +308,6 @@ func TestTestFixturesEdgeCases(t *testing.T) {
 		assert.Empty(t, result.Issues)
 		assert.Equal(t, 0, result.FetchedCount)
 		assert.NotNil(t, result.RateLimit)
-	})
-
-	t.Run("CreateTestBatchAIResponse with zero results", func(t *testing.T) {
-		fixtures := NewTestFixtures()
-
-		batchResponse := fixtures.CreateTestBatchAIResponse(0)
-
-		assert.Equal(t, 0, batchResponse.TotalProcessed)
-		assert.Empty(t, batchResponse.Results)
 	})
 
 	t.Run("CreateTestConfig with empty repository", func(t *testing.T) {

@@ -95,7 +95,7 @@ func TestMainFunction(t *testing.T) {
 	})
 
 	t.Run("main function with valid subcommands", func(t *testing.T) {
-		validCommands := []string{"init", "build", "status", "fetch", "classify", "wiki", "summarize"}
+		validCommands := []string{"init", "build", "status", "version", "analyze", "generate", "fetch", "wiki"}
 
 		for _, cmd := range validCommands {
 			t.Run(fmt.Sprintf("command_%s_exists", cmd), func(t *testing.T) {
@@ -131,13 +131,14 @@ func TestCommandStructure(t *testing.T) {
 
 	t.Run("all expected commands are registered", func(t *testing.T) {
 		expectedCommands := map[string]bool{
-			"init":      false,
-			"build":     false,
-			"status":    false,
-			"fetch":     false,
-			"classify":  false,
-			"wiki":      false,
-			"summarize": false,
+			"init":     false,
+			"build":    false,
+			"status":   false,
+			"version":  false,
+			"analyze":  false,
+			"generate": false,
+			"fetch":    false,
+			"wiki":     false,
 		}
 
 		// Check all subcommands
