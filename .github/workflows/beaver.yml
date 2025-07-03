@@ -247,39 +247,24 @@ jobs:
             # Create _site directory structure
             mkdir -p _site
             
-            # Convert generated markdown files to GitHub Pages format
-            # Look for beaver-Home.md and use it as index
-            if [ -f "beaver-Home.md" ]; then
-              echo "📄 Creating index page from beaver-Home.md"
-              cp "beaver-Home.md" "_site/index.md"
-            fi
+            # Copy HTML files directly to GitHub Pages
+            echo "📁 Copying HTML files to _site/"
             
-            # Copy all generated markdown files to _site
-            echo "📁 Copying generated markdown files to _site/"
-            for md_file in beaver-*.md; do
-              if [ -f "$md_file" ]; then
-                # Remove beaver- prefix for cleaner URLs
-                clean_name=$(echo "$md_file" | sed 's/^beaver-//')
-                cp "$md_file" "_site/$clean_name"
-                echo "  ✅ Copied $md_file -> _site/$clean_name"
+            # Copy main HTML files
+            for html_file in *.html; do
+              if [ -f "$html_file" ]; then
+                cp "$html_file" "_site/"
+                echo "  ✅ Copied $html_file -> _site/$html_file"
               fi
             done
             
-            # Create _config.yml for Jekyll
-            {
-              echo "title: Beaver Knowledge Base"
-              echo "description: AIエージェント知識ダム - 自動生成ナレッジベース"
-              echo "theme: minima"
-              echo "plugins:"
-              echo "  - jekyll-feed"
-              echo "  - jekyll-sitemap"
-              echo "markdown: kramdown"
-              echo "highlighter: rouge"
-              echo "baseurl: /beaver"
-              echo "url: https://nyasuto.github.io"
-            } > _site/_config.yml
+            # Copy assets directory if it exists
+            if [ -d "assets" ]; then
+              cp -r assets "_site/"
+              echo "  ✅ Copied assets directory"
+            fi
             
-            echo "🔧 Created Jekyll configuration"
+            echo "🔧 HTML site prepared - no Jekyll processing needed"
           fi
             
           echo "✅ GitHub Pages content generated successfully"
