@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -1281,6 +1283,12 @@ func (g *Generator) GenerateDeveloperDashboard(issues []models.Issue, projectNam
 func (g *Generator) GenerateHTMLPages(issues []models.Issue, projectName string) ([]*HTMLPage, error) {
 	var htmlPages []*HTMLPage
 
+	// Generate CSS file first
+	if err := g.generateCSSFile(); err != nil {
+		slog.Error("Failed to generate CSS file", "error", err)
+		// Continue with HTML generation even if CSS fails
+	}
+
 	// Generate HTML version of developer dashboard (index.html)
 	dashboardPage, err := g.GenerateDeveloperDashboard(issues, projectName)
 	if err != nil {
@@ -1312,26 +1320,8 @@ func (g *Generator) convertMarkdownToHTML(markdown, title string) string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>%s</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        header { background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
-        h1 { margin: 0; font-size: 2em; }
-        h2 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-top: 30px; }
-        h3 { color: #555; margin-top: 25px; }
-        table { width: 100%%; border-collapse: collapse; margin: 20px 0; }
-        table, th, td { border: 1px solid #ddd; }
-        th, td { padding: 12px; text-align: left; }
-        th { background-color: #f8f9fa; font-weight: 600; }
-        tr:nth-child(even) { background-color: #f8f9fa; }
-        a { color: #667eea; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        strong { color: #333; }
-        hr { border: none; border-top: 1px solid #eee; margin: 30px 0; }
-        .urgent-section { background: #fff5f5; border-left: 4px solid #f56565; padding: 20px; margin: 20px 0; border-radius: 4px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
-        .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
-    </style>
+    <meta name="description" content="Beaver Knowledge Base - GitHub Issues管理と知識ベース構築ツール">
+    <meta name="keywords" content="GitHub, Issues, 知識ベース, ダッシュボード, プロジェクト管理">
 </head>
 <body>
     <div class="container">
@@ -1378,4 +1368,299 @@ func (g *Generator) markdownToHTMLContent(markdown string) string {
 	}
 
 	return buf.String()
+}
+
+// generateCSSFile creates the responsive CSS file for the HTML pages
+func (g *Generator) generateCSSFile() error {
+	cssContent := `/* Beaver Knowledge Base - Responsive Styles */
+
+/* ベーススタイル */
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    margin: 0; 
+    padding: 20px; 
+    background: #f5f5f5;
+    line-height: 1.6;
+}
+
+.container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+}
+
+/* ヘッダー */
+header { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    color: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    margin-bottom: 30px; 
+    text-align: center; 
+}
+
+/* タイポグラフィ */
+h1 { 
+    margin: 0; 
+    font-size: 2em; 
+    word-wrap: break-word;
+}
+
+h2 { 
+    color: #333; 
+    border-bottom: 2px solid #667eea; 
+    padding-bottom: 10px; 
+    margin-top: 30px;
+    word-wrap: break-word;
+}
+
+h3 { 
+    color: #555; 
+    margin-top: 25px;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+/* テーブル */
+.table-container {
+    overflow-x: auto;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin: 0;
+}
+
+table, th, td { 
+    border: 1px solid #ddd; 
+}
+
+th, td { 
+    padding: 12px; 
+    text-align: left;
+    min-width: 100px;
+}
+
+th { 
+    background-color: #f8f9fa; 
+    font-weight: 600; 
+}
+
+tr:nth-child(even) { 
+    background-color: #f8f9fa; 
+}
+
+/* リンク */
+a { 
+    color: #667eea; 
+    text-decoration: none;
+    word-wrap: break-word;
+}
+
+a:hover { 
+    text-decoration: underline; 
+}
+
+/* その他の要素 */
+strong { 
+    color: #333; 
+}
+
+hr { 
+    border: none; 
+    border-top: 1px solid #eee; 
+    margin: 30px 0; 
+}
+
+.urgent-section { 
+    background: #fff5f5; 
+    border-left: 4px solid #f56565; 
+    padding: 20px; 
+    margin: 20px 0; 
+    border-radius: 4px; 
+}
+
+.stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 20px; 
+    margin: 20px 0; 
+}
+
+.stat-card { 
+    background: #f8f9fa; 
+    padding: 20px; 
+    border-radius: 8px; 
+    text-align: center; 
+}
+
+/* レスポンシブデザイン - タブレット */
+@media (max-width: 768px) {
+    body { 
+        padding: 10px; 
+    }
+    
+    .container { 
+        padding: 20px; 
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    header { 
+        padding: 20px; 
+        margin-bottom: 20px;
+    }
+    
+    h1 { 
+        font-size: 1.5em; 
+    }
+    
+    h2 { 
+        font-size: 1.3em;
+        margin-top: 20px;
+    }
+    
+    h3 { 
+        font-size: 1.1em;
+        margin-top: 15px;
+    }
+    
+    .table-container {
+        margin: 15px 0;
+        border-radius: 6px;
+    }
+    
+    table {
+        font-size: 0.9em;
+    }
+    
+    th, td { 
+        padding: 8px; 
+        min-width: 80px;
+    }
+    
+    .stats-grid { 
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+        gap: 15px; 
+    }
+    
+    .stat-card { 
+        padding: 15px; 
+    }
+}
+
+/* レスポンシブデザイン - スマートフォン */
+@media (max-width: 480px) {
+    body { 
+        padding: 5px; 
+    }
+    
+    .container { 
+        padding: 15px; 
+    }
+    
+    header { 
+        padding: 15px; 
+    }
+    
+    h1 { 
+        font-size: 1.2em; 
+        line-height: 1.3;
+    }
+    
+    h2 { 
+        font-size: 1.1em;
+    }
+    
+    h3 { 
+        font-size: 1em;
+    }
+    
+    .table-container {
+        margin: 10px 0;
+        border-radius: 4px;
+    }
+    
+    table {
+        font-size: 0.8em;
+    }
+    
+    th, td { 
+        padding: 6px; 
+        min-width: 60px;
+        font-size: 0.9em;
+    }
+    
+    .stats-grid { 
+        grid-template-columns: 1fr; 
+        gap: 10px; 
+    }
+    
+    .stat-card { 
+        padding: 10px; 
+    }
+    
+    a {
+        display: inline-block;
+        word-break: break-all;
+    }
+}
+
+/* タッチデバイス対応 */
+@media (hover: none) {
+    a:hover {
+        text-decoration: none;
+    }
+    
+    a:active {
+        background-color: rgba(102, 126, 234, 0.1);
+        text-decoration: underline;
+    }
+}
+
+/* プリント対応 */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    
+    .container {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 20px;
+    }
+    
+    header {
+        background: #667eea !important;
+        color: white !important;
+    }
+    
+    a {
+        color: #333 !important;
+        text-decoration: underline !important;
+    }
+}`
+
+	// Create the assets/css directory if it doesn't exist
+	cssDir := "_site/assets/css"
+	if err := os.MkdirAll(cssDir, 0755); err != nil {
+		return fmt.Errorf("failed to create CSS directory: %w", err)
+	}
+
+	// Write the CSS file
+	cssPath := filepath.Join(cssDir, "style.css")
+	if err := os.WriteFile(cssPath, []byte(cssContent), 0600); err != nil {
+		return fmt.Errorf("failed to write CSS file: %w", err)
+	}
+
+	slog.Info("CSS file generated successfully", "path", cssPath)
+	return nil
 }
