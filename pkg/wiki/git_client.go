@@ -15,7 +15,6 @@ type CommitAuthor = git.CommitAuthor
 type GitStatus = git.GitStatus
 type CommitHistoryOptions = git.CommitHistoryOptions
 
-
 // NewDefaultGitClient creates a new Git client with default configuration
 func NewDefaultGitClient() (GitClient, error) {
 	return git.NewDefaultGitClient()

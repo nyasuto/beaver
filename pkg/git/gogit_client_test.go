@@ -7,10 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
-
-
 func TestFactoryNewGitClient(t *testing.T) {
 	tests := []struct {
 		name         string
