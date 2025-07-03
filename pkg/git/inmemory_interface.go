@@ -179,8 +179,14 @@ func (w *InMemoryWorkspace) WriteFileWithCommit(path string, content []byte, mes
 		return nil, err
 	}
 
-	// Commit
-	return w.Client.CommitChanges(w.Repository, message, nil)
+	// Commit with default author for testing
+	commitOptions := &CommitOptions{
+		Author: &CommitAuthor{
+			Name:  "Test User",
+			Email: "test@example.com",
+		},
+	}
+	return w.Client.CommitChanges(w.Repository, message, commitOptions)
 }
 
 // PushToRemote pushes changes to the remote repository
