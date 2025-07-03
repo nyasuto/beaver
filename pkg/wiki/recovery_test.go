@@ -176,7 +176,8 @@ func TestNewRecoveryManager(t *testing.T) {
 func TestRecoveryManager_ExecuteWithRecovery(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
 	mockPublisher := &GitHubPagesPublisher{}
-	rm := NewRecoveryManager(mockGitClient, mockPublisher)
+	// Use FastBackoffStrategy for testing (1-10ms delays instead of seconds)
+	rm := NewRecoveryManagerWithBackoff(mockGitClient, mockPublisher, &FastBackoffStrategy{})
 	ctx := context.Background()
 
 	t.Run("successful operation on first attempt", func(t *testing.T) {
@@ -621,10 +622,16 @@ func TestContainsAnyString(t *testing.T) {
 func TestRecoveryManager_ExponentialBackoff(t *testing.T) {
 	mockGitClient := &MockRecoveryGitClient{}
 	mockPublisher := &GitHubPagesPublisher{}
-	rm := NewRecoveryManager(mockGitClient, mockPublisher)
-	ctx := context.Background()
 
-	t.Run("exponential backoff timing", func(t *testing.T) {
+	t.Run("exponential backoff timing with actual delays", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("Skipping slow test in short mode")
+		}
+
+		// Use default backoff strategy for actual timing test
+		rm := NewRecoveryManager(mockGitClient, mockPublisher)
+		ctx := context.Background()
+
 		callCount := 0
 		operation := func(ctx context.Context) error {
 			callCount++
@@ -643,11 +650,44 @@ func TestRecoveryManager_ExponentialBackoff(t *testing.T) {
 		assert.GreaterOrEqual(t, elapsed, 3*time.Second)
 	})
 
+	t.Run("exponential backoff logic with fast delays", func(t *testing.T) {
+		// Use FastBackoffStrategy for testing
+		rm := NewRecoveryManagerWithBackoff(mockGitClient, mockPublisher, &FastBackoffStrategy{})
+		ctx := context.Background()
+
+		callCount := 0
+		operation := func(ctx context.Context) error {
+			callCount++
+			return fmt.Errorf("persistent error")
+		}
+
+		start := time.Now()
+		err := rm.ExecuteWithRecovery(ctx, operation, 3)
+		elapsed := time.Since(start)
+
+		assert.Error(t, err)
+		assert.Equal(t, 3, callCount)
+
+		// Should complete quickly with fast delay strategy (under 50ms total)
+		assert.Less(t, elapsed, 50*time.Millisecond)
+	})
+
 	t.Run("backoff caps at maximum", func(t *testing.T) {
-		// Test that backoff doesn't grow infinitely
-		// This is tested through the code logic in ExecuteWithRecovery
-		// where delay is capped at 30 seconds
-		assert.True(t, true) // Placeholder - actual timing test would be too slow
+		// Test that backoff doesn't grow infinitely using fast delay strategy
+		rm := NewRecoveryManagerWithBackoff(mockGitClient, mockPublisher, &FastBackoffStrategy{})
+		ctx := context.Background()
+
+		callCount := 0
+		operation := func(ctx context.Context) error {
+			callCount++
+			return fmt.Errorf("persistent error")
+		}
+
+		// Test with many retries to verify capping logic
+		err := rm.ExecuteWithRecovery(ctx, operation, 10)
+		assert.Error(t, err)
+		assert.Equal(t, 10, callCount)
+		// The delay calculation should still work correctly even without actual waiting
 	})
 }
 

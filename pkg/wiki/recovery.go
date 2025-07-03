@@ -10,19 +10,83 @@ import (
 	"github.com/nyasuto/beaver/internal/errors"
 )
 
-// RecoveryManager handles automatic recovery from common errors
-type RecoveryManager struct {
-	gitClient GitClient
-	publisher WikiPublisher
-	logger    *log.Logger
+// BackoffStrategy defines how delays are handled during retries
+type BackoffStrategy interface {
+	Wait(ctx context.Context, delay time.Duration) error
 }
 
-// NewRecoveryManager creates a new recovery manager
+// DefaultBackoffStrategy uses actual time delays
+type DefaultBackoffStrategy struct{}
+
+func (d *DefaultBackoffStrategy) Wait(ctx context.Context, delay time.Duration) error {
+	select {
+	case <-time.After(delay):
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// FastBackoffStrategy uses minimal delays for testing (1-10ms instead of seconds)
+type FastBackoffStrategy struct{}
+
+func (f *FastBackoffStrategy) Wait(ctx context.Context, delay time.Duration) error {
+	// Scale down the delay to milliseconds for fast testing
+	fastDelay := time.Millisecond
+	if delay > time.Second {
+		// Map longer delays to 1-10ms range
+		fastDelay = time.Duration(1+delay.Seconds()) * time.Millisecond
+		if fastDelay > 10*time.Millisecond {
+			fastDelay = 10 * time.Millisecond
+		}
+	}
+
+	select {
+	case <-time.After(fastDelay):
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// NoWaitBackoffStrategy immediately returns without waiting (for testing)
+type NoWaitBackoffStrategy struct{}
+
+func (n *NoWaitBackoffStrategy) Wait(ctx context.Context, delay time.Duration) error {
+	// Still check for context cancellation even with no wait
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
+}
+
+// RecoveryManager handles automatic recovery from common errors
+type RecoveryManager struct {
+	gitClient       GitClient
+	publisher       WikiPublisher
+	logger          *log.Logger
+	backoffStrategy BackoffStrategy
+}
+
+// NewRecoveryManager creates a new recovery manager with default backoff strategy
 func NewRecoveryManager(gitClient GitClient, publisher WikiPublisher) *RecoveryManager {
 	return &RecoveryManager{
-		gitClient: gitClient,
-		publisher: publisher,
-		logger:    log.New(log.Writer(), "[RECOVERY] ", log.LstdFlags),
+		gitClient:       gitClient,
+		publisher:       publisher,
+		logger:          log.New(log.Writer(), "[RECOVERY] ", log.LstdFlags),
+		backoffStrategy: &DefaultBackoffStrategy{},
+	}
+}
+
+// NewRecoveryManagerWithBackoff creates a new recovery manager with custom backoff strategy
+func NewRecoveryManagerWithBackoff(gitClient GitClient, publisher WikiPublisher, backoff BackoffStrategy) *RecoveryManager {
+	return &RecoveryManager{
+		gitClient:       gitClient,
+		publisher:       publisher,
+		logger:          log.New(log.Writer(), "[RECOVERY] ", log.LstdFlags),
+		backoffStrategy: backoff,
 	}
 }
 
@@ -56,12 +120,10 @@ func (rm *RecoveryManager) ExecuteWithRecovery(ctx context.Context, operation Re
 			// Wait for retry delay if specified
 			if retryAfter := beaverErr.GetRetryAfter(); retryAfter != nil {
 				rm.logger.Printf("Waiting %v before retry attempt %d", *retryAfter, attempt+1)
-				select {
-				case <-time.After(*retryAfter):
-					continue
-				case <-ctx.Done():
-					return ctx.Err()
+				if err := rm.backoffStrategy.Wait(ctx, *retryAfter); err != nil {
+					return err
 				}
+				continue
 			}
 		}
 
@@ -77,11 +139,8 @@ func (rm *RecoveryManager) ExecuteWithRecovery(ctx context.Context, operation Re
 			}
 
 			rm.logger.Printf("Retrying operation in %v (attempt %d/%d)", delay, attempt+1, maxRetries)
-			select {
-			case <-time.After(delay):
-				continue
-			case <-ctx.Done():
-				return ctx.Err()
+			if err := rm.backoffStrategy.Wait(ctx, delay); err != nil {
+				return err
 			}
 		}
 	}
