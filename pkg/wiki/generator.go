@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/analytics"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 // Generator generates Wiki content from GitHub Issues
@@ -19,15 +22,35 @@ type Generator struct {
 	config            *config.Config
 	navigationManager *NavigationManager
 	sidebarGenerator  *SidebarGenerator
+	markdownParser    goldmark.Markdown
 }
 
 // NewGenerator creates a new Wiki generator
 func NewGenerator() *Generator {
+	// Configure goldmark with GitHub Flavored Markdown support
+	markdownParser := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,           // GitHub Flavored Markdown
+			extension.Table,         // Table support
+			extension.Strikethrough, // Strikethrough support
+			extension.TaskList,      // Task list support
+		),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(), // Auto-generate heading IDs
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(), // Render line breaks as <br>
+			html.WithXHTML(),     // Use XHTML-style self-closing tags
+			html.WithUnsafe(),    // Allow raw HTML (needed for Beaver's custom content)
+		),
+	)
+
 	return &Generator{
 		templateManager:   NewTemplateManager(),
 		config:            config.GetConfig(),
 		navigationManager: NewNavigationManager(),
 		sidebarGenerator:  NewSidebarGenerator(),
+		markdownParser:    markdownParser,
 	}
 }
 
@@ -1327,12 +1350,11 @@ func (g *Generator) convertMarkdownToHTML(markdown, title string) string {
 	return html
 }
 
-// markdownToHTMLContent converts markdown content to HTML
+// markdownToHTMLContent converts markdown content to HTML using goldmark
 func (g *Generator) markdownToHTMLContent(markdown string) string {
-	// Split into lines for processing
+	// Skip the main title line (already in HTML header)
 	lines := strings.Split(markdown, "\n")
-	var htmlLines []string
-	inTable := false
+	var filteredLines []string
 
 	for i, line := range lines {
 		// Skip the main title and blockquote metadata (already in HTML header)
@@ -1342,69 +1364,18 @@ func (g *Generator) markdownToHTMLContent(markdown string) string {
 		if i <= 3 && (strings.HasPrefix(line, "> ") || strings.TrimSpace(line) == "") {
 			continue
 		}
-
-		// Headers
-		if strings.HasPrefix(line, "### ") {
-			htmlLines = append(htmlLines, fmt.Sprintf("<h3>%s</h3>", strings.TrimPrefix(line, "### ")))
-		} else if strings.HasPrefix(line, "## ") {
-			htmlLines = append(htmlLines, fmt.Sprintf("<h2>%s</h2>", strings.TrimPrefix(line, "## ")))
-		} else if strings.HasPrefix(line, "# ") {
-			htmlLines = append(htmlLines, fmt.Sprintf("<h1>%s</h1>", strings.TrimPrefix(line, "# ")))
-			// Tables
-		} else if strings.HasPrefix(line, "|") && strings.HasSuffix(line, "|") {
-			if !inTable {
-				htmlLines = append(htmlLines, "<table>")
-				inTable = true
-			}
-			if !strings.Contains(line, "---") { // Skip separator lines
-				cells := strings.Split(strings.Trim(line, "|"), "|")
-				var htmlCells []string
-				for _, cell := range cells {
-					htmlCells = append(htmlCells, fmt.Sprintf("<td>%s</td>", strings.TrimSpace(cell)))
-				}
-				htmlLines = append(htmlLines, fmt.Sprintf("<tr>%s</tr>", strings.Join(htmlCells, "")))
-			}
-		} else {
-			if inTable {
-				htmlLines = append(htmlLines, "</table>")
-				inTable = false
-			}
-
-			// Horizontal rules
-			if line == "---" {
-				htmlLines = append(htmlLines, "<hr>")
-				// Blockquotes
-			} else if strings.HasPrefix(line, "> ") {
-				htmlLines = append(htmlLines, fmt.Sprintf("<blockquote>%s</blockquote>", strings.TrimPrefix(line, "> ")))
-				// Empty lines
-			} else if strings.TrimSpace(line) == "" {
-				htmlLines = append(htmlLines, "<br>")
-				// Regular content with inline formatting
-			} else {
-				formatted := g.formatInlineMarkdown(line)
-				htmlLines = append(htmlLines, fmt.Sprintf("<p>%s</p>", formatted))
-			}
-		}
+		filteredLines = append(filteredLines, line)
 	}
 
-	// Close table if still open
-	if inTable {
-		htmlLines = append(htmlLines, "</table>")
+	processedMarkdown := strings.Join(filteredLines, "\n")
+
+	// Use goldmark to convert markdown to HTML
+	var buf bytes.Buffer
+	if err := g.markdownParser.Convert([]byte(processedMarkdown), &buf); err != nil {
+		slog.Error("Failed to convert markdown to HTML", "error", err)
+		// Fallback: return as plain text wrapped in pre tag
+		return fmt.Sprintf("<pre>%s</pre>", processedMarkdown)
 	}
 
-	return strings.Join(htmlLines, "\n")
-}
-
-// formatInlineMarkdown handles bold, links, and other inline formatting
-func (g *Generator) formatInlineMarkdown(text string) string {
-	// Bold text - handle multiple patterns
-	text = regexp.MustCompile(`\*\*([^*]+?)\*\*`).ReplaceAllString(text, "<strong>$1</strong>")
-
-	// Links
-	text = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`).ReplaceAllString(text, `<a href="$2">$1</a>`)
-
-	// Clean up any remaining bold formatting issues
-	text = regexp.MustCompile(`\*\*`).ReplaceAllString(text, "")
-
-	return text
+	return buf.String()
 }
