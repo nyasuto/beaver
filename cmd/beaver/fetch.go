@@ -9,8 +9,8 @@ import (
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/content"
 	"github.com/nyasuto/beaver/pkg/github"
-	"github.com/nyasuto/beaver/pkg/wiki"
 	"github.com/spf13/cobra"
 )
 
@@ -173,7 +173,7 @@ func outputJSON(result *models.IssueResult, outputFile string) error {
 	}
 
 	if outputFile != "" {
-		err = wiki.WriteFileUTF8(outputFile, string(jsonData), 0600)
+		err = content.WriteFileUTF8(outputFile, string(jsonData), 0600)
 		if err != nil {
 			return fmt.Errorf("❌ ファイル書き込みエラー: %w", err)
 		}
@@ -273,7 +273,7 @@ func outputSummary(result *models.IssueResult, outputFile string) error {
 	summaryText := output.String()
 
 	if outputFile != "" {
-		err := wiki.WriteFileUTF8(outputFile, summaryText, 0600)
+		err := content.WriteFileUTF8(outputFile, summaryText, 0600)
 		if err != nil {
 			return fmt.Errorf("❌ ファイル書き込みエラー: %w", err)
 		}

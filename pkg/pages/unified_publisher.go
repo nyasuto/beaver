@@ -11,7 +11,7 @@ import (
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
-	"github.com/nyasuto/beaver/pkg/wiki"
+	"github.com/nyasuto/beaver/pkg/content"
 )
 
 // PublishingMode defines the type of publishing output
@@ -87,8 +87,8 @@ type SiteFeatures struct {
 // UnifiedPagesPublisher provides consolidated publishing functionality
 type UnifiedPagesPublisher struct {
 	config      *UnifiedPagesConfig
-	gitClient   wiki.GitClient
-	tempManager *wiki.TempManager
+	gitClient   content.GitClient
+	tempManager *content.TempManager
 	logger      *slog.Logger
 }
 
@@ -98,12 +98,12 @@ func NewUnifiedPagesPublisher(config *UnifiedPagesConfig) (*UnifiedPagesPublishe
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	gitClient, err := wiki.NewDefaultGitClient()
+	gitClient, err := content.NewDefaultGitClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create git client: %w", err)
 	}
 
-	tempManager := wiki.NewTempManager("", "beaver-pages")
+	tempManager := content.NewTempManager("", "beaver-pages")
 
 	return &UnifiedPagesPublisher{
 		config:      config,
@@ -190,7 +190,7 @@ func (p *UnifiedPagesPublisher) deployToGitHubPages(ctx context.Context) error {
 
 	p.logger.Info("Cloning repository for deployment", "url", repoURL, "branch", p.config.GitHubPages.Branch)
 
-	if err := p.gitClient.Clone(ctx, repoURL, deployDir, &wiki.CloneOptions{
+	if err := p.gitClient.Clone(ctx, repoURL, deployDir, &content.CloneOptions{
 		Branch: p.config.GitHubPages.Branch,
 		Depth:  1,
 	}); err != nil {
@@ -240,7 +240,7 @@ func (p *UnifiedPagesPublisher) generateHTMLContent(issues []models.Issue) error
 	p.logger.Info("Generating HTML content using site generator")
 
 	// Use wiki generator for HTML mode (legacy site package removed)
-	generator := wiki.NewGenerator()
+	generator := content.NewGenerator()
 
 	projectName := p.config.Site.Title
 	if projectName == "" {
@@ -273,7 +273,7 @@ func (p *UnifiedPagesPublisher) generateJekyllContent(issues []models.Issue) err
 	p.logger.Info("Generating Jekyll content using wiki generator")
 
 	// Create publisher configuration
-	publisherConfig := wiki.NewPublisherConfig(p.config.Owner, p.config.Repository, "")
+	publisherConfig := content.NewPublisherConfig(p.config.Owner, p.config.Repository, "")
 
 	// Create GitHub Pages configuration
 	pagesConfig := config.GitHubPagesConfig{
@@ -286,7 +286,7 @@ func (p *UnifiedPagesPublisher) generateJekyllContent(issues []models.Issue) err
 	}
 
 	// Create GitHub Pages publisher
-	publisher, err := wiki.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
+	publisher, err := content.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create GitHub Pages publisher: %w", err)
 	}
@@ -315,7 +315,7 @@ func (p *UnifiedPagesPublisher) createOrphanBranch(ctx context.Context, deployDi
 	}
 
 	// Clone the repository with minimal depth
-	if err := p.gitClient.Clone(ctx, repoURL, deployDir, &wiki.CloneOptions{
+	if err := p.gitClient.Clone(ctx, repoURL, deployDir, &content.CloneOptions{
 		Depth: 1,
 	}); err != nil {
 		return fmt.Errorf("failed to clone repository: %w", err)
@@ -430,7 +430,7 @@ func (p *UnifiedPagesPublisher) commitAndPush(ctx context.Context, deployDir str
 	}
 
 	// Push to GitHub Pages branch
-	pushOptions := &wiki.PushOptions{
+	pushOptions := &content.PushOptions{
 		Remote: "origin",
 		Branch: p.config.GitHubPages.Branch,
 		Force:  false,

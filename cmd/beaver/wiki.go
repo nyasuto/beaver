@@ -13,26 +13,26 @@ import (
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/content"
 	"github.com/nyasuto/beaver/pkg/github"
-	"github.com/nyasuto/beaver/pkg/wiki"
 )
 
 // Service factory functions for dependency injection in tests
 var (
-	wikiGitHubServiceFactory = func(token string) github.ServiceInterface {
+	contentGitHubServiceFactory = func(token string) github.ServiceInterface {
 		return github.NewService(token)
 	}
-	wikiGeneratorFactory = func() *wiki.Generator {
-		return wiki.NewGenerator()
+	contentGeneratorFactory = func() *content.Generator {
+		return content.NewGenerator()
 	}
-	wikiPublisherFactory = func(publisherConfig *wiki.PublisherConfig) (wiki.WikiPublisher, error) {
+	wikiPublisherFactory = func(publisherConfig *content.PublisherConfig) (content.WikiPublisher, error) {
 		// For v1.0, we only support GitHub Pages
 		pagesConfig := config.GitHubPagesConfig{
 			Theme:        "minima",
 			Branch:       "gh-pages",
 			EnableSearch: false,
 		}
-		return wiki.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
+		return content.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
 	}
 	wikiViperGetString = func(key string) string {
 		return viper.GetString(key)
@@ -62,7 +62,7 @@ var (
 )
 
 var wikiCmd = &cobra.Command{
-	Use:   "wiki",
+	Use:   "content",
 	Short: "ナレッジベース生成・デプロイコマンド群",
 	Long: `GitHub IssuesからGitHub Pagesドキュメントを生成します。
 
@@ -160,7 +160,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create GitHub service
-	githubService := wikiGitHubServiceFactory(token)
+	githubService := contentGitHubServiceFactory(token)
 
 	// Create query
 	query := models.DefaultIssueQuery(fmt.Sprintf("%s/%s", owner, repo))
@@ -184,7 +184,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create Wiki generator
-	generator := wikiGeneratorFactory()
+	generator := contentGeneratorFactory()
 	projectName := fmt.Sprintf("%s/%s", owner, repo)
 
 	// Generate Wiki pages
@@ -197,7 +197,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Generate and save pages
-	pages := make([]*wiki.WikiPage, 0, 4)
+	pages := make([]*content.WikiPage, 0, 4)
 
 	// Index page
 	slog.Info("  📄 Generating index page")
@@ -248,7 +248,7 @@ func runGenerateWiki(cmd *cobra.Command, args []string) error {
 	// Auto-publish if requested
 	if wikiPublish {
 		slog.Info("🚀 Deploying to GitHub Pages")
-		publisherConfig := &wiki.PublisherConfig{
+		publisherConfig := &content.PublisherConfig{
 			Owner:                    owner,
 			Repository:               repo,
 			Token:                    token,
@@ -318,7 +318,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create WikiPages from files
-	var pages []*wiki.WikiPage
+	var pages []*content.WikiPage
 	slog.Info("📤 Loading wiki pages", "count", len(wikiFiles))
 	for i, wikiFile := range wikiFiles {
 		if wikiBatch > 0 && i >= wikiBatch {
@@ -326,7 +326,7 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 			break
 		}
 
-		content, err := wikiOsReadFile(wikiFile) // #nosec G304 -- CLI tool reads user-specified files
+		fileContent, err := wikiOsReadFile(wikiFile) // #nosec G304 -- CLI tool reads user-specified files
 		if err != nil {
 			return fmt.Errorf("failed to read wiki file %s: %w", wikiFile, err)
 		}
@@ -334,16 +334,16 @@ func runPublishWiki(cmd *cobra.Command, args []string) error {
 		filename := filepath.Base(wikiFile)
 		title := filename[:len(filename)-3] // Remove .md extension
 
-		page := &wiki.WikiPage{
+		page := &content.WikiPage{
 			Title:    title,
-			Content:  string(content),
+			Content:  string(fileContent),
 			Filename: filename,
 		}
 		pages = append(pages, page)
 	}
 
 	// Create publisher and publish pages
-	publisherConfig := &wiki.PublisherConfig{
+	publisherConfig := &content.PublisherConfig{
 		Owner:                    owner,
 		Repository:               repo,
 		Token:                    token,
@@ -401,7 +401,7 @@ func runListWiki(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create publisher to access existing Wiki
-	publisherConfig := &wiki.PublisherConfig{
+	publisherConfig := &content.PublisherConfig{
 		Owner:                    owner,
 		Repository:               repo,
 		Token:                    token,
@@ -465,7 +465,7 @@ func parseRepoPath(repoPath string) (owner, repo string, err error) {
 	return parts[0], parts[1], nil
 }
 
-func saveWikiPage(page *wiki.WikiPage, outputDir string) error {
+func saveWikiPage(page *content.WikiPage, outputDir string) error {
 	filename := filepath.Join(outputDir, page.Filename)
 	return wikiOsWriteFile(filename, []byte(page.Content), 0644) // #nosec G306 -- CLI tool generates files with standard permissions
 }

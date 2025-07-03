@@ -160,8 +160,8 @@ jobs:
           fi
           
           # Run tests with timing
-          echo "⏱️ Running pkg/wiki performance tests"
-          go test -v -timeout=30s ./pkg/wiki/... -run TestWiki
+          echo "⏱️ Running pkg/content performance tests"
+          go test -v -timeout=30s ./pkg/content/... -run TestContent
           
           echo "⏱️ Running classification performance tests"
           go test -v -timeout=30s ./pkg/classification/... -run TestClassification
