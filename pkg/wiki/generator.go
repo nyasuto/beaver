@@ -32,7 +32,7 @@ func NewGenerator() *Generator {
 // now returns the current time in the configured timezone
 func (g *Generator) now() time.Time {
 	timestamp := g.config.Now()
-	slog.Info("🦫 GENERATOR DEBUG: Creating timestamp for wiki generation", 
+	slog.Info("🦫 GENERATOR DEBUG: Creating timestamp for wiki generation",
 		"timestamp", timestamp.Format("2006-01-02 15:04:05 MST"))
 	return timestamp
 }
@@ -1205,12 +1205,12 @@ func (g *Generator) GenerateDeveloperDashboard(issues []models.Issue, projectNam
 	}
 
 	generatedAt := g.now()
-	slog.Info("🏠 HOMEPAGE DEBUG: Generating developer dashboard", 
+	slog.Info("🏠 HOMEPAGE DEBUG: Generating developer dashboard",
 		"timestamp", generatedAt.Format("2006-01-02 15:04:05 MST"),
 		"total_issues", len(issues),
 		"open_issues", openIssues,
 		"closed_issues", closedIssues)
-	
+
 	data := DeveloperDashboardData{
 		ProjectName:    projectName,
 		GeneratedAt:    generatedAt,

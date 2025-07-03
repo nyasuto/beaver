@@ -388,13 +388,13 @@ func (c *Config) Now() time.Time {
 	if err != nil {
 		// Fallback to UTC if timezone loading fails
 		utcTime := time.Now().UTC()
-		slog.Info("🕐 TIMESTAMP DEBUG: Timezone loading failed, using UTC", 
+		slog.Info("🕐 TIMESTAMP DEBUG: Timezone loading failed, using UTC",
 			"timestamp", utcTime.Format("2006-01-02 15:04:05 UTC"))
 		return utcTime
 	}
 	currentTime := time.Now().In(location)
-	slog.Info("🕐 TIMESTAMP DEBUG: Generated timestamp", 
-		"timezone", location.String(), 
+	slog.Info("🕐 TIMESTAMP DEBUG: Generated timestamp",
+		"timezone", location.String(),
 		"timestamp", currentTime.Format("2006-01-02 15:04:05 MST"))
 	return currentTime
 }

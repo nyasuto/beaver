@@ -89,10 +89,10 @@ Example:
 func runBuildCommand(cmd *cobra.Command, args []string) error {
 	buildLogger := logger.WithComponent("build")
 	buildLogger.Info("Starting beaver build command")
-	
+
 	// Log current UTC and local time for debugging
 	now := time.Now()
-	slog.Info("🚀 BUILD DEBUG: Starting build", 
+	slog.Info("🚀 BUILD DEBUG: Starting build",
 		"utc_time", now.UTC().Format("2006-01-02 15:04:05 UTC"),
 		"local_time", now.Format("2006-01-02 15:04:05 MST"))
 
