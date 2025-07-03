@@ -225,9 +225,9 @@ jobs:
           # Create clean state directory
           mkdir -p .beaver
 
-          # Generate site content using Beaver's Go HTML generator with error handling
+          # Generate site content using Beaver's Wiki generator (Issue #367 developer dashboard) with error handling
           set +e
-          ./bin/beaver site build --output _site
+          ./bin/beaver build --project-path . --output _site
           build_exit_code=$?
           set -e
           
