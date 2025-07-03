@@ -63,8 +63,6 @@ var initCmd = &cobra.Command{
 var (
 	incrementalBuild bool
 	forceRebuild     bool
-	notifyOnSuccess  bool
-	notifyOnFailure  bool
 	stateFile        string
 	maxItems         int
 )
@@ -80,15 +78,10 @@ var buildCmd = &cobra.Command{
   --state-file     インクリメンタル状態ファイルのパス
   --max-items      1回の更新で処理する最大アイテム数
 
-通知オプション:
-  --notify-success 成功時にSlack/Teams通知を送信
-  --notify-failure 失敗時にSlack/Teams通知を送信
-
 Example:
   beaver build                    # 通常のビルド
   beaver build --incremental      # インクリメンタルビルド
-  beaver build --force-rebuild    # 完全再構築
-  beaver build --notify-success   # 成功時通知付き`,
+  beaver build --force-rebuild    # 完全再構築`,
 	RunE: runBuildCommand,
 }
 
@@ -98,31 +91,11 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 
 	// Get GitHub Actions context if available
 	var githubCtx *actions.GitHubContext
-	var notifier *actions.Notifier
 
 	if actions.IsGitHubActions() {
 		if ctx, err := actions.GetGitHubContext(); err == nil {
 			githubCtx = ctx
 			actions.LogInfo(fmt.Sprintf("Running in GitHub Actions: %s", actions.GetUpdateReason(ctx)))
-		}
-	}
-
-	// Setup notifications if configured
-	if (notifyOnSuccess || notifyOnFailure) && githubCtx != nil {
-		// Load notification config from environment
-		notificationConfig := actions.NotificationConfig{
-			Slack: actions.SlackConfig{
-				WebhookURL: os.Getenv("SLACK_WEBHOOK_URL"),
-				Channel:    os.Getenv("SLACK_CHANNEL"),
-				Username:   "Beaver Wiki Bot",
-				IconEmoji:  ":beaver:",
-			},
-			Teams: actions.TeamsConfig{
-				WebhookURL: os.Getenv("TEAMS_WEBHOOK_URL"),
-			},
-		}
-		if notificationConfig.Slack.WebhookURL != "" || notificationConfig.Teams.WebhookURL != "" {
-			notifier = actions.NewNotifier(notificationConfig)
 		}
 	}
 
@@ -143,9 +116,6 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		buildLogger.Error("Failed to load configuration", "error", err)
-		if notifier != nil && notifyOnFailure && githubCtx != nil {
-			notifier.SendWikiUpdateNotification(githubCtx, false, fmt.Sprintf("設定読み込みエラー: %v", err))
-		}
 		return fmt.Errorf("❌ 設定読み込みエラー: %w", err)
 	}
 	buildLogger.Info("Configuration loaded", "project", cfg.Project.Name, "repository", cfg.Project.Repository)
@@ -342,24 +312,6 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("📄 総ファイルサイズ: %.2f KB\n", float64(totalSize)/1024)
 	fmt.Printf("📊 処理したIssues: %d件\n", len(issuesForProcessing))
 	fmt.Printf("📝 生成したページ: %d件\n", len(wikiPages))
-
-	// Send success notification if configured
-	if notifier != nil && notifyOnSuccess && githubCtx != nil {
-		message := fmt.Sprintf("Wiki更新完了: %d件のIssueを処理し、%d個のページを生成しました",
-			len(issuesForProcessing), len(wikiPages))
-		if isIncremental {
-			message = fmt.Sprintf("インクリメンタルWiki更新完了: %d件のIssueを処理し、%d個のページを生成しました",
-				len(issuesForProcessing), len(wikiPages))
-		}
-		results := notifier.SendWikiUpdateNotification(githubCtx, true, message)
-		for _, result := range results {
-			if result.Success {
-				buildLogger.Info("Notification sent successfully", "channel", result.Channel)
-			} else {
-				buildLogger.Warn("Failed to send notification", "channel", result.Channel, "error", result.Error)
-			}
-		}
-	}
 
 	fmt.Println("🦫 Beaver Build完了!")
 	buildLogger.Info("Build command completed successfully")
@@ -559,8 +511,6 @@ func init() {
 	// Build command flags
 	buildCmd.Flags().BoolVar(&incrementalBuild, "incremental", false, "インクリメンタルビルドを実行 (前回更新以降の変更のみ)")
 	buildCmd.Flags().BoolVar(&forceRebuild, "force-rebuild", false, "すべてのIssueを再処理 (完全再構築)")
-	buildCmd.Flags().BoolVar(&notifyOnSuccess, "notify-success", false, "成功時にSlack/Teams通知を送信")
-	buildCmd.Flags().BoolVar(&notifyOnFailure, "notify-failure", false, "失敗時にSlack/Teams通知を送信")
 	buildCmd.Flags().StringVar(&stateFile, "state-file", "", "インクリメンタル状態ファイルのパス (デフォルト: .beaver/incremental-state.json)")
 	buildCmd.Flags().IntVar(&maxItems, "max-items", 100, "1回の更新で処理する最大アイテム数")
 }
