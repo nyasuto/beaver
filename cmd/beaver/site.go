@@ -307,7 +307,7 @@ func deployToGitHubPages(sourceDir, owner, repo string, deployLogger *slog.Logge
 	deployLogger.Info("Starting GitHub Pages deployment", "source", sourceDir, "repo", fmt.Sprintf("%s/%s", owner, repo))
 
 	// Create GitClient
-	gitClient, err := wiki.NewCmdGitClient()
+	gitClient, err := wiki.NewDefaultGitClient()
 	if err != nil {
 		return fmt.Errorf("failed to create git client: %w", err)
 	}

@@ -34,7 +34,7 @@ func (a *GitAuthenticator) SetupCredentials(workDir string) error {
 			})
 	}
 
-	gitClient, err := NewCmdGitClient()
+	gitClient, err := NewDefaultGitClient()
 	if err != nil {
 		return NewWikiError(ErrorTypeConfiguration, "setup_credentials", err,
 			"Gitクライアントの初期化に失敗しました", 0,
@@ -109,7 +109,7 @@ func (a *GitAuthenticator) Cleanup(workDir string) error {
 		return nil
 	}
 
-	gitClient, err := NewCmdGitClient()
+	gitClient, err := NewDefaultGitClient()
 	if err != nil {
 		// Not fatal during cleanup
 		return nil

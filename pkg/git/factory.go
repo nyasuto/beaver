@@ -3,16 +3,13 @@ package git
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // GitClientType represents the type of Git client to use
 type GitClientType string
 
 const (
-	// ClientTypeCmd uses command-line git
-	ClientTypeCmd GitClientType = "cmd"
-	// ClientTypeGoGit uses go-git library
-	ClientTypeGoGit GitClientType = "gogit"
 	// ClientTypeInMemory uses pure in-memory git operations
 	ClientTypeInMemory GitClientType = "inmemory"
 )
@@ -20,10 +17,6 @@ const (
 // NewGitClient creates a new Git client based on the specified type
 func NewGitClient(clientType GitClientType) (GitClient, error) {
 	switch clientType {
-	case ClientTypeCmd:
-		return NewCmdGitClient()
-	case ClientTypeGoGit:
-		return NewGoGitClient(), nil
 	case ClientTypeInMemory:
 		return NewInMemoryGitClientAdapter(), nil
 	default:
@@ -34,14 +27,6 @@ func NewGitClient(clientType GitClientType) (GitClient, error) {
 // NewGitClientWithAuth creates a new Git client with authentication
 func NewGitClientWithAuth(clientType GitClientType, token string) (GitClient, error) {
 	switch clientType {
-	case ClientTypeCmd:
-		// Command-line client uses environment variables for auth
-		if token != "" {
-			os.Setenv("GITHUB_TOKEN", token)
-		}
-		return NewCmdGitClient()
-	case ClientTypeGoGit:
-		return NewGoGitClientWithAuth(token), nil
 	case ClientTypeInMemory:
 		return NewInMemoryGitClientAdapterWithAuth(token), nil
 	default:
@@ -50,16 +35,14 @@ func NewGitClientWithAuth(clientType GitClientType, token string) (GitClient, er
 }
 
 // NewDefaultGitClient creates a Git client with default configuration
-// Defaults to InMemory for high performance, with fallback to go-git
+// Uses high-performance InMemory implementation
 func NewDefaultGitClient() (GitClient, error) {
-	// Use InMemoryGitClient as the preferred implementation for performance
 	client := NewInMemoryGitClientAdapter()
 	return client, nil
 }
 
 // NewDefaultGitClientWithAuth creates a Git client with authentication using default configuration
 func NewDefaultGitClientWithAuth(token string) (GitClient, error) {
-	// Use InMemoryGitClient as the preferred implementation for performance
 	client := NewInMemoryGitClientAdapterWithAuth(token)
 	return client, nil
 }
@@ -76,4 +59,14 @@ func NewInMemoryGitClientAdapterWithAuth(token string) GitClient {
 	return &InMemoryGitClientAdapter{
 		client: NewInMemoryGitClientWithAuth(token),
 	}
+}
+
+// IsGitRepository checks if directory is a git repository
+func IsGitRepository(dir string) bool {
+	// Check if .git directory exists
+	gitDir := filepath.Join(dir, ".git")
+	if info, err := os.Stat(gitDir); err == nil {
+		return info.IsDir()
+	}
+	return false
 }

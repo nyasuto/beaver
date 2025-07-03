@@ -2,44 +2,10 @@ package git
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestNewGoGitClient(t *testing.T) {
-	client := NewGoGitClient()
-	assert.NotNil(t, client)
-
-	goGitClient, ok := client.(*GoGitClient)
-	assert.True(t, ok)
-	assert.Equal(t, 30*time.Second, goGitClient.timeout)
-}
-
-func TestNewGoGitClientWithAuth(t *testing.T) {
-	token := "test-token"
-	client := NewGoGitClientWithAuth(token)
-	assert.NotNil(t, client)
-
-	goGitClient, ok := client.(*GoGitClient)
-	assert.True(t, ok)
-	assert.NotNil(t, goGitClient.auth)
-}
-
-func TestCreateInMemoryWorkspace(t *testing.T) {
-	client := NewGoGitClient()
-
-	repo, fs, err := client.CreateInMemoryWorkspace()
-	require.NoError(t, err)
-	assert.NotNil(t, repo)
-	assert.NotNil(t, fs)
-}
-
-func TestGoGitClientInterfaceCompliance(t *testing.T) {
-	// Ensure GoGitClient implements GitClient interface
-	var _ GitClient = (*GoGitClient)(nil)
-}
 
 func TestFactoryNewGitClient(t *testing.T) {
 	tests := []struct {
@@ -49,16 +15,10 @@ func TestFactoryNewGitClient(t *testing.T) {
 		expectedType interface{}
 	}{
 		{
-			name:         "GoGit client",
-			clientType:   ClientTypeGoGit,
+			name:         "InMemory client",
+			clientType:   ClientTypeInMemory,
 			shouldError:  false,
-			expectedType: (*GoGitClient)(nil),
-		},
-		{
-			name:         "Cmd client",
-			clientType:   ClientTypeCmd,
-			shouldError:  false,
-			expectedType: (*CmdGitClient)(nil),
+			expectedType: (*InMemoryGitClientAdapter)(nil),
 		},
 		{
 			name:        "Invalid client type",
