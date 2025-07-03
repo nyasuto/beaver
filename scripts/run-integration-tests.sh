@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Beaver Integration Test Runner
-# This script helps set up and run integration tests safely
+# This script helps set up and run Go integration tests safely
 
 set -e
 
@@ -42,15 +42,15 @@ OPTIONS:
     -r, --run               Run integration tests
     -c, --check             Check environment configuration
     -a, --all               Run all tests including performance tests
-    -q, --quick             Run quick tests only (skip performance)
+    -q, --quick             Run quick tests only (skip long-running tests)
     -v, --verbose           Enable verbose output
     --dry-run              Show what would be executed without running tests
 
 EXAMPLES:
     $0 --setup              # Setup environment interactively
     $0 --check              # Check if environment is ready
-    $0 --run                # Run integration tests
-    $0 --quick              # Run quick integration tests
+    $0 --run                # Run Go integration tests
+    $0 --quick              # Run quick Go tests only
     $0 --all --verbose      # Run all tests with verbose output
 
 ENVIRONMENT VARIABLES:
@@ -60,7 +60,7 @@ ENVIRONMENT VARIABLES:
     BEAVER_TEST_REPO_NAME      Test repository name
     BEAVER_DEBUG               Set to 'true' for debug output
 
-For more information, see: tests/integration/README.md
+NOTE: This runner now focuses on Go integration tests.
 EOF
 }
 
@@ -99,13 +99,13 @@ check_environment() {
         print_success "BEAVER_TEST_REPO_NAME is set to '${BEAVER_TEST_REPO_NAME}'"
     fi
     
-    # Check if Python is available
-    if ! command -v python &> /dev/null; then
-        print_error "Python is not installed or not in PATH"
+    # Check if Go is available
+    if ! command -v go &> /dev/null; then
+        print_error "Go is not installed or not in PATH"
         issues=$((issues + 1))
     else
-        local python_version=$(python --version 2>&1)
-        print_success "Python is available: ${python_version}"
+        local go_version=$(go version | awk '{print $3}')
+        print_success "Go is available: ${go_version}"
     fi
     
     # Check if git is available
@@ -213,7 +213,7 @@ EOF
 run_tests() {
     local test_args=""
     
-    print_status "Running Beaver Python integration tests..."
+    print_status "Running Beaver Go integration tests..."
     
     # Check environment first
     if ! check_environment; then
@@ -226,44 +226,42 @@ run_tests() {
         test_args="-v"
     fi
     
-    # Check if Python integration tests exist
-    local has_python_tests=false
-    if [[ -d "./tests/integration/python" ]] && [[ -f "./tests/integration/python/requirements.txt" ]]; then
-        has_python_tests=true
-        print_status "Found Python integration tests"
-    else
-        print_error "No Python integration tests found!"
-        print_status "Expected: Python tests in ./tests/integration/python/ with requirements.txt"
-        exit 1
-    fi
-    
     local test_results=0
     
-    # Run Python tests
-    if [[ "$has_python_tests" == "true" ]]; then
-        if [[ "$DRY_RUN" == "true" ]]; then
-            print_status "Dry run mode - would execute Python tests:"
-            echo "cd tests/integration/python && python -m pytest -v --tb=short"
-        else
-            print_status "Running Python integration tests..."
-            echo
-            
-            # Check if uv is available
-            if ! command -v uv &> /dev/null; then
-                print_warning "uv not available, skipping Python integration tests"
+    # Check if Beaver binary exists
+    if [[ ! -f "./bin/beaver" ]]; then
+        print_status "Building Beaver binary..."
+        if ! go build -o ./bin/beaver ./cmd/beaver; then
+            print_error "Failed to build Beaver binary"
+            exit 1
+        fi
+        print_success "Beaver binary built successfully"
+    fi
+    
+    # Run Go integration tests
+    if [[ "$DRY_RUN" == "true" ]]; then
+        print_status "Dry run mode - would execute Go tests:"
+        echo "go test -v -timeout=5m ./... -tags=integration"
+    else
+        print_status "Running Go integration tests..."
+        echo
+        
+        # Run integration tests with timeout
+        if [[ "$QUICK_TESTS" == "true" ]]; then
+            print_status "Running quick Go tests..."
+            if ! timeout 300 go test $test_args -timeout=3m ./pkg/... -short; then
+                print_error "Quick Go tests failed!"
+                test_results=1
             else
-                cd tests/integration/python
-                # Install dependencies with uv
-                if ! uv sync; then
-                    print_error "Failed to install Python dependencies with uv"
-                    test_results=1
-                elif ! uv run pytest -v --tb=short; then
-                    print_error "Python integration tests failed!"
-                    test_results=1
-                else
-                    print_success "Python integration tests passed!"
-                fi
-                cd - > /dev/null
+                print_success "Quick Go tests passed!"
+            fi
+        else
+            print_status "Running full Go integration tests..."
+            if ! timeout 600 go test $test_args -timeout=5m ./... -tags=integration; then
+                print_error "Go integration tests failed!"
+                test_results=1
+            else
+                print_success "Go integration tests passed!"
             fi
         fi
     fi
@@ -276,13 +274,13 @@ run_tests() {
     
     if [[ $test_results -eq 0 ]]; then
         echo
-        print_success "Python integration tests passed!"
+        print_success "Go integration tests passed!"
         if [[ -n "${BEAVER_TEST_REPO_OWNER}" && -n "${BEAVER_TEST_REPO_NAME}" ]]; then
             print_status "Check your GitHub Wiki at: https://github.com/${BEAVER_TEST_REPO_OWNER}/${BEAVER_TEST_REPO_NAME}/wiki"
         fi
     else
         echo
-        print_error "Python integration tests failed!"
+        print_error "Go integration tests failed!"
         print_status "Check the output above for error details"
         exit 1
     fi
