@@ -37,6 +37,8 @@ body {
 main {
     clear: both;
     padding-top: 20px;
+    margin-right: 320px; /* 目次サイドバー分のマージン確保 */
+    min-height: 500px; /* 最小高度確保 */
 }
 
 /* ===== ヘッダー ===== */
@@ -486,6 +488,11 @@ pre code {
         max-height: none;
     }
     
+    /* メインエリアのタブレット対応 */
+    main {
+        margin-right: 0; /* サイドバーマージン解除 */
+    }
+    
     .toc-list {
         max-height: 40vh;
     }
@@ -559,6 +566,11 @@ pre code {
     .table-of-contents {
         margin: 15px 0;
         border-radius: 6px;
+    }
+    
+    /* メインエリアのモバイル対応 */
+    main {
+        margin-right: 0; /* サイドバーマージン解除 */
     }
     
     .toc-header {

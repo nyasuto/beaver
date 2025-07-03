@@ -1324,7 +1324,7 @@ func (g *Generator) convertMarkdownToHTML(markdown, title string) string {
     <div class="container">
         <header>
             <h1>🦫 Beaver - AI知識ダム</h1>
-            <p> Generated %s</p>
+            <p>Generated %s</p>
         </header>
         %s
         <main>
