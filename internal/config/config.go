@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -386,9 +387,16 @@ func (c *Config) Now() time.Time {
 	location, err := c.GetTimezone()
 	if err != nil {
 		// Fallback to UTC if timezone loading fails
-		return time.Now().UTC()
+		utcTime := time.Now().UTC()
+		slog.Info("🕐 TIMESTAMP DEBUG: Timezone loading failed, using UTC", 
+			"timestamp", utcTime.Format("2006-01-02 15:04:05 UTC"))
+		return utcTime
 	}
-	return time.Now().In(location)
+	currentTime := time.Now().In(location)
+	slog.Info("🕐 TIMESTAMP DEBUG: Generated timestamp", 
+		"timezone", location.String(), 
+		"timestamp", currentTime.Format("2006-01-02 15:04:05 MST"))
+	return currentTime
 }
 
 // GetGitHubPagesTargets returns all GitHub Pages output targets
