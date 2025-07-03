@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
-	"github.com/nyasuto/beaver/pkg/site"
 	"github.com/nyasuto/beaver/pkg/wiki"
 )
 
@@ -239,20 +239,30 @@ func (c *UnifiedPagesConfig) Validate() error {
 func (p *UnifiedPagesPublisher) generateHTMLContent(issues []models.Issue) error {
 	p.logger.Info("Generating HTML content using site generator")
 
-	// Convert UnifiedPagesConfig to SiteConfig
-	siteConfig := p.convertToSiteConfig()
+	// Use wiki generator for HTML mode (legacy site package removed)
+	generator := wiki.NewGenerator()
 
-	// Create HTML generator
-	generator := site.NewHTMLGenerator(siteConfig)
-
-	// Generate the complete site
 	projectName := p.config.Site.Title
 	if projectName == "" {
 		projectName = p.config.Repository
 	}
 
-	if err := generator.GenerateSite(issues, projectName); err != nil {
-		return fmt.Errorf("failed to generate HTML site: %w", err)
+	// Generate all pages using wiki system
+	pages, err := generator.GenerateAllPages(issues, projectName)
+	if err != nil {
+		return fmt.Errorf("failed to generate wiki pages: %w", err)
+	}
+
+	// Save pages as HTML files
+	for _, page := range pages {
+		outputPath := filepath.Join(p.config.OutputDir, page.Filename)
+		if !strings.HasSuffix(outputPath, ".html") {
+			outputPath = strings.TrimSuffix(outputPath, ".md") + ".html"
+		}
+
+		if err := os.WriteFile(outputPath, []byte(page.Content), 0600); err != nil {
+			return fmt.Errorf("failed to write page %s: %w", outputPath, err)
+		}
 	}
 
 	p.logger.Info("HTML content generation completed", "output_dir", p.config.OutputDir)
@@ -432,56 +442,6 @@ func (p *UnifiedPagesPublisher) commitAndPush(ctx context.Context, deployDir str
 
 	p.logger.Info("Successfully committed and pushed changes", "branch", p.config.GitHubPages.Branch)
 	return nil
-}
-
-// convertToSiteConfig converts UnifiedPagesConfig to site.SiteConfig for HTML generation
-func (p *UnifiedPagesPublisher) convertToSiteConfig() *site.SiteConfig {
-	// Build base URL and path
-	baseURL := p.config.GitHubPages.BaseURL
-	if baseURL == "" {
-		baseURL = fmt.Sprintf("https://%s.github.io/%s", p.config.Owner, p.config.Repository)
-	}
-
-	basePath := "/" + p.config.Repository
-	if p.config.GitHubPages.Domain != "" {
-		basePath = "" // Custom domain doesn't need repo path
-	}
-
-	// Convert navigation items
-	var navigation []site.NavItem
-	for _, nav := range p.config.Site.Navigation {
-		navigation = append(navigation, site.NavItem{
-			Title: nav.Name,
-			URL:   basePath + nav.URL,
-			Icon:  nav.Icon,
-		})
-	}
-
-	// Default navigation if none specified
-	if len(navigation) == 0 {
-		navigation = []site.NavItem{
-			{Title: "ホーム", URL: basePath + "/", Icon: "🏠"},
-			{Title: "課題", URL: basePath + "/issues.html", Icon: "📋"},
-			{Title: "戦略", URL: basePath + "/strategy.html", Icon: "🎯"},
-			{Title: "解決策", URL: basePath + "/troubleshooting.html", Icon: "🔧"},
-		}
-	}
-
-	// Build site configuration
-	return &site.SiteConfig{
-		Title:         p.config.Site.Title,
-		Description:   fmt.Sprintf("AI駆動型ナレッジベース - %s から自動生成", p.config.Repository),
-		BaseURL:       baseURL,
-		BasePath:      basePath,
-		OutputDir:     p.config.OutputDir,
-		Theme:         p.config.Site.Theme,
-		Language:      "ja",
-		Author:        p.config.Owner,
-		Navigation:    navigation,
-		ServiceWorker: p.config.Site.Features.ServiceWorker,
-		Minify:        p.config.Site.Features.MinifyHTML,
-		Analytics:     p.config.GitHubPages.Analytics,
-	}
 }
 
 // LoadConfigFromDeploymentConfig loads pages configuration from deployment-config.yml

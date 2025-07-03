@@ -23,6 +23,7 @@ var (
 	pagesDeploy      bool
 	pagesConfigPath  string
 	pagesOpenBrowser bool
+	servePort        int
 )
 
 // pagesCmd is the unified pages command that replaces site and wiki commands
