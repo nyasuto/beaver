@@ -140,7 +140,7 @@ jobs:
 
       - name: 📦 Install uv
         if: hashFiles('tests/integration/python/pyproject.toml') != ''
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
 
