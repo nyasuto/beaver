@@ -1,5 +1,5 @@
 project:
-  name: "Beaver - AIエージェント知識ダム構築ツール"
+  name: "Beaver - GitHub知識ベース構築ツール"
   repository: "nyasuto/beaver"
 
 sources:
@@ -16,10 +16,8 @@ output:
     enable_search: false
     branch: "gh-pages"
 
-ai:
-  provider: "openai"      # openai, anthropic, local
-  model: "gpt-4"
-  features:
-    summarization: true   # 要約
-    categorization: true  # 分類
-    troubleshooting: true # トラブルシューティング
+classification:
+  # Rule-based classification settings
+  min_confidence: 0.5
+  enable_patterns: true
+  custom_rules: []

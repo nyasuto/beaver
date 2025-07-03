@@ -68,47 +68,6 @@ func createTestAnalyticsTimelineTrends() *analytics.TimelineTrends {
 	}
 }
 
-func createTestAIPatternAnalysisResult() *analytics.AIPatternAnalysisResult {
-	return &analytics.AIPatternAnalysisResult{
-		Patterns: []analytics.AILearningPattern{
-			{
-				PatternID:   "pattern-1",
-				Type:        "learning",
-				Title:       "Rapid Learning Pattern",
-				Description: "Fast adaptation to new technologies",
-				Confidence:  0.9,
-				Evidence:    []string{"Quick issue resolution", "Efficient debugging"},
-				Insights:    []string{"Strong problem-solving skills"},
-				Stage:       "advanced",
-				SuccessRate: 0.85,
-				Frequency:   10,
-			},
-		},
-		Analytics: analytics.AIAnalyticsMetrics{
-			SuccessRate:      0.85,
-			LearningVelocity: 2.5,
-			PatternDiversity: 0.75,
-			ConsistencyScore: 0.9,
-			TrendDirection:   "improving",
-		},
-		Trajectory: analytics.AILearningTrajectory{
-			Domain:        "software_development",
-			ProgressScore: 0.8,
-		},
-		PredictiveInsights: analytics.AIPredictiveInsights{
-			NextLearningOpportunities: []string{
-				"Explore advanced design patterns",
-				"Learn new testing frameworks",
-			},
-			RiskAreas: []string{
-				"Technical debt accumulation",
-			},
-		},
-		ProcessingTime: 1.23,
-		ErrorMessage:   "",
-	}
-}
-
 func TestSaveAnalysisResult(t *testing.T) {
 	t.Run("successful save", func(t *testing.T) {
 		result := &PatternAnalysisResult{
@@ -118,7 +77,6 @@ func TestSaveAnalysisResult(t *testing.T) {
 			TimeRange:   "2023-01-01 - 2023-12-31",
 			Timeline:    createTestAnalyticsTimeline(),
 			Trends:      createTestAnalyticsTimelineTrends(),
-			AIAnalysis:  createTestAIPatternAnalysisResult(),
 		}
 
 		// Create temporary file
@@ -215,7 +173,6 @@ func TestPatternAnalysisResultStructure(t *testing.T) {
 		TimeRange:   "2023-01-01 - 2023-12-31",
 		Timeline:    createTestAnalyticsTimeline(),
 		Trends:      createTestAnalyticsTimelineTrends(),
-		AIAnalysis:  createTestAIPatternAnalysisResult(),
 		Author:      "test-author",
 		IncludedGit: true,
 		AnalysisConfig: AnalysisConfig{
@@ -571,39 +528,6 @@ func TestTimelineTrends(t *testing.T) {
 	}
 }
 
-func TestAIPatternAnalysisResult(t *testing.T) {
-	result := createTestAIPatternAnalysisResult()
-
-	if len(result.Patterns) != 1 {
-		t.Errorf("Expected 1 pattern, got %d", len(result.Patterns))
-	}
-
-	pattern := result.Patterns[0]
-	if pattern.Type != "learning" {
-		t.Errorf("Expected pattern type 'learning', got '%s'", pattern.Type)
-	}
-
-	if result.Analytics.SuccessRate != 0.85 {
-		t.Errorf("Expected success rate 0.85, got %f", result.Analytics.SuccessRate)
-	}
-
-	if result.Trajectory.Domain != "software_development" {
-		t.Errorf("Expected domain 'software_development', got '%s'", result.Trajectory.Domain)
-	}
-
-	if len(result.PredictiveInsights.NextLearningOpportunities) != 2 {
-		t.Errorf("Expected 2 learning opportunities, got %d", len(result.PredictiveInsights.NextLearningOpportunities))
-	}
-
-	if result.ProcessingTime != 1.23 {
-		t.Errorf("Expected processing time 1.23, got %f", result.ProcessingTime)
-	}
-
-	if result.ErrorMessage != "" {
-		t.Errorf("Expected empty error message, got '%s'", result.ErrorMessage)
-	}
-}
-
 func TestAnalyzeEdgeCases(t *testing.T) {
 	t.Run("empty timeline", func(t *testing.T) {
 		timeline := &analytics.Timeline{
@@ -616,22 +540,22 @@ func TestAnalyzeEdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("nil AI analysis", func(t *testing.T) {
+	t.Run("nil trends", func(t *testing.T) {
 		result := &PatternAnalysisResult{
 			Repository:  "test/repo",
-			AIAnalysis:  nil, // Nil AI analysis should be handled
+			Trends:      nil,
 			TotalEvents: 0,
 		}
 
 		data, err := json.Marshal(result)
 		if err != nil {
-			t.Errorf("Should handle nil AI analysis: %v", err)
+			t.Errorf("Should handle nil trends: %v", err)
 		}
 
 		var unmarshaled PatternAnalysisResult
 		err = json.Unmarshal(data, &unmarshaled)
 		if err != nil {
-			t.Errorf("Should unmarshal with nil AI analysis: %v", err)
+			t.Errorf("Should unmarshal with nil trends: %v", err)
 		}
 	})
 
@@ -660,7 +584,6 @@ func BenchmarkSaveAnalysisResult(b *testing.B) {
 		TotalEvents: 100,
 		Timeline:    createTestAnalyticsTimeline(),
 		Trends:      createTestAnalyticsTimelineTrends(),
-		AIAnalysis:  createTestAIPatternAnalysisResult(),
 	}
 
 	b.ResetTimer()
@@ -690,7 +613,6 @@ func BenchmarkJSONSerialization(b *testing.B) {
 		TotalEvents: 100,
 		Timeline:    createTestAnalyticsTimeline(),
 		Trends:      createTestAnalyticsTimelineTrends(),
-		AIAnalysis:  createTestAIPatternAnalysisResult(),
 	}
 
 	b.ResetTimer()

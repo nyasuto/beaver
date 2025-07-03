@@ -82,14 +82,6 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 
 	// Initialize analytics components
 	timelineProcessor := analytics.NewTimelineProcessor(cfg.Project.Repository)
-	aiService := analytics.NewAIPatternService()
-
-	// Check AI service dependencies
-	if err := aiService.CheckPythonDependencies(ctx); err != nil {
-		analyzeLogger.Warn("AI pattern recognition unavailable", "error", err)
-		fmt.Printf("⚠️  AI分析が利用できません: %v\n", err)
-		fmt.Println("📝 基本的なタイムライン分析のみ実行します...")
-	}
 
 	// Collect development events from GitHub Issues
 	var allEvents []analytics.TimelineEvent
@@ -155,20 +147,8 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 	// Get timeline metrics
 	metrics := timeline.GetTimelineMetrics()
 
-	// Perform AI pattern analysis if available
-	var aiResult *analytics.AIPatternAnalysisResult
-	fmt.Println("🤖 AI学習パターン分析を実行中...")
-	aiResult, err = aiService.AnalyzePatterns(ctx, allEvents, author)
-	if err != nil {
-		analyzeLogger.Warn("AI pattern analysis failed", "error", err)
-		fmt.Printf("⚠️  AI分析エラー: %v\n", err)
-	} else if aiResult.ErrorMessage != "" {
-		analyzeLogger.Warn("AI pattern analysis error", "error_message", aiResult.ErrorMessage)
-		fmt.Printf("⚠️  AI分析エラー: %s\n", aiResult.ErrorMessage)
-	} else {
-		fmt.Printf("✅ AI分析完了: %d個のパターンを検出 (%.2f秒)\n",
-			len(aiResult.Patterns), aiResult.ProcessingTime)
-	}
+	// AI pattern analysis is not available in this version
+	fmt.Println("💡 基本的なタイムライン分析を実行中...")
 
 	// Create analysis result
 	result := &PatternAnalysisResult{
@@ -179,7 +159,6 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 		Timeline:    timeline,
 		Trends:      trends,
 		Metrics:     &metrics,
-		AIAnalysis:  aiResult,
 		Author:      author,
 		IncludedGit: includeGit,
 		AnalysisConfig: AnalysisConfig{
@@ -197,18 +176,8 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("📋 基本パターン: %d件\n", len(trends.Patterns))
 	fmt.Printf("💡 基本洞察: %d件\n", len(trends.Insights))
 
-	// Display AI analysis results if available
-	if result.AIAnalysis != nil && result.AIAnalysis.ErrorMessage == "" {
-		fmt.Println("\n🤖 AI学習パターン分析:")
-		fmt.Printf("🔍 AIパターン検出: %d件\n", len(result.AIAnalysis.Patterns))
-		fmt.Printf("📊 成功率: %.1f%%\n", result.AIAnalysis.Analytics.SuccessRate*100)
-		fmt.Printf("🚀 学習速度: %.2f パターン/月\n", result.AIAnalysis.Analytics.LearningVelocity)
-		fmt.Printf("🌟 パターン多様性: %.2f\n", result.AIAnalysis.Analytics.PatternDiversity)
-		fmt.Printf("🎯 一貫性スコア: %.2f\n", result.AIAnalysis.Analytics.ConsistencyScore)
-		fmt.Printf("📈 トレンド: %s\n", result.AIAnalysis.Analytics.TrendDirection)
-		fmt.Printf("👤 ドメイン: %s\n", result.AIAnalysis.Trajectory.Domain)
-		fmt.Printf("📈 進歩スコア: %.1f%%\n", result.AIAnalysis.Trajectory.ProgressScore*100)
-	}
+	// AI analysis is not available in this version
+	fmt.Println("\n💡 AI分析は現在利用できません（基本タイムライン分析のみ）")
 
 	if verbose {
 		fmt.Println("\n🔍 詳細パターン:")
@@ -224,32 +193,8 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		// Display detailed AI analysis if available
-		if result.AIAnalysis != nil && result.AIAnalysis.ErrorMessage == "" {
-			fmt.Println("\n🤖 詳細AI学習パターン:")
-			for i, pattern := range result.AIAnalysis.Patterns {
-				fmt.Printf("  %d. [%s] %s (信頼度: %.2f, 成功率: %.1f%%)\n",
-					i+1, pattern.Type, pattern.Title, pattern.Confidence, pattern.SuccessRate*100)
-				fmt.Printf("     段階: %s, 頻度: %d\n", pattern.Stage, pattern.Frequency)
-				if len(pattern.Insights) > 0 {
-					fmt.Printf("     洞察: %s\n", pattern.Insights[0])
-				}
-			}
-
-			if len(result.AIAnalysis.PredictiveInsights.NextLearningOpportunities) > 0 {
-				fmt.Println("\n🔮 学習機会予測:")
-				for i, opportunity := range result.AIAnalysis.PredictiveInsights.NextLearningOpportunities {
-					fmt.Printf("  %d. %s\n", i+1, opportunity)
-				}
-			}
-
-			if len(result.AIAnalysis.PredictiveInsights.RiskAreas) > 0 {
-				fmt.Println("\n⚠️  リスク領域:")
-				for i, risk := range result.AIAnalysis.PredictiveInsights.RiskAreas {
-					fmt.Printf("  %d. %s\n", i+1, risk)
-				}
-			}
-		}
+		// AI analysis features are not available in this version
+		fmt.Println("\n💡 詳細AI分析は将来のバージョンで提供予定です")
 	}
 
 	// Save results to file
@@ -272,17 +217,16 @@ func runAnalyzePatternsCommand(cmd *cobra.Command, args []string) error {
 
 // PatternAnalysisResult represents the complete analysis result
 type PatternAnalysisResult struct {
-	Repository     string                             `json:"repository"`
-	AnalyzedAt     time.Time                          `json:"analyzed_at"`
-	TotalEvents    int                                `json:"total_events"`
-	TimeRange      string                             `json:"time_range"`
-	Timeline       *analytics.Timeline                `json:"timeline"`
-	Trends         *analytics.TimelineTrends          `json:"trends"`
-	Metrics        *analytics.TimelineMetrics         `json:"metrics"`
-	AIAnalysis     *analytics.AIPatternAnalysisResult `json:"ai_analysis,omitempty"`
-	Author         string                             `json:"author,omitempty"`
-	IncludedGit    bool                               `json:"included_git"`
-	AnalysisConfig AnalysisConfig                     `json:"analysis_config"`
+	Repository     string                     `json:"repository"`
+	AnalyzedAt     time.Time                  `json:"analyzed_at"`
+	TotalEvents    int                        `json:"total_events"`
+	TimeRange      string                     `json:"time_range"`
+	Timeline       *analytics.Timeline        `json:"timeline"`
+	Trends         *analytics.TimelineTrends  `json:"trends"`
+	Metrics        *analytics.TimelineMetrics `json:"metrics"`
+	Author         string                     `json:"author,omitempty"`
+	IncludedGit    bool                       `json:"included_git"`
+	AnalysisConfig AnalysisConfig             `json:"analysis_config"`
 }
 
 // AnalysisConfig represents the configuration used for analysis

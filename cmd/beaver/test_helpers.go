@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nyasuto/beaver/internal/ai"
 	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/github"
@@ -206,43 +205,6 @@ func (f *TestFixtures) CreateTestIssueResult(issueCount int) *models.IssueResult
 			Remaining: 4999,
 			ResetTime: time.Now().Add(1 * time.Hour),
 		},
-	}
-}
-
-// CreateTestAIResponse creates a standard AI response
-func (f *TestFixtures) CreateTestAIResponse() *ai.SummarizationResponse {
-	category := "feature"
-	return &ai.SummarizationResponse{
-		Summary:        "This is a test AI summary",
-		KeyPoints:      []string{"Key point 1", "Key point 2"},
-		Category:       &category,
-		Complexity:     "medium",
-		ProviderUsed:   ai.ProviderOpenAI,
-		ModelUsed:      "gpt-4",
-		ProcessingTime: 1.5,
-		TokenUsage: map[string]int{
-			"prompt_tokens":     100,
-			"completion_tokens": 50,
-			"total_tokens":      150,
-		},
-	}
-}
-
-// CreateTestBatchAIResponse creates a standard batch AI response
-func (f *TestFixtures) CreateTestBatchAIResponse(resultCount int) *ai.BatchSummarizationResponse {
-	results := make([]ai.SummarizationResponse, resultCount)
-	for i := range resultCount {
-		response := f.CreateTestAIResponse()
-		response.Summary = fmt.Sprintf("Summary for issue %d", i+1)
-		results[i] = *response
-	}
-
-	return &ai.BatchSummarizationResponse{
-		TotalProcessed: resultCount,
-		TotalFailed:    0,
-		ProcessingTime: 3.5,
-		Results:        results,
-		FailedIssues:   []ai.FailedIssue{},
 	}
 }
 
