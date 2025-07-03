@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -1283,11 +1281,7 @@ func (g *Generator) GenerateDeveloperDashboard(issues []models.Issue, projectNam
 func (g *Generator) GenerateHTMLPages(issues []models.Issue, projectName string) ([]*HTMLPage, error) {
 	var htmlPages []*HTMLPage
 
-	// Generate CSS file first
-	if err := g.generateCSSFile(); err != nil {
-		slog.Error("Failed to generate CSS file", "error", err)
-		// Continue with HTML generation even if CSS fails
-	}
+	// Note: CSS and JS files are now independent static assets in assets/ directory
 
 	// Generate HTML version of developer dashboard (index.html)
 	dashboardPage, err := g.GenerateDeveloperDashboard(issues, projectName)
@@ -1313,6 +1307,9 @@ func (g *Generator) GenerateHTMLPages(issues []models.Issue, projectName string)
 func (g *Generator) convertMarkdownToHTML(markdown, title string) string {
 	timestamp := g.now().Format("2006-01-02 15:04")
 
+	// Generate table of contents and processed content
+	toc, processedContent := g.generateTableOfContents(markdown)
+
 	html := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1329,22 +1326,33 @@ func (g *Generator) convertMarkdownToHTML(markdown, title string) string {
             <h1>🦫 Beaver - AIエージェント知識ダム構築ツール - Developer Dashboard</h1>
             <p>🎯 <strong>30秒で情報発見</strong> - 開発者ワークフロー最適化ダッシュボード | Generated %s</p>
         </header>
+        %s
         <main>
 %s
         </main>
+        <button id="back-to-top" class="back-to-top" aria-label="ページトップに戻る">
+            <span>↑</span>
+        </button>
     </div>
     <script src="assets/js/main.js"></script>
 </body>
-</html>`, title, timestamp, g.markdownToHTMLContent(markdown))
+</html>`, title, timestamp, toc, processedContent)
 
 	return html
 }
 
-// markdownToHTMLContent converts markdown content to HTML using goldmark
-func (g *Generator) markdownToHTMLContent(markdown string) string {
-	// Skip the main title line (already in HTML header)
+// TOCItem represents a table of contents item
+type TOCItem struct {
+	Level int
+	Title string
+	ID    string
+}
+
+// generateTableOfContents extracts headings and generates TOC HTML and processed content
+func (g *Generator) generateTableOfContents(markdown string) (string, string) {
 	lines := strings.Split(markdown, "\n")
 	var filteredLines []string
+	var tocItems []TOCItem
 
 	for i, line := range lines {
 		// Skip the main title and blockquote metadata (already in HTML header)
@@ -1354,313 +1362,108 @@ func (g *Generator) markdownToHTMLContent(markdown string) string {
 		if i <= 3 && (strings.HasPrefix(line, "> ") || strings.TrimSpace(line) == "") {
 			continue
 		}
+
+		// Process headings for TOC
+		if strings.HasPrefix(line, "## ") {
+			title := strings.TrimPrefix(line, "## ")
+			title = strings.TrimSpace(title)
+			id := g.generateHeadingID(title)
+			tocItems = append(tocItems, TOCItem{Level: 2, Title: title, ID: id})
+			// Add ID to the heading
+			line = fmt.Sprintf("## %s {#%s}", title, id)
+		} else if strings.HasPrefix(line, "### ") {
+			title := strings.TrimPrefix(line, "### ")
+			title = strings.TrimSpace(title)
+			id := g.generateHeadingID(title)
+			tocItems = append(tocItems, TOCItem{Level: 3, Title: title, ID: id})
+			// Add ID to the heading
+			line = fmt.Sprintf("### %s {#%s}", title, id)
+		}
+
 		filteredLines = append(filteredLines, line)
 	}
 
 	processedMarkdown := strings.Join(filteredLines, "\n")
 
+	// Convert markdown to HTML
+	htmlContent := g.markdownToHTMLContent(processedMarkdown)
+
+	// Generate TOC HTML
+	tocHTML := g.buildTOCHTML(tocItems)
+
+	return tocHTML, htmlContent
+}
+
+// generateHeadingID creates a URL-safe ID from heading text
+func (g *Generator) generateHeadingID(title string) string {
+	// Remove emojis and special characters, convert to lowercase
+	id := strings.ToLower(title)
+	// Replace spaces and special characters with hyphens
+	id = strings.ReplaceAll(id, " ", "-")
+	id = strings.ReplaceAll(id, ":", "")
+	id = strings.ReplaceAll(id, "(", "")
+	id = strings.ReplaceAll(id, ")", "")
+	id = strings.ReplaceAll(id, ".", "")
+	id = strings.ReplaceAll(id, "#", "")
+	id = strings.ReplaceAll(id, "、", "")
+	id = strings.ReplaceAll(id, "。", "")
+	// Remove emojis (basic approach)
+	var result []rune
+	for _, r := range id {
+		if r <= 127 { // Keep ASCII only
+			result = append(result, r)
+		}
+	}
+	id = string(result)
+	// Clean up multiple hyphens
+	for strings.Contains(id, "--") {
+		id = strings.ReplaceAll(id, "--", "-")
+	}
+	id = strings.Trim(id, "-")
+	if id == "" {
+		id = "section"
+	}
+	return id
+}
+
+// buildTOCHTML constructs the table of contents HTML
+func (g *Generator) buildTOCHTML(items []TOCItem) string {
+	if len(items) == 0 {
+		return ""
+	}
+
+	var tocHTML strings.Builder
+	tocHTML.WriteString(`<nav class="table-of-contents" role="navigation" aria-label="目次">`)
+	tocHTML.WriteString(`<div class="toc-header">`)
+	tocHTML.WriteString(`<button class="toc-toggle" aria-expanded="true" aria-controls="toc-list">`)
+	tocHTML.WriteString(`<span class="toc-title">📋 目次</span>`)
+	tocHTML.WriteString(`<span class="toc-icon">▼</span>`)
+	tocHTML.WriteString(`</button>`)
+	tocHTML.WriteString(`</div>`)
+	tocHTML.WriteString(`<ul id="toc-list" class="toc-list">`)
+
+	for _, item := range items {
+		className := fmt.Sprintf("toc-level-%d", item.Level)
+		tocHTML.WriteString(fmt.Sprintf(`<li class="%s">`, className))
+		tocHTML.WriteString(fmt.Sprintf(`<a href="#%s" class="toc-link">%s</a>`, item.ID, item.Title))
+		tocHTML.WriteString(`</li>`)
+	}
+
+	tocHTML.WriteString(`</ul>`)
+	tocHTML.WriteString(`</nav>`)
+
+	return tocHTML.String()
+}
+
+// markdownToHTMLContent converts markdown content to HTML using goldmark
+func (g *Generator) markdownToHTMLContent(markdown string) string {
 	// Use goldmark to convert markdown to HTML
 	var buf bytes.Buffer
-	if err := g.markdownParser.Convert([]byte(processedMarkdown), &buf); err != nil {
+	if err := g.markdownParser.Convert([]byte(markdown), &buf); err != nil {
 		slog.Error("Failed to convert markdown to HTML", "error", err)
 		// Fallback: return as plain text wrapped in pre tag
-		return fmt.Sprintf("<pre>%s</pre>", processedMarkdown)
+		return fmt.Sprintf("<pre>%s</pre>", markdown)
 	}
 
 	return buf.String()
-}
-
-// generateCSSFile creates the responsive CSS file for the HTML pages
-func (g *Generator) generateCSSFile() error {
-	cssContent := `/* Beaver Knowledge Base - Responsive Styles */
-
-/* ベーススタイル */
-body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    margin: 0; 
-    padding: 20px; 
-    background: #f5f5f5;
-    line-height: 1.6;
-}
-
-.container { 
-    max-width: 1200px; 
-    margin: 0 auto; 
-    background: white; 
-    padding: 30px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-}
-
-/* ヘッダー */
-header { 
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-    color: white; 
-    padding: 30px; 
-    border-radius: 8px; 
-    margin-bottom: 30px; 
-    text-align: center; 
-}
-
-/* タイポグラフィ */
-h1 { 
-    margin: 0; 
-    font-size: 2em; 
-    word-wrap: break-word;
-}
-
-h2 { 
-    color: #333; 
-    border-bottom: 2px solid #667eea; 
-    padding-bottom: 10px; 
-    margin-top: 30px;
-    word-wrap: break-word;
-}
-
-h3 { 
-    color: #555; 
-    margin-top: 25px;
-    word-wrap: break-word;
-    line-height: 1.4;
-}
-
-/* テーブル */
-.table-container {
-    overflow-x: auto;
-    margin: 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin: 0;
-}
-
-table, th, td { 
-    border: 1px solid #ddd; 
-}
-
-th, td { 
-    padding: 12px; 
-    text-align: left;
-    min-width: 100px;
-}
-
-th { 
-    background-color: #f8f9fa; 
-    font-weight: 600; 
-}
-
-tr:nth-child(even) { 
-    background-color: #f8f9fa; 
-}
-
-/* リンク */
-a { 
-    color: #667eea; 
-    text-decoration: none;
-    word-wrap: break-word;
-}
-
-a:hover { 
-    text-decoration: underline; 
-}
-
-/* その他の要素 */
-strong { 
-    color: #333; 
-}
-
-hr { 
-    border: none; 
-    border-top: 1px solid #eee; 
-    margin: 30px 0; 
-}
-
-.urgent-section { 
-    background: #fff5f5; 
-    border-left: 4px solid #f56565; 
-    padding: 20px; 
-    margin: 20px 0; 
-    border-radius: 4px; 
-}
-
-.stats-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-    gap: 20px; 
-    margin: 20px 0; 
-}
-
-.stat-card { 
-    background: #f8f9fa; 
-    padding: 20px; 
-    border-radius: 8px; 
-    text-align: center; 
-}
-
-/* レスポンシブデザイン - タブレット */
-@media (max-width: 768px) {
-    body { 
-        padding: 10px; 
-    }
-    
-    .container { 
-        padding: 20px; 
-        border-radius: 0;
-        margin: 0;
-    }
-    
-    header { 
-        padding: 20px; 
-        margin-bottom: 20px;
-    }
-    
-    h1 { 
-        font-size: 1.5em; 
-    }
-    
-    h2 { 
-        font-size: 1.3em;
-        margin-top: 20px;
-    }
-    
-    h3 { 
-        font-size: 1.1em;
-        margin-top: 15px;
-    }
-    
-    .table-container {
-        margin: 15px 0;
-        border-radius: 6px;
-    }
-    
-    table {
-        font-size: 0.9em;
-    }
-    
-    th, td { 
-        padding: 8px; 
-        min-width: 80px;
-    }
-    
-    .stats-grid { 
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-        gap: 15px; 
-    }
-    
-    .stat-card { 
-        padding: 15px; 
-    }
-}
-
-/* レスポンシブデザイン - スマートフォン */
-@media (max-width: 480px) {
-    body { 
-        padding: 5px; 
-    }
-    
-    .container { 
-        padding: 15px; 
-    }
-    
-    header { 
-        padding: 15px; 
-    }
-    
-    h1 { 
-        font-size: 1.2em; 
-        line-height: 1.3;
-    }
-    
-    h2 { 
-        font-size: 1.1em;
-    }
-    
-    h3 { 
-        font-size: 1em;
-    }
-    
-    .table-container {
-        margin: 10px 0;
-        border-radius: 4px;
-    }
-    
-    table {
-        font-size: 0.8em;
-    }
-    
-    th, td { 
-        padding: 6px; 
-        min-width: 60px;
-        font-size: 0.9em;
-    }
-    
-    .stats-grid { 
-        grid-template-columns: 1fr; 
-        gap: 10px; 
-    }
-    
-    .stat-card { 
-        padding: 10px; 
-    }
-    
-    a {
-        display: inline-block;
-        word-break: break-all;
-    }
-}
-
-/* タッチデバイス対応 */
-@media (hover: none) {
-    a:hover {
-        text-decoration: none;
-    }
-    
-    a:active {
-        background-color: rgba(102, 126, 234, 0.1);
-        text-decoration: underline;
-    }
-}
-
-/* プリント対応 */
-@media print {
-    body {
-        background: white;
-        padding: 0;
-    }
-    
-    .container {
-        box-shadow: none;
-        border-radius: 0;
-        padding: 20px;
-    }
-    
-    header {
-        background: #667eea !important;
-        color: white !important;
-    }
-    
-    a {
-        color: #333 !important;
-        text-decoration: underline !important;
-    }
-}`
-
-	// Create the assets/css directory if it doesn't exist
-	cssDir := "_site/assets/css"
-	if err := os.MkdirAll(cssDir, 0755); err != nil {
-		return fmt.Errorf("failed to create CSS directory: %w", err)
-	}
-
-	// Write the CSS file
-	cssPath := filepath.Join(cssDir, "style.css")
-	if err := os.WriteFile(cssPath, []byte(cssContent), 0600); err != nil {
-		return fmt.Errorf("failed to write CSS file: %w", err)
-	}
-
-	slog.Info("CSS file generated successfully", "path", cssPath)
-	return nil
 }
