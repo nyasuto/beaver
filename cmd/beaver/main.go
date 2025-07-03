@@ -313,7 +313,6 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("📊 処理したIssues: %d件\n", len(issuesForProcessing))
 	fmt.Printf("📝 生成したページ: %d件\n", len(wikiPages))
 
-
 	fmt.Println("🦫 Beaver Build完了!")
 	buildLogger.Info("Build command completed successfully")
 	return nil
