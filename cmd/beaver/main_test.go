@@ -1,10 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -12,10 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nyasuto/beaver/internal/config"
-	"github.com/nyasuto/beaver/internal/models"
-	"github.com/nyasuto/beaver/pkg/github"
-	"github.com/nyasuto/beaver/pkg/wiki"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
