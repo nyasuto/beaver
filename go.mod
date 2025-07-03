@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.2
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/go-github/v60 v60.0.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
