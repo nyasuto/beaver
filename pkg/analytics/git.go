@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	gitpkg "github.com/nyasuto/beaver/pkg/git"
 )
 
@@ -209,10 +207,8 @@ func (cp *CommitPatterns) calculateMetrics() {
 
 // getCommitHistory retrieves Git commit history
 func (ga *GitAnalyzer) getCommitHistory(ctx context.Context, since *time.Time, maxCommits int) ([]GitCommit, error) {
-	// Try go-git object model first if client supports it
-	if _, ok := ga.gitClient.(*gitpkg.GoGitClient); ok {
-		return ga.getCommitHistoryWithGoGit(ctx, since, maxCommits)
-	}
+	// Use command-line approach for all clients
+	// (In-memory clients also support this interface)
 
 	// Fallback to command-line approach
 	options := &gitpkg.CommitHistoryOptions{
@@ -228,125 +224,6 @@ func (ga *GitAnalyzer) getCommitHistory(ctx context.Context, since *time.Time, m
 	}
 
 	return ga.parseGitLog(string(output))
-}
-
-// getCommitHistoryWithGoGit retrieves commit history using go-git object model
-func (ga *GitAnalyzer) getCommitHistoryWithGoGit(ctx context.Context, since *time.Time, maxCommits int) ([]GitCommit, error) {
-	repo, err := git.PlainOpen(ga.repoPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open repository: %w", err)
-	}
-
-	head, err := repo.Head()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get HEAD: %w", err)
-	}
-
-	logOptions := &git.LogOptions{
-		From: head.Hash(),
-	}
-	if since != nil {
-		logOptions.Since = since
-	}
-
-	commitIter, err := repo.Log(logOptions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get commit log: %w", err)
-	}
-	defer commitIter.Close()
-
-	var commits []GitCommit
-	count := 0
-
-	err = commitIter.ForEach(func(commit *object.Commit) error {
-		if maxCommits > 0 && count >= maxCommits {
-			return fmt.Errorf("max commits reached") // Stop iteration
-		}
-
-		gitCommit := GitCommit{
-			Hash:    commit.Hash.String(),
-			Author:  commit.Author.Name,
-			Email:   commit.Author.Email,
-			Date:    commit.Author.When,
-			Message: strings.TrimSpace(commit.Message),
-			Files:   []string{},
-		}
-
-		// Get file statistics
-		if count == 0 {
-			// For the first commit, compare with empty tree
-			gitCommit.Files, gitCommit.Additions, gitCommit.Deletions = ga.getCommitStats(commit, nil)
-		} else {
-			// For subsequent commits, compare with parent
-			if commit.NumParents() > 0 {
-				parent, err := commit.Parent(0)
-				if err == nil {
-					gitCommit.Files, gitCommit.Additions, gitCommit.Deletions = ga.getCommitStats(commit, parent)
-				}
-			}
-		}
-
-		commits = append(commits, gitCommit)
-		count++
-		return nil
-	})
-
-	if err != nil && err.Error() != "max commits reached" {
-		return nil, fmt.Errorf("failed to iterate commits: %w", err)
-	}
-
-	return commits, nil
-}
-
-// getCommitStats calculates file changes, additions, and deletions for a commit
-func (ga *GitAnalyzer) getCommitStats(commit, parent *object.Commit) ([]string, int, int) {
-	var files []string
-	var totalAdditions, totalDeletions int
-
-	currentTree, err := commit.Tree()
-	if err != nil {
-		return files, totalAdditions, totalDeletions
-	}
-
-	var parentTree *object.Tree
-	if parent != nil {
-		parentTree, err = parent.Tree()
-		if err != nil {
-			parentTree = nil
-		}
-	}
-
-	patch, err := currentTree.Patch(parentTree)
-	if err != nil {
-		return files, totalAdditions, totalDeletions
-	}
-
-	for _, filePatch := range patch.FilePatches() {
-		from, to := filePatch.Files()
-
-		var filename string
-		if to != nil {
-			filename = to.Path()
-		} else if from != nil {
-			filename = from.Path()
-		}
-
-		if filename != "" {
-			files = append(files, filename)
-		}
-
-		// Count additions and deletions
-		for _, chunk := range filePatch.Chunks() {
-			switch chunk.Type() {
-			case 1: // Addition
-				totalAdditions += strings.Count(chunk.Content(), "\n")
-			case 2: // Deletion
-				totalDeletions += strings.Count(chunk.Content(), "\n")
-			}
-		}
-	}
-
-	return files, totalAdditions, totalDeletions
 }
 
 // parseGitLog parses git log output into GitCommit structs

@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func BenchmarkCreateGoGitInMemoryWorkspace(b *testing.B) {
-	client := NewGoGitClient()
+func BenchmarkInMemoryWorkspaceCreation(b *testing.B) {
+	client := NewInMemoryGitClient()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		repo, fs, err := client.CreateInMemoryWorkspace()
+		repo, fs, err := client.CreateWorkspace()
 		if err != nil {
 			b.Fatalf("Failed to create in-memory workspace: %v", err)
 		}
@@ -19,92 +19,80 @@ func BenchmarkCreateGoGitInMemoryWorkspace(b *testing.B) {
 	}
 }
 
-func BenchmarkCmdGitClientCreation(b *testing.B) {
+func BenchmarkInMemoryGitClientCreation(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		client, err := NewCmdGitClient()
+		client := NewInMemoryGitClient()
+		_ = client
+	}
+}
+
+func BenchmarkDefaultGitClientCreation(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		client, err := NewDefaultGitClient()
 		if err != nil {
-			b.Fatalf("Failed to create cmd git client: %v", err)
+			b.Fatalf("Failed to create default git client: %v", err)
 		}
 		_ = client
 	}
 }
 
-func BenchmarkGoGitClientCreation(b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		client := NewGoGitClient()
-		_ = client
-	}
-}
-
-func BenchmarkCreatePureInMemoryWorkspace(b *testing.B) {
-	client := NewInMemoryGitClient()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		repo, fs, err := client.CreateWorkspace()
-		if err != nil {
-			b.Fatalf("Failed to create pure in-memory workspace: %v", err)
-		}
-		_ = repo
-		_ = fs
-	}
-}
-
-func TestPerformanceComparison(t *testing.T) {
+func TestInMemoryGitClientPerformance(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping performance test in short mode")
 	}
 
-	// Test existing GoGitClient in-memory workspace creation performance
-	goGitClient := NewGoGitClient()
+	// Test InMemoryGitClient performance
+	inMemoryClient := NewInMemoryGitClient()
 
-	// Benchmark existing GoGitClient in-memory workspace creation
 	start := time.Now()
-	for i := 0; i < 100; i++ {
-		repo, fs, err := goGitClient.CreateInMemoryWorkspace()
+	workspaceCount := 100
+	for i := 0; i < workspaceCount; i++ {
+		repo, fs, err := inMemoryClient.CreateWorkspace()
 		if err != nil {
 			t.Fatalf("Failed to create in-memory workspace: %v", err)
 		}
 		_ = repo
 		_ = fs
 	}
-	goGitDuration := time.Since(start)
+	inMemoryDuration := time.Since(start)
 
-	t.Logf("GoGitClient: Created 100 in-memory workspaces in %v (avg: %v per workspace)",
-		goGitDuration, goGitDuration/100)
+	t.Logf("InMemoryGitClient: Created %d in-memory workspaces in %v (avg: %v per workspace)",
+		workspaceCount, inMemoryDuration, inMemoryDuration/time.Duration(workspaceCount))
 
-	// Test new pure InMemoryGitClient performance
-	inMemoryClient := NewInMemoryGitClient()
+	// Performance validation
+	avgTimePerWorkspace := inMemoryDuration / time.Duration(workspaceCount)
+	if avgTimePerWorkspace > 10*time.Millisecond {
+		t.Logf("Warning: In-memory workspace creation took %v per workspace, might be slower than expected", avgTimePerWorkspace)
+	} else {
+		t.Logf("Good performance: In-memory workspace creation took %v per workspace", avgTimePerWorkspace)
+	}
+
+	// Test adapter performance
+	defaultClient, err := NewDefaultGitClient()
+	if err != nil {
+		t.Fatalf("Failed to create default git client: %v", err)
+	}
 
 	start = time.Now()
-	for i := 0; i < 100; i++ {
-		repo, fs, err := inMemoryClient.CreateWorkspace()
+	for i := 0; i < workspaceCount; i++ {
+		repo, fs, err := defaultClient.CreateInMemoryWorkspace()
 		if err != nil {
-			t.Fatalf("Failed to create pure in-memory workspace: %v", err)
+			t.Fatalf("Failed to create workspace via adapter: %v", err)
 		}
 		_ = repo
 		_ = fs
 	}
-	inMemoryDuration := time.Since(start)
+	adapterDuration := time.Since(start)
 
-	t.Logf("InMemoryGitClient: Created 100 pure in-memory workspaces in %v (avg: %v per workspace)",
-		inMemoryDuration, inMemoryDuration/100)
+	t.Logf("DefaultGitClient (adapter): Created %d workspaces in %v (avg: %v per workspace)",
+		workspaceCount, adapterDuration, adapterDuration/time.Duration(workspaceCount))
 
-	// Performance comparison
-	if inMemoryDuration < goGitDuration {
-		improvement := float64(goGitDuration) / float64(inMemoryDuration)
-		t.Logf("✅ Pure in-memory implementation is %.2fx faster than GoGitClient", improvement)
+	// Compare adapter vs direct performance
+	if adapterDuration < inMemoryDuration*2 {
+		t.Logf("✅ Adapter performance is reasonable (less than 2x overhead)")
 	} else {
-		t.Logf("⚠️ Pure in-memory implementation took %v vs GoGitClient %v", inMemoryDuration, goGitDuration)
-	}
-
-	// Basic performance validation
-	avgTimePerWorkspace := inMemoryDuration / 100
-	if avgTimePerWorkspace > 10*time.Millisecond {
-		t.Logf("Warning: Pure in-memory workspace creation took %v per workspace, might be slower than expected", avgTimePerWorkspace)
-	} else {
-		t.Logf("Good performance: Pure in-memory workspace creation took %v per workspace", avgTimePerWorkspace)
+		t.Logf("⚠️ Adapter has significant overhead: %v vs %v direct", adapterDuration, inMemoryDuration)
 	}
 }
