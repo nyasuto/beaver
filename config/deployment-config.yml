@@ -12,35 +12,17 @@ deployment:
     - staging
     - production
 
-# GitHub Pages deployment
+# GitHub Pages deployment (HTML-only mode)
 github_pages:
   enabled: true
   branch: "gh-pages"
   build_dir: "_site"
   custom_domain: ""
   
-  jekyll:
-    theme: "minima"
-    plugins:
-      - jekyll-feed
-      - jekyll-sitemap
-      - jekyll-seo-tag
-    
-    config:
-      title: "Beaver Documentation"
-      description: "AI agent knowledge dam construction tool"
-      baseurl: ""
-      markdown: "kramdown"
-      highlighter: "rouge"
-      
-      kramdown:
-        input: "GFM"
-        syntax_highlighter: "rouge"
-    
-    collections:
-      docs:
-        output: true
-        permalink: "/:collection/:name/"
+  html:
+    title: "Beaver Documentation"
+    description: "AI agent knowledge dam construction tool"
+    baseurl: ""
     
     navigation:
       - name: "Home"
@@ -63,7 +45,7 @@ github_pages:
   optimization:
     minify_html: true
     compress_images: true
-    generate_sitemap: true
+    generate_sitemap: false
 
 # GitHub Wiki deployment
 github_wiki:

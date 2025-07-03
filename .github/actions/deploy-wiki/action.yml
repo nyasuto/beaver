@@ -26,9 +26,9 @@ inputs:
     required: false
     default: 'incremental'
   theme:
-    description: 'Jekyll theme for GitHub Pages'
+    description: 'Theme for GitHub Pages (legacy parameter - no longer used)'
     required: false
-    default: 'minima'
+    default: 'html'
   enable-search:
     description: 'Enable search functionality'
     required: false
