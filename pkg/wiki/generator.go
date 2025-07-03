@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -47,6 +49,15 @@ type WikiPage struct {
 	Summary   string
 	Category  string
 	Tags      []string
+}
+
+// HTMLPage represents a generated HTML page
+type HTMLPage struct {
+	Title     string
+	Content   string // HTML content
+	Filename  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // ClassificationSummary contains classification statistics
@@ -1241,4 +1252,159 @@ func (g *Generator) GenerateDeveloperDashboard(issues []models.Issue, projectNam
 		Category:  "Dashboard",
 		Tags:      []string{"dashboard", "urgent", "developer", "quick-access"},
 	}, nil
+}
+
+// GenerateHTMLPages generates HTML pages directly from markdown templates
+func (g *Generator) GenerateHTMLPages(issues []models.Issue, projectName string) ([]*HTMLPage, error) {
+	var htmlPages []*HTMLPage
+
+	// Generate HTML version of developer dashboard (index.html)
+	dashboardPage, err := g.GenerateDeveloperDashboard(issues, projectName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate developer dashboard: %w", err)
+	}
+
+	// Convert markdown to HTML
+	htmlContent := g.convertMarkdownToHTML(dashboardPage.Content, dashboardPage.Title)
+
+	htmlPages = append(htmlPages, &HTMLPage{
+		Title:     dashboardPage.Title,
+		Content:   htmlContent,
+		Filename:  "index.html",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+	})
+
+	return htmlPages, nil
+}
+
+// convertMarkdownToHTML converts markdown content to HTML with proper structure
+func (g *Generator) convertMarkdownToHTML(markdown, title string) string {
+	timestamp := g.now().Format("2006-01-02 15:04")
+
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%s</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        header { background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+        h1 { margin: 0; font-size: 2em; }
+        h2 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-top: 30px; }
+        h3 { color: #555; margin-top: 25px; }
+        table { width: 100%%; border-collapse: collapse; margin: 20px 0; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        a { color: #667eea; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        strong { color: #333; }
+        hr { border: none; border-top: 1px solid #eee; margin: 30px 0; }
+        .urgent-section { background: #fff5f5; border-left: 4px solid #f56565; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🦫 Beaver - AIエージェント知識ダム構築ツール - Developer Dashboard</h1>
+            <p>🎯 <strong>30秒で情報発見</strong> - 開発者ワークフロー最適化ダッシュボード | Generated %s</p>
+        </header>
+        <main>
+%s
+        </main>
+    </div>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>`, title, timestamp, g.markdownToHTMLContent(markdown))
+
+	return html
+}
+
+// markdownToHTMLContent converts markdown content to HTML
+func (g *Generator) markdownToHTMLContent(markdown string) string {
+	// Split into lines for processing
+	lines := strings.Split(markdown, "\n")
+	var htmlLines []string
+	inTable := false
+
+	for i, line := range lines {
+		// Skip the main title and blockquote metadata (already in HTML header)
+		if i == 0 && strings.HasPrefix(line, "# ") {
+			continue
+		}
+		if i <= 3 && (strings.HasPrefix(line, "> ") || strings.TrimSpace(line) == "") {
+			continue
+		}
+
+		// Headers
+		if strings.HasPrefix(line, "### ") {
+			htmlLines = append(htmlLines, fmt.Sprintf("<h3>%s</h3>", strings.TrimPrefix(line, "### ")))
+		} else if strings.HasPrefix(line, "## ") {
+			htmlLines = append(htmlLines, fmt.Sprintf("<h2>%s</h2>", strings.TrimPrefix(line, "## ")))
+		} else if strings.HasPrefix(line, "# ") {
+			htmlLines = append(htmlLines, fmt.Sprintf("<h1>%s</h1>", strings.TrimPrefix(line, "# ")))
+			// Tables
+		} else if strings.HasPrefix(line, "|") && strings.HasSuffix(line, "|") {
+			if !inTable {
+				htmlLines = append(htmlLines, "<table>")
+				inTable = true
+			}
+			if !strings.Contains(line, "---") { // Skip separator lines
+				cells := strings.Split(strings.Trim(line, "|"), "|")
+				var htmlCells []string
+				for _, cell := range cells {
+					htmlCells = append(htmlCells, fmt.Sprintf("<td>%s</td>", strings.TrimSpace(cell)))
+				}
+				htmlLines = append(htmlLines, fmt.Sprintf("<tr>%s</tr>", strings.Join(htmlCells, "")))
+			}
+		} else {
+			if inTable {
+				htmlLines = append(htmlLines, "</table>")
+				inTable = false
+			}
+
+			// Horizontal rules
+			if line == "---" {
+				htmlLines = append(htmlLines, "<hr>")
+				// Blockquotes
+			} else if strings.HasPrefix(line, "> ") {
+				htmlLines = append(htmlLines, fmt.Sprintf("<blockquote>%s</blockquote>", strings.TrimPrefix(line, "> ")))
+				// Empty lines
+			} else if strings.TrimSpace(line) == "" {
+				htmlLines = append(htmlLines, "<br>")
+				// Regular content with inline formatting
+			} else {
+				formatted := g.formatInlineMarkdown(line)
+				htmlLines = append(htmlLines, fmt.Sprintf("<p>%s</p>", formatted))
+			}
+		}
+	}
+
+	// Close table if still open
+	if inTable {
+		htmlLines = append(htmlLines, "</table>")
+	}
+
+	return strings.Join(htmlLines, "\n")
+}
+
+// formatInlineMarkdown handles bold, links, and other inline formatting
+func (g *Generator) formatInlineMarkdown(text string) string {
+	// Bold text - handle multiple patterns
+	text = regexp.MustCompile(`\*\*([^*]+?)\*\*`).ReplaceAllString(text, "<strong>$1</strong>")
+
+	// Links
+	text = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`).ReplaceAllString(text, `<a href="$2">$1</a>`)
+
+	// Clean up any remaining bold formatting issues
+	text = regexp.MustCompile(`\*\*`).ReplaceAllString(text, "")
+
+	return text
 }
