@@ -265,7 +265,36 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	}
 	buildLogger.Info("Wiki content generated", "page_count", len(wikiPages))
 
-	// Save Wiki pages
+	// Generate HTML pages for GitHub Pages
+	buildLogger.Info("Generating HTML pages for GitHub Pages")
+	fmt.Printf("🌐 HTML生成中...\n")
+	htmlPages, err := wikiGenerator.GenerateHTMLPages(issuesForProcessing, cfg.Project.Name)
+	if err != nil {
+		buildLogger.Error("Failed to generate HTML pages", "error", err)
+		return fmt.Errorf("❌ HTML生成エラー: %w", err)
+	}
+	buildLogger.Info("HTML pages generated", "page_count", len(htmlPages))
+
+	// Create _site directory if it doesn't exist
+	siteDir := "_site"
+	if err := os.MkdirAll(siteDir, 0755); err != nil {
+		buildLogger.Error("Failed to create _site directory", "error", err)
+		return fmt.Errorf("❌ _siteディレクトリ作成エラー: %w", err)
+	}
+
+	// Save HTML pages to _site directory
+	buildLogger.Info("Saving HTML pages to _site directory")
+	for _, page := range htmlPages {
+		outputPath := fmt.Sprintf("%s/%s", siteDir, page.Filename)
+		if err := os.WriteFile(outputPath, []byte(page.Content), 0600); err != nil {
+			buildLogger.Error("Failed to save HTML page", "error", err, "output_path", outputPath)
+			return fmt.Errorf("❌ HTMLページ保存エラー: %w", err)
+		}
+		buildLogger.Info("HTML page saved", "output_path", outputPath, "size_bytes", len(page.Content))
+		fmt.Printf("✅ HTMLページ生成完了: %s\n", outputPath)
+	}
+
+	// Save Wiki pages (markdown files)
 	buildLogger.Info("Saving Wiki pages")
 	var totalSize int
 	for _, page := range wikiPages {
@@ -318,7 +347,8 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("📄 総ファイルサイズ: %.2f KB\n", float64(totalSize)/1024)
 	fmt.Printf("📊 処理したIssues: %d件\n", len(issuesForProcessing))
-	fmt.Printf("📝 生成したページ: %d件\n", len(wikiPages))
+	fmt.Printf("📝 生成したページ: %d件 (Markdown)\n", len(wikiPages))
+	fmt.Printf("🌐 生成したページ: %d件 (HTML)\n", len(htmlPages))
 
 	fmt.Println("🦫 Beaver Build完了!")
 	buildLogger.Info("Build command completed successfully")

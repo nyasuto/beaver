@@ -225,7 +225,7 @@ jobs:
           # Create clean state directory
           mkdir -p .beaver
 
-          # Generate site content using Beaver's Wiki generator (Issue #367 developer dashboard) with error handling
+          # Generate site content using Beaver's built-in HTML generator
           set +e
           ./bin/beaver build --force-rebuild 
           build_exit_code=$?
@@ -242,12 +242,11 @@ jobs:
             echo "<html><head><title>Beaver Knowledge Base</title></head><body><h1>Beaver Knowledge Base</h1><p>サイト生成中にエラーが発生しました。</p></body></html>" > _site/index.html
             echo "🔄 Created fallback site content"
           else
-            echo "✅ Beaver build successful, checking generated content"
+            echo "✅ Beaver build successful with Go HTML generator"
             
-            # Check if _site directory was created by beaver build
+            # Beaver now generates _site directory with HTML files directly
             if [ -d "_site" ]; then
-              echo "📁 Using Beaver-generated content from _site/"
-              # _site directory already exists with generated content
+              echo "📁 Using Beaver-generated HTML content from _site/"
               ls -la _site/
               
               # Add any missing assets if they exist in root
@@ -256,69 +255,11 @@ jobs:
                 echo "  ✅ Added assets directory to _site/"
               fi
             else
-              echo "📁 No _site directory found, converting Markdown to HTML"
-              # Create _site directory structure
-              mkdir -p _site
-              
-              # Convert new Markdown files to HTML for GitHub Pages
-              echo "🔄 Converting Beaver-generated Markdown to HTML..."
-              
-              # Convert beaver-Home.md to index.html
-              if [ -f "beaver-Home.md" ]; then
-                echo "  🔄 Converting beaver-Home.md -> index.html"
-                # Simple MD to HTML conversion (preserving structure)
-                {
-                  echo '<!DOCTYPE html>'
-                  echo '<html lang="ja">'
-                  echo '<head>'
-                  echo '    <meta charset="UTF-8">'
-                  echo '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
-                  echo '    <title>Beaver Knowledge Base</title>'
-                  echo '    <link rel="stylesheet" href="assets/css/style.css">'
-                  echo '</head>'
-                  echo '<body>'
-                  echo '    <header>'
-                  echo '        <h1>🦫 Beaver - AIエージェント知識ダム構築ツール - Developer Dashboard</h1>'
-                  # Extract timestamp from beaver-Home.md
-                  timestamp=$(grep "Generated" beaver-Home.md | sed 's/.*Generated //' | head -1)
-                  echo "        <p>🎯 <strong>30秒で情報発見</strong> - 開発者ワークフロー最適化ダッシュボード | Generated $timestamp</p>"
-                  echo '    </header>'
-                  echo '    <main>'
-                  
-                  # Convert markdown content to basic HTML
-                  sed -e 's/^# /<h1>/' -e 's/$/<\/h1>/' \
-                      -e 's/^## /<h2>/' -e 's/$/<\/h2>/' \
-                      -e 's/^### /<h3>/' -e 's/$/<\/h3>/' \
-                      -e 's/^\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g' \
-                      -e 's/\[\([^]]*\)\](\([^)]*\))/<a href="\2">\1<\/a>/g' \
-                      -e 's/^$/\<br\/\>/' \
-                      beaver-Home.md | grep -v "^# " | tail -n +4
-                  
-                  echo '    </main>'
-                  echo '    <script src="assets/js/main.js"></script>'
-                  echo '</body>'
-                  echo '</html>'
-                } > _site/index.html
-                echo "  ✅ Generated index.html with latest timestamp: $timestamp"
-              else
-                echo "  ⚠️ beaver-Home.md not found, using fallback HTML files"
-                # Fallback: Copy existing HTML files
-                for html_file in *.html; do
-                  if [ -f "$html_file" ]; then
-                    cp "$html_file" "_site/"
-                    echo "  ✅ Copied $html_file -> _site/$html_file"
-                  fi
-                done
-              fi
-              
-              # Copy assets directory if it exists
-              if [ -d "assets" ]; then
-                cp -r assets "_site/"
-                echo "  ✅ Copied assets directory"
-              fi
+              echo "❌ No _site directory found - Beaver HTML generation may have failed"
+              exit 1
             fi
             
-            echo "🔧 GitHub Pages content prepared"
+            echo "🔧 GitHub Pages content prepared by Go generator"
           fi
             
           echo "✅ GitHub Pages content generated successfully"
