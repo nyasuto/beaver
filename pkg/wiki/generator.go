@@ -70,6 +70,58 @@ type IssuesSummaryData struct {
 	Navigation          NavigationContext
 }
 
+// UrgentIssue represents an urgent issue for Top 3 display
+type UrgentIssue struct {
+	Issue         models.Issue
+	UrgencyScore  float64
+	UrgencyReason string
+	ActionNeeded  string
+}
+
+// DeveloperDashboardData contains data for the enhanced homepage
+type DeveloperDashboardData struct {
+	ProjectName    string
+	GeneratedAt    time.Time
+	TotalIssues    int
+	OpenIssues     int
+	ClosedIssues   int
+	Status         string
+	LastUpdate     time.Time
+	UrgentIssues   []UrgentIssue
+	QuickAccess    []CategoryLink
+	ProjectStatus  ProjectSummary
+	RecentActivity []ActivityItem
+	Navigation     NavigationContext
+}
+
+// CategoryLink represents a quick access category link
+type CategoryLink struct {
+	Title       string
+	Description string
+	URL         string
+	Icon        string
+	Count       int
+}
+
+// ProjectSummary represents current project status summary
+type ProjectSummary struct {
+	InProgress     int
+	CompletedToday int
+	CompletedWeek  int
+	HealthScore    float64
+	HealthStatus   string
+}
+
+// ActivityItem represents a recent activity item
+type ActivityItem struct {
+	Type        string
+	Title       string
+	Description string
+	Timestamp   time.Time
+	URL         string
+	Author      string
+}
+
 // TroubleshootingData contains data for troubleshooting guide
 type TroubleshootingData struct {
 	ProjectName  string
@@ -130,16 +182,6 @@ type LearningGoal struct {
 	Status        string
 	Progress      int
 	RelatedIssues []int
-}
-
-// IndexData contains data for the main index page
-type IndexData struct {
-	ProjectName string
-	GeneratedAt time.Time
-	TotalIssues int
-	Status      string
-	LastUpdate  time.Time
-	Navigation  NavigationContext
 }
 
 // GenerateIssuesSummary generates an Issues summary Wiki page
@@ -535,32 +577,10 @@ func (g *Generator) GenerateSidebar(issues []models.Issue, projectName string) (
 	return g.sidebarGenerator.GenerateSidebar(projectName, issues)
 }
 
-// GenerateIndex generates the main index page
+// GenerateIndex generates the main index page using the new developer dashboard
 func (g *Generator) GenerateIndex(issues []models.Issue, projectName string) (*WikiPage, error) {
-	data := IndexData{
-		ProjectName: projectName,
-		GeneratedAt: g.now(),
-		TotalIssues: len(issues),
-		Status:      "Active",
-		LastUpdate:  g.now(),
-		Navigation:  g.navigationManager.GetNavigationContext("Home"),
-	}
-
-	content, err := g.renderTemplate("index", data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render index template: %w", err)
-	}
-
-	return &WikiPage{
-		Title:     fmt.Sprintf("%s - Home", projectName),
-		Content:   content,
-		Filename:  "Home.md",
-		CreatedAt: g.now(),
-		UpdatedAt: g.now(),
-		Summary:   fmt.Sprintf("Main index page for %s knowledge base", projectName),
-		Category:  "Index",
-		Tags:      []string{"index", "home", "navigation"},
-	}, nil
+	// Use the new developer dashboard for the home page (Issue #367 enhancement)
+	return g.GenerateDeveloperDashboard(issues, projectName)
 }
 
 // GenerateStatistics generates a comprehensive statistics dashboard
@@ -824,4 +844,390 @@ func (g *Generator) calculateClassificationStats(issues []models.Issue) Classifi
 	}
 
 	return stats
+}
+
+// calculateUrgencyScore calculates urgency score for an issue based on multiple factors
+func (g *Generator) calculateUrgencyScore(issue models.Issue) (float64, string) {
+	score := 0.0
+	reasons := []string{}
+
+	// 1. Label-based priority scoring
+	for _, label := range issue.Labels {
+		labelName := toLower(label.Name)
+		switch {
+		case contains(labelName, "critical") || contains(labelName, "priority: critical"):
+			score += 50.0
+			reasons = append(reasons, "Critical priority label")
+		case contains(labelName, "high") || contains(labelName, "priority: high"):
+			score += 30.0
+			reasons = append(reasons, "High priority label")
+		case contains(labelName, "bug") || contains(labelName, "type: bug"):
+			score += 20.0
+			reasons = append(reasons, "Bug label")
+		case contains(labelName, "security") || contains(labelName, "type: security"):
+			score += 40.0
+			reasons = append(reasons, "Security issue")
+		case contains(labelName, "ci/cd") || contains(labelName, "type: ci/cd"):
+			score += 15.0
+			reasons = append(reasons, "CI/CD issue")
+		}
+	}
+
+	// 2. Keyword-based urgency scoring
+	titleAndBody := toLower(issue.Title + " " + issue.Body)
+	urgentKeywords := map[string]float64{
+		"urgent":        25.0,
+		"emergency":     30.0,
+		"critical":      25.0,
+		"broken":        20.0,
+		"failing":       20.0,
+		"error":         15.0,
+		"crash":         25.0,
+		"security":      30.0,
+		"vulnerability": 25.0,
+		"regression":    20.0,
+		"blocking":      25.0,
+		"production":    20.0,
+	}
+
+	for keyword, points := range urgentKeywords {
+		if contains(titleAndBody, keyword) {
+			score += points
+			reasons = append(reasons, fmt.Sprintf("Contains '%s'", keyword))
+		}
+	}
+
+	// 3. Time-based urgency (recent issues get slight boost)
+	daysSinceCreated := time.Since(issue.CreatedAt).Hours() / 24
+	if daysSinceCreated <= 1 {
+		score += 10.0
+		reasons = append(reasons, "Created within 24 hours")
+	} else if daysSinceCreated <= 7 {
+		score += 5.0
+		reasons = append(reasons, "Created within a week")
+	}
+
+	// 4. Comment activity suggests urgency
+	if len(issue.Comments) > 5 {
+		score += 10.0
+		reasons = append(reasons, "High comment activity")
+	} else if len(issue.Comments) > 2 {
+		score += 5.0
+		reasons = append(reasons, "Active discussion")
+	}
+
+	// 5. Assignee status
+	if len(issue.Assignees) == 0 {
+		score += 5.0
+		reasons = append(reasons, "Unassigned")
+	}
+
+	reasonText := "Normal priority"
+	if len(reasons) > 0 {
+		reasonText = reasons[0] // Use primary reason
+		if len(reasons) > 1 {
+			reasonText += fmt.Sprintf(" (+%d factors)", len(reasons)-1)
+		}
+	}
+
+	return score, reasonText
+}
+
+// getTopUrgentIssues returns the top 3 most urgent open issues
+func (g *Generator) getTopUrgentIssues(issues []models.Issue) []UrgentIssue {
+	var openIssues []models.Issue
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openIssues = append(openIssues, issue)
+		}
+	}
+
+	if len(openIssues) == 0 {
+		return []UrgentIssue{}
+	}
+
+	// Calculate urgency scores
+	type scoredIssue struct {
+		issue  models.Issue
+		score  float64
+		reason string
+	}
+
+	var scoredIssues []scoredIssue
+	for _, issue := range openIssues {
+		score, reason := g.calculateUrgencyScore(issue)
+		scoredIssues = append(scoredIssues, scoredIssue{
+			issue:  issue,
+			score:  score,
+			reason: reason,
+		})
+	}
+
+	// Simple bubble sort by score (highest first)
+	for i := 0; i < len(scoredIssues); i++ {
+		for j := i + 1; j < len(scoredIssues); j++ {
+			if scoredIssues[j].score > scoredIssues[i].score {
+				scoredIssues[i], scoredIssues[j] = scoredIssues[j], scoredIssues[i]
+			}
+		}
+	}
+
+	// Take top 3
+	maxResults := 3
+	if len(scoredIssues) < maxResults {
+		maxResults = len(scoredIssues)
+	}
+
+	var urgentIssues []UrgentIssue
+	for i := 0; i < maxResults; i++ {
+		scored := scoredIssues[i]
+		actionNeeded := g.determineActionNeeded(scored.issue, scored.score)
+
+		urgentIssues = append(urgentIssues, UrgentIssue{
+			Issue:         scored.issue,
+			UrgencyScore:  scored.score,
+			UrgencyReason: scored.reason,
+			ActionNeeded:  actionNeeded,
+		})
+	}
+
+	return urgentIssues
+}
+
+// determineActionNeeded determines what action is needed for an urgent issue
+func (g *Generator) determineActionNeeded(issue models.Issue, score float64) string {
+	if score >= 50.0 {
+		return "🚨 Immediate attention required"
+	} else if score >= 30.0 {
+		return "⚡ High priority action needed"
+	} else if score >= 20.0 {
+		return "🔧 Should be addressed soon"
+	} else if len(issue.Assignees) == 0 {
+		return "👤 Needs assignment"
+	} else {
+		return "📋 Review and prioritize"
+	}
+}
+
+// generateQuickAccessLinks creates category-based quick access links
+func (g *Generator) generateQuickAccessLinks(issues []models.Issue) []CategoryLink {
+	categories := map[string]*CategoryLink{
+		"bug": {
+			Title:       "🐛 Bug Fixes",
+			Description: "Critical bugs and errors",
+			URL:         "Issues-Summary#bugs",
+			Icon:        "🐛",
+		},
+		"feature": {
+			Title:       "✨ New Features",
+			Description: "Feature requests and enhancements",
+			URL:         "Issues-Summary#features",
+			Icon:        "✨",
+		},
+		"docs": {
+			Title:       "📚 Documentation",
+			Description: "Documentation improvements",
+			URL:         "Issues-Summary#documentation",
+			Icon:        "📚",
+		},
+		"config": {
+			Title:       "⚙️ Configuration",
+			Description: "Setup and configuration issues",
+			URL:         "Troubleshooting-Guide",
+			Icon:        "⚙️",
+		},
+	}
+
+	// Count issues by category
+	for _, issue := range issues {
+		if issue.State != "open" {
+			continue
+		}
+
+		// Check labels for category classification
+		for _, label := range issue.Labels {
+			labelName := toLower(label.Name)
+			if contains(labelName, "bug") || contains(labelName, "type: bug") {
+				categories["bug"].Count++
+			} else if contains(labelName, "feature") || contains(labelName, "type: feature") || contains(labelName, "enhancement") {
+				categories["feature"].Count++
+			} else if contains(labelName, "docs") || contains(labelName, "type: docs") || contains(labelName, "documentation") {
+				categories["docs"].Count++
+			}
+		}
+
+		// Keyword-based classification as fallback
+		titleAndBody := toLower(issue.Title + " " + issue.Body)
+		if contains(titleAndBody, "config") || contains(titleAndBody, "setup") || contains(titleAndBody, "install") {
+			categories["config"].Count++
+		}
+	}
+
+	var links []CategoryLink
+	for _, link := range categories {
+		if link.Count > 0 {
+			links = append(links, *link)
+		}
+	}
+
+	return links
+}
+
+// generateProjectStatus creates a project status summary
+func (g *Generator) generateProjectStatus(issues []models.Issue) ProjectSummary {
+	var inProgress, completedToday, completedWeek int
+	now := g.now()
+	weekAgo := now.AddDate(0, 0, -7)
+	dayAgo := now.AddDate(0, 0, -1)
+
+	for _, issue := range issues {
+		if issue.State == "open" && len(issue.Assignees) > 0 {
+			inProgress++
+		}
+
+		if issue.State == "closed" {
+			if issue.ClosedAt != nil {
+				if issue.ClosedAt.After(dayAgo) {
+					completedToday++
+				}
+				if issue.ClosedAt.After(weekAgo) {
+					completedWeek++
+				}
+			}
+		}
+	}
+
+	// Calculate health score
+	totalIssues := len(issues)
+	openIssues := 0
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openIssues++
+		}
+	}
+
+	healthScore := 100.0
+	if totalIssues > 0 {
+		healthScore = 100.0 - (float64(openIssues)/float64(totalIssues))*100.0
+		if healthScore < 0 {
+			healthScore = 0
+		}
+	}
+
+	healthStatus := "Excellent"
+	if healthScore < 50 {
+		healthStatus = "Needs Attention"
+	} else if healthScore < 70 {
+		healthStatus = "Good"
+	} else if healthScore < 90 {
+		healthStatus = "Very Good"
+	}
+
+	return ProjectSummary{
+		InProgress:     inProgress,
+		CompletedToday: completedToday,
+		CompletedWeek:  completedWeek,
+		HealthScore:    healthScore,
+		HealthStatus:   healthStatus,
+	}
+}
+
+// generateRecentActivity creates recent activity items
+func (g *Generator) generateRecentActivity(issues []models.Issue) []ActivityItem {
+	var activities []ActivityItem
+	now := g.now()
+	weekAgo := now.AddDate(0, 0, -7)
+
+	// Sort issues by update time (most recent first)
+	var recentIssues []models.Issue
+	for _, issue := range issues {
+		if issue.UpdatedAt.After(weekAgo) {
+			recentIssues = append(recentIssues, issue)
+		}
+	}
+
+	// Simple sort by UpdatedAt (newest first)
+	for i := 0; i < len(recentIssues); i++ {
+		for j := i + 1; j < len(recentIssues); j++ {
+			if recentIssues[j].UpdatedAt.After(recentIssues[i].UpdatedAt) {
+				recentIssues[i], recentIssues[j] = recentIssues[j], recentIssues[i]
+			}
+		}
+	}
+
+	// Take top 5 recent activities
+	maxActivities := 5
+	if len(recentIssues) < maxActivities {
+		maxActivities = len(recentIssues)
+	}
+
+	for i := 0; i < maxActivities; i++ {
+		issue := recentIssues[i]
+		activityType := "Updated"
+		if issue.State == "closed" && issue.ClosedAt != nil && issue.ClosedAt.After(weekAgo) {
+			activityType = "Closed"
+		} else if issue.CreatedAt.After(weekAgo) {
+			activityType = "Created"
+		}
+
+		description := truncateString(issue.Body, 100)
+		if description == "" {
+			description = "No description provided"
+		}
+
+		activities = append(activities, ActivityItem{
+			Type:        activityType,
+			Title:       issue.Title,
+			Description: description,
+			Timestamp:   issue.UpdatedAt,
+			URL:         fmt.Sprintf("https://github.com/%s/issues/%d", issue.Repository, issue.Number),
+			Author:      issue.User.Login,
+		})
+	}
+
+	return activities
+}
+
+// GenerateDeveloperDashboard generates an enhanced homepage with developer-focused features
+func (g *Generator) GenerateDeveloperDashboard(issues []models.Issue, projectName string) (*WikiPage, error) {
+	openIssues := 0
+	closedIssues := 0
+	for _, issue := range issues {
+		if issue.State == "open" {
+			openIssues++
+		} else {
+			closedIssues++
+		}
+	}
+
+	data := DeveloperDashboardData{
+		ProjectName:    projectName,
+		GeneratedAt:    g.now(),
+		TotalIssues:    len(issues),
+		OpenIssues:     openIssues,
+		ClosedIssues:   closedIssues,
+		Status:         "Active",
+		LastUpdate:     g.now(),
+		UrgentIssues:   g.getTopUrgentIssues(issues),
+		QuickAccess:    g.generateQuickAccessLinks(issues),
+		ProjectStatus:  g.generateProjectStatus(issues),
+		RecentActivity: g.generateRecentActivity(issues),
+		Navigation:     g.navigationManager.GetNavigationContext("Home"),
+	}
+
+	content, err := g.renderTemplate("developer-dashboard", data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render developer dashboard template: %w", err)
+	}
+
+	return &WikiPage{
+		Title:     fmt.Sprintf("%s - Developer Dashboard", projectName),
+		Content:   content,
+		Filename:  "Home.md",
+		CreatedAt: g.now(),
+		UpdatedAt: g.now(),
+		Summary:   fmt.Sprintf("Developer-focused dashboard for %s with urgent issues and quick access", projectName),
+		Category:  "Dashboard",
+		Tags:      []string{"dashboard", "urgent", "developer", "quick-access"},
+	}, nil
 }
