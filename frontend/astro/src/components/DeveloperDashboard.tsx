@@ -112,7 +112,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           🎯 Developer Dashboard
         </h2>
         <p className="text-lg text-gray-600 dark:text-gray-300">
-          Issue #367対応: 30秒で重要情報にアクセス
+          重要情報に素早くアクセス
         </p>
       </div>
 
@@ -231,7 +231,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
       <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
         <div className="text-center">
           <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
-            ⚡ Issue #367目標達成状況
+            ⚡ パフォーマンス達成状況
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="flex items-center justify-center space-x-2">
