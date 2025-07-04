@@ -80,7 +80,7 @@ export const AccessibleTabs: React.FC<AccessibleTabsProps> = ({
   onTabChange,
   ariaLabel = 'Navigation tabs'
 }) => {
-  const handleKeyDown = (event: React.KeyboardEvent, tabId: string) => {
+  const handleKeyDown = (event: React.KeyboardEvent, _tabId: string) => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     let newIndex = currentIndex;
 
@@ -276,7 +276,7 @@ export const colorContrastUtils = {
   }),
 
   // Check if color combination meets WCAG AA standards
-  meetsContrastRatio: (foreground: string, background: string): boolean => {
+  meetsContrastRatio: (_foreground: string, _background: string): boolean => {
     // This is a simplified version - in production, use a proper contrast calculation library
     return true; // Placeholder for actual contrast calculation
   }
