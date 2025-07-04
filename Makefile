@@ -2,7 +2,7 @@
 # Makefile for unified development and build automation
 # v2.0: Go Backend + Astro Frontend統合ビルドシステム
 
-.PHONY: help build clean test test-unit test-integration test-integration-setup test-integration-quick test-all lint fmt deps install run dev quality test-cov workflow-lint astro-deps astro-build astro-dev integrated-build full-build site-dev scripts-lint scripts-test
+.PHONY: help build clean test test-unit test-integration test-integration-setup test-integration-quick test-all lint fmt deps install run dev quality test-cov workflow-lint astro-deps astro-build astro-dev astro-typecheck astro-lint astro-validate astro-quality integrated-build full-build site-dev scripts-lint scripts-test
 
 # Variables
 BINARY_NAME=beaver
@@ -131,8 +131,8 @@ workflow-lint:
 test-all: test-unit test-integration
 	@echo "✅ 全テスト完了"
 
-## quality: Run all quality checks (Go + scripts + workflow validation)
-quality: fmt lint test-unit scripts-lint workflow-lint
+## quality: Run all quality checks (Go + scripts + Astro + workflow validation)
+quality: fmt lint test-unit scripts-lint astro-quality workflow-lint
 	@echo "✅ 全品質チェック完了"
 
 ## quality-fix: Auto-fix issues where possible
@@ -260,7 +260,7 @@ astro-deps:
 		echo "❌ Astro frontend directory not found: $(ASTRO_DIR)"; \
 		exit 1; \
 	fi
-	cd $(ASTRO_DIR) && npm ci
+	cd $(ASTRO_DIR) && npm install
 	@echo "✅ Astro依存関係インストール完了"
 
 ## astro-build: Build Astro frontend
@@ -278,6 +278,38 @@ astro-build: astro-deps
 astro-dev: astro-deps
 	@echo "🚀 Astro開発サーバーを起動中..."
 	cd $(ASTRO_DIR) && npm run dev
+
+## astro-typecheck: TypeScript type checking for Astro frontend
+astro-typecheck: astro-deps
+	@echo "📝 Astro TypeScript型チェック実行中..."
+	cd $(ASTRO_DIR) && npm run typecheck
+
+## astro-lint: Lint Astro frontend code
+astro-lint: astro-deps
+	@echo "🔍 Astroコード品質チェック実行中..."
+	cd $(ASTRO_DIR) && npm run lint
+
+## astro-validate: Validate Astro build output
+astro-validate: astro-build
+	@echo "🔍 Astroビルド検証中..."
+	@if [ ! -f "$(ASTRO_OUTPUT_DIR)/index.html" ]; then \
+		echo "❌ index.htmlが生成されていません"; \
+		exit 1; \
+	fi
+	@echo "📊 Astroビルド出力統計:"
+	@find $(ASTRO_OUTPUT_DIR) -type f -name "*.html" | wc -l | sed 's/^/  HTMLファイル: /'
+	@find $(ASTRO_OUTPUT_DIR) -type f -name "*.css" | wc -l | sed 's/^/  CSSファイル: /'
+	@find $(ASTRO_OUTPUT_DIR) -type f -name "*.js" | wc -l | sed 's/^/  JSファイル: /'
+	@du -sh $(ASTRO_OUTPUT_DIR) | sed 's/^/  総サイズ: /'
+	@echo "✅ Astroビルド検証完了"
+
+## astro-quality: Run all Astro quality checks
+astro-quality:
+	@echo "🔍 Astro品質チェックを開始中..."
+	@$(MAKE) astro-typecheck || echo "⚠️ TypeScript型チェックでエラーが発生しました"
+	@$(MAKE) astro-lint || echo "⚠️ ESLintでエラーが発生しました"
+	@$(MAKE) astro-validate || echo "⚠️ ビルド検証でエラーが発生しました"
+	@echo "✅ Astro品質チェック完了"
 
 ## integrated-build: Build Go backend with Astro frontend integration
 integrated-build: build
