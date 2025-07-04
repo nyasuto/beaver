@@ -17,6 +17,7 @@
   "dependencies": {
     "@astrojs/react": "^4.3.0",
     "@astrojs/tailwind": "^6.0.2",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "astro": "^5.11.0",
     "chart.js": "^4.5.0",
     "react": "^19.1.0",

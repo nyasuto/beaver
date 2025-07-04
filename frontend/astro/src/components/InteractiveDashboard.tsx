@@ -19,6 +19,57 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
   const [filteredIssues, setFilteredIssues] = useState<Issue[]>(issues);
   const [activeView, setActiveView] = useState<'dashboard' | 'search' | 'analytics'>('dashboard');
   const [announceMessage, setAnnounceMessage] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+
+  // Check for category filter from sessionStorage (from CategoryShortcuts)
+  React.useEffect(() => {
+    const storedFilter = sessionStorage.getItem('issueFilter');
+    if (storedFilter) {
+      try {
+        const filterData = JSON.parse(storedFilter);
+        // Check if filter is recent (within 1 minute)
+        if (Date.now() - filterData.timestamp < 60000) {
+          setCategoryFilter(filterData.category);
+          // Clear the filter after applying
+          sessionStorage.removeItem('issueFilter');
+        }
+      } catch (error) {
+        console.warn('Failed to parse stored filter:', error);
+      }
+    }
+  }, []);
+
+  // Apply category filter to issues
+  React.useEffect(() => {
+    let filtered = issues;
+    
+    if (categoryFilter) {
+      const categoryFilters: Record<string, string[]> = {
+        bug: ['bug', 'error', 'defect', 'fix'],
+        feature: ['feature', 'enhancement', 'new', 'add'],
+        critical: ['critical', 'urgent', 'high', 'important', 'priority'],
+        docs: ['docs', 'documentation', 'readme', 'guide'],
+        test: ['test', 'testing', 'spec', 'qa'],
+        deploy: ['deploy', 'deployment', 'release', 'ci/cd', 'build'],
+        performance: ['performance', 'speed', 'optimization', 'slow'],
+        security: ['security', 'vulnerability', 'auth', 'permission']
+      };
+
+      const filters = categoryFilters[categoryFilter];
+      if (filters) {
+        filtered = issues.filter(issue => {
+          const searchText = `${issue.title} ${issue.body || ''} ${(issue.labels || []).join(' ')}`.toLowerCase();
+          return filters.some(filter => searchText.includes(filter.toLowerCase()));
+        });
+      }
+    }
+
+    setFilteredIssues(filtered);
+    
+    if (categoryFilter && filtered.length > 0) {
+      setAnnounceMessage(`${categoryFilter}カテゴリで${filtered.length}件のIssueが見つかりました`);
+    }
+  }, [issues, categoryFilter]);
 
   // Calculate filtered statistics
   const filteredStats = useMemo(() => {
@@ -133,6 +184,28 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
           ariaLabel="Dashboard navigation"
         />
       </div>
+
+      {/* Category Filter Banner */}
+      {categoryFilter && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-blue-700 dark:text-blue-300 font-medium">
+                🔍 フィルタ適用中: {categoryFilter}
+              </span>
+              <span className="text-sm text-blue-600 dark:text-blue-400">
+                {filteredIssues.length}件のIssueが見つかりました
+              </span>
+            </div>
+            <button
+              onClick={() => setCategoryFilter(null)}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              フィルタを解除
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Active View Content */}
       <main id="main-content" role="tabpanel" aria-labelledby={`tab-${activeView}`}>
