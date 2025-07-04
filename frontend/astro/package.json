@@ -9,14 +9,14 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint . --ext .astro,.js,.jsx",
-    "lint:fix": "eslint . --ext .astro,.ts,.tsx,.js,.jsx --fix",
-    "typecheck": "astro check"
+    "lint:fix": "eslint . --ext .astro,.js,.jsx --fix",
+    "typecheck": "astro check",
+    "clean": "rm -rf dist _site-astro",
+    "test": "echo 'No tests specified' && exit 0"
   },
   "dependencies": {
     "@astrojs/react": "^4.3.0",
     "@astrojs/tailwind": "^6.0.2",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
     "astro": "^5.11.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -28,6 +28,8 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-astro": "^0.29.0"
+    "eslint-plugin-astro": "^0.29.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6"
   }
 }
