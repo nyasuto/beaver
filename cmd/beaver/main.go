@@ -62,10 +62,11 @@ var initCmd = &cobra.Command{
 
 // Build command flags
 var (
-	incrementalBuild bool
-	forceRebuild     bool
-	stateFile        string
-	maxItems         int
+	incrementalBuild  bool
+	forceRebuild      bool
+	stateFile         string
+	maxItems          int
+	enableAstroExport bool // New flag for Astro data export
 )
 
 var buildCmd = &cobra.Command{
@@ -350,6 +351,17 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("📝 生成したページ: %d件 (Markdown)\n", len(wikiPages))
 	fmt.Printf("🌐 生成したページ: %d件 (HTML)\n", len(htmlPages))
 
+	// Generate Astro data if requested
+	if enableAstroExport {
+		fmt.Println("🎨 Astro frontend用データを生成中...")
+		if err := ExportAstroData(cfg); err != nil {
+			buildLogger.Error("Failed to export Astro data", "error", err)
+			fmt.Printf("⚠️ Astro data export failed: %v\n", err)
+		} else {
+			fmt.Println("✅ Astro data exported successfully!")
+		}
+	}
+
 	fmt.Println("🦫 Beaver Build完了!")
 	buildLogger.Info("Build command completed successfully")
 	return nil
@@ -550,6 +562,7 @@ func init() {
 	buildCmd.Flags().BoolVar(&forceRebuild, "force-rebuild", false, "すべてのIssueを再処理 (完全再構築)")
 	buildCmd.Flags().StringVar(&stateFile, "state-file", "", "インクリメンタル状態ファイルのパス (デフォルト: .beaver/incremental-state.json)")
 	buildCmd.Flags().IntVar(&maxItems, "max-items", 100, "1回の更新で処理する最大アイテム数")
+	buildCmd.Flags().BoolVar(&enableAstroExport, "astro-export", false, "Astro frontend用のJSONデータを生成")
 }
 
 // mainLogic contains the core logic of main() without os.Exit for testing
