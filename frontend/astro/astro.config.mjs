@@ -7,7 +7,7 @@ export default defineConfig({
   output: 'static',
   outDir: '../../_site-astro',
   publicDir: './public',
-  base: process.env.NODE_ENV === 'production' ? '/beaver' : '',
+  base: process.env.NODE_ENV === 'production' ? '/beaver/' : '/',
   server: {
     port: 4321,
     host: true
