@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Issue } from '../types/beaver';
+import { extractMarkdownSummary } from '../utils/markdown';
 
 interface UrgentTasksProps {
   issues: Issue[];
@@ -163,7 +164,7 @@ const UrgentTasks: React.FC<UrgentTasksProps> = ({ issues, className = '' }) => 
                   
                   {task.body && (
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {task.body.slice(0, 120)}...
+                      {extractMarkdownSummary(task.body, 120)}
                     </p>
                   )}
                   

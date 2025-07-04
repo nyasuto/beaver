@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Issue } from '../types/beaver';
+import { extractMarkdownSummary } from '../utils/markdown';
 
 interface QuickSearchProps {
   issues: Issue[];
@@ -236,7 +237,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({ issues, className = '' }) => 
                     </h4>
                     {result.issue.body && (
                       <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {result.issue.body.slice(0, 100)}...
+                        {extractMarkdownSummary(result.issue.body, 100)}
                       </p>
                     )}
                   </div>

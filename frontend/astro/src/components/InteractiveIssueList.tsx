@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Issue } from '../types/beaver';
+import { extractMarkdownSummary } from '../utils/markdown';
 
 interface InteractiveIssueListProps {
   issues: Issue[];
@@ -235,10 +236,7 @@ const InteractiveIssueList: React.FC<InteractiveIssueListProps> = ({
                 {viewMode === 'detailed' && issue.body && (
                   <div className="mt-2">
                     <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
-                      {issue.body.length > 150 
-                        ? issue.body.substring(0, 150) + '...' 
-                        : issue.body
-                      }
+                      {extractMarkdownSummary(issue.body, 150)}
                     </p>
                   </div>
                 )}
