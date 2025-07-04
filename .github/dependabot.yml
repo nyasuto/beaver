@@ -26,6 +26,15 @@ updates:
       time: "10:00"
       timezone: "Asia/Tokyo"
 
+  # npm依存関係の自動更新 (Astro frontend)
+  - package-ecosystem: "npm"
+    directory: "/frontend/astro"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+
   # GitHub Actions の自動更新
   - package-ecosystem: "github-actions"
     directory: "/"
