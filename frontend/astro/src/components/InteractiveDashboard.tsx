@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import SearchComponent from './SearchComponent';
 import InteractiveIssueList from './InteractiveIssueList';
+import { OptimizedStatisticsDashboard } from './PerformanceOptimizations';
+import { AccessibleTabs, SkipNavigation, AriaLiveRegion } from './AccessibilityEnhancements';
 import type { Issue, Statistics } from '../types/beaver';
 
 interface InteractiveDashboardProps {
@@ -16,6 +18,7 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
 }) => {
   const [filteredIssues, setFilteredIssues] = useState<Issue[]>(issues);
   const [activeView, setActiveView] = useState<'dashboard' | 'search' | 'analytics'>('dashboard');
+  const [announceMessage, setAnnounceMessage] = useState<string>('');
 
   // Calculate filtered statistics
   const filteredStats = useMemo(() => {
@@ -76,9 +79,25 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
     return distribution;
   }, [filteredIssues]);
 
-  const handleFilteredIssues = (filtered: Issue[]) => {
+  const handleFilteredIssues = useCallback((filtered: Issue[]) => {
     setFilteredIssues(filtered);
-  };
+    // Announce filter results to screen readers
+    const message = `Filtered to ${filtered.length} issue${filtered.length === 1 ? '' : 's'}`;
+    setAnnounceMessage(message);
+    // Clear message after announcement
+    setTimeout(() => setAnnounceMessage(''), 1000);
+  }, []);
+
+  const handleTabChange = useCallback((tabId: string) => {
+    setActiveView(tabId as 'dashboard' | 'search' | 'analytics');
+    const tabNames = {
+      dashboard: 'Dashboard',
+      search: 'Search & Filter', 
+      analytics: 'Analytics'
+    };
+    setAnnounceMessage(`Switched to ${tabNames[tabId as keyof typeof tabNames]} tab`);
+    setTimeout(() => setAnnounceMessage(''), 1000);
+  }, []);
 
   const getHealthColor = (score: number): string => {
     if (score >= 80) return 'text-green-600';
@@ -94,45 +113,29 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
     return '🔴';
   };
 
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'search', label: 'Search & Filter', icon: '🔍' },
+    { id: 'analytics', label: 'Analytics', icon: '📈' }
+  ];
+
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Navigation Tabs */}
+      <SkipNavigation />
+      <AriaLiveRegion message={announceMessage} />
+      
+      {/* Navigation Tabs - Enhanced with accessibility */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveView('dashboard')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeView === 'dashboard'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-            }`}
-          >
-            📊 Dashboard
-          </button>
-          <button
-            onClick={() => setActiveView('search')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeView === 'search'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-            }`}
-          >
-            🔍 Search & Filter
-          </button>
-          <button
-            onClick={() => setActiveView('analytics')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeView === 'analytics'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-            }`}
-          >
-            📈 Analytics
-          </button>
-        </div>
+        <AccessibleTabs
+          tabs={tabs}
+          activeTab={activeView}
+          onTabChange={handleTabChange}
+          ariaLabel="Dashboard navigation"
+        />
       </div>
 
       {/* Active View Content */}
+      <main id="main-content" role="tabpanel" aria-labelledby={`tab-${activeView}`}>
       {activeView === 'dashboard' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Quick Stats Cards */}
@@ -178,67 +181,78 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
       )}
 
       {activeView === 'analytics' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Label Distribution */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              🏷️ Top Labels
-            </h3>
-            <div className="space-y-3">
-              {labelDistribution.map(({ label, count }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
-                    {label}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 w-20">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ 
-                          width: `${Math.max(10, (count / filteredStats.total_issues) * 100)}%` 
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 w-8 text-right">
-                      {count}
+        <div className="space-y-6">
+          {/* Chart Dashboard - Optimized with lazy loading */}
+          <OptimizedStatisticsDashboard statistics={statistics} />
+          
+          {/* Additional Analytics Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Label Distribution */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                🏷️ Top Labels (Filtered Data)
+              </h3>
+              <div className="space-y-3">
+                {labelDistribution.length > 0 ? labelDistribution.map(({ label, count }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                      {label}
                     </span>
+                    <div className="flex items-center space-x-2">
+                      <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 w-20">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ 
+                            width: `${Math.max(10, (count / filteredStats.total_issues) * 100)}%` 
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 w-8 text-right">
+                        {count}
+                      </span>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    <div className="text-4xl mb-2">🏷️</div>
+                    <p>No labels found in filtered issues</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Urgency Distribution */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                ⚡ Urgency Distribution (Filtered Data)
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-red-600">🔴 High (50+)</span>
+                  <span className="text-sm font-medium">{urgencyDistribution.high}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-yellow-600">🟡 Medium (20-49)</span>
+                  <span className="text-sm font-medium">{urgencyDistribution.medium}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-blue-600">🔵 Low (1-19)</span>
+                  <span className="text-sm font-medium">{urgencyDistribution.low}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">⚪ None (0)</span>
+                  <span className="text-sm font-medium">{urgencyDistribution.none}</span>
+                </div>
+              </div>
+
+              {filteredStats.avg_urgency > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Average Urgency: <span className="font-medium">{Math.round(filteredStats.avg_urgency)}</span>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-
-          {/* Urgency Distribution */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              ⚡ Urgency Distribution
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-red-600">🔴 High (50+)</span>
-                <span className="text-sm font-medium">{urgencyDistribution.high}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-yellow-600">🟡 Medium (20-49)</span>
-                <span className="text-sm font-medium">{urgencyDistribution.medium}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-blue-600">🔵 Low (1-19)</span>
-                <span className="text-sm font-medium">{urgencyDistribution.low}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">⚪ None (0)</span>
-                <span className="text-sm font-medium">{urgencyDistribution.none}</span>
-              </div>
-            </div>
-
-            {filteredStats.avg_urgency > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Average Urgency: <span className="font-medium">{Math.round(filteredStats.avg_urgency)}</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -256,6 +270,7 @@ const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
         showAnalysis={true}
         itemsPerPage={10}
       />
+      </main>
     </div>
   );
 };

@@ -32,6 +32,14 @@ export interface Statistics {
   closed_issues: number;
   health_score: number;
   trends?: Trends;
+  timeline?: TimelineData[];
+}
+
+export interface TimelineData {
+  week_start: string;
+  created_count: number;
+  closed_count: number;
+  total_count: number;
 }
 
 export interface Trends {
