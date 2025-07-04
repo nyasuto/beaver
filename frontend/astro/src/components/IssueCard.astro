@@ -36,10 +36,6 @@ function getUrgencyColor(urgency: number): string {
   return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 }
 
-function getPriorityLabel(labels: string[]): string {
-  const priorityLabel = labels.find(label => label.startsWith('priority:'));
-  return priorityLabel ? priorityLabel.replace('priority:', '').trim() : '';
-}
 ---
 
 <div class={`border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow ${compact ? 'py-2' : ''} ${className}`}>
