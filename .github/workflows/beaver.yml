@@ -11,6 +11,17 @@ permissions:
   pages: write
   id-token: write
 
+# Ensure only one self-documentation workflow runs at a time to prevent conflicts
+# When issues are updated rapidly, multiple workflows could run in parallel
+# This would cause:
+# - Git conflicts when pushing to GitHub Pages
+# - Resource contention during site generation
+# - Inconsistent incremental state management
+# Solution: Serialize execution with cancel-in-progress: false to queue subsequent runs
+concurrency:
+  group: beaver-self-documentation
+  cancel-in-progress: false
+
 on:
   # Issue events - create, update, close, reopen
   issues:
