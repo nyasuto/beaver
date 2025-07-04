@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .astro,.js,.jsx",
     "lint:fix": "eslint . --ext .astro,.js,.jsx --fix",
     "typecheck": "astro check",
-    "clean": "rm -rf dist _site-astro",
+    "clean": "rm -rf dist",
     "test": "echo 'No tests specified' && exit 0"
   },
   "dependencies": {

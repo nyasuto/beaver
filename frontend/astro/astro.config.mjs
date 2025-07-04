@@ -5,7 +5,7 @@ import tailwind from '@astrojs/tailwind';
 export default defineConfig({
   integrations: [react(), tailwind()],
   output: 'static',
-  outDir: '../../_site-astro',
+  outDir: './dist',
   publicDir: './public',
   base: process.env.NODE_ENV === 'production' ? '/beaver/' : '/',
   server: {

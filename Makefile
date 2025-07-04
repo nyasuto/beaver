@@ -15,7 +15,7 @@ GIT_COMMIT=$(shell git rev-parse --short HEAD)
 LDFLAGS=-ldflags "-X main.version=$(VERSION) -X 'main.buildTime=$(BUILD_TIME)' -X main.gitCommit=$(GIT_COMMIT)"
 
 # Build Configuration
-ASTRO_OUTPUT_DIR=_site-astro
+ASTRO_OUTPUT_DIR=frontend/astro/dist
 FINAL_OUTPUT_DIR=_site
 NODE_VERSION=18
 SCRIPTS_DIR=./scripts
@@ -267,8 +267,8 @@ astro-deps:
 astro-build: astro-deps
 	@echo "🎨 Astroフロントエンドをビルド中..."
 	cd $(ASTRO_DIR) && npm run build
-	@if [ -d "$(ASTRO_OUTPUT_DIR)" ]; then \
-		echo "✅ Astroビルド成功: $(ASTRO_OUTPUT_DIR)"; \
+	@if [ -d "$(ASTRO_DIR)/dist" ]; then \
+		echo "✅ Astroビルド成功: $(ASTRO_DIR)/dist"; \
 	else \
 		echo "❌ Astroビルド失敗"; \
 		exit 1; \
@@ -292,15 +292,15 @@ astro-lint: astro-deps
 ## astro-validate: Validate Astro build output
 astro-validate: astro-build
 	@echo "🔍 Astroビルド検証中..."
-	@if [ ! -f "$(ASTRO_OUTPUT_DIR)/index.html" ]; then \
+	@if [ ! -f "$(ASTRO_DIR)/dist/index.html" ]; then \
 		echo "❌ index.htmlが生成されていません"; \
 		exit 1; \
 	fi
 	@echo "📊 Astroビルド出力統計:"
-	@find $(ASTRO_OUTPUT_DIR) -type f -name "*.html" | wc -l | sed 's/^/  HTMLファイル: /'
-	@find $(ASTRO_OUTPUT_DIR) -type f -name "*.css" | wc -l | sed 's/^/  CSSファイル: /'
-	@find $(ASTRO_OUTPUT_DIR) -type f -name "*.js" | wc -l | sed 's/^/  JSファイル: /'
-	@du -sh $(ASTRO_OUTPUT_DIR) | sed 's/^/  総サイズ: /'
+	@find $(ASTRO_DIR)/dist -type f -name "*.html" | wc -l | sed 's/^/  HTMLファイル: /'
+	@find $(ASTRO_DIR)/dist -type f -name "*.css" | wc -l | sed 's/^/  CSSファイル: /'
+	@find $(ASTRO_DIR)/dist -type f -name "*.js" | wc -l | sed 's/^/  JSファイル: /'
+	@du -sh $(ASTRO_DIR)/dist | sed 's/^/  総サイズ: /'
 	@echo "✅ Astroビルド検証完了"
 
 ## astro-quality: Run all Astro quality checks
@@ -317,9 +317,9 @@ integrated-build: build
 	$(BUILD_DIR)/$(BINARY_NAME) build --astro-export
 	@echo "✅ Go backend データ生成完了"
 	@$(MAKE) astro-build
-	@if [ -d "$(ASTRO_OUTPUT_DIR)" ]; then \
+	@if [ -d "$(ASTRO_DIR)/dist" ]; then \
 		rm -rf $(FINAL_OUTPUT_DIR); \
-		mv $(ASTRO_OUTPUT_DIR) $(FINAL_OUTPUT_DIR); \
+		cp -r $(ASTRO_DIR)/dist $(FINAL_OUTPUT_DIR); \
 		echo "✅ 統合ビルド完了: $(FINAL_OUTPUT_DIR)"; \
 	else \
 		echo "❌ 統合ビルド失敗"; \
