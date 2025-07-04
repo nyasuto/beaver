@@ -281,17 +281,17 @@ jobs:
           cd ../..
           
           # Verify Astro build output
-          if [ -d "_site-astro" ]; then
+          if [ -d "frontend/astro/dist" ]; then
             echo "✅ Astro build successful"
-            echo "📁 Astro generated content in _site-astro/"
-            ls -la _site-astro/
+            echo "📁 Astro generated content in frontend/astro/dist/"
+            ls -la frontend/astro/dist/
             
             # Prepare output directory for GitHub Pages
             rm -rf _site
-            mv _site-astro _site
-            echo "🔧 Moved _site-astro to _site for GitHub Pages deployment"
+            cp -r frontend/astro/dist _site
+            echo "🔧 Copied frontend/astro/dist to _site for GitHub Pages deployment"
           else
-            echo "❌ No _site-astro directory found - Astro build may have failed"
+            echo "❌ No frontend/astro/dist directory found - Astro build may have failed"
             exit 1
           fi
             

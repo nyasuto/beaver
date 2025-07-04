@@ -67,7 +67,6 @@ clean_build() {
     rm -rf "$PROJECT_ROOT"/*.md
     
     # Remove Astro build outputs
-    rm -rf "$ASTRO_DIR/_site-astro"
     rm -rf "$ASTRO_DIR/dist"
     rm -rf "$ASTRO_DIR/.astro"
     
@@ -171,8 +170,8 @@ build_astro_frontend() {
     fi
     
     # Check if output was created
-    if [ -d "../../_site-astro" ]; then
-        log_success "✅ Astro build completed -> _site-astro/"
+    if [ -d "dist" ]; then
+        log_success "✅ Astro build completed -> dist/"
     else
         log_error "Astro build output not found"
         return 1
@@ -201,9 +200,9 @@ compare_outputs() {
     echo ""
     
     # Astro output
-    if [ -d "$PROJECT_ROOT/_site-astro" ]; then
-        local astro_size=$(du -sh "$PROJECT_ROOT/_site-astro" | cut -f1)
-        local astro_files=$(find "$PROJECT_ROOT/_site-astro" -type f | wc -l)
+    if [ -d "$ASTRO_DIR/dist" ]; then
+        local astro_size=$(du -sh "$ASTRO_DIR/dist" | cut -f1)
+        local astro_files=$(find "$ASTRO_DIR/dist" -type f | wc -l)
         echo "🎨 Astro Frontend Build:"
         echo "   Size: $astro_size"
         echo "   Files: $astro_files"
@@ -245,9 +244,9 @@ build_integrated() {
     fi
     
     # Step 3: Ensure primary _site points to Astro output
-    if [ -d "$PROJECT_ROOT/_site-astro" ]; then
+    if [ -d "$ASTRO_DIR/dist" ]; then
         rm -rf "$PROJECT_ROOT/_site"
-        cp -r "$PROJECT_ROOT/_site-astro" "$PROJECT_ROOT/_site"
+        cp -r "$ASTRO_DIR/dist" "$PROJECT_ROOT/_site"
         log_success "✅ Primary _site now uses Astro output"
     fi
     
