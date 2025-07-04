@@ -111,9 +111,6 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
         <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           🎯 Developer Dashboard
         </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-300">
-          重要情報に素早くアクセス
-        </p>
       </div>
 
       {/* Quick Actions Summary */}
@@ -226,35 +223,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Performance Banner */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
-            ⚡ パフォーマンス達成状況
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-green-600 dark:text-green-400">✅</span>
-              <span className="text-green-800 dark:text-green-300">
-                情報発見時間: 30秒以内対応
-              </span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-green-600 dark:text-green-400">✅</span>
-              <span className="text-green-800 dark:text-green-300">
-                緊急タスク即座表示
-              </span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-green-600 dark:text-green-400">✅</span>
-              <span className="text-green-800 dark:text-green-300">
-                ワンクリックカテゴリフィルタ
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 };
