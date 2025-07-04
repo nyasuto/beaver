@@ -214,14 +214,14 @@ jobs:
             --repository "$TARGET_REPO" \
             --verbose
 
-      - name: 🚀 Generate GitHub Pages Content
+      - name: 🚀 Generate GitHub Pages Content (Astro)
         env:
           GITHUB_TOKEN: ${{ secrets.BEAVER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           UPDATE_TYPE: ${{ needs.preflight.outputs.update_type }}
           MAX_ITEMS: ${{ github.event.inputs.max_items || '100' }}
         run: |
           echo "🚀 === GitHub Pages Deployment Process ==="
-          echo "📄 Generating site using Go HTML generator"
+          echo "🎨 Generating site using Astro Frontend"
           echo "🎯 Event: ${{ github.event_name }} | Update: $UPDATE_TYPE"
 
           # Clean up any corrupted state files before starting
@@ -236,57 +236,80 @@ jobs:
           # Create clean state directory
           mkdir -p .beaver
 
-          # Generate site content using Beaver's built-in HTML generator
+          # Step 1: Generate Astro data using Go backend
+          echo "📊 Step 1: Generating Astro data with Go backend..."
           set +e
-          ./bin/beaver build --force-rebuild 
+          ./bin/beaver build --astro-export --force-rebuild 
           build_exit_code=$?
           set -e
           
           if [ $build_exit_code -ne 0 ]; then
-            echo "⚠️ Site build failed, attempting recovery..."
+            echo "⚠️ Go backend data generation failed, attempting recovery..."
             
             # Clean slate approach if build fails
             rm -rf _site .beaver/incremental-state.json
-            mkdir -p _site .beaver
+            mkdir -p _site .beaver frontend/astro/src/data
             
-            # Try building minimal site
-            echo "<html><head><title>Beaver Knowledge Base</title></head><body><h1>Beaver Knowledge Base</h1><p>サイト生成中にエラーが発生しました。</p></body></html>" > _site/index.html
-            echo "🔄 Created fallback site content"
+            # Create minimal data file for Astro
+            echo '{"issues":[],"statistics":{"total_issues":0,"open_issues":0,"closed_issues":0,"health_score":0},"navigation":{"toc":[]},"metadata":{"generated_at":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","repository":"'${{ needs.preflight.outputs.repository }}'","version":"1.0.0"}}' > frontend/astro/src/data/beaver.json
+            echo "🔄 Created fallback data for Astro"
           else
-            echo "✅ Beaver build successful with Go HTML generator"
+            echo "✅ Go backend data generation successful"
+            echo "📊 Astro data exported to frontend/astro/src/data/beaver.json"
+          fi
+
+          # Step 2: Setup Node.js for Astro build
+          echo "📦 Step 2: Setting up Node.js for Astro..."
+
+      - name: 📦 Setup Node.js for Astro
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/astro/package-lock.json
+
+      - name: 🎨 Build Astro Frontend
+        run: |
+          echo "🎨 Step 3: Building Astro frontend..."
+          
+          # Install Astro dependencies
+          cd frontend/astro
+          npm ci
+          
+          # Build Astro site
+          npm run build
+          cd ../..
+          
+          # Verify Astro build output
+          if [ -d "_site-astro" ]; then
+            echo "✅ Astro build successful"
+            echo "📁 Astro generated content in _site-astro/"
+            ls -la _site-astro/
             
-            # Beaver now generates _site directory with HTML files directly
-            if [ -d "_site" ]; then
-              echo "📁 Using Beaver-generated HTML content from _site/"
-              ls -la _site/
-              
-              # Add any missing assets if they exist in root
-              if [ -d "assets" ] && [ ! -d "_site/assets" ]; then
-                cp -r assets "_site/"
-                echo "  ✅ Added assets directory to _site/"
-              fi
-            else
-              echo "❌ No _site directory found - Beaver HTML generation may have failed"
-              exit 1
-            fi
-            
-            echo "🔧 GitHub Pages content prepared by Go generator"
+            # Prepare output directory for GitHub Pages
+            rm -rf _site
+            mv _site-astro _site
+            echo "🔧 Moved _site-astro to _site for GitHub Pages deployment"
+          else
+            echo "❌ No _site-astro directory found - Astro build may have failed"
+            exit 1
           fi
             
-          echo "✅ GitHub Pages content generated successfully"
+          echo "✅ Astro frontend build completed successfully"
 
       - name: 📊 GitHub Pages Deployment Report
         if: always()
         run: |
           echo "📊 GitHub Pages Deployment Report"
           echo "================================="
-          echo "🚀 Target: GitHub Pages (Go HTML generator)"
+          echo "🚀 Target: GitHub Pages (Astro Frontend)"
           echo "🎯 Trigger: ${{ github.event_name }}"
           echo "🔄 Update Type: ${{ needs.preflight.outputs.update_type }}"
           echo "📁 Repository: ${{ needs.preflight.outputs.repository }}"
           echo "⏰ Completed: $(date '+%Y-%m-%d %H:%M:%S UTC')"
           echo "✅ Status: ${{ job.status }}"
           echo "🌐 Pages URL: https://${{ github.repository_owner }}.github.io/beaver"
+          echo "🎨 Architecture: Go Backend + Astro Frontend"
 
           # Show incremental state if exists and is valid
           if [ -f ".beaver/incremental-state.json" ]; then
