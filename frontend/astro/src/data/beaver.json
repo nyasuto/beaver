@@ -1,0 +1,20 @@
+{
+  "issues": [],
+  "statistics": {
+    "total_issues": 0,
+    "open_issues": 0,
+    "closed_issues": 0,
+    "health_score": 0
+  },
+  "navigation": {
+    "toc": []
+  },
+  "metadata": {
+    "generated_at": "2025-07-04T03:41:06Z",
+    "repository": "example/repo",
+    "version": "1.0.0",
+    "build_info": {
+      "build_time": "2025-07-04T03:41:06Z"
+    }
+  }
+}

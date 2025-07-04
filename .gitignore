@@ -68,6 +68,13 @@ wiki-output/
 # Jekyll build output
 _site/
 
+# Astro build output
+_site-astro/
+
+# Phase 0 baseline files
+_site-baseline/
+assets-baseline/
+
 # Generated site output
 /site/
 
