@@ -111,3 +111,7 @@ yarn-error.log*
 # Astro frontend generated data (Go backend exports)
 frontend/astro/src/data/
 frontend/astro/dist/
+
+# Build outputs and assets (cleaning legacy)
+assets/
+.astro/
