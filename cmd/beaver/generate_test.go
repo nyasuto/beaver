@@ -317,8 +317,8 @@ func TestGenerateTroubleshootingCommand(t *testing.T) {
 
 		contentStr := string(content)
 		expectedElements := []string{
-			"# 🛠️",       // Title
-			"## 📋 概要",    // Overview section
+			"# 🛠️",    // Title
+			"## 📋 概要", // Overview section
 			"## 🔍 よくあるエラーパターン", // Error patterns
 			"## 💡 解決方法",        // Solutions
 			"## 📊 統計情報",        // Statistics
