@@ -81,3 +81,101 @@ export interface BeaverData {
   navigation: Navigation;
   metadata: Metadata;
 }
+
+// ==============================
+// Phase 1 Extended Types for UI Components
+// ==============================
+
+// Component Props Interfaces
+export interface IssueCardProps {
+  issue: Issue;
+  showAnalysis?: boolean;
+  compact?: boolean;
+  className?: string;
+}
+
+export interface StatisticsCardProps {
+  statistics: Statistics;
+  showTrends?: boolean;
+  className?: string;
+}
+
+// Utility Types for Component State Management
+export interface FilterOptions {
+  state?: 'open' | 'closed' | 'all';
+  labels?: string[];
+  category?: string;
+  urgency?: {
+    min?: number;
+    max?: number;
+  };
+  dateRange?: {
+    start?: string;
+    end?: string;
+  };
+}
+
+export interface ViewOptions {
+  sortBy?: 'created' | 'updated' | 'urgency' | 'title';
+  sortOrder?: 'asc' | 'desc';
+  groupBy?: 'state' | 'category' | 'priority' | 'none';
+  itemsPerPage?: number;
+  currentPage?: number;
+}
+
+// Search Functionality
+export interface SearchState {
+  query: string;
+  filters: FilterOptions;
+  view: ViewOptions;
+  results?: Issue[];
+  totalCount?: number;
+}
+
+// Configuration and Settings
+export interface BeaverConfig {
+  ui: {
+    theme: 'light' | 'dark' | 'system';
+    compactMode: boolean;
+    showAnalysis: boolean;
+    showTrends: boolean;
+  };
+  display: {
+    itemsPerPage: number;
+    defaultSort: ViewOptions['sortBy'];
+    defaultGrouping: ViewOptions['groupBy'];
+  };
+  features: {
+    search: boolean;
+    filters: boolean;
+    exportOptions: string[];
+  };
+}
+
+// Component State Types
+export interface ComponentState {
+  loading: boolean;
+  error?: string;
+  data?: any;
+}
+
+export interface IssueListState extends ComponentState {
+  issues: Issue[];
+  filteredIssues: Issue[];
+  search: SearchState;
+  selection: number[];
+}
+
+export interface StatisticsState extends ComponentState {
+  statistics: Statistics;
+  trends?: Trends;
+  comparison?: {
+    previous: Statistics;
+    change: {
+      total_issues: number;
+      open_issues: number;
+      closed_issues: number;
+      health_score: number;
+    };
+  };
+}
