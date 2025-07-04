@@ -163,20 +163,17 @@ func TestRunGenerateTroubleshooting_FlagHandling(t *testing.T) {
 	// Test different flag combinations
 	originalIncludeClosed := includeClosed
 	originalMaxIssues := maxIssuesForAnalysis
-	originalAIEnhanced := aiEnhanced
 	originalExportWiki := exportWiki
 
 	defer func() {
 		includeClosed = originalIncludeClosed
 		maxIssuesForAnalysis = originalMaxIssues
-		aiEnhanced = originalAIEnhanced
 		exportWiki = originalExportWiki
 	}()
 
 	// Test with different flag values
 	includeClosed = true
 	maxIssuesForAnalysis = 100
-	aiEnhanced = false
 	exportWiki = true
 
 	originalToken := os.Getenv("GITHUB_TOKEN")
@@ -293,20 +290,8 @@ func TestFormatHelperFunctions(t *testing.T) {
 
 	// Test priority icon mapping
 	t.Run("getPriorityIcon", func(t *testing.T) {
-		tests := []struct {
-			priority string
-			expected string
-		}{
-			{"critical", "🚨"},
-			{"high", "🔴"},
-			{"medium", "🟡"},
-			{"low", "🟢"},
-			{"unknown", "⚪"},
-		}
-		for _, test := range tests {
-			result := getPriorityIcon(test.priority)
-			assert.Equal(t, test.expected, result)
-		}
+		// getPriorityIcon function was removed with analyze package cleanup
+		t.Skip("getPriorityIcon function no longer exists")
 	})
 
 	// Test duration formatting
@@ -336,7 +321,7 @@ func TestTroubleshootingHelperFunctionCoverage(t *testing.T) {
 		assert.NotPanics(t, func() {
 			_ = getSeverityIcon("test")
 			_ = getDifficultyIcon("test")
-			_ = getPriorityIcon("test")
+			// getPriorityIcon function was removed with analyze package cleanup
 			_ = formatDuration(time.Hour)
 		})
 	})

@@ -78,7 +78,7 @@ func TestAnalyzeTroubleshooting(t *testing.T) {
 			{
 				Number:    2,
 				Title:     "Database connection timeout",
-				Body:      "SQL connection timeout error occurring frequently",
+				Body:      "SQL connection timeout error occurring frequently. This issue was resolved by adjusting connection pool settings.",
 				State:     "closed",
 				CreatedAt: time.Now().Add(-48 * time.Hour),
 				UpdatedAt: time.Now().Add(-2 * time.Hour),

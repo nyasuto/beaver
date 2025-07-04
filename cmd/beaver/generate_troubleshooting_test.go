@@ -191,10 +191,8 @@ func TestGetPriorityIcon(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.priority, func(t *testing.T) {
-			got := getPriorityIcon(tt.priority)
-			if got != tt.expected {
-				t.Errorf("getPriorityIcon(%q) = %q, want %q", tt.priority, got, tt.expected)
-			}
+			// getPriorityIcon function was removed with analyze package cleanup
+			t.Skip("getPriorityIcon function no longer exists")
 		})
 	}
 }
@@ -226,12 +224,7 @@ func TestFormatDuration(t *testing.T) {
 	}
 }
 
-func TestNewPythonAIService(t *testing.T) {
-	service := NewPythonAIService()
-	if service == nil {
-		t.Error("NewPythonAIService() returned nil")
-	}
-}
+// TestNewPythonAIService was removed as AI functionality was simplified
 
 func TestSaveTroubleshootingGuide_JSON(t *testing.T) {
 	// Create a test troubleshooting guide
@@ -290,13 +283,12 @@ func TestSaveTroubleshootingGuide_UnsupportedFormat(t *testing.T) {
 func createTestTroubleshootingGuide() *troubleshooting.TroubleshootingGuide {
 	// Create a minimal test guide structure
 	return &troubleshooting.TroubleshootingGuide{
-		ProjectName:      "test-project",
-		GeneratedAt:      time.Now(),
-		TotalIssues:      10,
-		SolvedIssues:     8,
-		ErrorPatterns:    []troubleshooting.ErrorPattern{},
-		Solutions:        []troubleshooting.Solution{},
-		PreventionGuides: []troubleshooting.PreventionGuide{},
-		EmergencyActions: []troubleshooting.EmergencyAction{},
+		ProjectName:   "test-project",
+		GeneratedAt:   time.Now(),
+		TotalIssues:   10,
+		SolvedIssues:  8,
+		ErrorPatterns: []troubleshooting.ErrorPattern{},
+		Solutions:     []troubleshooting.Solution{},
+		// PreventionGuides and EmergencyActions fields were removed in analyze package cleanup
 	}
 }

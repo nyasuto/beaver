@@ -23,19 +23,6 @@ type MockTroubleshootingAnalyzer struct {
 	Error error
 }
 
-// MockGenerateAIService for generate command testing
-type MockGenerateAIService struct {
-	Result *troubleshooting.AITroubleshootingResult
-	Error  error
-}
-
-func (m *MockGenerateAIService) AnalyzeTroubleshootingPatterns(ctx context.Context, issues []models.Issue) (*troubleshooting.AITroubleshootingResult, error) {
-	if m.Error != nil {
-		return nil, m.Error
-	}
-	return m.Result, nil
-}
-
 // MockGenerateGitHubService for GitHub API integration testing (specific to generate tests)
 type MockGenerateGitHubService struct {
 	Issues []models.Issue
@@ -164,30 +151,6 @@ func createMockTroubleshootingGuide() *troubleshooting.TroubleshootingGuide {
 				RelatedIssues: []int{3},
 				Tags:          []string{"database", "performance"},
 				CreatedAt:     now,
-			},
-		},
-		PreventionGuides: []troubleshooting.PreventionGuide{
-			{
-				ID:          "prev_1",
-				Title:       "API Token Management",
-				Description: "Best practices for managing API tokens",
-				Category:    "Security",
-				Actions:     []string{"Regular token rotation", "Monitor expiration"},
-				Frequency:   "Weekly",
-				Priority:    troubleshooting.PriorityHigh,
-				Impact:      "Prevents authentication issues",
-			},
-		},
-		EmergencyActions: []troubleshooting.EmergencyAction{
-			{
-				ID:          "emergency_1",
-				Trigger:     "API authentication failures",
-				Title:       "Emergency API Token Reset",
-				Description: "Immediate steps when API tokens fail",
-				Steps:       []string{"Generate new token", "Update configuration", "Restart services"},
-				Priority:    troubleshooting.PriorityCritical,
-				TimeFrame:   "15 minutes",
-				Precautions: []string{"Notify team", "Backup current config"},
 			},
 		},
 		Statistics: troubleshooting.GuideStatistics{
@@ -356,10 +319,9 @@ func TestGenerateTroubleshootingCommand(t *testing.T) {
 		expectedElements := []string{
 			"# 🛠️",       // Title
 			"## 📋 概要",    // Overview section
-			"## 🚨 緊急時対応", // Emergency actions
 			"## 🔍 よくあるエラーパターン", // Error patterns
 			"## 💡 解決方法",        // Solutions
-			"## 🛡️ 予防策",        // Prevention guides
+			"## 📊 統計情報",        // Statistics
 		}
 
 		for _, element := range expectedElements {
@@ -527,7 +489,6 @@ func TestSaveTroubleshootingWiki(t *testing.T) {
 	essentialElements := []string{
 		mockGuide.ProjectName,
 		"📋 概要",
-		"🚨 緊急時対応",
 		"🔍 よくあるエラーパターン",
 		"💡 解決方法",
 		"📊 統計情報",
@@ -582,12 +543,8 @@ func TestGenerateTroubleshootingWikiContent(t *testing.T) {
 	})
 
 	t.Run("emergency actions section", func(t *testing.T) {
-		if !strings.Contains(content, "## 🚨 緊急時対応") {
-			t.Error("Missing emergency actions section")
-		}
-		if !strings.Contains(content, "Emergency API Token Reset") {
-			t.Error("Missing emergency action title")
-		}
+		// Emergency actions section was removed with analyze package cleanup
+		t.Skip("Emergency actions section no longer exists in simplified implementation")
 	})
 
 	t.Run("error patterns section", func(t *testing.T) {
@@ -609,12 +566,8 @@ func TestGenerateTroubleshootingWikiContent(t *testing.T) {
 	})
 
 	t.Run("prevention section", func(t *testing.T) {
-		if !strings.Contains(content, "## 🛡️ 予防策") {
-			t.Error("Missing prevention section")
-		}
-		if !strings.Contains(content, "API Token Management") {
-			t.Error("Missing prevention guide title")
-		}
+		// Prevention section was removed with analyze package cleanup
+		t.Skip("Prevention section no longer exists in simplified implementation")
 	})
 
 	t.Run("statistics section", func(t *testing.T) {
@@ -668,26 +621,6 @@ func TestHelperFunctions(t *testing.T) {
 		}
 	})
 
-	t.Run("getPriorityIcon", func(t *testing.T) {
-		testCases := []struct {
-			priority string
-			expected string
-		}{
-			{"critical", "🚨"},
-			{"high", "🔴"},
-			{"medium", "🟡"},
-			{"low", "🟢"},
-			{"unknown", "⚪"},
-		}
-
-		for _, tc := range testCases {
-			result := getPriorityIcon(tc.priority)
-			if result != tc.expected {
-				t.Errorf("getPriorityIcon(%s) = %s, expected %s", tc.priority, result, tc.expected)
-			}
-		}
-	})
-
 	t.Run("formatDuration", func(t *testing.T) {
 		testCases := []struct {
 			duration time.Duration
@@ -704,51 +637,6 @@ func TestHelperFunctions(t *testing.T) {
 			result := formatDuration(tc.duration)
 			if result != tc.expected {
 				t.Errorf("formatDuration(%v) = %s, expected %s", tc.duration, result, tc.expected)
-			}
-		}
-	})
-}
-
-func TestPythonAIService(t *testing.T) {
-	t.Run("NewPythonAIService", func(t *testing.T) {
-		service := NewPythonAIService()
-		if service == nil {
-			t.Error("NewPythonAIService returned nil")
-		}
-	})
-
-	t.Run("AnalyzeTroubleshootingPatterns", func(t *testing.T) {
-		service := NewPythonAIService()
-		issues := createTestIssues()
-
-		result, err := service.AnalyzeTroubleshootingPatterns(context.Background(), issues)
-		if err != nil {
-			t.Fatalf("AnalyzeTroubleshootingPatterns failed: %v", err)
-		}
-
-		if result == nil {
-			t.Fatal("Result is nil")
-		}
-
-		// Verify basic result structure
-		if result.Confidence != 0.75 {
-			t.Errorf("Expected confidence 0.75, got %f", result.Confidence)
-		}
-
-		if len(result.Recommendations) != 3 {
-			t.Errorf("Expected 3 recommendations, got %d", len(result.Recommendations))
-		}
-
-		expectedRecommendations := []string{
-			"Implement monitoring",
-			"Improve error handling",
-			"Add automated testing",
-		}
-
-		for i, expected := range expectedRecommendations {
-			if i >= len(result.Recommendations) || result.Recommendations[i] != expected {
-				t.Errorf("Recommendation %d: expected '%s', got '%s'",
-					i, expected, result.Recommendations[i])
 			}
 		}
 	})
@@ -776,10 +664,8 @@ func TestCommandIntegration(t *testing.T) {
 			t.Error("Missing --format flag")
 		}
 
-		aiEnhancedFlag := generateTroubleshootingCmd.Flag("ai-enhanced")
-		if aiEnhancedFlag == nil {
-			t.Error("Missing --ai-enhanced flag")
-		}
+		// AI-enhanced flag was removed with analyze package cleanup
+		// Just check that basic required flags exist
 	})
 
 	t.Run("argument validation", func(t *testing.T) {
