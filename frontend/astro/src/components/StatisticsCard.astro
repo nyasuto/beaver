@@ -1,0 +1,151 @@
+---
+// Phase 1: Statistics Card Component
+// Displays comprehensive statistics with health score visualization
+
+import type { Statistics } from '../types/beaver';
+
+export interface Props {
+  statistics: Statistics;
+  showTrends?: boolean;
+  className?: string;
+}
+
+const { statistics, showTrends = false, className = '' } = Astro.props;
+
+// Helper functions
+function getHealthColor(score: number): string {
+  if (score >= 80) return 'text-green-600';
+  if (score >= 60) return 'text-yellow-600';
+  if (score >= 40) return 'text-orange-600';
+  return 'text-red-600';
+}
+
+function getHealthIcon(score: number): string {
+  if (score >= 80) return '🟢';
+  if (score >= 60) return '🟡';
+  if (score >= 40) return '🟠';
+  return '🔴';
+}
+
+function formatHealthScore(score: number): string {
+  return `${Math.round(score)}%`;
+}
+
+function getHealthStatus(score: number): string {
+  if (score >= 80) return 'Excellent';
+  if (score >= 60) return 'Good';
+  if (score >= 40) return 'Fair';
+  return 'Needs Attention';
+}
+---
+
+<div class={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 ${className}`}>
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">📊 Project Statistics</h2>
+    {showTrends && statistics.trends && (
+      <div class="text-sm text-gray-500 dark:text-gray-400">
+        Last updated: {new Date().toLocaleDateString('ja-JP')}
+      </div>
+    )}
+  </div>
+
+  <!-- Main Statistics Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <!-- Total Issues -->
+    <div class="text-center">
+      <div class="text-3xl font-bold text-blue-600 mb-1">{statistics.total_issues}</div>
+      <div class="text-sm text-gray-600 dark:text-gray-400">Total Issues</div>
+    </div>
+
+    <!-- Open Issues -->
+    <div class="text-center">
+      <div class="text-3xl font-bold text-green-600 mb-1">{statistics.open_issues}</div>
+      <div class="text-sm text-gray-600 dark:text-gray-400">Open</div>
+    </div>
+
+    <!-- Closed Issues -->
+    <div class="text-center">
+      <div class="text-3xl font-bold text-gray-600 mb-1">{statistics.closed_issues}</div>
+      <div class="text-sm text-gray-600 dark:text-gray-400">Closed</div>
+    </div>
+
+    <!-- Health Score -->
+    <div class="text-center">
+      <div class={`text-3xl font-bold mb-1 ${getHealthColor(statistics.health_score)}`}>
+        {formatHealthScore(statistics.health_score)}
+      </div>
+      <div class="text-sm text-gray-600 dark:text-gray-400">Health Score</div>
+    </div>
+  </div>
+
+  <!-- Health Score Visualization -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Project Health</span>
+      <span class="text-sm text-gray-500 dark:text-gray-400">
+        {getHealthIcon(statistics.health_score)} {getHealthStatus(statistics.health_score)}
+      </span>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div 
+        class={`h-2 rounded-full transition-all duration-300 ${
+          statistics.health_score >= 80 ? 'bg-green-500' :
+          statistics.health_score >= 60 ? 'bg-yellow-500' :
+          statistics.health_score >= 40 ? 'bg-orange-500' : 'bg-red-500'
+        }`}
+        style={`width: ${Math.min(statistics.health_score, 100)}%`}
+      ></div>
+    </div>
+  </div>
+
+  <!-- Resolution Rate -->
+  <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Resolution Rate</span>
+    <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+      {statistics.total_issues > 0 
+        ? `${Math.round((statistics.closed_issues / statistics.total_issues) * 100)}%`
+        : '0%'
+      }
+    </span>
+  </div>
+
+  <!-- Trends (if available and showTrends is true) -->
+  {showTrends && statistics.trends && statistics.trends.weekly_summary && (
+    <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">📈 Weekly Activity</h3>
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <!-- Created This Week -->
+        <div>
+          <div class="text-lg font-bold text-blue-600">{statistics.trends.weekly_summary.created_this_week}</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">Created</div>
+        </div>
+
+        <!-- Closed This Week -->
+        <div>
+          <div class="text-lg font-bold text-green-600">{statistics.trends.weekly_summary.closed_this_week}</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">Closed</div>
+        </div>
+
+        <!-- Active Contributors -->
+        <div>
+          <div class="text-lg font-bold text-purple-600">{statistics.trends.weekly_summary.active_contributors}</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">Contributors</div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- Quick Insights -->
+  <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+    <div class="text-sm text-blue-800 dark:text-blue-200">
+      <span class="font-medium">💡 Quick Insight:</span>
+      {statistics.health_score >= 80 && 'Excellent project health! Keep up the great work.'}
+      {statistics.health_score >= 60 && statistics.health_score < 80 && 'Good progress! Consider addressing open issues.'}
+      {statistics.health_score >= 40 && statistics.health_score < 60 && 'Room for improvement. Focus on issue resolution.'}
+      {statistics.health_score < 40 && 'Attention needed. Consider prioritizing issue management.'}
+    </div>
+  </div>
+</div>
