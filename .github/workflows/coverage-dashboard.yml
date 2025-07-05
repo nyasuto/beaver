@@ -1,14 +1,22 @@
-name: Coverage Dashboard
+# DEPRECATED: Coverage Dashboard functionality has been integrated into docs-deployment.yml
+# This workflow is kept for reference but is disabled to prevent conflicts
+
+name: Coverage Dashboard (DEPRECATED)
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  # Disable all triggers - functionality moved to docs-deployment.yml
+  workflow_dispatch:
+    inputs:
+      force_enable:
+        description: "Force enable deprecated workflow (not recommended)"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   coverage-analysis:
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.force_enable == 'true' }}
     
     steps:
     - name: Checkout code
