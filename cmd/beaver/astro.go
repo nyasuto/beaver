@@ -115,7 +115,21 @@ type CategoryMapping struct {
 
 // ExportAstroData generates JSON data for Astro frontend
 func ExportAstroData(cfg *config.Config) error {
+	return ExportAstroDataWithOptions(cfg, false)
+}
+
+// ExportAstroDataWithOptions generates JSON data with additional options
+func ExportAstroDataWithOptions(cfg *config.Config, skipAPICall bool) error {
 	slog.Info("🎨 Generating Astro data export...")
+
+	// Skip API calls in dry-run mode or test mode
+	if cfg.DryRun || skipAPICall {
+		if cfg.DryRun {
+			slog.Info("📋 Dry run mode: Skipping GitHub API calls")
+		}
+		// Generate mock data for dry-run or test mode
+		return generateMockAstroData(cfg)
+	}
 
 	// Initialize GitHub service (reuse existing logic)
 	githubService := github.NewService(cfg.Sources.GitHub.Token)
@@ -478,4 +492,63 @@ func truncateTitle(title string, maxLen int) string {
 		return title
 	}
 	return title[:maxLen] + "..."
+}
+
+// generateMockAstroData creates mock data for dry-run or test mode
+func generateMockAstroData(cfg *config.Config) error {
+	slog.Info("📝 Generating mock Astro data for test/dry-run mode")
+
+	// Create mock issues
+	mockIssues := []models.Issue{
+		{
+			ID:     1,
+			Number: 100,
+			Title:  "Test Issue for Mock Data",
+			Body:   "This is a test issue generated for dry-run mode",
+			State:  "open",
+			Labels: []models.Label{
+				{Name: "type: feature"},
+				{Name: "priority: medium"},
+			},
+			CreatedAt: time.Now().AddDate(0, 0, -7),
+			UpdatedAt: time.Now().AddDate(0, 0, -1),
+			HTMLURL:   "https://github.com/test/repo/issues/100",
+			User: models.User{
+				ID:        12345,
+				Login:     "test-user",
+				AvatarURL: "https://avatars.githubusercontent.com/test-user",
+			},
+		},
+	}
+
+	// Convert to Astro format
+	astroIssues := make([]AstroIssue, len(mockIssues))
+	for i, issue := range mockIssues {
+		astroIssues[i] = convertToAstroIssue(issue)
+	}
+
+	// Generate statistics
+	statistics := generateAstroStatistics(mockIssues)
+
+	// Generate navigation
+	navigation := generateAstroNavigation(astroIssues)
+
+	// Generate metadata
+	metadata := generateAstroMetadata(cfg)
+
+	// Create complete data structure
+	data := AstroDataExport{
+		Issues:     astroIssues,
+		Statistics: statistics,
+		Navigation: navigation,
+		Metadata:   metadata,
+	}
+
+	// Write to JSON file
+	if err := writeAstroData(data); err != nil {
+		return err
+	}
+
+	slog.Info("✅ Mock Astro data generated successfully")
+	return nil
 }

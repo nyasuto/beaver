@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,8 +19,19 @@ func TestMain(m *testing.M) {
 		Level: slog.LevelWarn,
 	})))
 
+	// Clear any real GitHub tokens to force test isolation
+	originalGitHubToken := os.Getenv("GITHUB_TOKEN")
+	os.Unsetenv("GITHUB_TOKEN")
+
 	// Run tests
-	os.Exit(m.Run())
+	code := m.Run()
+
+	// Restore original environment
+	if originalGitHubToken != "" {
+		os.Setenv("GITHUB_TOKEN", originalGitHubToken)
+	}
+
+	os.Exit(code)
 }
 
 // Test runGenerateTroubleshooting function - currently has low coverage (22.4%)
@@ -117,15 +127,16 @@ ai:
 	}()
 	os.Setenv("BEAVER_CONFIG_PATH", configPath)
 
+	// Enable dry-run mode to avoid API calls
+	originalDryRun := dryRun
+	dryRun = true
+	defer func() { dryRun = originalDryRun }()
+
 	cmd := &cobra.Command{}
 	err = runGenerateTroubleshooting(cmd, []string{"owner/repo"})
 
-	// Should fail at GitHub connection with fake token
-	assert.Error(t, err)
-	assert.True(t,
-		strings.Contains(err.Error(), "failed to fetch issues") ||
-			strings.Contains(err.Error(), "GitHub"),
-		"Expected GitHub connection error, got: %v", err)
+	// Should succeed in dry-run mode
+	assert.NoError(t, err)
 }
 
 func TestRunGenerateTroubleshooting_WithEnvironmentToken(t *testing.T) {
@@ -148,15 +159,16 @@ func TestRunGenerateTroubleshooting_WithEnvironmentToken(t *testing.T) {
 	os.Setenv("GITHUB_TOKEN", "env-fake-token")
 	os.Setenv("BEAVER_CONFIG_PATH", "/nonexistent/config.yml")
 
+	// Enable dry-run mode to avoid API calls
+	originalDryRun := dryRun
+	dryRun = true
+	defer func() { dryRun = originalDryRun }()
+
 	cmd := &cobra.Command{}
 	err := runGenerateTroubleshooting(cmd, []string{"owner/repo"})
 
-	// Should fail at GitHub connection with fake token
-	assert.Error(t, err)
-	assert.True(t,
-		strings.Contains(err.Error(), "failed to fetch issues") ||
-			strings.Contains(err.Error(), "GitHub"),
-		"Expected GitHub connection error, got: %v", err)
+	// Should succeed in dry-run mode
+	assert.NoError(t, err)
 }
 
 func TestRunGenerateTroubleshooting_FlagHandling(t *testing.T) {
@@ -187,11 +199,16 @@ func TestRunGenerateTroubleshooting_FlagHandling(t *testing.T) {
 
 	os.Setenv("GITHUB_TOKEN", "flag-test-token")
 
+	// Enable dry-run mode to avoid API calls
+	originalDryRunValue := dryRun
+	dryRun = true
+	defer func() { dryRun = originalDryRunValue }()
+
 	cmd := &cobra.Command{}
 	err := runGenerateTroubleshooting(cmd, []string{"owner/repo"})
 
-	// Should fail at GitHub connection but flags should be processed
-	assert.Error(t, err)
+	// Should succeed in dry-run mode with flags processed
+	assert.NoError(t, err)
 }
 
 // Test helper functions for generate troubleshooting

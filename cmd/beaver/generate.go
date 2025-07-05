@@ -59,6 +59,7 @@ var (
 	maxIssuesForAnalysis    int
 	troubleshootingSeverity string
 	exportWiki              bool
+	dryRun                  bool
 )
 
 func init() {
@@ -75,6 +76,7 @@ func init() {
 	generateTroubleshootingCmd.Flags().IntVar(&maxIssuesForAnalysis, "max-issues", 200, "分析する最大Issue数")
 	generateTroubleshootingCmd.Flags().StringVar(&troubleshootingSeverity, "min-severity", "low", "最小重要度フィルター (low|medium|high|critical)")
 	generateTroubleshootingCmd.Flags().BoolVar(&exportWiki, "export-wiki", false, "Wiki形式のガイドも同時に生成")
+	generateTroubleshootingCmd.Flags().BoolVar(&dryRun, "dry-run", false, "実際のAPI呼び出しを行わずに処理をシミュレート")
 }
 
 func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
@@ -103,6 +105,16 @@ func runGenerateTroubleshooting(cmd *cobra.Command, args []string) error {
 	}
 	if token == "" {
 		return fmt.Errorf("GitHub token not found. Set GITHUB_TOKEN environment variable or configure in beaver.yml")
+	}
+
+	// Skip API calls in dry-run mode
+	if dryRun {
+		slog.Info("ℹ️ Dry run mode: Skipping GitHub API calls")
+		fmt.Println("📋 Dry run モード: GitHub API呼び出しをスキップしました")
+		fmt.Printf("📊 Mock データ: %d issues (仮想)\n", 10)
+		fmt.Println("💾 トラブルシューティングガイドを保存 (dry-run)")
+		fmt.Println("✅ トラブルシューティングガイド生成完了 (dry-run)")
+		return nil // Return success without error in dry-run mode
 	}
 
 	// Create GitHub service

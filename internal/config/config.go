@@ -17,6 +17,7 @@ type Config struct {
 	Output   OutputConfig   `mapstructure:"output"`
 	AI       AIConfig       `mapstructure:"ai"`
 	Timezone TimezoneConfig `mapstructure:"timezone"`
+	DryRun   bool           `mapstructure:"dry_run"`
 }
 
 // ProjectConfig holds project-specific settings
