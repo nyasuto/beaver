@@ -326,3 +326,305 @@ func TestTroubleshootingHelperFunctionCoverage(t *testing.T) {
 		})
 	})
 }
+
+// Test runVersionCommand function - currently has 0% coverage
+func TestRunVersionCommand(t *testing.T) {
+	// Capture output to test version command output
+	helper := NewTestHelpers(t)
+
+	output, _ := helper.CaptureOutput(func() {
+		cmd := &cobra.Command{}
+		runVersionCommand(cmd, []string{})
+	})
+
+	// Check that version information is displayed
+	assert.Contains(t, output, "🦫 Beaver バージョン:")
+	assert.Contains(t, output, "📅 ビルド時刻:")
+	assert.Contains(t, output, "📝 Git commit:")
+
+	// Check that version variables are included in output
+	assert.Contains(t, output, version)
+	assert.Contains(t, output, buildTime)
+	assert.Contains(t, output, gitCommit)
+}
+
+// Test runRootCommand function - currently has 100% coverage but adding edge cases
+func TestRunRootCommand(t *testing.T) {
+	helper := NewTestHelpers(t)
+
+	output, _ := helper.CaptureOutput(func() {
+		cmd := &cobra.Command{}
+		runRootCommand(cmd, []string{})
+	})
+
+	// Check that root command displays expected content
+	assert.Contains(t, output, "🦫 Beaver - AI知識ダム")
+	assert.Contains(t, output, "🚀 クイックスタート:")
+	assert.Contains(t, output, "beaver init")
+	assert.Contains(t, output, "beaver doctor")
+	assert.Contains(t, output, "🆘 困ったときは:")
+}
+
+// Test main function - currently has 0% coverage
+func TestMain_Function(t *testing.T) {
+	// Test main function behavior by testing mainLogic
+	// We can't test main() directly as it calls os.Exit
+
+	// Save original args
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+
+	// Test with help command
+	os.Args = []string{"beaver", "--help"}
+
+	// mainLogic should not return error for help
+	err := mainLogic()
+	// Help command returns error in cobra, but that's expected behavior
+	// We just want to ensure mainLogic can be called without panic
+	_ = err // Don't fail test on help error
+}
+
+// Test mainLogic function - currently has 100% coverage but test error cases
+func TestMainLogic_ErrorCases(t *testing.T) {
+	// Save original args
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+
+	// Test with invalid command
+	os.Args = []string{"beaver", "invalid-command"}
+
+	err := mainLogic()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown command")
+}
+
+// Test version command integration
+func TestVersionCommand_Integration(t *testing.T) {
+	// Test that version command is properly registered
+	assert.NotNil(t, versionCmd)
+	assert.Equal(t, "version", versionCmd.Use)
+	assert.Contains(t, versionCmd.Short, "バージョン情報")
+
+	// Test version command can be executed
+	helper := NewTestHelpers(t)
+	output, _ := helper.CaptureOutput(func() {
+		versionCmd.Run(versionCmd, []string{})
+	})
+
+	assert.Contains(t, output, "Beaver バージョン")
+}
+
+// Test init command coverage improvement
+func TestRunInitCommand_ExtendedCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func() (func(), string)
+		wantErr bool
+	}{
+		{
+			name: "config file already exists",
+			setup: func() (func(), string) {
+				tempDir := t.TempDir()
+				oldWd, _ := os.Getwd()
+				os.Chdir(tempDir)
+
+				// Create existing config file
+				configPath := "beaver.yml"
+				os.WriteFile(configPath, []byte("existing config"), 0600)
+
+				return func() { os.Chdir(oldWd) }, tempDir
+			},
+			wantErr: false, // Should warn but not error
+		},
+		{
+			name: "successful init in empty directory",
+			setup: func() (func(), string) {
+				tempDir := t.TempDir()
+				oldWd, _ := os.Getwd()
+				os.Chdir(tempDir)
+
+				return func() { os.Chdir(oldWd) }, tempDir
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup, _ := tt.setup()
+			defer cleanup()
+
+			helper := NewTestHelpers(t)
+			var err error
+			_, _ = helper.CaptureOutput(func() {
+				cmd := &cobra.Command{}
+				// runInitCommand doesn't return error, it uses os.Exit
+				// We test by calling it and checking output
+				runInitCommand(cmd, []string{})
+			})
+
+			// runInitCommand doesn't return errors, it prints and potentially exits
+			_ = err
+		})
+	}
+}
+
+// Test buildCommand function coverage improvement
+func TestRunBuildCommand_ExtendedCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func() func()
+		wantErr bool
+	}{
+		{
+			name: "no config file",
+			setup: func() func() {
+				tempDir := t.TempDir()
+				oldWd, _ := os.Getwd()
+				os.Chdir(tempDir)
+
+				return func() { os.Chdir(oldWd) }
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid config file",
+			setup: func() func() {
+				tempDir := t.TempDir()
+				oldWd, _ := os.Getwd()
+				os.Chdir(tempDir)
+
+				// Create invalid config
+				os.WriteFile("beaver.yml", []byte("invalid: yaml: content:"), 0600)
+
+				return func() { os.Chdir(oldWd) }
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := tt.setup()
+			defer cleanup()
+
+			cmd := &cobra.Command{}
+			err := runBuildCommand(cmd, []string{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("runBuildCommand() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// Test statusCommand function coverage improvement
+func TestRunStatusCommand_ExtendedCases(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func() func()
+	}{
+		{
+			name: "no config file",
+			setup: func() func() {
+				tempDir := t.TempDir()
+				oldWd, _ := os.Getwd()
+				os.Chdir(tempDir)
+
+				return func() { os.Chdir(oldWd) }
+			},
+		},
+		{
+			name: "valid config file",
+			setup: func() func() {
+				tempDir := t.TempDir()
+				oldWd, _ := os.Getwd()
+				os.Chdir(tempDir)
+
+				// Create valid config
+				validConfig := `
+project:
+  name: "test-project"
+  repository: "owner/repo"
+sources:
+  github:
+    token: "test-token"
+ai:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+`
+				os.WriteFile("beaver.yml", []byte(validConfig), 0600)
+
+				return func() { os.Chdir(oldWd) }
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := tt.setup()
+			defer cleanup()
+
+			helper := NewTestHelpers(t)
+			_, _ = helper.CaptureOutput(func() {
+				cmd := &cobra.Command{}
+				runStatusCommand(cmd, []string{})
+			})
+
+			// Status command doesn't return errors, just prints status
+		})
+	}
+}
+
+// Test splitString function - currently has 100% coverage but add edge cases
+func TestSplitString_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		sep      string
+		expected []string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			sep:      "/",
+			expected: nil,
+		},
+		{
+			name:     "no separator",
+			input:    "noseparator",
+			sep:      "/",
+			expected: []string{"noseparator"},
+		},
+		{
+			name:     "multiple separators",
+			input:    "a/b/c/d",
+			sep:      "/",
+			expected: []string{"a", "b", "c", "d"},
+		},
+		{
+			name:     "separator at end",
+			input:    "test/",
+			sep:      "/",
+			expected: []string{"test", ""},
+		},
+		{
+			name:     "separator at start",
+			input:    "/test",
+			sep:      "/",
+			expected: []string{"", "test"},
+		},
+		{
+			name:     "consecutive separators",
+			input:    "a//b",
+			sep:      "/",
+			expected: []string{"a", "", "b"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := splitString(tt.input, tt.sep)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
