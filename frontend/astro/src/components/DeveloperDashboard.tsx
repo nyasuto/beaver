@@ -277,7 +277,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               
               <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {Math.round((statistics.health_score || 0) * 100)}%
+                  {Math.round(statistics.health_score || 0)}%
                 </div>
                 <div className="text-sm text-orange-800 dark:text-orange-300">
                   プロジェクト健全度
