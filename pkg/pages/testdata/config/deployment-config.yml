@@ -1,0 +1,64 @@
+# Sample deployment configuration for testing
+github_pages:
+  enabled: true
+  branch: "gh-pages"
+  build_dir: "_site"
+  custom_domain: "docs.example.com"
+  jekyll:
+    theme: "minima"
+    config:
+      title: "Test Documentation"
+      description: "Sample documentation for testing"
+      baseurl: "/docs"
+      url: "https://docs.example.com"
+    collections:
+      docs:
+        output: true
+        permalink: "/:collection/:name/"
+      guides:
+        output: true
+        permalink: "/guides/:name/"
+    plugins:
+      - "jekyll-feed"
+      - "jekyll-sitemap"
+      - "jekyll-seo-tag"
+    navigation:
+      - name: "Home"
+        url: "/"
+        icon: "🏠"
+      - name: "Documentation"
+        url: "/docs/"
+        icon: "📚"
+      - name: "API Reference"
+        url: "/api/"
+        icon: "🔧"
+  search:
+    enabled: true
+    provider: "lunr"
+  analytics:
+    enabled: true
+    google_analytics_id: "GA-TEST-123"
+  optimization:
+    minify_html: true
+    compress_images: true
+    generate_sitemap: true
+
+github_wiki:
+  enabled: false
+  branch: "wiki"
+  clone_url_template: "https://github.com/{owner}/{repo}.wiki.git"
+  content:
+    source_dir: "docs"
+    exclude_patterns:
+      - "_*"
+      - ".git*"
+    file_naming:
+      convert_spaces: true
+      replacement_char: "-"
+      preserve_case: false
+  templates:
+    home_page: "_layouts/home.html"
+    sidebar: "_includes/sidebar.html"
+  sync:
+    bidirectional: false
+    conflict_resolution: "local_wins"

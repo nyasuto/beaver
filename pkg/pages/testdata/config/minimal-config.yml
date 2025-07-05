@@ -1,0 +1,3 @@
+# Minimal deployment configuration for testing
+github_pages:
+  enabled: true
