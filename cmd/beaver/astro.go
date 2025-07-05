@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -110,15 +109,8 @@ type AstroBuildInfo struct {
 
 // CategoryMapping represents the external configuration for category classification
 type CategoryMapping struct {
-	LabelMappings   map[string]string           `json:"label_mappings"`
-	ContentKeywords map[string][]string         `json:"content_keywords"`
-	DefaultCategory string                      `json:"default_category"`
-	SpecialRules    CategoryMappingSpecialRules `json:"special_rules"`
-}
-
-// CategoryMappingSpecialRules contains special rules for category classification
-type CategoryMappingSpecialRules struct {
-	CriticalExcludePatterns []string `json:"critical_exclude_patterns"`
+	LabelMappings   map[string]string `json:"label_mappings"`
+	DefaultCategory string            `json:"default_category"`
 }
 
 // ExportAstroData generates JSON data for Astro frontend
@@ -394,20 +386,7 @@ func getDefaultCategoryMapping() *CategoryMapping {
 			"enhancement":        "feature",
 			"priority: critical": "critical",
 		},
-		ContentKeywords: map[string][]string{
-			"critical":    []string{"critical", "urgent"},
-			"bug":         []string{"bug", "error", "fix"},
-			"security":    []string{"security", "vulnerability"},
-			"performance": []string{"performance", "speed", "optimization"},
-			"deploy":      []string{"deploy", "deployment", "ci/cd"},
-			"test":        []string{"test", "testing"},
-			"docs":        []string{"docs", "documentation", "文書化", "wiki"},
-			"feature":     []string{"feature", "enhancement"},
-		},
 		DefaultCategory: "general",
-		SpecialRules: CategoryMappingSpecialRules{
-			CriticalExcludePatterns: []string{"critical偏重"},
-		},
 	}
 }
 
@@ -423,40 +402,6 @@ func categorizeIssue(issue models.Issue) string {
 	for _, label := range issue.Labels {
 		if category, exists := mapping.LabelMappings[label.Name]; exists {
 			return category
-		}
-	}
-
-	// Second priority: Content-based classification using configured keywords
-	searchText := strings.ToLower(issue.Title + " " + issue.Body)
-
-	// Check each category's keywords in priority order
-	categoryOrder := []string{"critical", "bug", "security", "performance", "deploy", "test", "docs", "feature"}
-
-	for _, category := range categoryOrder {
-		keywords, exists := mapping.ContentKeywords[category]
-		if !exists {
-			continue
-		}
-
-		for _, keyword := range keywords {
-			if strings.Contains(searchText, keyword) {
-				// Special handling for critical category to avoid false positives
-				if category == "critical" {
-					// Check exclude patterns
-					shouldExclude := false
-					for _, excludePattern := range mapping.SpecialRules.CriticalExcludePatterns {
-						if strings.Contains(searchText, excludePattern) {
-							shouldExclude = true
-							break
-						}
-					}
-					if !shouldExclude {
-						return category
-					}
-				} else {
-					return category
-				}
-			}
 		}
 	}
 

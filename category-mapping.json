@@ -13,18 +13,5 @@
     "enhancement": "feature",
     "priority: critical": "critical"
   },
-  "content_keywords": {
-    "critical": ["critical", "urgent"],
-    "bug": ["bug", "error", "fix"],
-    "security": ["security", "vulnerability"],
-    "performance": ["performance", "speed", "optimization"],
-    "deploy": ["deploy", "deployment", "ci/cd"],
-    "test": ["test", "testing"],
-    "docs": ["docs", "documentation", "文書化", "wiki"],
-    "feature": ["feature", "enhancement"]
-  },
-  "default_category": "general",
-  "special_rules": {
-    "critical_exclude_patterns": ["critical偏重"]
-  }
+  "default_category": "general"
 }
