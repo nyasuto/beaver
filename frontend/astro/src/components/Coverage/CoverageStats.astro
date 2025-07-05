@@ -1,0 +1,176 @@
+---
+import type { CoverageStatsProps } from '../../types/beaver';
+
+interface Props extends CoverageStatsProps {}
+
+const { data, className = '' } = Astro.props;
+
+// Calculate critical issues count
+const criticalIssues = data.package_stats.filter(p => p.coverage < 50 || p.quality_grade === 'F').length + 
+  data.recommendations.filter(r => r.priority === 'High').length;
+
+// Grade color mapping
+const getGradeColor = (grade: string) => {
+  const colors = {
+    'A': 'text-green-600 dark:text-green-400',
+    'B': 'text-lime-600 dark:text-lime-400', 
+    'C': 'text-orange-600 dark:text-orange-400',
+    'D': 'text-red-600 dark:text-red-400',
+    'F': 'text-red-700 dark:text-red-500'
+  };
+  return colors[grade as keyof typeof colors] || 'text-gray-600 dark:text-gray-400';
+};
+
+const coverageColor = getGradeColor(data.quality_rating.overall_grade);
+---
+
+<div class={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 ${className}`}>
+  <!-- Total Coverage -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+    <div class={`text-3xl md:text-4xl font-bold mb-2 ${coverageColor}`}>
+      {data.total_coverage.toFixed(1)}%
+    </div>
+    <div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+      総合カバレッジ
+    </div>
+  </div>
+
+  <!-- Total Packages -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+    <div class="text-3xl md:text-4xl font-bold mb-2 text-blue-600 dark:text-blue-400">
+      {data.summary.total_packages}
+    </div>
+    <div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+      総パッケージ数
+    </div>
+  </div>
+
+  <!-- Tested Packages -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+    <div class="text-3xl md:text-4xl font-bold mb-2 text-indigo-600 dark:text-indigo-400">
+      {data.summary.tested_packages}/{data.summary.total_packages}
+    </div>
+    <div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+      テスト済みパッケージ
+    </div>
+  </div>
+
+  <!-- Critical Issues -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+    <div class="text-3xl md:text-4xl font-bold mb-2 text-red-600 dark:text-red-400">
+      {criticalIssues}
+    </div>
+    <div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+      緊急課題
+    </div>
+  </div>
+
+  <!-- Quality Grade -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+    <div class={`text-3xl md:text-4xl font-bold mb-2 ${coverageColor}`}>
+      {data.quality_rating.overall_grade}
+    </div>
+    <div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+      品質評価
+    </div>
+  </div>
+
+  <!-- Next Target -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+    <div class="text-3xl md:text-4xl font-bold mb-2 text-purple-600 dark:text-purple-400">
+      {data.quality_rating.next_target.toFixed(1)}%
+    </div>
+    <div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+      次の目標
+    </div>
+  </div>
+</div>
+
+<!-- Additional insights -->
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Coverage Progress -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">📊 カバレッジ進捗</h3>
+    
+    <!-- Progress Bar -->
+    <div class="mb-4">
+      <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+        <span>現在: {data.total_coverage.toFixed(1)}%</span>
+        <span>目標: {data.quality_rating.next_target.toFixed(1)}%</span>
+      </div>
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+        <div 
+          class={`h-3 rounded-full transition-all duration-300 ${
+            data.quality_rating.overall_grade === 'A' ? 'bg-green-500' :
+            data.quality_rating.overall_grade === 'B' ? 'bg-lime-500' :
+            data.quality_rating.overall_grade === 'C' ? 'bg-orange-500' :
+            data.quality_rating.overall_grade === 'D' ? 'bg-red-500' : 'bg-red-600'
+          }`}
+          style={`width: ${Math.min(data.total_coverage, 100)}%`}
+        ></div>
+      </div>
+      <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        あと {Math.max(0, data.quality_rating.next_target - data.total_coverage).toFixed(1)}% で次の目標達成
+      </div>
+    </div>
+
+    <!-- Grade Description -->
+    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+      <div class="text-sm text-gray-700 dark:text-gray-300">
+        <strong>評価:</strong> {data.quality_rating.description}
+      </div>
+    </div>
+  </div>
+
+  <!-- Package Distribution -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">📦 パッケージ分布</h3>
+    
+    <div class="space-y-3">
+      {['A', 'B', 'C', 'D', 'F'].map(grade => {
+        const count = data.package_stats.filter(p => p.quality_grade === grade).length;
+        const percentage = data.summary.total_packages > 0 ? (count / data.summary.total_packages * 100) : 0;
+        const gradeColor = getGradeColor(grade).replace('text-', 'bg-').replace('dark:text-', 'dark:bg-');
+        
+        return (
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class={`w-3 h-3 rounded-full ${gradeColor}`}></div>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Grade {grade}
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                {count}個
+              </span>
+              <span class="text-xs text-gray-500 dark:text-gray-500">
+                ({percentage.toFixed(0)}%)
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+    
+    <!-- File Stats -->
+    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div class="text-sm text-gray-600 dark:text-gray-400">
+        <div class="flex justify-between">
+          <span>総ファイル数:</span>
+          <span class="font-medium">{data.summary.total_files}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>テスト済みファイル:</span>
+          <span class="font-medium">{data.summary.tested_files}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>未テストファイル:</span>
+          <span class="font-medium text-red-600 dark:text-red-400">
+            {data.summary.total_files - data.summary.tested_files}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
