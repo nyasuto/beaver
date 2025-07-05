@@ -234,7 +234,17 @@ func runPagesServeCommand(cmd *cobra.Command, args []string) error {
 
 	// Check if output directory exists
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-		return fmt.Errorf("出力ディレクトリが見つかりません: %s\n先に 'beaver pages generate' を実行してください", outputDir)
+		return fmt.Errorf(`出力ディレクトリが見つかりません: %s
+
+解決方法:
+  1. 先にページを生成してください:
+     beaver pages generate nyasuto/beaver --mode html
+  2. または custom出力ディレクトリを指定:
+     beaver pages serve --output ./custom-output
+  3. 現在のディレクトリを確認:
+     ls -la
+
+ページ生成後にもう一度実行してください`, outputDir)
 	}
 
 	setupLogger.Info("🌐 ローカルサーバー開始", "port", servePort, "directory", outputDir)
@@ -273,7 +283,23 @@ func fetchIssuesForPages(owner, repository string, logger *slog.Logger) ([]model
 		if envToken := os.Getenv("GITHUB_TOKEN"); envToken != "" {
 			token = envToken
 		} else {
-			return nil, fmt.Errorf("GitHub Token が設定されていません")
+			return nil, fmt.Errorf(`GitHub Token が設定されていません
+
+解決方法:
+  1. 環境変数に設定:
+     export GITHUB_TOKEN=your_token_here
+  2. beaver.yml に設定:
+     sources:
+       github:
+         token: "your_token_here"
+  3. GitHub Personal Access Token を取得:
+     https://github.com/settings/tokens
+  4. 設定確認:
+     beaver status
+
+使用例:
+  export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+  beaver pages generate nyasuto/beaver`)
 		}
 	}
 

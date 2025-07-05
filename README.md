@@ -6,6 +6,52 @@ BeaverはAIエージェント開発の軌跡を自動的に整理された永続
 
 **v1.0**: GitHub Pages特化 - カスタムGo HTMLジェネレーターによるWebサイトとして知識を自動生成・デプロイ
 
+## 🚀 5分で始める Beaver
+
+### 1️⃣ 準備
+```bash
+# GitHub Personal Access Token を取得
+# https://github.com/settings/tokens で "repo" 権限で作成
+
+export GITHUB_TOKEN=your_token_here
+```
+
+### 2️⃣ インストール & 初期化
+```bash
+# Beaverをダウンロード
+git clone https://github.com/nyasuto/beaver.git
+cd beaver
+
+# ビルド
+make build
+
+# 初期設定
+./bin/beaver init
+```
+
+### 3️⃣ 設定確認
+```bash
+# 設定診断（問題があれば解決方法を表示）
+./bin/beaver doctor
+
+# 設定状況確認
+./bin/beaver status
+```
+
+### 4️⃣ 知識ダム生成
+```bash
+# あなたのリポジトリから知識を生成
+./bin/beaver pages generate your-username/your-repo
+
+# 問題がある場合
+./bin/beaver doctor  # 診断ツールで原因特定
+```
+
+### 🆘 困ったときは
+- **設定エラー**: `beaver doctor` で診断
+- **GitHub接続失敗**: `beaver status` で接続確認  
+- **コマンド不明**: `beaver --help` でヘルプ表示
+
 ## 🎯 解決する課題
 
 **エンジニアリングマネージャの日々の苦悩:**
