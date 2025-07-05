@@ -58,7 +58,7 @@ clean:
 ## test: Run unit tests only (fast, no external dependencies)
 test:
 	@echo "🧪 ユニットテストを実行中..."
-	go test -v ./...
+	go test -v -failfast ./...
 
 ## test-unit: Alias for test (unit tests only)
 test-unit: test
@@ -66,7 +66,7 @@ test-unit: test
 ## test-cov: Run unit tests with coverage
 test-cov:
 	@echo "🧪 カバレッジ付きユニットテストを実行中..."
-	go test -v -coverprofile=coverage.out ./...
+	go test -v -failfast -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "📊 カバレッジレポート: coverage.html"
 
@@ -79,7 +79,7 @@ test-integration:
 		exit 0; \
 	fi
 	@echo "🧪 Go統合テスト実行中..."
-	go test -v -tags=integration ./... || echo "⚠️ 統合テストは部分的に失敗しました"
+	go test -v -failfast -tags=integration ./... || echo "⚠️ 統合テストは部分的に失敗しました"
 
 ## test-integration-setup: Setup integration test environment
 test-integration-setup:
@@ -96,7 +96,7 @@ test-integration-quick:
 		echo "⚠️ GITHUB_TOKEN環境変数が設定されていません"; \
 		exit 0; \
 	fi
-	go test -v -tags=integration -short ./...
+	go test -v -failfast -tags=integration -short ./...
 
 ## lint: Run golangci-lint with integrated security checks
 lint:

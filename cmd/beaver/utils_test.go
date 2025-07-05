@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-// TestParseOwnerRepo tests the parseOwnerRepo utility function
-func TestParseOwnerRepo(t *testing.T) {
+// TestParseOwnerRepo_Utils tests the parseOwnerRepo utility function (avoiding duplicate)
+func TestParseOwnerRepo_Utils(t *testing.T) {
 	tests := []struct {
 		name          string
 		repoPath      string
@@ -173,7 +173,7 @@ func TestSplitString(t *testing.T) {
 }
 
 // TestSplitString_EdgeCases tests edge cases for the splitString function
-func TestSplitString_EdgeCases(t *testing.T) {
+func TestSplitString_EdgeCases_Utils(t *testing.T) {
 	t.Run("Overlapping separators", func(t *testing.T) {
 		// Test case where separator pattern could overlap
 		result := splitString("aaa", "aa")
