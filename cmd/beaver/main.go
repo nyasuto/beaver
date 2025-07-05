@@ -27,17 +27,35 @@ var rootCmd = &cobra.Command{
 	Use:     "beaver",
 	Short:   "🦫 Beaver - AI知識ダム",
 	Version: version,
-	Long: `Beaver は AI エージェント開発の軌跡を自動的に整理された永続的な知識に変換します。
-	
+	Long: `🦫 Beaver - AI知識ダム
+
+Beaver は AI エージェント開発の軌跡を自動的に整理された永続的な知識に変換します。
 散在する GitHub Issues、コミットログ、AI実験記録を構造化された Wiki ドキュメントに変換し、
-流れ去る学びを永続的な知識ダムとして蓄積します。`,
+流れ去る学びを永続的な知識ダムとして蓄積します。
+
+🚀 クイックスタート:
+  1. beaver init                    # 初期設定
+  2. beaver doctor                  # 設定診断
+  3. beaver pages generate owner/repo  # 知識生成
+
+🆘 困ったときは:
+  - beaver doctor                   # 設定問題の診断
+  - beaver status                   # 接続・設定確認
+  - beaver [command] --help         # 詳細ヘルプ`,
 	Run: runRootCommand,
 }
 
 func runRootCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("🦫 Beaver - AI知識ダム")
-	fmt.Println("使用方法: beaver [command]")
-	fmt.Println("詳細なヘルプ: beaver --help")
+	fmt.Println()
+	fmt.Println("🚀 クイックスタート:")
+	fmt.Println("  beaver init                     # 初期設定")
+	fmt.Println("  beaver doctor                   # 設定診断")
+	fmt.Println("  beaver pages generate owner/repo  # 知識生成")
+	fmt.Println()
+	fmt.Println("🆘 困ったときは:")
+	fmt.Println("  beaver doctor                   # 設定問題の診断")
+	fmt.Println("  beaver --help                   # 詳細ヘルプ")
 }
 
 var versionCmd = &cobra.Command{
@@ -139,14 +157,36 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	// Check if repository is configured
 	if cfg.Project.Repository == "" || cfg.Project.Repository == "username/my-repo" {
 		buildLogger.Error("Repository not configured")
-		return fmt.Errorf("❌ リポジトリが設定されていません。beaver.yml でリポジトリを指定してください")
+		return fmt.Errorf(`❌ リポジトリが設定されていません
+
+解決方法:
+  1. beaver.yml を編集してリポジトリを設定:
+     project:
+       repository: "your-username/your-repo"
+  2. 初期設定がまだの場合:
+     beaver init
+  3. 設定を確認:
+     beaver status
+
+例: project.repository を "nyasuto/beaver" に設定`)
 	}
 
 	buildLogger.Info("Parsing repository path", "repository", cfg.Project.Repository)
 	owner, repo := parseOwnerRepo(cfg.Project.Repository)
 	if owner == "" || repo == "" {
 		buildLogger.Error("Invalid repository format", "repository", cfg.Project.Repository)
-		return fmt.Errorf("❌ リポジトリ形式が無効です: %s (owner/repo 形式で指定してください)", cfg.Project.Repository)
+		return fmt.Errorf(`❌ リポジトリ形式が無効です: %s
+
+解決方法:
+  1. 正しい形式で設定: "owner/repo"
+     例: "nyasuto/beaver"
+  2. beaver.yml を確認:
+     project:
+       repository: "your-username/your-repo"
+  3. コマンド実行例:
+     beaver pages generate nyasuto/beaver
+
+現在の設定: %s`, cfg.Project.Repository, cfg.Project.Repository)
 	}
 	buildLogger.Info("Repository parsed", "owner", owner, "repo", repo)
 
@@ -154,7 +194,17 @@ func runBuildCommand(cmd *cobra.Command, args []string) error {
 	buildLogger.Info("Checking GitHub token")
 	if cfg.Sources.GitHub.Token == "" {
 		buildLogger.Error("GitHub token not configured")
-		return fmt.Errorf("❌ GITHUB_TOKEN が設定されていません")
+		return fmt.Errorf(`❌ GITHUB_TOKEN が設定されていません
+
+解決方法:
+  1. GitHub Personal Access Token を取得:
+     https://github.com/settings/tokens
+  2. 環境変数に設定:
+     export GITHUB_TOKEN=your_token_here
+  3. または beaver.yml の sources.github.token に設定
+  4. beaver status で設定を確認
+
+詳細: https://docs.github.com/ja/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token`)
 	}
 	buildLogger.Info("GitHub token configured", "token_length", len(cfg.Sources.GitHub.Token))
 
@@ -556,6 +606,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(generateCmd)
+	rootCmd.AddCommand(doctorCmd)
 
 	// Build command flags
 	buildCmd.Flags().BoolVar(&incrementalBuild, "incremental", false, "インクリメンタルビルドを実行 (前回更新以降の変更のみ)")
