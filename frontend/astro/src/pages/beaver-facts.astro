@@ -1,0 +1,187 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Interesting facts about beavers (the animal) related to our project
+const beaverFacts = [
+  {
+    id: 1,
+    title: "🏗️ Natural Engineers",
+    fact: "Beavers are nature's best engineers, building complex dams that can last decades. Just like how Beaver (our tool) builds lasting knowledge bases from temporary GitHub issues.",
+    relevance: "Our tool mimics beaver engineering by creating permanent knowledge structures."
+  },
+  {
+    id: 2,
+    title: "🌊 Flow Control Masters",
+    fact: "Beaver dams control water flow and create stable ecosystems. They transform rushing streams into calm, organized waterways.",
+    relevance: "Similarly, our Beaver tool controls the flow of information, transforming chaotic GitHub issues into organized documentation."
+  },
+  {
+    id: 3,
+    title: "🔄 Continuous Builders",
+    fact: "Beavers never stop maintaining their dams. They constantly add new materials and repair old sections to keep the structure strong.",
+    relevance: "Our automated workflows continuously update and maintain the knowledge base, just like real beavers maintain their dams."
+  },
+  {
+    id: 4,
+    title: "🏘️ Community Creators",
+    fact: "Beaver dams create wetland habitats that support entire ecosystems. Many species benefit from beaver engineering.",
+    relevance: "Our knowledge base creates a collaborative environment where teams can share insights and build on each other's work."
+  },
+  {
+    id: 5,
+    title: "📚 Knowledge Preservers",
+    fact: "Beavers pass down dam-building knowledge through generations. Young beavers learn by watching and helping their parents.",
+    relevance: "Our tool preserves institutional knowledge that would otherwise be lost when team members leave or issues get buried."
+  },
+  {
+    id: 6,
+    title: "🌿 Resource Optimizers",
+    fact: "Beavers are incredibly efficient with materials. They use every piece of wood, mud, and stone to maximum effect.",
+    relevance: "Our tool maximizes the value of every GitHub issue, comment, and discussion by organizing them into searchable knowledge."
+  },
+  {
+    id: 7,
+    title: "🛡️ Defensive Architects",
+    fact: "Beaver lodges have underwater entrances for security, making them nearly impregnable to predators.",
+    relevance: "Our documentation architecture protects valuable knowledge from being lost to repository cleanup or team turnover."
+  },
+  {
+    id: 8,
+    title: "🎯 Strategic Planners",
+    fact: "Beavers carefully choose dam locations based on water flow, available materials, and long-term sustainability.",
+    relevance: "Our tool strategically organizes information based on priority, relevance, and team needs for sustainable knowledge management."
+  }
+];
+
+const funStats = {
+  totalFacts: beaverFacts.length,
+  engineeringFacts: beaverFacts.filter(f => f.title.includes('🏗️') || f.title.includes('🔄') || f.title.includes('🛡️')).length,
+  collaborationFacts: beaverFacts.filter(f => f.title.includes('🏘️') || f.title.includes('📚')).length,
+  efficiencyFacts: beaverFacts.filter(f => f.title.includes('🌊') || f.title.includes('🌿') || f.title.includes('🎯')).length
+};
+---
+
+<BaseLayout title="🦫 Beaver Facts - Why We Named Our Tool After Nature's Best Engineers" description="Discover the fascinating parallels between real beavers and our knowledge management tool">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header Section -->
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+        🦫 Why Beaver?
+      </h1>
+      <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+        Discover the fascinating parallels between nature's master engineers and our knowledge management tool. 
+        Every feature of our Beaver tool is inspired by real beaver behavior and engineering principles.
+      </p>
+      
+      <!-- Fun Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-blue-600">{funStats.totalFacts}</div>
+          <div class="text-sm text-blue-700 dark:text-blue-300">Total Facts</div>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-green-600">{funStats.engineeringFacts}</div>
+          <div class="text-sm text-green-700 dark:text-green-300">Engineering</div>
+        </div>
+        <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-purple-600">{funStats.collaborationFacts}</div>
+          <div class="text-sm text-purple-700 dark:text-purple-300">Collaboration</div>
+        </div>
+        <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+          <div class="text-2xl font-bold text-orange-600">{funStats.efficiencyFacts}</div>
+          <div class="text-sm text-orange-700 dark:text-orange-300">Efficiency</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation back to main -->
+    <div class="text-center mb-8">
+      <a 
+        href={import.meta.env.BASE_URL} 
+        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+      >
+        ← Back to Knowledge Dam
+      </a>
+    </div>
+
+    <!-- Facts Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {beaverFacts.map((fact, index) => (
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {fact.title}
+            </h3>
+          </div>
+          
+          <!-- Content -->
+          <div class="p-6">
+            <!-- Beaver Fact -->
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                🦫 Beaver Behavior
+              </h4>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {fact.fact}
+              </p>
+            </div>
+            
+            <!-- Tool Relevance -->
+            <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
+              <h4 class="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
+                🔧 How Our Tool Mimics This
+              </h4>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {fact.relevance}
+              </p>
+            </div>
+          </div>
+          
+          <!-- Fact Number -->
+          <div class="absolute top-4 right-4 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+            {index + 1}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Call to Action -->
+    <div class="mt-16 text-center bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl p-8">
+      <h2 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+        Ready to Build Your Knowledge Dam? 🏗️
+      </h2>
+      <p class="text-lg text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
+        Just like real beavers transform landscapes with their engineering skills, 
+        our Beaver tool will transform your development workflow into an organized, 
+        searchable knowledge ecosystem.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a 
+          href={`${import.meta.env.BASE_URL}issues`}
+          class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          🔍 Explore Issues
+        </a>
+        <a 
+          href={`${import.meta.env.BASE_URL}coverage`}
+          class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+        >
+          📊 View Coverage
+        </a>
+      </div>
+    </div>
+
+    <!-- Fun Footer -->
+    <div class="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p>🦫 Did you know? A beaver's teeth never stop growing, and they stay sharp by constantly gnawing on wood.</p>
+      <p>Similarly, our knowledge base never stops growing and stays sharp by constantly processing new issues!</p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .hover\:shadow-md:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+</style>
