@@ -271,6 +271,7 @@ func loadPagesConfig(owner, repository string, mode pages.PublishingMode) (*page
 
 // fetchIssuesForPages fetches GitHub issues for page generation
 func fetchIssuesForPages(owner, repository string, logger *slog.Logger) ([]models.Issue, error) {
+
 	// Load Beaver configuration for GitHub access
 	cfg, err := config.LoadConfig()
 	if err != nil {

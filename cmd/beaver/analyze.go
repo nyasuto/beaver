@@ -237,6 +237,7 @@ type AnalysisConfig struct {
 }
 
 func fetchGitHubEvents(ctx context.Context, cfg *config.Config, _, _ string) ([]analytics.TimelineEvent, error) {
+
 	// Early validation: check if token is available
 	if cfg.Sources.GitHub.Token == "" {
 		return nil, fmt.Errorf("GitHub token is required for fetching events")
