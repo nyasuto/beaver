@@ -209,6 +209,21 @@ jobs:
             beaver coverage export --input coverage.out --format ci-summary --output coverage-summary.json
             
             echo "📊 Coverage dashboard files generated successfully"
+          
+          # Debug: Verify generated files
+          echo "🔍 DEBUG: Verifying generated coverage files..."
+          echo "📁 Current directory: $(pwd)"
+          ls -la coverage* 2>/dev/null || echo "❌ No coverage files found"
+          
+          # Show file sizes for verification
+          if [ -f "coverage-dashboard.html" ]; then
+            echo "✅ coverage-dashboard.html: $(du -h coverage-dashboard.html | cut -f1)"
+            head -5 coverage-dashboard.html | grep -o '<title>.*</title>' || echo "HTML structure check"
+          fi
+          if [ -f "coverage-data.json" ]; then
+            echo "✅ coverage-data.json: $(du -h coverage-data.json | cut -f1)"
+            head -3 coverage-data.json || echo "JSON structure check"
+          fi
           else
             echo "⚠️ No coverage data found, skipping coverage dashboard generation"
           fi
@@ -274,6 +289,28 @@ jobs:
           # Create clean state directory
           mkdir -p .beaver
 
+          # Step 0: Preserve coverage files if they exist
+          echo "🔍 Step 0: Checking and preserving coverage files..."
+          mkdir -p .coverage-backup
+          if [ -f "coverage-dashboard.html" ]; then
+            echo "📊 Found coverage-dashboard.html, backing up..."
+            cp coverage-dashboard.html .coverage-backup/
+          fi
+          if [ -f "coverage-data.json" ]; then
+            echo "📊 Found coverage-data.json, backing up..."
+            cp coverage-data.json .coverage-backup/
+          fi
+          if [ -f "coverage-summary.json" ]; then
+            echo "📊 Found coverage-summary.json, backing up..."
+            cp coverage-summary.json .coverage-backup/
+          fi
+          if [ -f "coverage.out" ]; then
+            echo "📊 Found coverage.out, backing up..."
+            cp coverage.out .coverage-backup/
+          fi
+          echo "🔍 Coverage backup completed. Files in backup:"
+          ls -la .coverage-backup/ || echo "No backup files"
+
           # Step 1: Generate Astro data using Go backend
           echo "📊 Step 1: Generating Astro data with Go backend..."
           set +e
@@ -294,6 +331,31 @@ jobs:
           else
             echo "✅ Go backend data generation successful"
             echo "📊 Astro data exported to frontend/astro/src/data/beaver.json"
+          fi
+
+          # Step 1.5: Restore coverage files after Astro data generation
+          echo "🔄 Step 1.5: Restoring coverage files..."
+          if [ -d ".coverage-backup" ]; then
+            if [ -f ".coverage-backup/coverage-dashboard.html" ]; then
+              echo "📊 Restoring coverage-dashboard.html..."
+              cp .coverage-backup/coverage-dashboard.html ./
+            fi
+            if [ -f ".coverage-backup/coverage-data.json" ]; then
+              echo "📊 Restoring coverage-data.json..."
+              cp .coverage-backup/coverage-data.json ./
+            fi
+            if [ -f ".coverage-backup/coverage-summary.json" ]; then
+              echo "📊 Restoring coverage-summary.json..."
+              cp .coverage-backup/coverage-summary.json ./
+            fi
+            if [ -f ".coverage-backup/coverage.out" ]; then
+              echo "📊 Restoring coverage.out..."
+              cp .coverage-backup/coverage.out ./
+            fi
+            echo "✅ Coverage files restored. Current directory contents:"
+            ls -la coverage* || echo "❌ No coverage files found after restore"
+          else
+            echo "⚠️ No coverage backup directory found"
           fi
 
           # Step 2: Setup Node.js for Astro build
@@ -329,25 +391,76 @@ jobs:
             cp -r frontend/astro/dist _site
             echo "🔧 Copied frontend/astro/dist to _site for GitHub Pages deployment"
             
-            # Integrate coverage dashboard into site
-            if [ -f "coverage-dashboard.html" ] && [ -f "coverage-data.json" ]; then
-              echo "📊 Integrating coverage dashboard into GitHub Pages..."
-              
-              # Create coverage subdirectory in site
-              mkdir -p _site/coverage
-              
-              # Copy coverage files to site
+            # Check for coverage files and integrate into site
+            echo "🔍 Step 3.1: Checking for coverage files..."
+            echo "📁 Current working directory: $(pwd)"
+            echo "📁 Contents of current directory:"
+            ls -la
+            echo ""
+            echo "🔍 Looking for coverage files:"
+            ls -la coverage* 2>/dev/null || echo "❌ No coverage files found with pattern 'coverage*'"
+            
+            # Check individual files
+            echo ""
+            echo "🔍 Individual file checks:"
+            if [ -f "coverage-dashboard.html" ]; then
+              echo "✅ coverage-dashboard.html found ($(du -h coverage-dashboard.html | cut -f1))"
+            else
+              echo "❌ coverage-dashboard.html not found"
+            fi
+            
+            if [ -f "coverage-data.json" ]; then
+              echo "✅ coverage-data.json found ($(du -h coverage-data.json | cut -f1))"
+            else
+              echo "❌ coverage-data.json not found"
+            fi
+            
+            if [ -f "coverage-summary.json" ]; then
+              echo "✅ coverage-summary.json found ($(du -h coverage-summary.json | cut -f1))"
+            else
+              echo "❌ coverage-summary.json not found"
+            fi
+            
+            # Attempt integration regardless of both files requirement
+            echo ""
+            echo "📊 Attempting coverage dashboard integration..."
+            mkdir -p _site/coverage
+            
+            coverage_integrated=false
+            
+            if [ -f "coverage-dashboard.html" ]; then
+              echo "📊 Copying coverage-dashboard.html to _site/coverage/index.html..."
               cp coverage-dashboard.html _site/coverage/index.html
+              coverage_integrated=true
+            fi
+            
+            if [ -f "coverage-data.json" ]; then
+              echo "📊 Copying coverage-data.json to _site/coverage/..."
               cp coverage-data.json _site/coverage/coverage-data.json
-              
-              # Copy additional coverage files if they exist
-              [ -f "coverage-summary.json" ] && cp coverage-summary.json _site/coverage/
-              [ -f "coverage.out" ] && cp coverage.out _site/coverage/
-              
+              coverage_integrated=true
+            fi
+            
+            if [ -f "coverage-summary.json" ]; then
+              echo "📊 Copying coverage-summary.json to _site/coverage/..."
+              cp coverage-summary.json _site/coverage/
+            fi
+            
+            if [ -f "coverage.out" ]; then
+              echo "📊 Copying coverage.out to _site/coverage/..."
+              cp coverage.out _site/coverage/
+            fi
+            
+            # Verify integration results
+            echo ""
+            echo "🔍 Verification: Contents of _site/coverage/:"
+            ls -la _site/coverage/ || echo "❌ _site/coverage/ directory not found"
+            
+            if [ "$coverage_integrated" = true ]; then
               echo "✅ Coverage dashboard integrated at /coverage/"
               echo "🌐 Dashboard will be available at: https://${{ github.repository_owner }}.github.io/beaver/coverage/"
             else
-              echo "⚠️ Coverage dashboard files not found, skipping coverage integration"
+              echo "⚠️ No coverage dashboard files were found for integration"
+              echo "🔍 This might indicate that the coverage generation step failed or files were cleaned up"
             fi
           else
             echo "❌ No frontend/astro/dist directory found - Astro build may have failed"
@@ -444,6 +557,8 @@ jobs:
             coverage-*.html
             coverage-*.json
             coverage.out
+            .coverage-backup/
+            _site/coverage/
           retention-days: 7
           if-no-files-found: warn
 
