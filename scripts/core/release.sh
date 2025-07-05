@@ -115,7 +115,8 @@ create_git_tag() {
     fi
     
     # Create annotated tag
-    local tag_message="🦫 Beaver $tag
+    local tag_message
+    tag_message="🦫 Beaver $tag
 
 🚀 Release created via automated release script
 

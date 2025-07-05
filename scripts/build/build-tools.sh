@@ -147,7 +147,7 @@ check_go_installation() {
     # If specific version requested, check if it matches
     if [[ "$GO_VERSION" != "stable" ]]; then
         local requested_version
-        requested_version=$(echo "$GO_VERSION" | sed 's/go//')
+        requested_version=${GO_VERSION#go}
         if [[ "$current_version" != "$requested_version" ]]; then
             log_warn "Requested Go version ($requested_version) differs from current ($current_version)"
         fi
@@ -225,7 +225,9 @@ build_ldflags() {
     
     # Add custom ldflags if provided
     if [[ -n "$LDFLAGS" ]]; then
-        ldflags_parts+=($LDFLAGS)
+        # Use mapfile for safe array assignment
+        mapfile -t additional_ldflags < <(printf '%s\n' "$LDFLAGS")
+        ldflags_parts+=("${additional_ldflags[@]}")
     fi
     
     echo "${ldflags_parts[*]}"
@@ -313,12 +315,10 @@ cross_build() {
         local goos="${PLATFORM_PARTS[0]}"
         local goarch="${PLATFORM_PARTS[1]}"
         
-        local binary_name="$BINARY_NAME"
         local suffix="${goos}-${goarch}"
         
         # Add .exe extension for Windows
         if [[ "$goos" == "windows" ]]; then
-            binary_name="${BINARY_NAME}.exe"
             suffix="${suffix}.exe"
         fi
         
