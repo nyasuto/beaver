@@ -12,8 +12,8 @@ type HeaderOptions struct {
 
 // NavItem represents a navigation menu item
 type NavItem struct {
-	Label string
-	URL   string
+	Label      string
+	URL        string
 	IsExternal bool
 }
 

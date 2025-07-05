@@ -227,7 +227,7 @@ func (dg *DashboardGenerator) getTopNavigation() string {
 // getDashboardTemplate returns the HTML template for the interactive dashboard
 func (dg *DashboardGenerator) getDashboardTemplate() string {
 	headerGen := components.NewHeaderGenerator()
-	
+
 	return `<!DOCTYPE html>
 <html lang="ja">
 <head>
