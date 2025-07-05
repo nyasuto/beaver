@@ -162,11 +162,12 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ issues, className
                   <div className="text-xs opacity-75 mb-2">{category.description}</div>
                   
                   <div className="flex justify-center space-x-2 text-xs">
-                    {open > 0 && (
-                      <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
-                        {open} Open
-                      </span>
-                    )}
+                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                      {open} Open
+                    </span>
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 rounded-full">
+                      {categoryIssues.length} Total
+                    </span>
                   </div>
                 </div>
               </button>
@@ -227,33 +228,47 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ issues, className
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          <div className="text-lg font-bold text-green-600 dark:text-green-400">
             {issues.filter(i => i.state === 'open').length}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Open Issues</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Total Open</div>
         </div>
         
         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          <div className="text-lg font-bold text-gray-600 dark:text-gray-400">
             {issues.filter(i => i.state === 'closed').length}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Closed Issues</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Total Closed</div>
+        </div>
+        
+        <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="text-lg font-bold text-red-600 dark:text-red-400">
+            {getStateDistribution(getCategoryIssues(issues, categories.find(c => c.key === 'critical')!)).open}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Critical Open</div>
+        </div>
+        
+        <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="text-lg font-bold text-red-600 dark:text-red-400">
+            {getStateDistribution(getCategoryIssues(issues, categories.find(c => c.key === 'bug')!)).open}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Bug Open</div>
+        </div>
+        
+        <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+            {getStateDistribution(getCategoryIssues(issues, categories.find(c => c.key === 'feature')!)).open}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Feature Open</div>
         </div>
         
         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            {getCategoryIssues(issues, categories.find(c => c.key === 'critical')!).length}
+            {issues.length}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Critical</div>
-        </div>
-        
-        <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            {getCategoryIssues(issues, categories.find(c => c.key === 'bug')!).length}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Bugs</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Total Issues</div>
         </div>
       </div>
 
