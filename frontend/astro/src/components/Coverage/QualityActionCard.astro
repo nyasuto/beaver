@@ -1,0 +1,189 @@
+---
+import type { CoverageData } from '../../types/beaver';
+
+interface Props {
+  className?: string;
+}
+
+const { className = '' } = Astro.props;
+
+// Try to load coverage data
+let coverageData: CoverageData | null = null;
+let isDataAvailable = false;
+
+try {
+  // In a real deployment, this would fetch from the actual API endpoint
+  // For now, we'll simulate the data availability check
+  const mockData: CoverageData = {
+    project_name: 'beaver',
+    generated_at: new Date().toISOString(),
+    total_coverage: 60.1,
+    quality_rating: {
+      overall_grade: 'D',
+      description: 'カバレッジ向上が必要',
+      next_target: 70.0
+    },
+    summary: {
+      total_packages: 16,
+      tested_packages: 0,
+      untested_packages: 16,
+      total_files: 45,
+      tested_files: 12
+    },
+    package_stats: [],
+    file_coverage: [],
+    recommendations: [
+      {
+        priority: 'High',
+        title: 'テストカバレッジの向上',
+        description: '基本的なユニットテストの追加が必要です'
+      }
+    ]
+  };
+  
+  coverageData = mockData;
+  isDataAvailable = true;
+} catch (error) {
+  isDataAvailable = false;
+}
+
+// Grade color mapping
+const getGradeColor = (grade: string) => {
+  const colors = {
+    'A': 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200',
+    'B': 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 text-lime-800 dark:text-lime-200',
+    'C': 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200',
+    'D': 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200',
+    'F': 'border-red-600 bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100'
+  };
+  return colors[grade as keyof typeof colors] || 'border-gray-500 bg-gray-50 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
+};
+
+const getStatusIcon = (grade: string) => {
+  const icons = {
+    'A': '🎉',
+    'B': '👍', 
+    'C': '📈',
+    'D': '⚠️',
+    'F': '🚨'
+  };
+  return icons[grade as keyof typeof icons] || '📊';
+};
+---
+
+<div class={`border-l-4 rounded-lg p-4 ${isDataAvailable && coverageData ? getGradeColor(coverageData.quality_rating.overall_grade) : 'border-gray-300 bg-gray-50 dark:bg-gray-800'} ${className}`}>
+  {isDataAvailable && coverageData ? (
+    <Fragment>
+      <!-- Header with Icon and Grade -->
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-3">
+          <span class="text-xl">{getStatusIcon(coverageData.quality_rating.overall_grade)}</span>
+          <div>
+            <h4 class="font-semibold text-gray-800 dark:text-gray-100">
+              🧪 品質アラート ({coverageData.quality_rating.overall_grade}評価)
+            </h4>
+            <p class="text-sm opacity-75">
+              カバレッジ {coverageData.total_coverage.toFixed(1)}% - {coverageData.quality_rating.description}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Urgent Badge -->
+        <div class="flex items-center space-x-2">
+          <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-600 text-white">
+            🚨 {coverageData.recommendations.filter(r => r.priority === 'High').length}件緊急
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="text-center">
+          <div class="text-lg font-bold">{coverageData.total_coverage.toFixed(1)}%</div>
+          <div class="text-xs opacity-75">カバレッジ</div>
+        </div>
+        <div class="text-center">
+          <div class="text-lg font-bold">{coverageData.quality_rating.next_target.toFixed(1)}%</div>
+          <div class="text-xs opacity-75">目標</div>
+        </div>
+        <div class="text-center">
+          <div class="text-lg font-bold">{coverageData.summary.untested_packages}</div>
+          <div class="text-xs opacity-75">未テスト</div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mb-3">
+        <div class="flex justify-between text-xs opacity-75 mb-1">
+          <span>進捗</span>
+          <span>あと {Math.max(0, coverageData.quality_rating.next_target - coverageData.total_coverage).toFixed(1)}%</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div 
+            class={`h-2 rounded-full transition-all duration-300 ${
+              coverageData.quality_rating.overall_grade === 'A' ? 'bg-green-500' :
+              coverageData.quality_rating.overall_grade === 'B' ? 'bg-lime-500' :
+              coverageData.quality_rating.overall_grade === 'C' ? 'bg-orange-500' :
+              coverageData.quality_rating.overall_grade === 'D' ? 'bg-red-500' : 'bg-red-600'
+            }`}
+            style={`width: ${Math.min(coverageData.total_coverage, 100)}%`}
+          ></div>
+        </div>
+      </div>
+
+      <!-- Top Priority Action -->
+      {coverageData.recommendations.length > 0 && (
+        <div class="mb-3 p-2 bg-white dark:bg-gray-800 rounded border">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="text-xs font-medium text-red-600 dark:text-red-400 mb-1">
+                優先アクション
+              </div>
+              <div class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                {coverageData.recommendations[0].title}
+              </div>
+            </div>
+            <div class="ml-2">
+              <span class={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
+                coverageData.recommendations[0].priority === 'High' ? 'bg-red-500 text-white' :
+                coverageData.recommendations[0].priority === 'Medium' ? 'bg-orange-500 text-white' : 'bg-green-500 text-white'
+              }`}>
+                {coverageData.recommendations[0].priority}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between">
+        <a 
+          href="/beaver/coverage" 
+          class="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+        >
+          📊 詳細分析を見る
+        </a>
+        <button class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors">
+          🚀 改善開始
+        </button>
+      </div>
+    </Fragment>
+  ) : (
+    <!-- No Data State -->
+    <div class="text-center py-6">
+      <div class="text-3xl mb-2">📊</div>
+      <h4 class="font-medium text-gray-800 dark:text-white mb-1">
+        品質データなし
+      </h4>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        テストを実行してカバレッジデータを生成
+      </p>
+      <a 
+        href="/beaver/coverage" 
+        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+      >
+        📊 品質分析を開始
+      </a>
+    </div>
+  )}
+</div>

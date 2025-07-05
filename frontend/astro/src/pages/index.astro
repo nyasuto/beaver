@@ -71,17 +71,7 @@ const { issues, statistics, metadata } = beaverData!;
     )}
 
     <!-- Enhanced Statistics Dashboard -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-      <!-- Main Statistics -->
-      <div class="lg:col-span-2">
-        <StatisticsCard statistics={statistics} showTrends={true} />
-      </div>
-      
-      <!-- Coverage Summary Widget -->
-      <div class="lg:col-span-1">
-        <CoverageSummaryWidget />
-      </div>
-    </div>
+    <StatisticsCard statistics={statistics} showTrends={true} className="mb-8" />
 
     <!-- Repository Info -->
     <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
