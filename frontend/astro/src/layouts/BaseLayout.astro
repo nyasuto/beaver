@@ -30,27 +30,10 @@ const { title, description = "Beaver - AI知識ダム" } = Astro.props;
   </head>
   <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <div class="min-h-screen flex flex-col">
-      <!-- Header -->
-      <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center py-4">
-            <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">🦫</span>
-              </div>
-              <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Beaver
-              </h1>
-            </div>
-            <nav class="flex items-center space-x-4">
-              <a href={import.meta.env.BASE_URL} class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-                ホーム
-              </a>
-              <a href={`${import.meta.env.BASE_URL}issues`} class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-                Issues
-              </a>
-            </nav>
-          </div>
+      <!-- Minimal Header -->
+      <header class="py-2 text-center bg-transparent">
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          🦫 Beaver
         </div>
       </header>
 
