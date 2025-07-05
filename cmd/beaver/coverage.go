@@ -70,6 +70,7 @@ func createCoverageCommand() *cobra.Command {
 	cmd.AddCommand(createCoverageCollectCommand())
 	cmd.AddCommand(createCoverageReportCommand())
 	cmd.AddCommand(createCoverageValidateCommand())
+	cmd.AddCommand(createCoverageExportCommand())
 
 	return cmd
 }
@@ -465,4 +466,125 @@ func runCoverageValidate(minCoverage float64, failOnLow, checkPackages bool) err
 	}
 
 	return nil
+}
+
+// createCoverageExportCommand creates the coverage export subcommand
+func createCoverageExportCommand() *cobra.Command {
+	var (
+		inputFile    string
+		outputFile   string
+		exportFormat string
+		minimizeSize bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "export",
+		Short: "カバレッジデータを様々な形式でエクスポート",
+		Long:  "カバレッジデータをCI/CD、GitHub Pages、その他の形式でエクスポートします。",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runCoverageExport(inputFile, outputFile, exportFormat, minimizeSize)
+		},
+	}
+
+	cmd.Flags().StringVarP(&inputFile, "input", "i", "coverage.out", "入力カバレッジファイル")
+	cmd.Flags().StringVarP(&outputFile, "output", "o", "", "出力ファイルパス")
+	cmd.Flags().StringVarP(&exportFormat, "format", "f", "json", "エクスポート形式 (json, github-pages, ci-summary)")
+	cmd.Flags().BoolVar(&minimizeSize, "minimize", false, "ファイルサイズを最小化")
+
+	return cmd
+}
+
+// runCoverageExport exports coverage data in specified format
+func runCoverageExport(inputFile, outputFile, exportFormat string, minimizeSize bool) error {
+	fmt.Printf("📤 カバレッジデータエクスポート中: %s -> %s\n", inputFile, exportFormat)
+
+	// Check input file exists
+	if _, err := os.Stat(inputFile); os.IsNotExist(err) {
+		return fmt.Errorf("カバレッジファイルが見つかりません: %s", inputFile)
+	}
+
+	// Get project root
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Analyze coverage data
+	analyzer := coverage.NewAnalyzer(projectRoot, coverage.DefaultCoverageConfig())
+	data, err := analyzer.AnalyzeCoverageFile(inputFile)
+	if err != nil {
+		return fmt.Errorf("カバレッジ分析失敗: %w", err)
+	}
+
+	// Generate default output file if not specified
+	if outputFile == "" {
+		outputFile = generateDefaultOutputPath(exportFormat)
+	}
+
+	// Setup export options
+	options := coverage.ExportOptions{
+		Format:       exportFormat,
+		OutputPath:   outputFile,
+		MinimizeSize: minimizeSize,
+	}
+
+	// Export data
+	exporter := coverage.NewDataExporter(coverage.DefaultCoverageConfig())
+	if err := exporter.Export(data, options); err != nil {
+		return fmt.Errorf("エクスポート失敗: %w", err)
+	}
+
+	fmt.Printf("✅ エクスポート完了: %s\n", outputFile)
+
+	// Show format-specific usage instructions
+	showExportInstructions(exportFormat, outputFile)
+
+	return nil
+}
+
+// generateDefaultOutputPath generates default output path based on format
+func generateDefaultOutputPath(format string) string {
+	switch format {
+	case "github-pages":
+		return "coverage-data.json"
+	case "ci-summary":
+		return "coverage-summary.json"
+	default:
+		return "coverage-export.json"
+	}
+}
+
+// showExportInstructions shows usage instructions for different formats
+func showExportInstructions(format, outputFile string) {
+	switch format {
+	case "github-pages":
+		fmt.Printf(`
+🌐 GitHub Pages 統合方法:
+1. %s を GitHub Pages リポジトリにコピー
+2. JavaScript で fetch('%s') してデータを読み込み
+3. Chart.js などでカバレッジダッシュボードを作成
+
+例: fetch('./%s').then(r => r.json()).then(data => renderDashboard(data))
+`, outputFile, outputFile, outputFile)
+
+	case "ci-summary":
+		fmt.Printf(`
+🔄 CI/CD 統合方法:
+1. %s を CI アーティファクトとして保存
+2. passed_threshold フィールドでビルド成否を判定
+3. critical_issues で品質ゲートを設定
+
+例: jq '.passed_threshold' %s && echo "カバレッジチェック合格"
+`, outputFile, outputFile)
+
+	case "json":
+		fmt.Printf(`
+📊 JSON データ活用方法:
+1. %s には完全なカバレッジデータが含まれています
+2. 外部ツールでの可視化やレポート生成に活用
+3. API 統合でダッシュボードシステムに送信
+
+例: curl -X POST -d @%s https://your-dashboard.com/api/coverage
+`, outputFile, outputFile)
+	}
 }
