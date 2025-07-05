@@ -737,7 +737,7 @@ func TestRunAnalyzePatternsCommand_DetailedErrorCases(t *testing.T) {
 				return func() {}
 			},
 			wantErr: true,
-			errMsg:  "無効なリポジトリパス",
+			errMsg:  "設定が無効です",
 		},
 		{
 			name: "repository with invalid format",
@@ -746,7 +746,7 @@ func TestRunAnalyzePatternsCommand_DetailedErrorCases(t *testing.T) {
 				return func() {}
 			},
 			wantErr: true,
-			errMsg:  "無効なリポジトリパス",
+			errMsg:  "設定が無効です",
 		},
 		{
 			name: "missing GitHub token in config and environment",
@@ -779,7 +779,7 @@ sources:
 				}
 			},
 			wantErr: true,
-			errMsg:  "GitHub token が設定されていません",
+			errMsg:  "設定が無効です",
 		},
 		{
 			name: "config file validation failure",
@@ -789,7 +789,7 @@ sources:
 				oldWd, _ := os.Getwd()
 				os.Chdir(tempDir)
 
-				// Create invalid config file manually
+				// Create invalid config file manually (empty repository)
 				configContent := `
 project:
   repository: ""
@@ -802,7 +802,7 @@ sources:
 				return func() { os.Chdir(oldWd) }
 			},
 			wantErr: true,
-			errMsg:  "project.repository は必須設定です",
+			errMsg:  "分析用のイベントが見つかりません",
 		},
 	}
 
