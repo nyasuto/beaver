@@ -2,7 +2,6 @@ package coverage
 
 import (
 	"fmt"
-	"html/template"
 	"sort"
 	"strings"
 
@@ -25,47 +24,16 @@ func NewDashboardGenerator(config *CoverageConfig) *DashboardGenerator {
 	}
 }
 
-// GenerateInteractiveDashboard generates a rich interactive HTML dashboard
+// GenerateInteractiveDashboard generates a rich interactive HTML dashboard using shared components
 func (dg *DashboardGenerator) GenerateInteractiveDashboard(data *CoverageData) string {
-	tmpl := template.Must(template.New("dashboard").Funcs(template.FuncMap{
-		"formatPercent": func(val float64) string {
-			return fmt.Sprintf("%.1f%%", val)
-		},
-		"getGradeColor": func(grade string) string {
-			colors := map[string]string{
-				"A": "#4CAF50", "B": "#8BC34A", "C": "#FF9800",
-				"D": "#FF5722", "F": "#F44336",
-			}
-			if color, ok := colors[grade]; ok {
-				return color
-			}
-			return "#666"
-		},
-		"getPriorityColor": func(priority string) string {
-			colors := map[string]string{
-				"High": "#F44336", "Medium": "#FF9800", "Low": "#4CAF50",
-			}
-			if color, ok := colors[priority]; ok {
-				return color
-			}
-			return "#666"
-		},
-		"lower": func(s string) string {
-			return strings.ToLower(s)
-		},
-	}).Parse(dg.getDashboardTemplate()))
+	// Generate components using shared UI components
+	statsHTML := dg.generateStatsSection(data)
+	chartsHTML := dg.generateChartsSection(data)
+	tablesHTML := dg.generateTablesSection(data)
+	recommendationsHTML := dg.generateRecommendationsSection(data)
 
-	var builder strings.Builder
-	if err := tmpl.Execute(&builder, map[string]interface{}{
-		"Data":      data,
-		"Generated": data.GeneratedAt.Format("2006-01-02 15:04:05"),
-		"Stats":     dg.generateDashboardStats(data),
-		"Charts":    dg.generateChartData(data),
-	}); err != nil {
-		return fmt.Sprintf("Error generating dashboard: %v", err)
-	}
-
-	return builder.String()
+	// Build the complete dashboard
+	return dg.buildDashboardHTML(data, statsHTML, chartsHTML, tablesHTML, recommendationsHTML)
 }
 
 // generateDashboardStats generates enhanced statistics for the dashboard
@@ -211,29 +179,190 @@ func (dg *DashboardGenerator) countCriticalIssues(data *CoverageData) int {
 	return critical
 }
 
-// getTopNavigation returns the common header banner using shared component
-func (dg *DashboardGenerator) getTopNavigation() string {
-	headerGen := components.NewHeaderGenerator()
-	options := components.HeaderOptions{
-		CurrentPage: "coverage",
-		BaseURL:     "../",
-		// Note: GitHub link removed to match exact Home/Issues design
+// generateStatsSection generates the statistics cards section using StatCard component
+func (dg *DashboardGenerator) generateStatsSection(data *CoverageData) string {
+	statCardGen := components.NewStatCardGenerator()
+	stats := dg.generateDashboardStats(data)
+
+	cards := []components.StatCardData{
+		{
+			Value:     fmt.Sprintf("%.1f%%", data.TotalCoverage),
+			Label:     "Total Coverage",
+			Grade:     data.QualityRating.OverallGrade,
+			ValueType: "percentage",
+		},
+		{
+			Value:     fmt.Sprintf("%d", stats["TotalPackages"]),
+			Label:     "Total Packages",
+			ValueType: "number",
+		},
+		{
+			Value:     fmt.Sprintf("%d/%d", stats["TestedPackages"], stats["TotalPackages"]),
+			Label:     "Tested Packages",
+			ValueType: "fraction",
+		},
+		{
+			Value:     fmt.Sprintf("%d", stats["CriticalIssues"]),
+			Label:     "Critical Issues",
+			ValueType: "number",
+		},
+		{
+			Value:     data.QualityRating.OverallGrade,
+			Label:     "Quality Grade",
+			Grade:     data.QualityRating.OverallGrade,
+			ValueType: "grade",
+		},
+		{
+			Value:     fmt.Sprintf("%.1f%%", stats["NextTarget"]),
+			Label:     "Next Target",
+			ValueType: "percentage",
+		},
 	}
-	return headerGen.GenerateHeader(options)
+
+	options := components.StatCardOptions{
+		ShowGrade: true,
+		DarkMode:  true,
+	}
+
+	return statCardGen.GenerateStatsGrid(cards, options)
 }
 
-// getDashboardTemplate returns the HTML template for the interactive dashboard
-func (dg *DashboardGenerator) getDashboardTemplate() string {
-	headerGen := components.NewHeaderGenerator()
+// generateChartsSection generates the charts section using ChartContainer component
+func (dg *DashboardGenerator) generateChartsSection(data *CoverageData) string {
+	chartGen := components.NewChartContainerGenerator()
+	chartData := dg.generateChartData(data)
 
-	return `<!DOCTYPE html>
+	var charts []components.ChartData
+
+	// Package coverage chart
+	if packageChart, ok := chartData["PackageChart"].(map[string]interface{}); ok {
+		charts = append(charts, components.ChartData{
+			ChartID:   "packageChart",
+			Title:     "📊 Package Coverage",
+			ChartType: "bar",
+			Data:      packageChart,
+			Height:    "400px",
+		})
+	}
+
+	// Distribution chart
+	if distributionChart, ok := chartData["DistributionChart"].(map[string]interface{}); ok {
+		charts = append(charts, components.ChartData{
+			ChartID:   "distributionChart",
+			Title:     "🎯 Coverage Distribution",
+			ChartType: "doughnut",
+			Data:      distributionChart,
+			Height:    "400px",
+		})
+	}
+
+	options := components.ChartContainerOptions{
+		ResponsiveHeight: true,
+		DarkMode:         true,
+		GridColumns:      2,
+	}
+
+	return chartGen.GenerateChartsGrid(charts, options)
+}
+
+// generateTablesSection generates the performance tables section using Card component
+func (dg *DashboardGenerator) generateTablesSection(data *CoverageData) string {
+	cardGen := components.NewCardGenerator()
+	stats := dg.generateDashboardStats(data)
+
+	var topPerformersCard, needsAttentionCard string
+
+	// Top performers table
+	if topPerformers, ok := stats["TopPerformers"].([]PackageCoverageStats); ok {
+		topPerformersHTML := dg.generatePerformersTable(topPerformers)
+		topPerformersCard = cardGen.GenerateTableCard("🏆 Top Performers", "🏆", topPerformersHTML, components.CardOptions{
+			HeaderStyle: "colored",
+			ShowShadow:  true,
+			Rounded:     true,
+			DarkMode:    true,
+		})
+	}
+
+	// Needs attention table
+	if needsAttention, ok := stats["NeedsAttention"].([]PackageCoverageStats); ok {
+		needsAttentionHTML := dg.generatePerformersTable(needsAttention)
+		needsAttentionCard = cardGen.GenerateTableCard("⚠️ Needs Attention", "⚠️", needsAttentionHTML, components.CardOptions{
+			HeaderStyle: "colored",
+			ShowShadow:  true,
+			Rounded:     true,
+			DarkMode:    true,
+		})
+	}
+
+	return fmt.Sprintf(`
+        <div class="tables-grid">
+            %s
+            %s
+        </div>`, topPerformersCard, needsAttentionCard)
+}
+
+// generateRecommendationsSection generates the recommendations section using Card component
+func (dg *DashboardGenerator) generateRecommendationsSection(data *CoverageData) string {
+	cardGen := components.NewCardGenerator()
+
+	var recommendations []components.RecommendationItem
+	for _, rec := range data.Recommendations {
+		recommendations = append(recommendations, components.RecommendationItem{
+			Title:       rec.Title,
+			Description: rec.Description,
+			Priority:    rec.Priority,
+		})
+	}
+
+	return cardGen.GenerateRecommendationsCard(recommendations)
+}
+
+// generatePerformersTable generates HTML table for package performance data
+func (dg *DashboardGenerator) generatePerformersTable(packages []PackageCoverageStats) string {
+	var tableHTML strings.Builder
+
+	tableHTML.WriteString(`
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Coverage</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>`)
+
+	for _, pkg := range packages {
+		tableHTML.WriteString(fmt.Sprintf(`
+                            <tr>
+                                <td>%s</td>
+                                <td>%.1f%%</td>
+                                <td><span class="grade-%s">%s</span></td>
+                            </tr>`, pkg.PackageName, pkg.Coverage, pkg.QualityGrade, pkg.QualityGrade))
+	}
+
+	tableHTML.WriteString(`
+                        </tbody>
+                    </table>`)
+
+	return tableHTML.String()
+}
+
+// buildDashboardHTML builds the complete dashboard HTML using components
+func (dg *DashboardGenerator) buildDashboardHTML(data *CoverageData, statsHTML, chartsHTML, tablesHTML, recommendationsHTML string) string {
+	headerGen := components.NewHeaderGenerator()
+	statCardGen := components.NewStatCardGenerator()
+	cardGen := components.NewCardGenerator()
+	chartGen := components.NewChartContainerGenerator()
+
+	return fmt.Sprintf(`<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coverage Dashboard - {{.Data.ProjectName}}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    ` + headerGen.GetTailwindCSSCDN() + `
+    <title>Coverage Dashboard - %s</title>
+    %s
+    %s
     <style>
         * {
             margin: 0;
@@ -243,24 +372,25 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f9fafb; /* bg-gray-50 equivalent */
-            color: #111827; /* text-gray-900 equivalent */
+            background: #f9fafb;
+            color: #111827;
             line-height: 1.6;
         }
         
-        /* Dark mode support */
         @media (prefers-color-scheme: dark) {
             body {
-                background: #111827; /* dark:bg-gray-900 equivalent */
-                color: #f9fafb; /* dark:text-gray-100 equivalent */
+                background: #111827;
+                color: #f9fafb;
             }
         }
         
-        /* Header component styles */
-        ` + headerGen.GetHeaderCSS() + `
+        %s
+        %s
+        %s
+        %s
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
             color: white;
             padding: 2rem;
             text-align: center;
@@ -283,98 +413,6 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
             padding: 2rem;
         }
         
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-        
-        .stat-card {
-            background: #ffffff; /* bg-white equivalent */
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
-            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .stat-card {
-                background: #1f2937; /* dark:bg-gray-800 equivalent */
-                border-color: #374151; /* dark:border-gray-700 equivalent */
-            }
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            color: #6b7280; /* text-gray-500 equivalent */
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .stat-label {
-                color: #9ca3af; /* dark:text-gray-400 equivalent */
-            }
-        }
-        
-        .grade-A { color: #4CAF50; }
-        .grade-B { color: #8BC34A; }
-        .grade-C { color: #FF9800; }
-        .grade-D { color: #FF5722; }
-        .grade-F { color: #F44336; }
-        
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        
-        .chart-container {
-            background: #ffffff; /* bg-white equivalent */
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
-            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .chart-container {
-                background: #1f2937; /* dark:bg-gray-800 equivalent */
-                border-color: #374151; /* dark:border-gray-700 equivalent */
-            }
-        }
-        
-        .chart-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            color: #111827; /* text-gray-900 equivalent */
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .chart-title {
-                color: #f9fafb; /* dark:text-gray-100 equivalent */
-            }
-        }
-        
-        .chart-canvas {
-            max-height: 400px;
-        }
-        
         .tables-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -382,126 +420,23 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
             margin-bottom: 3rem;
         }
         
-        .table-container {
-            background: #ffffff; /* bg-white equivalent */
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
-            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
-            overflow: hidden;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .table-container {
-                background: #1f2937; /* dark:bg-gray-800 equivalent */
-                border-color: #374151; /* dark:border-gray-700 equivalent */
-            }
-        }
-        
-        .table-header {
-            background: #667eea;
-            color: white;
-            padding: 1rem;
-            font-weight: bold;
-        }
-        
-        .table-content {
-            padding: 1rem;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* border-gray-200 equivalent */
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            th, td {
-                border-bottom-color: #374151; /* dark:border-gray-700 equivalent */
-            }
-        }
-        
-        th {
-            background: #f9fafb; /* bg-gray-50 equivalent */
-            font-weight: 600;
-            color: #111827; /* text-gray-900 equivalent */
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            th {
-                background: #374151; /* dark:bg-gray-700 equivalent */
-                color: #f9fafb; /* dark:text-gray-100 equivalent */
-            }
-        }
-        
-        .recommendations {
-            background: #ffffff; /* bg-white equivalent */
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
-            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
-            padding: 1.5rem;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .recommendations {
-                background: #1f2937; /* dark:bg-gray-800 equivalent */
-                border-color: #374151; /* dark:border-gray-700 equivalent */
-            }
-        }
-        
-        .recommendation-item {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid #667eea;
-            background: #f9fafb; /* bg-gray-50 equivalent */
-            border-radius: 0 8px 8px 0;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            .recommendation-item {
-                background: #374151; /* dark:bg-gray-700 equivalent */
-            }
-        }
-        
-        .recommendation-title {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        
-        .recommendation-priority {
-            display: inline-block;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            color: white;
-            margin-bottom: 0.5rem;
-        }
-        
-        .priority-high { background: #F44336; }
-        .priority-medium { background: #FF9800; }
-        .priority-low { background: #4CAF50; }
-        
         .footer {
             text-align: center;
             padding: 2rem;
-            color: #6b7280; /* text-gray-500 equivalent */
-            border-top: 1px solid #e5e7eb; /* border-gray-200 equivalent */
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
             margin-top: 3rem;
         }
         
         @media (prefers-color-scheme: dark) {
             .footer {
-                color: #9ca3af; /* dark:text-gray-400 equivalent */
-                border-top-color: #374151; /* dark:border-gray-700 equivalent */
+                color: #9ca3af;
+                border-top-color: #374151;
             }
         }
         
         @media (max-width: 768px) {
-            .charts-grid, .tables-grid {
+            .tables-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -512,123 +447,24 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
             .container {
                 padding: 1rem;
             }
-            
         }
     </style>
 </head>
-<body>` + dg.getTopNavigation() + `
+<body>%s
     <header class="header">
         <h1>📊 Coverage Dashboard</h1>
-        <div class="subtitle">{{.Data.ProjectName}} - Generated {{.Generated}}</div>
+        <div class="subtitle">%s - Generated %s</div>
     </header>
 
     <div class="container">
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value grade-{{.Data.QualityRating.OverallGrade}}">{{formatPercent .Data.TotalCoverage}}</div>
-                <div class="stat-label">Total Coverage</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{.Stats.TotalPackages}}</div>
-                <div class="stat-label">Total Packages</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{.Stats.TestedPackages}}/{{.Stats.TotalPackages}}</div>
-                <div class="stat-label">Tested Packages</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{.Stats.CriticalIssues}}</div>
-                <div class="stat-label">Critical Issues</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value grade-{{.Data.QualityRating.OverallGrade}}">{{.Data.QualityRating.OverallGrade}}</div>
-                <div class="stat-label">Quality Grade</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{formatPercent .Stats.NextTarget}}</div>
-                <div class="stat-label">Next Target</div>
-            </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="charts-grid">
-            <div class="chart-container">
-                <div class="chart-title">📊 Package Coverage</div>
-                <canvas id="packageChart" class="chart-canvas"></canvas>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">🎯 Coverage Distribution</div>
-                <canvas id="distributionChart" class="chart-canvas"></canvas>
-            </div>
-        </div>
-
-        <!-- Performance Tables -->
-        <div class="tables-grid">
-            <div class="table-container">
-                <div class="table-header">🏆 Top Performers</div>
-                <div class="table-content">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Package</th>
-                                <th>Coverage</th>
-                                <th>Grade</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{range .Stats.TopPerformers}}
-                            <tr>
-                                <td>{{.PackageName}}</td>
-                                <td>{{formatPercent .Coverage}}</td>
-                                <td><span class="grade-{{.QualityGrade}}">{{.QualityGrade}}</span></td>
-                            </tr>
-                            {{end}}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="table-container">
-                <div class="table-header">⚠️ Needs Attention</div>
-                <div class="table-content">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Package</th>
-                                <th>Coverage</th>
-                                <th>Grade</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{range .Stats.NeedsAttention}}
-                            <tr>
-                                <td>{{.PackageName}}</td>
-                                <td>{{formatPercent .Coverage}}</td>
-                                <td><span class="grade-{{.QualityGrade}}">{{.QualityGrade}}</span></td>
-                            </tr>
-                            {{end}}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recommendations -->
-        <div class="recommendations">
-            <h2>💡 Recommendations</h2>
-            {{range .Data.Recommendations}}
-            <div class="recommendation-item">
-                <div class="recommendation-priority priority-{{.Priority | lower}}">{{.Priority}} Priority</div>
-                <div class="recommendation-title">{{.Title}}</div>
-                <div>{{.Description}}</div>
-            </div>
-            {{end}}
-        </div>
+        %s
+        %s
+        %s
+        %s
     </div>
 
     <footer class="footer">
-        Generated by Beaver Coverage Dashboard • {{.Generated}}
+        Generated by Beaver Coverage Dashboard • %s
     </footer>
 
     <script>
@@ -636,23 +472,7 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         const packageCtx = document.getElementById('packageChart').getContext('2d');
         new Chart(packageCtx, {
             type: 'bar',
-            data: {
-                labels: {{.Charts.PackageChart.Labels}},
-                datasets: [{
-                    label: 'Coverage %',
-                    data: {{.Charts.PackageChart.Data}},
-                    backgroundColor: function(context) {
-                        const grades = {{.Charts.PackageChart.Grades}};
-                        const grade = grades[context.dataIndex];
-                        const colors = {
-                            'A': '#4CAF50', 'B': '#8BC34A', 'C': '#FF9800',
-                            'D': '#FF5722', 'F': '#F44336'
-                        };
-                        return colors[grade] || '#666';
-                    },
-                    borderWidth: 1
-                }]
-            },
+            data: %s,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -674,15 +494,7 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         const distributionCtx = document.getElementById('distributionChart').getContext('2d');
         new Chart(distributionCtx, {
             type: 'doughnut',
-            data: {
-                labels: {{.Charts.DistributionChart.Labels}},
-                datasets: [{
-                    data: {{.Charts.DistributionChart.Data}},
-                    backgroundColor: {{.Charts.DistributionChart.Colors}},
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
+            data: %s,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -695,5 +507,77 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         });
     </script>
 </body>
-</html>`
+</html>`,
+		data.ProjectName,
+		chartGen.GetChartJSCDN(),
+		headerGen.GetTailwindCSSCDN(),
+		headerGen.GetHeaderCSS(),
+		statCardGen.GetStatCardCSS(),
+		cardGen.GetCardCSS(),
+		chartGen.GetChartContainerCSS(),
+		dg.getTopNavigation(),
+		data.ProjectName,
+		data.GeneratedAt.Format("2006-01-02 15:04:05"),
+		statsHTML,
+		chartsHTML,
+		tablesHTML,
+		recommendationsHTML,
+		data.GeneratedAt.Format("2006-01-02 15:04:05"),
+		dg.generateChartDataJSON(data, "PackageChart"),
+		dg.generateChartDataJSON(data, "DistributionChart"),
+	)
+}
+
+// generateChartDataJSON generates JSON data for charts
+func (dg *DashboardGenerator) generateChartDataJSON(data *CoverageData, chartType string) string {
+	chartData := dg.generateChartData(data)
+
+	switch chartType {
+	case "PackageChart":
+		if chart, ok := chartData["PackageChart"].(map[string]interface{}); ok {
+			return fmt.Sprintf(`{
+            "labels": %v,
+            "datasets": [{
+                "label": "Coverage %%",
+                "data": %v,
+                "backgroundColor": function(context) {
+                    const grades = %v;
+                    const grade = grades[context.dataIndex];
+                    const colors = {
+                        'A': '#4CAF50', 'B': '#8BC34A', 'C': '#FF9800',
+                        'D': '#FF5722', 'F': '#F44336'
+                    };
+                    return colors[grade] || '#666';
+                },
+                "borderWidth": 1
+            }]
+        }`, chart["Labels"], chart["Data"], chart["Grades"])
+		}
+
+	case "DistributionChart":
+		if chart, ok := chartData["DistributionChart"].(map[string]interface{}); ok {
+			return fmt.Sprintf(`{
+            "labels": %v,
+            "datasets": [{
+                "data": %v,
+                "backgroundColor": %v,
+                "borderWidth": 2,
+                "borderColor": "#fff"
+            }]
+        }`, chart["Labels"], chart["Data"], chart["Colors"])
+		}
+	}
+
+	return "{}"
+}
+
+// getTopNavigation returns the common header banner using shared component
+func (dg *DashboardGenerator) getTopNavigation() string {
+	headerGen := components.NewHeaderGenerator()
+	options := components.HeaderOptions{
+		CurrentPage: "coverage",
+		BaseURL:     "../",
+		// Note: GitHub link removed to match exact Home/Issues design
+	}
+	return headerGen.GenerateHeader(options)
 }
