@@ -11,7 +11,7 @@ export LANG=C.UTF-8
 
 # Script configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 BEAVER_BIN="${PROJECT_ROOT}/bin/beaver"
 LOG_FILE="${PROJECT_ROOT}/.beaver/ci-beaver.log"
 
