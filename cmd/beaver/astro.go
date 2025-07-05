@@ -340,23 +340,27 @@ func categorizeIssue(issue models.Issue) string {
 		searchText += " " + strings.ToLower(label.Name)
 	}
 
-	// Category filters matching frontend CategoryShortcuts.tsx
-	categories := map[string][]string{
-		"critical":      {"critical", "urgent", "high", "important", "priority"},
-		"bug":           {"bug", "error", "defect", "fix"},
-		"feature":       {"feature", "enhancement", "new", "add"},
-		"documentation": {"docs", "documentation", "readme", "guide"},
-		"test":          {"test", "testing", "spec", "qa"},
-		"deploy":        {"deploy", "deployment", "release", "ci/cd", "build"},
-		"performance":   {"performance", "speed", "optimization", "slow"},
-		"security":      {"security", "vulnerability", "auth", "permission"},
+	// Priority-based categorization to match frontend CategoryShortcuts.tsx
+	// Check categories in priority order (most specific first)
+	categoryPriority := []struct {
+		key     string
+		filters []string
+	}{
+		{"critical", []string{"critical", "urgent", "high", "important", "priority"}},
+		{"bug", []string{"bug", "error", "defect", "fix"}},
+		{"security", []string{"security", "vulnerability", "auth", "permission"}},
+		{"performance", []string{"performance", "speed", "optimization", "slow"}},
+		{"deploy", []string{"deploy", "deployment", "release", "ci/cd", "build"}},
+		{"test", []string{"test", "testing", "spec", "qa"}},
+		{"docs", []string{"docs", "documentation", "readme", "guide"}},
+		{"feature", []string{"feature", "enhancement", "new", "add"}},
 	}
 
-	// Check categories in priority order (critical first)
-	for category, keywords := range categories {
-		for _, keyword := range keywords {
+	// Check each category in priority order
+	for _, category := range categoryPriority {
+		for _, keyword := range category.filters {
 			if strings.Contains(searchText, keyword) {
-				return category
+				return category.key
 			}
 		}
 	}

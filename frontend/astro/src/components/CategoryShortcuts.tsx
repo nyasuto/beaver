@@ -82,11 +82,34 @@ const categories: CategoryConfig[] = [
   }
 ];
 
+// Priority-based categorization to avoid duplicate counting
+function getPrimaryCategory(issue: Issue): string {
+  const searchText = `${issue.title} ${issue.body || ''} ${(issue.labels || []).join(' ')}`.toLowerCase();
+  
+  // Check categories in priority order (most specific first)
+  const categoryPriority = [
+    'critical',     // Highest priority
+    'bug',         // Second priority  
+    'security',    // Third priority
+    'performance', // Fourth priority
+    'deploy',      // Fifth priority
+    'test',        // Sixth priority
+    'docs',        // Seventh priority
+    'feature'      // Lowest priority (most general)
+  ];
+  
+  for (const categoryKey of categoryPriority) {
+    const category = categories.find(c => c.key === categoryKey);
+    if (category && category.filters.some(filter => searchText.includes(filter.toLowerCase()))) {
+      return categoryKey;
+    }
+  }
+  
+  return 'general'; // Default category
+}
+
 function getCategoryIssues(issues: Issue[], category: CategoryConfig): Issue[] {
-  return issues.filter(issue => {
-    const searchText = `${issue.title} ${issue.body || ''} ${(issue.labels || []).join(' ')}`.toLowerCase();
-    return category.filters.some(filter => searchText.includes(filter.toLowerCase()));
-  });
+  return issues.filter(issue => getPrimaryCategory(issue) === category.key);
 }
 
 function getStateDistribution(issues: Issue[]): { open: number; closed: number } {
