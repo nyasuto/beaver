@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"sort"
 	"strings"
+
+	"github.com/nyasuto/beaver/pkg/components"
 )
 
 // DashboardGenerator generates interactive coverage dashboards
@@ -209,8 +211,21 @@ func (dg *DashboardGenerator) countCriticalIssues(data *CoverageData) int {
 	return critical
 }
 
+// getTopNavigation returns the common header banner using shared component
+func (dg *DashboardGenerator) getTopNavigation() string {
+	headerGen := components.NewHeaderGenerator()
+	options := components.HeaderOptions{
+		CurrentPage: "coverage",
+		BaseURL:     "../",
+		// Note: GitHub link removed to match exact Home/Issues design
+	}
+	return headerGen.GenerateHeader(options)
+}
+
 // getDashboardTemplate returns the HTML template for the interactive dashboard
 func (dg *DashboardGenerator) getDashboardTemplate() string {
+	headerGen := components.NewHeaderGenerator()
+
 	return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -218,6 +233,7 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coverage Dashboard - {{.Data.ProjectName}}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    ` + headerGen.GetTailwindCSSCDN() + `
     <style>
         * {
             margin: 0;
@@ -227,10 +243,21 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: #f9fafb; /* bg-gray-50 equivalent */
+            color: #111827; /* text-gray-900 equivalent */
             line-height: 1.6;
         }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #111827; /* dark:bg-gray-900 equivalent */
+                color: #f9fafb; /* dark:text-gray-100 equivalent */
+            }
+        }
+        
+        /* Header component styles */
+        ` + headerGen.GetHeaderCSS() + `
         
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -264,12 +291,20 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         }
         
         .stat-card {
-            background: white;
+            background: #ffffff; /* bg-white equivalent */
             padding: 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
+            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
             text-align: center;
             transition: transform 0.2s ease;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .stat-card {
+                background: #1f2937; /* dark:bg-gray-800 equivalent */
+                border-color: #374151; /* dark:border-gray-700 equivalent */
+            }
         }
         
         .stat-card:hover {
@@ -283,10 +318,16 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         }
         
         .stat-label {
-            color: #666;
+            color: #6b7280; /* text-gray-500 equivalent */
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .stat-label {
+                color: #9ca3af; /* dark:text-gray-400 equivalent */
+            }
         }
         
         .grade-A { color: #4CAF50; }
@@ -303,17 +344,31 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         }
         
         .chart-container {
-            background: white;
+            background: #ffffff; /* bg-white equivalent */
             padding: 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
+            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .chart-container {
+                background: #1f2937; /* dark:bg-gray-800 equivalent */
+                border-color: #374151; /* dark:border-gray-700 equivalent */
+            }
         }
         
         .chart-title {
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 1rem;
-            color: #333;
+            color: #111827; /* text-gray-900 equivalent */
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .chart-title {
+                color: #f9fafb; /* dark:text-gray-100 equivalent */
+            }
         }
         
         .chart-canvas {
@@ -328,10 +383,18 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         }
         
         .table-container {
-            background: white;
+            background: #ffffff; /* bg-white equivalent */
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
+            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
             overflow: hidden;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .table-container {
+                background: #1f2937; /* dark:bg-gray-800 equivalent */
+                border-color: #374151; /* dark:border-gray-700 equivalent */
+            }
         }
         
         .table-header {
@@ -353,28 +416,55 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         th, td {
             padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #e5e7eb; /* border-gray-200 equivalent */
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            th, td {
+                border-bottom-color: #374151; /* dark:border-gray-700 equivalent */
+            }
         }
         
         th {
-            background: #f8f9fa;
+            background: #f9fafb; /* bg-gray-50 equivalent */
             font-weight: 600;
-            color: #555;
+            color: #111827; /* text-gray-900 equivalent */
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            th {
+                background: #374151; /* dark:bg-gray-700 equivalent */
+                color: #f9fafb; /* dark:text-gray-100 equivalent */
+            }
         }
         
         .recommendations {
-            background: white;
+            background: #ffffff; /* bg-white equivalent */
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* shadow-sm equivalent */
+            border: 1px solid #e5e7eb; /* border-gray-200 equivalent */
             padding: 1.5rem;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .recommendations {
+                background: #1f2937; /* dark:bg-gray-800 equivalent */
+                border-color: #374151; /* dark:border-gray-700 equivalent */
+            }
         }
         
         .recommendation-item {
             padding: 1rem;
             margin-bottom: 1rem;
             border-left: 4px solid #667eea;
-            background: #f8f9fa;
+            background: #f9fafb; /* bg-gray-50 equivalent */
             border-radius: 0 8px 8px 0;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .recommendation-item {
+                background: #374151; /* dark:bg-gray-700 equivalent */
+            }
         }
         
         .recommendation-title {
@@ -398,9 +488,16 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
         .footer {
             text-align: center;
             padding: 2rem;
-            color: #666;
-            border-top: 1px solid #eee;
+            color: #6b7280; /* text-gray-500 equivalent */
+            border-top: 1px solid #e5e7eb; /* border-gray-200 equivalent */
             margin-top: 3rem;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .footer {
+                color: #9ca3af; /* dark:text-gray-400 equivalent */
+                border-top-color: #374151; /* dark:border-gray-700 equivalent */
+            }
         }
         
         @media (max-width: 768px) {
@@ -415,10 +512,11 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
             .container {
                 padding: 1rem;
             }
+            
         }
     </style>
 </head>
-<body>
+<body>` + dg.getTopNavigation() + `
     <header class="header">
         <h1>📊 Coverage Dashboard</h1>
         <div class="subtitle">{{.Data.ProjectName}} - Generated {{.Generated}}</div>
