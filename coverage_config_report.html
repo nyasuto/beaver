@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>config: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/nyasuto/beaver/pkg/config/classification.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package config
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "gopkg.in/yaml.v3"
+)
+
+// ClassificationConfig represents the shared classification configuration
+type ClassificationConfig struct {
+        PriorityRules  map[string]RuleSet `yaml:"priority_rules"`
+        CategoryRules  map[string]RuleSet `yaml:"category_rules"`
+        ActionRules    ActionRulesConfig  `yaml:"action_rules"`
+        SearchConfig   SearchConfig       `yaml:"search_config"`
+        WorkflowConfig WorkflowConfig     `yaml:"workflow_config"`
+        DataContract   DataContract       `yaml:"data_contract"`
+}
+
+// RuleSet represents a set of classification rules
+type RuleSet struct {
+        Keywords      []string `yaml:"keywords"`
+        Labels        []string `yaml:"labels"`
+        TitlePatterns []string `yaml:"title_patterns"`
+        Description   string   `yaml:"description"`
+}
+
+// ActionRulesConfig contains configuration for action item generation
+type ActionRulesConfig struct {
+        StaleThresholdDays  int `yaml:"stale_threshold_days"`
+        CriticalActionLimit int `yaml:"critical_action_limit"`
+        FeatureActionLimit  int `yaml:"feature_action_limit"`
+        BugActionLimit      int `yaml:"bug_action_limit"`
+}
+
+// SearchConfig contains search and filtering configuration
+type SearchConfig struct {
+        RelevanceScores struct {
+                TitleMatch   int `yaml:"title_match"`
+                LabelMatch   int `yaml:"label_match"`
+                BodyMatch    int `yaml:"body_match"`
+                CommentMatch int `yaml:"comment_match"`
+        } `yaml:"relevance_scores"`
+        MaxSearchResults int `yaml:"max_search_results"`
+        SearchDebounceMs int `yaml:"search_debounce_ms"`
+}
+
+// WorkflowConfig contains workflow metrics configuration
+type WorkflowConfig struct {
+        TimePeriods struct {
+                DailyHours  int `yaml:"daily_hours"`
+                WeeklyDays  int `yaml:"weekly_days"`
+                MonthlyDays int `yaml:"monthly_days"`
+        } `yaml:"time_periods"`
+        VelocityCalculation string `yaml:"velocity_calculation"`
+        ActivityThreshold   int    `yaml:"activity_threshold"`
+}
+
+// DataContract defines the required fields for data consistency
+type DataContract struct {
+        IssueRequiredFields      []string `yaml:"issue_required_fields"`
+        StatisticsRequiredFields []string `yaml:"statistics_required_fields"`
+        WorkflowMetricsFields    []string `yaml:"workflow_metrics_fields"`
+}
+
+// LoadClassificationConfig loads the shared classification configuration
+func LoadClassificationConfig() (*ClassificationConfig, error) <span class="cov8" title="1">{
+        configPath := getClassificationConfigPath()
+
+        data, err := os.ReadFile(configPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to read classification config: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var config ClassificationConfig
+        if err := yaml.Unmarshal(data, &amp;config); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to parse classification config: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return &amp;config, nil</span>
+}
+
+// getClassificationConfigPath returns the path to the classification config file
+func getClassificationConfigPath() string <span class="cov8" title="1">{
+        // Try to find config in common locations
+        possiblePaths := []string{
+                "config/classification.yml",
+                "../config/classification.yml",
+                "../../config/classification.yml",
+                "/etc/beaver/classification.yml",
+                filepath.Join(os.Getenv("HOME"), ".beaver", "classification.yml"),
+        }
+
+        for _, path := range possiblePaths </span><span class="cov8" title="1">{
+                if _, err := os.Stat(path); err == nil </span><span class="cov8" title="1">{
+                        return path
+                }</span>
+        }
+
+        // Default to the first path
+        <span class="cov8" title="1">return possiblePaths[0]</span>
+}
+
+// GetPriorityFromLabels determines priority based on shared configuration
+func (c *ClassificationConfig) GetPriorityFromLabels(labels []string) string <span class="cov8" title="1">{
+        labelText := ""
+        for _, label := range labels </span><span class="cov8" title="1">{
+                labelText += " " + label
+        }</span>
+        <span class="cov8" title="1">labelText = " " + labelText + " " // Add spaces for better matching
+
+        // Check each priority level in order of importance
+        priorities := []string{"critical", "high", "medium", "low"}
+        for _, priority := range priorities </span><span class="cov8" title="1">{
+                if rules, exists := c.PriorityRules[priority]; exists </span><span class="cov8" title="1">{
+                        // Check labels
+                        for _, ruleLabel := range rules.Labels </span><span class="cov8" title="1">{
+                                for _, issueLabel := range labels </span><span class="cov8" title="1">{
+                                        if issueLabel == ruleLabel </span><span class="cov8" title="1">{
+                                                return priority
+                                        }</span>
+                                }
+                        }
+
+                        // Check keywords in combined label text
+                        <span class="cov8" title="1">for _, keyword := range rules.Keywords </span><span class="cov8" title="1">{
+                                if containsWord(labelText, keyword) </span><span class="cov8" title="1">{
+                                        return priority
+                                }</span>
+                        }
+                }
+        }
+
+        <span class="cov8" title="1">return "low"</span> // Default priority
+}
+
+// GetCategoryFromContent determines category based on shared configuration
+func (c *ClassificationConfig) GetCategoryFromContent(title, body string, labels []string) string <span class="cov8" title="1">{
+        content := title + " " + body
+        labelText := ""
+        for _, label := range labels </span><span class="cov8" title="1">{
+                labelText += " " + label
+        }</span>
+
+        // Check each category
+        <span class="cov8" title="1">categories := []string{"bug", "feature", "documentation", "test", "refactor"}
+        for _, category := range categories </span><span class="cov8" title="1">{
+                if rules, exists := c.CategoryRules[category]; exists </span><span class="cov8" title="1">{
+                        // Check labels first (highest priority)
+                        for _, ruleLabel := range rules.Labels </span><span class="cov8" title="1">{
+                                for _, issueLabel := range labels </span><span class="cov8" title="1">{
+                                        if issueLabel == ruleLabel </span><span class="cov8" title="1">{
+                                                return category
+                                        }</span>
+                                }
+                        }
+
+                        // Check title patterns
+                        <span class="cov8" title="1">for _, pattern := range rules.TitlePatterns </span><span class="cov8" title="1">{
+                                if containsWord(title, pattern) </span><span class="cov8" title="1">{
+                                        return category
+                                }</span>
+                        }
+
+                        // Check keywords in content
+                        <span class="cov8" title="1">for _, keyword := range rules.Keywords </span><span class="cov8" title="1">{
+                                if containsWord(content, keyword) </span><span class="cov8" title="1">{
+                                        return category
+                                }</span>
+                        }
+                }
+        }
+
+        <span class="cov8" title="1">return "general"</span> // Default category
+}
+
+// containsWord checks if text contains a word (case-insensitive)
+func containsWord(text, word string) bool <span class="cov8" title="1">{
+        text = " " + text + " "
+        word = " " + word + " "
+        return len(text) &gt;= len(word) &amp;&amp;
+                (text == word ||
+                        findInText(text, word) &gt;= 0)
+}</span>
+
+// findInText is a simple case-insensitive search
+func findInText(text, substr string) int <span class="cov8" title="1">{
+        textLower := toLower(text)
+        substrLower := toLower(substr)
+
+        for i := 0; i &lt;= len(textLower)-len(substrLower); i++ </span><span class="cov8" title="1">{
+                if textLower[i:i+len(substrLower)] == substrLower </span><span class="cov8" title="1">{
+                        return i
+                }</span>
+        }
+        <span class="cov8" title="1">return -1</span>
+}
+
+// toLower converts string to lowercase
+func toLower(s string) string <span class="cov8" title="1">{
+        result := make([]byte, len(s))
+        for i := 0; i &lt; len(s); i++ </span><span class="cov8" title="1">{
+                if s[i] &gt;= 'A' &amp;&amp; s[i] &lt;= 'Z' </span><span class="cov8" title="1">{
+                        result[i] = s[i] + 32
+                }</span> else<span class="cov8" title="1"> {
+                        result[i] = s[i]
+                }</span>
+        }
+        <span class="cov8" title="1">return string(result)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
