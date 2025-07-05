@@ -872,8 +872,8 @@ func TestEdgeCases(t *testing.T) {
 			word     string
 			expected bool
 		}{
-			{"fix-bug", "fix", false}, // containsWord looks for whole words only
-			{"bug_fix", "bug", false}, // containsWord looks for whole words only
+			{"fix-bug", "fix", false},    // containsWord looks for whole words only
+			{"bug_fix", "bug", false},    // containsWord looks for whole words only
 			{"test.case", "test", false}, // containsWord looks for whole words only
 			{"test@case", "test", false}, // containsWord looks for whole words only
 			{"test#case", "test", false}, // containsWord looks for whole words only
