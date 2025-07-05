@@ -48,6 +48,9 @@ func (dg *DashboardGenerator) GenerateInteractiveDashboard(data *CoverageData) s
 			}
 			return "#666"
 		},
+		"lower": func(s string) string {
+			return strings.ToLower(s)
+		},
 	}).Parse(dg.getDashboardTemplate()))
 
 	var builder strings.Builder

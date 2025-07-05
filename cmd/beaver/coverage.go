@@ -386,7 +386,23 @@ func runCoverageReport(inputFile, outputFile, format string) error {
 		htmlReport:   format == "html",
 	}
 
-	return outputCoverageData(data, opts)
+	// Output the data first
+	err = outputCoverageData(data, opts)
+	if err != nil {
+		return err
+	}
+
+	// Generate HTML report if requested  
+	if opts.htmlReport {
+		// Create a dummy collector for HTML generation
+		collector := coverage.NewCollector(projectRoot, coverage.DefaultCoverageConfig())
+		err = generateHTMLCoverageReport(collector, data, opts)
+		if err != nil {
+			return fmt.Errorf("HTMLレポート生成失敗: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // createCoverageValidateCommand creates the coverage validate subcommand
