@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -331,19 +332,39 @@ func writeAstroData(data AstroDataExport) error {
 
 // Helper functions
 func categorizeIssue(issue models.Issue) string {
-	title := issue.Title
-	if len(title) > 20 {
-		prefix := title[:20]
-		if contains(prefix, "feat") || contains(prefix, "feature") {
-			return "feature"
-		}
-		if contains(prefix, "fix") || contains(prefix, "bug") {
-			return "bug"
-		}
-		if contains(prefix, "docs") || contains(prefix, "documentation") {
-			return "documentation"
+	// Build search text similar to frontend logic
+	searchText := strings.ToLower(issue.Title + " " + issue.Body)
+
+	// Add all labels to search text
+	for _, label := range issue.Labels {
+		searchText += " " + strings.ToLower(label.Name)
+	}
+
+	// Priority-based categorization to match frontend CategoryShortcuts.tsx
+	// Check categories in priority order (most specific first)
+	categoryPriority := []struct {
+		key     string
+		filters []string
+	}{
+		{"critical", []string{"critical", "urgent", "high", "important", "priority"}},
+		{"bug", []string{"bug", "error", "defect", "fix"}},
+		{"security", []string{"security", "vulnerability", "auth", "permission"}},
+		{"performance", []string{"performance", "speed", "optimization", "slow"}},
+		{"deploy", []string{"deploy", "deployment", "release", "ci/cd", "build"}},
+		{"test", []string{"test", "testing", "spec", "qa"}},
+		{"docs", []string{"docs", "documentation", "readme", "guide"}},
+		{"feature", []string{"feature", "enhancement", "new", "add"}},
+	}
+
+	// Check each category in priority order
+	for _, category := range categoryPriority {
+		for _, keyword := range category.filters {
+			if strings.Contains(searchText, keyword) {
+				return category.key
+			}
 		}
 	}
+
 	return "general"
 }
 
@@ -416,8 +437,4 @@ func truncateTitle(title string, maxLen int) string {
 		return title
 	}
 	return title[:maxLen] + "..."
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr
 }
