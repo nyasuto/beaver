@@ -42,7 +42,7 @@ func TestMainFunction(t *testing.T) {
 
 		// Verify default output - Custom Run function is executed
 		assert.Contains(t, captured, "🦫 Beaver - AI知識ダム")
-		assert.Contains(t, captured, "使用方法: beaver [command]")
+		assert.Contains(t, captured, "🚀 クイックスタート:")
 	})
 
 	t.Run("main function with help flag", func(t *testing.T) {

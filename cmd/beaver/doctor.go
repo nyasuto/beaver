@@ -220,4 +220,3 @@ func runDoctorCommand(cmd *cobra.Command, args []string) {
 func init() {
 	// Doctor command will be added to root in main.go init()
 }
-
