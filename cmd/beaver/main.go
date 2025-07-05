@@ -607,6 +607,7 @@ func init() {
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(generateCmd)
 	rootCmd.AddCommand(doctorCmd)
+	rootCmd.AddCommand(createCoverageCommand())
 
 	// Build command flags
 	buildCmd.Flags().BoolVar(&incrementalBuild, "incremental", false, "インクリメンタルビルドを実行 (前回更新以降の変更のみ)")

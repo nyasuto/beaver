@@ -53,6 +53,9 @@ logs/
 # Coverage files
 coverage.out
 coverage.html
+coverage-report.html
+coverage-*.html
+coverage-*.json
 
 # Temporary files
 tmp/
