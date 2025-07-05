@@ -28,7 +28,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'scripts/run-integration-tests.sh'
+      - 'scripts/testing/run-integration-tests.sh'
       - 'tests/integration/**'
       - '.github/workflows/integration.yml'
       - 'pkg/**'
@@ -74,7 +74,7 @@ jobs:
 
       - name: ⚙️ Setup integration environment
         run: |
-          chmod +x ./scripts/run-integration-tests.sh
+          chmod +x ./scripts/testing/run-integration-tests.sh
 
       - name: 🔗 Run integration tests
         env:
@@ -90,15 +90,15 @@ jobs:
           echo "🔍 Test scope: ${{ github.event.inputs.test_scope || 'quick' }}"
           
           # Pre-flight checks
-          ./scripts/run-integration-tests.sh --check
+          ./scripts/testing/run-integration-tests.sh --check
           
           # Run tests based on scope
           case "${{ github.event.inputs.test_scope || 'quick' }}" in
             "quick"|"")
-              ./scripts/run-integration-tests.sh --quick --run
+              ./scripts/testing/run-integration-tests.sh --quick --run
               ;;
             "all")
-              ./scripts/run-integration-tests.sh --all --run
+              ./scripts/testing/run-integration-tests.sh --all --run
               ;;
           esac
         timeout-minutes: 15
