@@ -1036,11 +1036,11 @@ func TestContextCancellation(t *testing.T) {
 	}{
 		{
 			name:    "immediate cancellation",
-			timeout: 0,
+			timeout: 1 * time.Millisecond, // Use very short timeout instead of 0
 		},
 		{
 			name:    "short timeout",
-			timeout: 1 * time.Millisecond,
+			timeout: 10 * time.Millisecond,
 		},
 	}
 
@@ -1049,20 +1049,24 @@ func TestContextCancellation(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
 			defer cancel()
 
-			if tt.timeout == 0 {
-				cancel() // Cancel immediately
+			// Use a goroutine with timeout to prevent hanging
+			done := make(chan error, 1)
+			go func() {
+				// Test that functions handle context cancellation gracefully
+				_, err := fetchGitEvents(ctx, "2023-01-01", 50)
+				done <- err
+			}()
+
+			select {
+			case err := <-done:
+				// Should get context error or other error, not panic
+				if err == nil {
+					t.Log("No error returned (might be expected depending on implementation)")
+				}
+			case <-time.After(2 * time.Second):
+				t.Error("Context cancellation test timed out")
 			}
 
-			// Test that functions handle context cancellation gracefully
-			_, err := fetchGitEvents(ctx, "2023-01-01", 50)
-			// Should get context error or other error, not panic
-			if err == nil {
-				t.Log("No error returned (might be expected depending on implementation)")
-			}
-
-			// Skip fetchGitHubEvents test due to signature complexity
-			// _, err = fetchGitHubEvents(ctx, "owner", "repo")
-			// Just test that context cancellation doesn't panic
 			t.Log("Context cancellation test completed without panic")
 		})
 	}

@@ -377,11 +377,20 @@ func TestMain_Function(t *testing.T) {
 	// Test with help command
 	os.Args = []string{"beaver", "--help"}
 
-	// mainLogic should not return error for help
-	err := mainLogic()
-	// Help command returns error in cobra, but that's expected behavior
-	// We just want to ensure mainLogic can be called without panic
-	_ = err // Don't fail test on help error
+	// Use goroutine with timeout to prevent hanging
+	done := make(chan error, 1)
+	go func() {
+		done <- mainLogic()
+	}()
+
+	select {
+	case err := <-done:
+		// Help command returns error in cobra, but that's expected behavior
+		// We just want to ensure mainLogic can be called without panic
+		_ = err // Don't fail test on help error
+	case <-time.After(5 * time.Second):
+		t.Error("mainLogic() timed out")
+	}
 }
 
 // Test mainLogic function - currently has 100% coverage but test error cases
