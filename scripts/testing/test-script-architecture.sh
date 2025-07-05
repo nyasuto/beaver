@@ -7,8 +7,8 @@ set -euo pipefail
 
 # Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=ci-common.sh
-source "${SCRIPT_DIR}/ci-common.sh"
+# shellcheck source=../core/ci-common.sh
+source "${SCRIPT_DIR}/../core/ci-common.sh"
 
 # Test configuration
 TEST_REPOSITORY="test/repo"
@@ -137,13 +137,11 @@ test_script_availability() {
     log_debug "Testing script availability..."
     
     local scripts=(
-        "ci-common.sh"
-        "build-tools.sh"
-        "deployment.sh"
-        "github-integration.sh"
-        "ci-checks.sh"
-        "release-builder.sh"
-        "beaver-automation.sh"
+        "../core/ci-common.sh"
+        "../core/ci-beaver.sh"
+        "../core/release.sh"
+        "../build/build-tools.sh"
+        "../build/build-integrated.sh"
     )
     
     for script in "${scripts[@]}"; do
@@ -318,9 +316,8 @@ test_dry_run() {
     log_debug "Testing dry-run functionality..."
     
     local scripts=(
-        "build-tools.sh"
-        "deployment.sh"
-        "ci-checks.sh"
+        "../build/build-tools.sh"
+        "../core/ci-beaver.sh"
     )
     
     for script in "${scripts[@]}"; do
@@ -342,7 +339,7 @@ test_dry_run() {
 test_ci_integration() {
     log_debug "Testing integration with existing CI script..."
     
-    local ci_script="$SCRIPT_DIR/ci-beaver.sh"
+    local ci_script="$SCRIPT_DIR/../core/ci-beaver.sh"
     if [[ -f "$ci_script" ]]; then
         if [[ -x "$ci_script" ]]; then
             log_debug "✅ ci-beaver.sh is available and executable"

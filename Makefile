@@ -209,17 +209,17 @@ release-dry-run:
 ## release-patch: Create a patch release
 release-patch:
 	@echo "🏷️ パッチバージョンリリースを作成中..."
-	@./scripts/release.sh patch
+	@./scripts/core/release.sh patch
 
 ## release-minor: Create a minor release  
 release-minor:
 	@echo "🏷️ マイナーバージョンリリースを作成中..."
-	@./scripts/release.sh minor
+	@./scripts/core/release.sh minor
 
 ## release-major: Create a major release
 release-major:
 	@echo "🏷️ メジャーバージョンリリースを作成中..."
-	@./scripts/release.sh major
+	@./scripts/core/release.sh major
 
 ## site-build: Generate knowledge base content (using beaver build)
 site-build: build
@@ -247,8 +247,8 @@ scripts-lint:
 ## scripts-test: Test scripts functionality
 scripts-test:
 	@echo "🧪 スクリプト機能テスト実行中..."
-	@if [ -f "$(SCRIPTS_DIR)/test-script-architecture.sh" ]; then \
-		bash $(SCRIPTS_DIR)/test-script-architecture.sh; \
+	@if [ -f "$(SCRIPTS_DIR)/testing/test-script-architecture.sh" ]; then \
+		bash $(SCRIPTS_DIR)/testing/test-script-architecture.sh; \
 	else \
 		echo "⚠️ スクリプトテストファイルが見つかりません"; \
 	fi

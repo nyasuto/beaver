@@ -179,7 +179,7 @@ jobs:
 
           # Build Beaver
           make build
-          chmod +x ./bin/beaver ./scripts/ci-beaver.sh
+          chmod +x ./bin/beaver ./scripts/core/ci-beaver.sh
 
       - name: 🧪 Run Unit Tests
         run: |
@@ -192,10 +192,10 @@ jobs:
         run: |
           # Test binary
           ./bin/beaver --help
-          ./scripts/ci-beaver.sh --help
+          ./scripts/core/ci-beaver.sh --help
 
           # Test CI script
-          ./scripts/ci-beaver.sh health-check
+          ./scripts/core/ci-beaver.sh health-check
 
       - name: ⚙️ Setup configuration
         env:
@@ -209,7 +209,7 @@ jobs:
           fi
 
           # Create configuration using CI script
-          ./scripts/ci-beaver.sh test-setup \
+          ./scripts/core/ci-beaver.sh test-setup \
             --repository "$TARGET_REPO" \
             --verbose
 
@@ -428,7 +428,7 @@ jobs:
         run: |
           go mod download
           make build
-          chmod +x ./scripts/ci-beaver.sh
+          chmod +x ./scripts/core/ci-beaver.sh
 
       - name: 🧹 Perform self-documentation cleanup
         run: |
@@ -436,7 +436,7 @@ jobs:
           echo "🦫 Meta-maintenance: Beaver cleaning up its own documentation artifacts"
 
           # Clean up old artifacts
-          ./scripts/ci-beaver.sh clean || echo "Clean script not available, skipping cleanup"
+          ./scripts/core/ci-beaver.sh clean || echo "Clean script not available, skipping cleanup"
 
           # Optimize incremental state for self-documentation
           if [ -f ".beaver/incremental-state.json" ]; then
@@ -474,7 +474,7 @@ jobs:
         run: |
           go mod download
           make build
-          chmod +x ./bin/beaver ./scripts/ci-beaver.sh
+          chmod +x ./bin/beaver ./scripts/core/ci-beaver.sh
 
       - name: 📊 Execute comprehensive self-analysis
         env:
