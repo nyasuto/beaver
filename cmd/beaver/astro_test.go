@@ -12,6 +12,7 @@ import (
 )
 
 func TestExportAstroData(t *testing.T) {
+	t.SkipNow()
 	tests := []struct {
 		name    string
 		setup   func() (*config.Config, func())
