@@ -490,7 +490,7 @@ func TestCollector_generateCoverageProfile(t *testing.T) {
 	defer cleanupTempDir(t, tempDir)
 
 	collector := NewCollector(tempDir, nil)
-	
+
 	// Set a specific output path
 	outputPath := filepath.Join(tempDir, "test-coverage.out")
 	collector.SetOutputPath(outputPath)
@@ -511,7 +511,7 @@ func TestCollector_findAllPackages(t *testing.T) {
 	// Create some directories with Go files
 	testDirs := []string{
 		"pkg/utils",
-		"cmd/app", 
+		"cmd/app",
 		"internal/models",
 		"vendor/external", // Should be skipped
 		".hidden",         // Should be skipped
@@ -647,9 +647,9 @@ func TestCollector_getTestPackages(t *testing.T) {
 			expectedExcludes: []string{},
 		},
 		{
-			name:            "with exclude packages",
-			includePackages: []string{},
-			excludePackages: []string{"vendor", "test"},
+			name:             "with exclude packages",
+			includePackages:  []string{},
+			excludePackages:  []string{"vendor", "test"},
 			expectedContains: []string{},
 			expectedExcludes: []string{"vendor", "test"},
 		},

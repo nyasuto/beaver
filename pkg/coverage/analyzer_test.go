@@ -14,7 +14,7 @@ func TestAnalyzer_AnalyzeCoverageFile(t *testing.T) {
 
 	// Test with sample coverage file
 	sampleFile := filepath.Join("testdata", "coverage", "sample.out")
-	
+
 	// Check if test file exists
 	if _, err := os.Stat(sampleFile); os.IsNotExist(err) {
 		t.Skip("Sample coverage file not found, skipping test")
@@ -61,7 +61,7 @@ func TestAnalyzer_AnalyzeCoverageFile_Complex(t *testing.T) {
 
 	// Test with complex coverage file
 	complexFile := filepath.Join("testdata", "coverage", "complex.out")
-	
+
 	// Check if test file exists
 	if _, err := os.Stat(complexFile); os.IsNotExist(err) {
 		t.Skip("Complex coverage file not found, skipping test")
@@ -116,7 +116,7 @@ github.com/test/project/pkg/models/user.go:25.2,30.12 3 2`
 	// Create a temporary file with coverage content
 	tempDir := createTempDir(t)
 	defer cleanupTempDir(t, tempDir)
-	
+
 	tempFile := filepath.Join(tempDir, "test.out")
 	err := os.WriteFile(tempFile, []byte(coverageContent), 0600)
 	if err != nil {
@@ -270,40 +270,40 @@ func TestAnalyzer_generateCoverageSummary(t *testing.T) {
 func TestAnalyzer_calculateQualityRating(t *testing.T) {
 
 	tests := []struct {
-		name            string
-		totalCoverage   float64
-		expectedGrade   string
-		expectedTarget  float64
+		name           string
+		totalCoverage  float64
+		expectedGrade  string
+		expectedTarget float64
 	}{
 		{
-			name:            "excellent coverage",
-			totalCoverage:   95.0,
-			expectedGrade:   "A",
-			expectedTarget:  95.0,
+			name:           "excellent coverage",
+			totalCoverage:  95.0,
+			expectedGrade:  "A",
+			expectedTarget: 95.0,
 		},
 		{
-			name:            "good coverage",
-			totalCoverage:   85.0,
-			expectedGrade:   "B",
-			expectedTarget:  90.0,
+			name:           "good coverage",
+			totalCoverage:  85.0,
+			expectedGrade:  "B",
+			expectedTarget: 90.0,
 		},
 		{
-			name:            "fair coverage",
-			totalCoverage:   75.0,
-			expectedGrade:   "C",
-			expectedTarget:  80.0,
+			name:           "fair coverage",
+			totalCoverage:  75.0,
+			expectedGrade:  "C",
+			expectedTarget: 80.0,
 		},
 		{
-			name:            "poor coverage",
-			totalCoverage:   60.0,
-			expectedGrade:   "D",
-			expectedTarget:  70.0,
+			name:           "poor coverage",
+			totalCoverage:  60.0,
+			expectedGrade:  "D",
+			expectedTarget: 70.0,
 		},
 		{
-			name:            "failing coverage",
-			totalCoverage:   40.0,
-			expectedGrade:   "F",
-			expectedTarget:  50.0,
+			name:           "failing coverage",
+			totalCoverage:  40.0,
+			expectedGrade:  "F",
+			expectedTarget: 50.0,
 		},
 	}
 
@@ -366,7 +366,7 @@ func TestAnalyzer_generateRecommendations(t *testing.T) {
 
 	// Since generateRecommendations method doesn't exist, we'll simulate the logic
 	var recommendations []Recommendation
-	
+
 	// Add recommendations for packages with low coverage
 	for _, pkg := range packageStats {
 		if pkg.Coverage < 70.0 {
@@ -471,7 +471,7 @@ func TestAnalyzer_calculateTotalCoverage(t *testing.T) {
 		totalStatements += pkg.TotalStatements
 		coveredStatements += pkg.CoveredStatements
 	}
-	
+
 	totalCoverage := (float64(coveredStatements) / float64(totalStatements)) * 100
 
 	// Expected: (90 + 160 + 60) / (100 + 200 + 100) = 310 / 400 = 77.5%
