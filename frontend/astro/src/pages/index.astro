@@ -42,19 +42,19 @@ const { issues, statistics, metadata } = beaverData!;
         GitHub Issuesを永続的な知識ベースに変換
       </p>
       
-      <!-- Enhanced Navigation -->
-      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
-        <a 
-          href={`${import.meta.env.BASE_URL}issues`} 
-          class="inline-flex items-center px-6 py-3 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          🔍 Advanced Search & Analytics →
-        </a>
+      <!-- Simple Navigation -->
+      <div class="flex gap-6 justify-center items-center mb-6">
         <a 
           href={import.meta.env.BASE_URL} 
-          class="inline-flex items-center px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          class="text-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
         >
           🏠 ホーム
+        </a>
+        <a 
+          href={`${import.meta.env.BASE_URL}issues`} 
+          class="text-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
+        >
+          🔍 サーチ
         </a>
       </div>
     </div>
