@@ -38,6 +38,34 @@ function getWorkflowMetrics(issues: Issue[]) {
   };
 }
 
+function getDailyMetrics(issues: Issue[]) {
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
+  const newToday = issues.filter(issue => 
+    new Date(issue.created_at) >= twentyFourHoursAgo
+  );
+  
+  const updatedToday = issues.filter(issue => 
+    issue.updated_at && new Date(issue.updated_at) >= twentyFourHoursAgo
+  );
+  
+  const closedToday = issues.filter(issue => 
+    issue.state === 'closed' && 
+    issue.updated_at && 
+    new Date(issue.updated_at) >= twentyFourHoursAgo
+  );
+  
+  const hasActivity = newToday.length > 0 || updatedToday.length > 0 || closedToday.length > 0;
+  
+  return {
+    newToday: newToday.length,
+    updatedToday: updatedToday.length,
+    closedToday: closedToday.length,
+    hasActivity
+  };
+}
+
 function getNextActions(issues: Issue[]): string[] {
   const actions: string[] = [];
   
@@ -102,6 +130,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   className = '' 
 }) => {
   const metrics = getWorkflowMetrics(issues);
+  const dailyMetrics = getDailyMetrics(issues);
   const nextActions = getNextActions(issues);
 
   return (
@@ -137,6 +166,30 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           </div>
           
           <div>
+            {/* 日次進捗（活動がある場合のみ表示） */}
+            {dailyMetrics.hasActivity && (
+              <>
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
+                  🌟 本日の進捗（24h）
+                </h4>
+                <div className="grid grid-cols-3 gap-2 text-sm mb-4">
+                  <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                    <div className="font-bold text-green-600">{dailyMetrics.newToday}</div>
+                    <div className="text-gray-600 dark:text-gray-400">新規</div>
+                  </div>
+                  <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                    <div className="font-bold text-blue-600">{dailyMetrics.updatedToday}</div>
+                    <div className="text-gray-600 dark:text-gray-400">更新</div>
+                  </div>
+                  <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                    <div className="font-bold text-purple-600">{dailyMetrics.closedToday}</div>
+                    <div className="text-gray-600 dark:text-gray-400">完了</div>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* 週次進捗 */}
             <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
               📊 今週の進捗
             </h4>
