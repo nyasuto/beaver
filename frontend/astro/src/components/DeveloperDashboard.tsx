@@ -316,6 +316,62 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                     </div>
                   </div>
                 </div>
+                
+                {/* Quality Alert Card - Integrated into Action Section */}
+                <div>
+                  <div className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
+                    🧪 品質概要
+                  </div>
+                  <div className="border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm">⚠️</span>
+                        <div>
+                          <div className="text-sm font-medium text-red-800 dark:text-red-200">
+                            カバレッジ 60.1% (D評価)
+                          </div>
+                          <div className="text-xs text-red-600 dark:text-red-300">
+                            カバレッジ向上が必要
+                          </div>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-600 text-white">
+                        🚨 1件緊急
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
+                      <div className="text-center">
+                        <div className="font-bold">60.1%</div>
+                        <div className="opacity-75">カバレッジ</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold">70.0%</div>
+                        <div className="opacity-75">目標</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold">16</div>
+                        <div className="opacity-75">未テスト</div>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full bg-red-200 dark:bg-red-800 rounded-full h-1.5 mb-2">
+                      <div className="h-1.5 bg-red-500 rounded-full" style={{ width: '60.1%' }}></div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <a 
+                        href="/beaver/coverage" 
+                        className="text-xs font-medium text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 transition-colors"
+                      >
+                        📊 詳細分析
+                      </a>
+                      <button className="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors">
+                        🚀 改善開始
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
