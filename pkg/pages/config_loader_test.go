@@ -66,20 +66,20 @@ github_pages:
 				assert.Equal(t, "gh-pages", config.GitHubPages.Branch)
 				assert.Equal(t, "example.com", config.GitHubPages.Domain)
 				assert.Equal(t, "_site", config.GitHubPages.BuildDir)
-				assert.Equal(t, "/docs", config.GitHubPages.BaseURL)
+				assert.Equal(t, "", config.GitHubPages.BaseURL) // No longer extracted from Jekyll config
 				assert.Equal(t, "GA-12345", config.GitHubPages.Analytics)
 				assert.True(t, config.GitHubPages.EnableSearch)
 
-				// Site settings for HTML mode
+				// Site settings for HTML mode - now uses defaults
 				assert.Equal(t, "beaver-default", config.Site.Theme)
-				assert.Equal(t, "Test Documentation", config.Site.Title)
+				assert.Equal(t, "Beaver Documentation", config.Site.Title) // Default title
 				assert.True(t, config.Site.Features.PWA)
 				assert.True(t, config.Site.Features.ServiceWorker)
 				assert.True(t, config.Site.Features.SEO)
 				assert.True(t, config.Site.Features.MinifyHTML)
 
-				// Navigation
-				require.Len(t, config.Site.Navigation, 2)
+				// Navigation - default navigation items
+				require.Len(t, config.Site.Navigation, 2) // Default navigation
 				assert.Equal(t, "Home", config.Site.Navigation[0].Name)
 				assert.Equal(t, "/", config.Site.Navigation[0].URL)
 			},
@@ -457,21 +457,21 @@ github_pages:
 		assert.Equal(t, "custom-branch", config.GitHubPages.Branch)
 		assert.Equal(t, "docs.example.com", config.GitHubPages.Domain)
 		assert.Equal(t, "custom-build", config.GitHubPages.BuildDir)
-		assert.Equal(t, "/complex", config.GitHubPages.BaseURL)
+		assert.Equal(t, "", config.GitHubPages.BaseURL) // No longer extracted from Jekyll config
 		assert.Equal(t, "GA-COMPLEX-123", config.GitHubPages.Analytics)
 		assert.True(t, config.GitHubPages.EnableSearch)
 
-		// Site settings
-		assert.Equal(t, "beaver-default", config.Site.Theme) // Should use default for HTML mode
-		assert.Equal(t, "Complex Documentation", config.Site.Title)
+		// Site settings - now uses defaults for HTML mode
+		assert.Equal(t, "beaver-default", config.Site.Theme)
+		assert.Equal(t, "Beaver Documentation", config.Site.Title) // Default title
 		assert.True(t, config.Site.Features.MinifyHTML)
 
-		// Navigation should be mapped
-		require.Len(t, config.Site.Navigation, 3)
+		// Navigation - default navigation items (Jekyll navigation no longer parsed)
+		require.Len(t, config.Site.Navigation, 2) // Default navigation
 		assert.Equal(t, "Home", config.Site.Navigation[0].Name)
 		assert.Equal(t, "/", config.Site.Navigation[0].URL)
-		assert.Equal(t, "Guides", config.Site.Navigation[1].Name)
-		assert.Equal(t, "/guides/", config.Site.Navigation[1].URL)
+		assert.Equal(t, "Issues", config.Site.Navigation[1].Name)
+		assert.Equal(t, "/issues/", config.Site.Navigation[1].URL)
 	})
 
 }
