@@ -248,7 +248,7 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ issues, className
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-lg font-bold text-green-600 dark:text-green-400">
             {issues.filter(i => i.state === 'open').length}
@@ -284,12 +284,6 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ issues, className
           <div className="text-sm text-gray-600 dark:text-gray-400">Feature Open</div>
         </div>
         
-        <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            {issues.length}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Total Issues</div>
-        </div>
       </div>
 
       {/* Usage Instructions */}
