@@ -66,8 +66,14 @@ function getDailyMetrics(issues: Issue[]) {
   };
 }
 
-function getNextActions(issues: Issue[]): string[] {
-  const actions: string[] = [];
+interface ActionItem {
+  text: string;
+  issues: Issue[];
+  type: 'critical' | 'stale' | 'bug' | 'feature' | 'none';
+}
+
+function getNextActions(issues: Issue[]): ActionItem[] {
+  const actions: ActionItem[] = [];
   
   // Check for critical/high priority issues
   const criticalIssues = issues.filter(issue => {
@@ -80,7 +86,11 @@ function getNextActions(issues: Issue[]): string[] {
   });
   
   if (criticalIssues.length > 0) {
-    actions.push(`🚨 ${criticalIssues.length}件の緊急対応が必要`);
+    actions.push({
+      text: `🚨 ${criticalIssues.length}件の緊急対応が必要`,
+      issues: criticalIssues.slice(0, 5), // Show max 5 issues in hover
+      type: 'critical'
+    });
   }
   
   // Check for stale issues (no updates in 30 days)
@@ -91,7 +101,11 @@ function getNextActions(issues: Issue[]): string[] {
   );
   
   if (staleIssues.length > 0) {
-    actions.push(`📅 ${staleIssues.length}件の長期停滞Issues要確認`);
+    actions.push({
+      text: `📅 ${staleIssues.length}件の長期停滞Issues要確認`,
+      issues: staleIssues.slice(0, 5),
+      type: 'stale'
+    });
   }
   
   // Check for bugs
@@ -101,7 +115,11 @@ function getNextActions(issues: Issue[]): string[] {
   });
   
   if (bugIssues.length > 0) {
-    actions.push(`🐛 ${bugIssues.length}件のバグ修正待ち`);
+    actions.push({
+      text: `🐛 ${bugIssues.length}件のバグ修正待ち`,
+      issues: bugIssues.slice(0, 5),
+      type: 'bug'
+    });
   }
   
   // Check for feature requests
@@ -114,11 +132,19 @@ function getNextActions(issues: Issue[]): string[] {
   });
   
   if (featureIssues.length > 0) {
-    actions.push(`✨ ${featureIssues.length}件の新機能実装待ち`);
+    actions.push({
+      text: `✨ ${featureIssues.length}件の新機能実装待ち`,
+      issues: featureIssues.slice(0, 5),
+      type: 'feature'
+    });
   }
   
   if (actions.length === 0) {
-    actions.push('✅ 緊急対応事項はありません');
+    actions.push({
+      text: '✅ 緊急対応事項はありません',
+      issues: [],
+      type: 'none'
+    });
   }
   
   return actions.slice(0, 4); // Show max 4 actions
@@ -129,6 +155,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   statistics, 
   className = '' 
 }) => {
+  const [hoveredAction, setHoveredAction] = React.useState<number | null>(null);
   const metrics = getWorkflowMetrics(issues);
   const dailyMetrics = getDailyMetrics(issues);
   const nextActions = getNextActions(issues);
@@ -162,10 +189,83 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {nextActions.map((action, index) => (
-                  <div key={index} className="bg-blue-50 dark:bg-blue-900/20 rounded-md p-3 border-l-4 border-blue-500">
+                  <div 
+                    key={index} 
+                    className="relative bg-blue-50 dark:bg-blue-900/20 rounded-md p-3 border-l-4 border-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
+                    onMouseEnter={() => setHoveredAction(index)}
+                    onMouseLeave={() => setHoveredAction(null)}
+                  >
                     <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                      {action}
+                      {action.text}
                     </div>
+                    
+                    {/* Hover Preview */}
+                    {hoveredAction === index && action.issues.length > 0 && (
+                      <div className="absolute top-full left-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20 p-4">
+                        <div className="text-sm">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">
+                              {action.type === 'critical' ? '🚨 緊急対応' : 
+                               action.type === 'stale' ? '📅 長期停滞' :
+                               action.type === 'bug' ? '🐛 バグ修正' :
+                               action.type === 'feature' ? '✨ 新機能' : '詳細'}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {action.issues.length}件
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {action.issues.map((issue) => (
+                              <div
+                                key={issue.id}
+                                className="p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                                onClick={() => window.open(issue.html_url, '_blank')}
+                              >
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <span className="font-medium">#{issue.number}</span>
+                                  <span className={`px-1 py-0.5 rounded ${ 
+                                    action.type === 'critical' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                                    action.type === 'stale' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                                    action.type === 'bug' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                                    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                  }`}>
+                                    {action.type === 'critical' ? 'CRITICAL' :
+                                     action.type === 'stale' ? 'STALE' :
+                                     action.type === 'bug' ? 'BUG' :
+                                     'FEATURE'}
+                                  </span>
+                                </div>
+                                <div className="text-gray-700 dark:text-gray-300 line-clamp-2">
+                                  {issue.title}
+                                </div>
+                                {issue.labels && issue.labels.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {issue.labels.slice(0, 2).map((label) => (
+                                      <span
+                                        key={label}
+                                        className="text-xs px-1 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded"
+                                      >
+                                        {label}
+                                      </span>
+                                    ))}
+                                    {issue.labels.length > 2 && (
+                                      <span className="text-xs text-gray-500">+{issue.labels.length - 2}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-center">
+                            <div className="text-blue-600 dark:text-blue-400 font-medium text-xs">
+                              クリックで Issue 詳細を表示 →
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

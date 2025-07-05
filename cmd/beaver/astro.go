@@ -457,10 +457,11 @@ func calculateUrgencyScore(issue models.Issue) int {
 }
 
 func getTopUrgentIssues(issues []AstroIssue, count int) []AstroIssue {
-	// Sort by urgency score (simple implementation)
+	// Sort by urgency score (more selective threshold)
 	urgent := make([]AstroIssue, 0)
 	for _, issue := range issues {
-		if issue.State == "open" && issue.Analysis != nil && issue.Analysis.UrgencyScore > 20 {
+		// Only truly urgent items: critical priority OR high priority bugs
+		if issue.State == "open" && issue.Analysis != nil && issue.Analysis.UrgencyScore >= 35 {
 			urgent = append(urgent, issue)
 		}
 	}
