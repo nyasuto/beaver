@@ -152,18 +152,18 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
         </div>
         
         <div className="grid grid-cols-1 gap-6">
-          {/* 推奨アクション */}
+          {/* 推奨アクション - 横並びに */}
           <div>
-            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-3">
               📋 推奨アクション
             </h4>
-            <ul className="space-y-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {nextActions.map((action, index) => (
-                <li key={index} className="text-sm text-blue-700 dark:text-blue-300">
+                <div key={index} className="text-sm text-blue-700 dark:text-blue-300 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   {action}
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
           
           {/* 進捗情報を横並びに */}
