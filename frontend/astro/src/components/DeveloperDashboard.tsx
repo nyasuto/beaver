@@ -106,13 +106,6 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
   return (
     <div className={`space-y-8 ${className}`}>
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          🎯 Developer Dashboard
-        </h2>
-      </div>
-
       {/* Quick Actions Summary */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
         <div className="flex items-center justify-between mb-4">
