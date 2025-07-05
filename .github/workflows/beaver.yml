@@ -28,8 +28,9 @@ on:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
 
   # Push to main branch - for production deployment
+  # Push to test branches - for testing deployment
   push:
-    branches: [main]
+    branches: [main, 'test/**']
 
   # Scheduled updates
   schedule:
@@ -64,7 +65,7 @@ jobs:
   preflight:
     name: 🔍 Pre-flight Checks
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/') }}
     outputs:
       should_update: ${{ steps.check_conditions.outputs.should_update }}
       update_type: ${{ steps.check_conditions.outputs.update_type }}
@@ -150,7 +151,7 @@ jobs:
     name: 🚀 Beaver Self-Documentation (GitHub Pages)
     runs-on: ubuntu-latest
     needs: preflight
-    if: ${{ needs.preflight.outputs.should_update == 'true' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.preflight.outputs.should_update == 'true' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')) }}
 
     environment:
       name: github-pages
@@ -413,7 +414,7 @@ jobs:
     name: 🧹 Self-Documentation Cleanup
     runs-on: ubuntu-latest
     needs: [beaver-self-documentation]
-    if: ${{ always() && (github.event_name == 'schedule' || github.event.inputs.force_rebuild == 'true') && github.ref == 'refs/heads/main' }}
+    if: ${{ always() && (github.event_name == 'schedule' || github.event.inputs.force_rebuild == 'true') && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')) }}
 
     steps:
       - name: 📥 Checkout code
@@ -457,7 +458,7 @@ jobs:
   weekly-self-analysis:
     name: 📈 Weekly Self-Analysis
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'schedule' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'schedule' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')) }}
 
     steps:
       - name: 📥 Checkout code
