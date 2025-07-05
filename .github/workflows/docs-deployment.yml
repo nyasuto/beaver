@@ -372,11 +372,38 @@ jobs:
         run: |
           echo "🎨 Step 3: Building Astro frontend..."
           
+          # Step 3.0: Copy coverage files to Astro's public directory BEFORE building
+          echo "📊 Step 3.0: Preparing coverage data for Astro build..."
+          mkdir -p frontend/astro/public/coverage
+          
+          # Copy coverage files if they exist
+          if [ -f "coverage-data.json" ]; then
+            echo "✅ Found coverage-data.json, copying to Astro public directory"
+            cp coverage-data.json frontend/astro/public/coverage/
+            echo "📊 Coverage data size: $(du -h coverage-data.json | cut -f1)"
+          else
+            echo "⚠️ coverage-data.json not found in current directory"
+          fi
+          
+          if [ -f "coverage-summary.json" ]; then
+            echo "✅ Found coverage-summary.json, copying to Astro public directory"
+            cp coverage-summary.json frontend/astro/public/coverage/
+          fi
+          
+          if [ -f "coverage-dashboard.html" ]; then
+            echo "✅ Found coverage-dashboard.html, copying to Astro public directory"
+            cp coverage-dashboard.html frontend/astro/public/coverage/index.html
+          fi
+          
+          # Verify files are in place for Astro build
+          echo "🔍 Coverage files available for Astro build:"
+          ls -la frontend/astro/public/coverage/ || echo "❌ No coverage directory created"
+          
           # Install Astro dependencies
           cd frontend/astro
           npm ci
           
-          # Build Astro site
+          # Build Astro site (now with coverage data available)
           npm run build
           cd ../..
           

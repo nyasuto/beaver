@@ -34,9 +34,40 @@ const { issues, statistics, metadata } = beaverData!;
 // Load coverage data for quality summary
 let coverageData: any = null;
 try {
-  const response = await fetch('/beaver/coverage/coverage-data.json');
-  if (response.ok) {
-    coverageData = await response.json();
+  // During build: try to read from public/coverage directory
+  // During runtime: fetch from the served URL
+  if (import.meta.env.DEV || !import.meta.env.PROD) {
+    // Development mode: use fetch
+    const response = await fetch('/beaver/coverage/coverage-data.json');
+    if (response.ok) {
+      coverageData = await response.json();
+    }
+  } else {
+    // Build time: try to import from file system first, then fallback to fetch
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const coverageFile = path.resolve(process.cwd(), 'public/coverage/coverage-data.json');
+      if (fs.existsSync(coverageFile)) {
+        const rawData = fs.readFileSync(coverageFile, 'utf8');
+        coverageData = JSON.parse(rawData);
+        console.log('✅ Coverage data loaded from build-time file system');
+      } else {
+        // Fallback to fetch for runtime
+        const response = await fetch('/beaver/coverage/coverage-data.json');
+        if (response.ok) {
+          coverageData = await response.json();
+          console.log('✅ Coverage data loaded from runtime fetch');
+        }
+      }
+    } catch (fsError) {
+      // Final fallback to fetch
+      console.warn('File system access failed, trying fetch:', fsError);
+      const response = await fetch('/beaver/coverage/coverage-data.json');
+      if (response.ok) {
+        coverageData = await response.json();
+      }
+    }
   }
 } catch (error) {
   console.warn('Coverage data not available:', error);
