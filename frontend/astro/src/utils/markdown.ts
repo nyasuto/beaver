@@ -5,16 +5,23 @@ import { marked } from 'marked';
 marked.setOptions({
   gfm: true,
   breaks: true,
-  // Sanitize HTML for security
-  sanitize: false, // We'll handle this carefully
+  // Modern marked doesn't have sanitize option
 });
 
 /**
  * Converts Markdown to HTML safely
  */
-export function markdownToHtml(markdown: string): string {
+export async function markdownToHtml(markdown: string): Promise<string> {
   if (!markdown) return '';
-  return marked(markdown);
+  return await marked(markdown);
+}
+
+/**
+ * Synchronous version for compatibility
+ */
+export function markdownToHtmlSync(markdown: string): string {
+  if (!markdown) return '';
+  return marked.parse(markdown) as string;
 }
 
 /**

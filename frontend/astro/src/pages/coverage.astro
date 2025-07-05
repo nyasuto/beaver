@@ -1,0 +1,223 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CoverageStats from '../components/Coverage/CoverageStats.astro';
+import CoverageCharts from '../components/Coverage/CoverageCharts.tsx';
+import CoverageTable from '../components/Coverage/CoverageTable.astro';
+import CoverageRecommendations from '../components/Coverage/CoverageRecommendations.astro';
+import type { CoverageData } from '../types/beaver';
+
+const title = '📊 カバレッジダッシュボード';
+const description = 'Beaverプロジェクトのテストカバレッジ分析とコード品質メトリクス';
+
+// Load coverage data (fallback if not available)
+let coverageData: CoverageData | null = null;
+try {
+  // Try to load coverage data from the generated JSON
+  const coverageResponse = await fetch('/beaver/coverage/coverage-data.json');
+  if (coverageResponse.ok) {
+    coverageData = await coverageResponse.json();
+  }
+} catch (error) {
+  console.log('Coverage data not available, using mock data for development');
+}
+
+// Mock data for development/fallback
+const mockCoverageData: CoverageData = {
+  project_name: 'beaver',
+  generated_at: new Date().toISOString(),
+  total_coverage: 60.1,
+  quality_rating: {
+    overall_grade: 'D',
+    description: 'カバレッジ向上が必要',
+    next_target: 70.0
+  },
+  summary: {
+    total_packages: 16,
+    tested_packages: 0,
+    untested_packages: 16,
+    total_files: 45,
+    tested_files: 12
+  },
+  package_stats: [
+    {
+      package_name: 'github.com/nyasuto/beaver/internal/models',
+      coverage: 100.0,
+      quality_grade: 'A',
+      covered_statements: 25,
+      total_statements: 25,
+      file_count: 3
+    },
+    {
+      package_name: 'github.com/nyasuto/beaver/pkg/coverage',
+      coverage: 11.8,
+      quality_grade: 'F',
+      covered_statements: 15,
+      total_statements: 127,
+      file_count: 8
+    }
+  ],
+  file_coverage: [],
+  recommendations: [
+    {
+      priority: 'High',
+      title: 'pkg/coverageパッケージのテスト追加',
+      description: '11.8%のカバレッジは最低基準を大幅に下回っています'
+    },
+    {
+      priority: 'Medium',
+      title: '全体カバレッジの向上',
+      description: '目標70%達成のため追加テストが必要です'
+    }
+  ]
+};
+
+const data = coverageData || mockCoverageData;
+
+// Calculate chart data
+const packageChartData = {
+  labels: data.package_stats.map(p => p.package_name.split('/').pop() || p.package_name),
+  data: data.package_stats.map(p => p.coverage),
+  grades: data.package_stats.map(p => p.quality_grade)
+};
+
+const distributionData = {
+  A: data.package_stats.filter(p => p.quality_grade === 'A').length,
+  B: data.package_stats.filter(p => p.quality_grade === 'B').length,
+  C: data.package_stats.filter(p => p.quality_grade === 'C').length,
+  D: data.package_stats.filter(p => p.quality_grade === 'D').length,
+  F: data.package_stats.filter(p => p.quality_grade === 'F').length,
+};
+
+const distributionChartData = {
+  labels: ['A (90%+)', 'B (80-89%)', 'C (70-79%)', 'D (50-69%)', 'F (<50%)'],
+  data: [distributionData.A, distributionData.B, distributionData.C, distributionData.D, distributionData.F],
+  colors: ['#4CAF50', '#8BC34A', '#FF9800', '#FF5722', '#F44336']
+};
+
+const chartData = {
+  package_chart: packageChartData,
+  distribution_chart: distributionChartData
+};
+
+// Get top performers and needs attention
+const topPerformers = [...data.package_stats]
+  .sort((a, b) => b.coverage - a.coverage)
+  .slice(0, 5);
+
+const needsAttention = [...data.package_stats]
+  .filter(p => p.coverage < 50 || p.quality_grade === 'F' || p.quality_grade === 'D')
+  .sort((a, b) => a.coverage - b.coverage)
+  .slice(0, 5);
+---
+
+<BaseLayout title={title} description={description}>
+  <!-- Hero Section -->
+  <div class="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
+    <div class="container mx-auto px-6 py-16">
+      <div class="text-center">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4">
+          📊 カバレッジダッシュボード
+        </h1>
+        <p class="text-xl md:text-2xl opacity-90 mb-8">
+          {data.project_name} - コード品質とテストカバレッジ分析
+        </p>
+        <div class="flex flex-wrap justify-center gap-4 text-sm md:text-base">
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+            📅 最終更新: {new Date(data.generated_at).toLocaleDateString('ja-JP')}
+          </div>
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+            🎯 総合カバレッジ: {data.total_coverage.toFixed(1)}%
+          </div>
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+            📋 品質評価: {data.quality_rating.overall_grade}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <section class="container mx-auto px-6 py-12">
+    <CoverageStats data={data} />
+  </section>
+
+  <!-- Charts Section -->
+  <section class="container mx-auto px-6 py-12 bg-gray-50 dark:bg-gray-900">
+    <h2 class="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">
+      📈 カバレッジ可視化
+    </h2>
+    <CoverageCharts chartData={chartData} client:load />
+  </section>
+
+  <!-- Performance Tables -->
+  <section class="container mx-auto px-6 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Top Performers -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6">
+          <h3 class="text-xl font-bold flex items-center">
+            🏆 高パフォーマンスパッケージ
+          </h3>
+        </div>
+        <div class="p-6">
+          <CoverageTable packages={topPerformers} type="top-performers" />
+        </div>
+      </div>
+
+      <!-- Needs Attention -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white p-6">
+          <h3 class="text-xl font-bold flex items-center">
+            ⚠️ 改善が必要なパッケージ
+          </h3>
+        </div>
+        <div class="p-6">
+          <CoverageTable packages={needsAttention} type="needs-attention" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recommendations -->
+  <section class="container mx-auto px-6 py-12 bg-gray-50 dark:bg-gray-900">
+    <h2 class="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">
+      💡 改善提案
+    </h2>
+    <CoverageRecommendations recommendations={data.recommendations} />
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="container mx-auto px-6 py-12">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">
+        🚀 クイックアクション
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a 
+          href="/beaver/coverage/coverage.out" 
+          class="block p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+        >
+          <div class="text-2xl mb-2">📄</div>
+          <h3 class="font-bold text-blue-800 dark:text-blue-200">生データダウンロード</h3>
+          <p class="text-sm text-blue-600 dark:text-blue-400">coverage.outファイル</p>
+        </a>
+        <a 
+          href="/beaver/issues" 
+          class="block p-6 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+        >
+          <div class="text-2xl mb-2">🐛</div>
+          <h3 class="font-bold text-green-800 dark:text-green-200">関連Issue</h3>
+          <p class="text-sm text-green-600 dark:text-green-400">テスト改善タスク</p>
+        </a>
+        <a 
+          href="/beaver/" 
+          class="block p-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+        >
+          <div class="text-2xl mb-2">🏠</div>
+          <h3 class="font-bold text-purple-800 dark:text-purple-200">プロジェクト概要</h3>
+          <p class="text-sm text-purple-600 dark:text-purple-400">メインダッシュボード</p>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

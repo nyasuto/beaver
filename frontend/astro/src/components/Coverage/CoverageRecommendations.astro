@@ -1,0 +1,234 @@
+---
+import type { CoverageRecommendationsProps } from '../../types/beaver';
+
+interface Props extends CoverageRecommendationsProps {}
+
+const { recommendations, className = '' } = Astro.props;
+
+// Priority color mapping
+const getPriorityColor = (priority: string) => {
+  const colors = {
+    'High': 'bg-red-100 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-200',
+    'Medium': 'bg-orange-100 dark:bg-orange-900/20 border-orange-500 text-orange-800 dark:text-orange-200',
+    'Low': 'bg-green-100 dark:bg-green-900/20 border-green-500 text-green-800 dark:text-green-200'
+  };
+  return colors[priority as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-900/20 border-gray-500 text-gray-800 dark:text-gray-200';
+};
+
+const getPriorityIcon = (priority: string) => {
+  const icons = {
+    'High': '🚨',
+    'Medium': '⚡',
+    'Low': '💡'
+  };
+  return icons[priority as keyof typeof icons] || '📋';
+};
+
+const getPriorityBadgeColor = (priority: string) => {
+  const colors = {
+    'High': 'bg-red-500 text-white',
+    'Medium': 'bg-orange-500 text-white',
+    'Low': 'bg-green-500 text-white'
+  };
+  return colors[priority as keyof typeof colors] || 'bg-gray-500 text-white';
+};
+
+// Group recommendations by priority
+const groupedRecommendations = {
+  High: recommendations.filter(r => r.priority === 'High'),
+  Medium: recommendations.filter(r => r.priority === 'Medium'),
+  Low: recommendations.filter(r => r.priority === 'Low')
+};
+---
+
+<div class={`space-y-6 ${className}`}>
+  {recommendations.length > 0 ? (
+    <Fragment>
+      <!-- Priority Summary -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">
+          📊 改善提案サマリー
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(groupedRecommendations).map(([priority, recs]) => {
+            const count = recs.length;
+            const priorityColor = getPriorityBadgeColor(priority);
+            const icon = getPriorityIcon(priority);
+            
+            return count > 0 && (
+              <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="text-2xl mb-2">{icon}</div>
+                <div class={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${priorityColor} mb-2`}>
+                  {priority} Priority
+                </div>
+                <div class="text-2xl font-bold text-gray-800 dark:text-white">
+                  {count}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                  項目
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Recommendations List -->
+      <div class="space-y-4">
+        {Object.entries(groupedRecommendations).map(([priority, recs]) => 
+          recs.length > 0 && (
+            <div>
+              <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-white flex items-center">
+                <span class="mr-2">{getPriorityIcon(priority)}</span>
+                {priority} Priority ({recs.length}件)
+              </h3>
+              
+              <div class="space-y-3">
+                {recs.map((rec, index) => {
+                  const priorityColor = getPriorityColor(rec.priority);
+                  
+                  return (
+                    <div 
+                      class={`border-l-4 rounded-lg p-4 ${priorityColor}`}
+                    >
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          <!-- Priority Badge -->
+                          <div class="flex items-center mb-2">
+                            <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityBadgeColor(rec.priority)}`}>
+                              {rec.priority}
+                            </span>
+                            {rec.affected_packages && rec.affected_packages.length > 0 && (
+                              <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">
+                                影響: {rec.affected_packages.length}パッケージ
+                              </span>
+                            )}
+                          </div>
+                          
+                          <!-- Title -->
+                          <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                            {rec.title}
+                          </h4>
+                          
+                          <!-- Description -->
+                          <p class="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                            {rec.description}
+                          </p>
+                          
+                          <!-- Affected Packages -->
+                          {rec.affected_packages && rec.affected_packages.length > 0 && (
+                            <div class="mt-3">
+                              <details class="group">
+                                <summary class="cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                                  📦 影響を受けるパッケージ ({rec.affected_packages.length}個)
+                                  <span class="ml-1 group-open:rotate-90 transition-transform">▶</span>
+                                </summary>
+                                <div class="mt-2 ml-4 space-y-1">
+                                  {rec.affected_packages.map((pkg) => (
+                                    <div class="text-xs text-gray-600 dark:text-gray-400 font-mono">
+                                      • {pkg}
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <!-- Action Button -->
+                        <div class="ml-4 flex-shrink-0">
+                          <button 
+                            class={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded transition-colors ${
+                              rec.priority === 'High' 
+                                ? 'text-white bg-red-600 hover:bg-red-700' 
+                                : rec.priority === 'Medium'
+                                ? 'text-white bg-orange-600 hover:bg-orange-700'
+                                : 'text-white bg-green-600 hover:bg-green-700'
+                            }`}
+                          >
+                            {rec.priority === 'High' ? '🚀 今すぐ対応' : rec.priority === 'Medium' ? '📅 計画に追加' : '💭 検討'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+      <!-- Implementation Guide -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">
+          🛠️ 実装ガイド
+        </h3>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Quick Wins -->
+          <div>
+            <h4 class="font-semibold mb-3 text-green-700 dark:text-green-400">
+              ✅ クイックウィン (1-2日)
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <li>• 基本的なユニットテスト追加</li>
+              <li>• 既存テストの拡張</li>
+              <li>• 簡単なエッジケーステスト</li>
+              <li>• テストヘルパー関数作成</li>
+            </ul>
+          </div>
+          
+          <!-- Medium Term -->
+          <div>
+            <h4 class="font-semibold mb-3 text-orange-700 dark:text-orange-400">
+              🎯 中期改善 (1-2週間)
+            </h4>
+            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <li>• 統合テスト実装</li>
+              <li>• モックとスタブの整備</li>
+              <li>• テストデータ準備の自動化</li>
+              <li>• CI/CDでのカバレッジチェック</li>
+            </ul>
+          </div>
+          
+          <!-- Best Practices -->
+          <div class="lg:col-span-2 mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <h4 class="font-semibold mb-2 text-blue-800 dark:text-blue-200">
+              💡 ベストプラクティス
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700 dark:text-blue-300">
+              <div>
+                <strong>テスト設計:</strong>
+                <ul class="mt-1 space-y-1 text-blue-600 dark:text-blue-400">
+                  <li>• AAA パターン (Arrange, Act, Assert)</li>
+                  <li>• 単一責任のテストケース</li>
+                  <li>• 意味のあるテスト名</li>
+                </ul>
+              </div>
+              <div>
+                <strong>カバレッジ戦略:</strong>
+                <ul class="mt-1 space-y-1 text-blue-600 dark:text-blue-400">
+                  <li>• 重要なビジネスロジック優先</li>
+                  <li>• エラーハンドリングのテスト</li>
+                  <li>• 境界値テスト</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Fragment>
+  ) : (
+    <!-- Empty State -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center">
+      <div class="text-6xl mb-4">🎉</div>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
+        素晴らしい！
+      </h3>
+      <p class="text-gray-600 dark:text-gray-400">
+        現在改善提案はありません。コード品質が高く維持されています。
+      </p>
+    </div>
+  )}
+</div>

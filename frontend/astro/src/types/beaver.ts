@@ -117,6 +117,98 @@ export interface BeaverData {
 }
 
 // ==============================
+// Coverage Dashboard Types
+// ==============================
+
+export interface CoverageData {
+  project_name: string;
+  generated_at: string;
+  total_coverage: number;
+  quality_rating: QualityRating;
+  summary: CoverageSummary;
+  package_stats: PackageCoverageStats[];
+  file_coverage: FileCoverageStats[];
+  recommendations: CoverageRecommendation[];
+}
+
+export interface QualityRating {
+  overall_grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  description: string;
+  next_target: number;
+}
+
+export interface CoverageSummary {
+  total_packages: number;
+  tested_packages: number;
+  untested_packages: number;
+  total_files: number;
+  tested_files: number;
+}
+
+export interface PackageCoverageStats {
+  package_name: string;
+  coverage: number;
+  quality_grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  covered_statements: number;
+  total_statements: number;
+  file_count: number;
+}
+
+export interface FileCoverageStats {
+  file_name: string;
+  package_name: string;
+  coverage: number;
+  complexity_score: number;
+  covered_statements: number;
+  total_statements: number;
+}
+
+export interface CoverageRecommendation {
+  priority: 'High' | 'Medium' | 'Low';
+  title: string;
+  description: string;
+  affected_packages?: string[];
+}
+
+// Chart data structures for coverage visualization
+export interface CoverageChartData {
+  package_chart: {
+    labels: string[];
+    data: number[];
+    grades: string[];
+  };
+  distribution_chart: {
+    labels: string[];
+    data: number[];
+    colors: string[];
+  };
+}
+
+// Component Props for Coverage
+export interface CoverageStatsProps {
+  data: CoverageData;
+  className?: string;
+}
+
+export interface CoverageChartProps {
+  chartData: CoverageChartData;
+  type: 'package' | 'distribution';
+  className?: string;
+}
+
+export interface CoverageTableProps {
+  packages: PackageCoverageStats[];
+  type: 'top-performers' | 'needs-attention';
+  limit?: number;
+  className?: string;
+}
+
+export interface CoverageRecommendationsProps {
+  recommendations: CoverageRecommendation[];
+  className?: string;
+}
+
+// ==============================
 // Phase 1 Extended Types for UI Components
 // ==============================
 
