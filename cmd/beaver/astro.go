@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/config"
@@ -331,19 +332,35 @@ func writeAstroData(data AstroDataExport) error {
 
 // Helper functions
 func categorizeIssue(issue models.Issue) string {
-	title := issue.Title
-	if len(title) > 20 {
-		prefix := title[:20]
-		if contains(prefix, "feat") || contains(prefix, "feature") {
-			return "feature"
-		}
-		if contains(prefix, "fix") || contains(prefix, "bug") {
-			return "bug"
-		}
-		if contains(prefix, "docs") || contains(prefix, "documentation") {
-			return "documentation"
+	// Build search text similar to frontend logic
+	searchText := strings.ToLower(issue.Title + " " + issue.Body)
+
+	// Add all labels to search text
+	for _, label := range issue.Labels {
+		searchText += " " + strings.ToLower(label.Name)
+	}
+
+	// Category filters matching frontend CategoryShortcuts.tsx
+	categories := map[string][]string{
+		"critical":      {"critical", "urgent", "high", "important", "priority"},
+		"bug":           {"bug", "error", "defect", "fix"},
+		"feature":       {"feature", "enhancement", "new", "add"},
+		"documentation": {"docs", "documentation", "readme", "guide"},
+		"test":          {"test", "testing", "spec", "qa"},
+		"deploy":        {"deploy", "deployment", "release", "ci/cd", "build"},
+		"performance":   {"performance", "speed", "optimization", "slow"},
+		"security":      {"security", "vulnerability", "auth", "permission"},
+	}
+
+	// Check categories in priority order (critical first)
+	for category, keywords := range categories {
+		for _, keyword := range keywords {
+			if strings.Contains(searchText, keyword) {
+				return category
+			}
 		}
 	}
+
 	return "general"
 }
 
@@ -416,8 +433,4 @@ func truncateTitle(title string, maxLen int) string {
 		return title
 	}
 	return title[:maxLen] + "..."
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr
 }
