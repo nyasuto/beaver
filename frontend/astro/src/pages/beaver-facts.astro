@@ -5,51 +5,59 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const beaverFacts = [
   {
     id: 1,
-    title: "🏗️ Natural Engineers",
-    fact: "Beavers are nature's best engineers, building complex dams that can last decades. Just like how Beaver (our tool) builds lasting knowledge bases from temporary GitHub issues.",
-    relevance: "Our tool mimics beaver engineering by creating permanent knowledge structures."
+    title: "🏗️ 自然界の建築エンジニア",
+    fact: "ビーバーは自然界で最も優秀な建築エンジニアです。数十年も持続する複雑なダムを建設します。我々のBeaverツールが一時的なGitHub Issuesから永続的な知識ベースを構築するのと同様です。",
+    relevance: "我々のツールは、ビーバーの建築工学を模倣して永続的な知識構造を作り出します。",
+    image: "https://images.unsplash.com/photo-1628618819007-5d1f4d8e8bc0?w=400&h=300&fit=crop&crop=face"
   },
   {
     id: 2,
-    title: "🌊 Flow Control Masters",
-    fact: "Beaver dams control water flow and create stable ecosystems. They transform rushing streams into calm, organized waterways.",
-    relevance: "Similarly, our Beaver tool controls the flow of information, transforming chaotic GitHub issues into organized documentation."
+    title: "🌊 水流制御の達人",
+    fact: "ビーバーダムは水流をコントロールし、安定した生態系を作り出します。激流を穏やかで整理された水路に変えてしまいます。",
+    relevance: "同様に、我々のBeaverツールは情報の流れをコントロールし、混沌としたGitHub Issuesを整理されたドキュメントに変換します。",
+    image: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=400&h=300&fit=crop"
   },
   {
     id: 3,
-    title: "🔄 Continuous Builders",
-    fact: "Beavers never stop maintaining their dams. They constantly add new materials and repair old sections to keep the structure strong.",
-    relevance: "Our automated workflows continuously update and maintain the knowledge base, just like real beavers maintain their dams."
+    title: "🔄 継続的な建設者",
+    fact: "ビーバーはダムの維持を決して止めません。構造を強固に保つため、常に新しい材料を追加し、古い部分を修理し続けます。",
+    relevance: "我々の自動化ワークフローは、実際のビーバーがダムを維持するように、知識ベースを継続的に更新・保守します。",
+    image: "https://images.unsplash.com/photo-1628618819030-f6c9ac53d1c8?w=400&h=300&fit=crop"
   },
   {
     id: 4,
-    title: "🏘️ Community Creators",
-    fact: "Beaver dams create wetland habitats that support entire ecosystems. Many species benefit from beaver engineering.",
-    relevance: "Our knowledge base creates a collaborative environment where teams can share insights and build on each other's work."
+    title: "🏘️ コミュニティクリエイター",
+    fact: "ビーバーダムは湿地生息地を作り出し、生態系全体を支えます。多くの種がビーバーの建築工学から恩恵を受けています。",
+    relevance: "我々の知識ベースは、チームが洞察を共有し、お互いの仕事の上に構築できる協調的な環境を作り出します。",
+    image: "https://images.unsplash.com/photo-1628618819057-80f3528c5f5e?w=400&h=300&fit=crop"
   },
   {
     id: 5,
-    title: "📚 Knowledge Preservers",
-    fact: "Beavers pass down dam-building knowledge through generations. Young beavers learn by watching and helping their parents.",
-    relevance: "Our tool preserves institutional knowledge that would otherwise be lost when team members leave or issues get buried."
+    title: "📚 知識の保存者",
+    fact: "ビーバーはダム建設の知識を世代を超えて受け継ぎます。若いビーバーは親を観察し、手伝うことで学習します。",
+    relevance: "我々のツールは、チームメンバーが去ったりIssuesが埋もれたりした時に失われるはずの組織知識を保存します。",
+    image: "https://images.unsplash.com/photo-1628618819081-4e5e5d94e7b8?w=400&h=300&fit=crop"
   },
   {
     id: 6,
-    title: "🌿 Resource Optimizers",
-    fact: "Beavers are incredibly efficient with materials. They use every piece of wood, mud, and stone to maximum effect.",
-    relevance: "Our tool maximizes the value of every GitHub issue, comment, and discussion by organizing them into searchable knowledge."
+    title: "🌿 資源最適化の専門家",
+    fact: "ビーバーは材料を驚くほど効率的に使用します。木材、泥、石のすべてを最大限に活用します。",
+    relevance: "我々のツールは、すべてのGitHub Issue、コメント、ディスカッションを検索可能な知識に整理することで、その価値を最大化します。",
+    image: "https://images.unsplash.com/photo-1628618819109-cf8dc0c4e4e8?w=400&h=300&fit=crop"
   },
   {
     id: 7,
-    title: "🛡️ Defensive Architects",
-    fact: "Beaver lodges have underwater entrances for security, making them nearly impregnable to predators.",
-    relevance: "Our documentation architecture protects valuable knowledge from being lost to repository cleanup or team turnover."
+    title: "🛡️ 防御的建築家",
+    fact: "ビーバーの巣は水中入口を持ち、捕食者からほぼ完全に身を守ることができます。",
+    relevance: "我々のドキュメント アーキテクチャは、リポジトリのクリーンアップやチームの離職から貴重な知識を保護します。",
+    image: "https://images.unsplash.com/photo-1628618819132-3f0b3c4e4e8b?w=400&h=300&fit=crop"
   },
   {
     id: 8,
-    title: "🎯 Strategic Planners",
-    fact: "Beavers carefully choose dam locations based on water flow, available materials, and long-term sustainability.",
-    relevance: "Our tool strategically organizes information based on priority, relevance, and team needs for sustainable knowledge management."
+    title: "🎯 戦略的プランナー",
+    fact: "ビーバーは水流、利用可能な材料、長期的な持続可能性に基づいて、ダムの場所を慎重に選択します。",
+    relevance: "我々のツールは、持続可能な知識管理のために、優先度、関連性、チームのニーズに基づいて情報を戦略的に整理します。",
+    image: "https://images.unsplash.com/photo-1628618819156-6f0b3c4e4e8c?w=400&h=300&fit=crop"
   }
 ];
 
@@ -61,35 +69,35 @@ const funStats = {
 };
 ---
 
-<BaseLayout title="🦫 Beaver Facts - Why We Named Our Tool After Nature's Best Engineers" description="Discover the fascinating parallels between real beavers and our knowledge management tool">
+<BaseLayout title="🦫 ビーバーの事実 - なぜ自然界最高のエンジニアから名前を取ったのか" description="実際のビーバーと我々の知識管理ツールの魅力的な共通点を発見しよう">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header Section -->
     <div class="text-center mb-12">
       <h1 class="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-        🦫 Why Beaver?
+        🦫 なぜBeaverなのか？
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-        Discover the fascinating parallels between nature's master engineers and our knowledge management tool. 
-        Every feature of our Beaver tool is inspired by real beaver behavior and engineering principles.
+        自然界の建築マスターと我々の知識管理ツールの魅力的な共通点を発見してください。
+        Beaverツールのすべての機能は、実際のビーバーの行動と建築原理からインスピレーションを得ています。
       </p>
       
       <!-- Fun Stats -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
         <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
           <div class="text-2xl font-bold text-blue-600">{funStats.totalFacts}</div>
-          <div class="text-sm text-blue-700 dark:text-blue-300">Total Facts</div>
+          <div class="text-sm text-blue-700 dark:text-blue-300">総事実数</div>
         </div>
         <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
           <div class="text-2xl font-bold text-green-600">{funStats.engineeringFacts}</div>
-          <div class="text-sm text-green-700 dark:text-green-300">Engineering</div>
+          <div class="text-sm text-green-700 dark:text-green-300">建築工学</div>
         </div>
         <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
           <div class="text-2xl font-bold text-purple-600">{funStats.collaborationFacts}</div>
-          <div class="text-sm text-purple-700 dark:text-purple-300">Collaboration</div>
+          <div class="text-sm text-purple-700 dark:text-purple-300">協調性</div>
         </div>
         <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
           <div class="text-2xl font-bold text-orange-600">{funStats.efficiencyFacts}</div>
-          <div class="text-sm text-orange-700 dark:text-orange-300">Efficiency</div>
+          <div class="text-sm text-orange-700 dark:text-orange-300">効率性</div>
         </div>
       </div>
     </div>
@@ -100,14 +108,14 @@ const funStats = {
         href={import.meta.env.BASE_URL} 
         class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
       >
-        ← Back to Knowledge Dam
+        ← 知識ダムに戻る
       </a>
     </div>
 
     <!-- Facts Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       {beaverFacts.map((fact, index) => (
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow relative">
           <!-- Header -->
           <div class="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -115,12 +123,22 @@ const funStats = {
             </h3>
           </div>
           
+          <!-- Beaver Image -->
+          <div class="px-6 pt-4">
+            <img 
+              src={fact.image} 
+              alt={`ビーバーの画像 - ${fact.title}`}
+              class="w-full h-48 object-cover rounded-lg mb-4"
+              loading="lazy"
+            />
+          </div>
+          
           <!-- Content -->
-          <div class="p-6">
+          <div class="p-6 pt-0">
             <!-- Beaver Fact -->
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                🦫 Beaver Behavior
+                🦫 ビーバーの行動
               </h4>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
                 {fact.fact}
@@ -130,7 +148,7 @@ const funStats = {
             <!-- Tool Relevance -->
             <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
               <h4 class="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
-                🔧 How Our Tool Mimics This
+                🔧 我々のツールの模倣
               </h4>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
                 {fact.relevance}
@@ -149,33 +167,33 @@ const funStats = {
     <!-- Call to Action -->
     <div class="mt-16 text-center bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl p-8">
       <h2 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">
-        Ready to Build Your Knowledge Dam? 🏗️
+        あなたの知識ダムを構築する準備はできましたか？ 🏗️
       </h2>
       <p class="text-lg text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
-        Just like real beavers transform landscapes with their engineering skills, 
-        our Beaver tool will transform your development workflow into an organized, 
-        searchable knowledge ecosystem.
+        実際のビーバーがエンジニアリングスキルで景観を変えるように、
+        我々のBeaverツールは開発ワークフローを整理された、
+        検索可能な知識エコシステムに変換します。
       </p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
         <a 
           href={`${import.meta.env.BASE_URL}issues`}
           class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
         >
-          🔍 Explore Issues
+          🔍 Issuesを探索
         </a>
         <a 
           href={`${import.meta.env.BASE_URL}coverage`}
           class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
         >
-          📊 View Coverage
+          📊 カバレッジを表示
         </a>
       </div>
     </div>
 
     <!-- Fun Footer -->
     <div class="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
-      <p>🦫 Did you know? A beaver's teeth never stop growing, and they stay sharp by constantly gnawing on wood.</p>
-      <p>Similarly, our knowledge base never stops growing and stays sharp by constantly processing new issues!</p>
+      <p>🦫 ご存知でしたか？ビーバーの歯は成長し続け、常に木をかじることで鋭さを保っています。</p>
+      <p>同様に、我々の知識ベースも成長し続け、新しいIssuesを常に処理することで鋭さを保っています！</p>
     </div>
   </div>
 </BaseLayout>
