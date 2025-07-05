@@ -209,6 +209,26 @@ func (dg *DashboardGenerator) countCriticalIssues(data *CoverageData) int {
 	return critical
 }
 
+// getTopNavigation returns the common top navigation HTML
+func (dg *DashboardGenerator) getTopNavigation() string {
+	return `
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="../" class="brand-link">
+                        🦫 Beaver
+                    </a>
+                </div>
+                <div class="nav-menu">
+                    <a href="../" class="nav-link">ホーム</a>
+                    <a href="./" class="nav-link active">カバレッジ</a>
+                    <a href="https://github.com/nyasuto/beaver" class="nav-link" target="_blank">GitHub</a>
+                </div>
+            </div>
+        </nav>`
+}
+
 // getDashboardTemplate returns the HTML template for the interactive dashboard
 func (dg *DashboardGenerator) getDashboardTemplate() string {
 	return `<!DOCTYPE html>
@@ -230,6 +250,61 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
             background: #f8f9fa;
             color: #333;
             line-height: 1.6;
+        }
+        
+        /* Top Navigation Styles */
+        .top-nav {
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+        
+        .nav-brand .brand-link {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            color: #667eea;
+            background: #f8f9fa;
+        }
+        
+        .nav-link.active {
+            color: #667eea;
+            background: #e7f1ff;
         }
         
         .header {
@@ -415,10 +490,18 @@ func (dg *DashboardGenerator) getDashboardTemplate() string {
             .container {
                 padding: 1rem;
             }
+            
+            .nav-menu {
+                gap: 1rem;
+            }
+            
+            .nav-container {
+                padding: 0 1rem;
+            }
         }
     </style>
 </head>
-<body>
+<body>` + dg.getTopNavigation() + `
     <header class="header">
         <h1>📊 Coverage Dashboard</h1>
         <div class="subtitle">{{.Data.ProjectName}} - Generated {{.Generated}}</div>
