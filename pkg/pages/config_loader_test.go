@@ -117,7 +117,7 @@ github_pages:
 				assert.Equal(t, "just-the-docs", config.Wiki.Theme)
 				assert.Equal(t, "Wiki Documentation", config.Wiki.Title)
 				assert.Contains(t, config.Wiki.Collections, "docs")
-				
+
 				expectedPlugins := []string{"jekyll-feed", "jekyll-sitemap", "jekyll-seo-tag"}
 				assert.Equal(t, expectedPlugins, config.Wiki.Plugins)
 			},
@@ -165,7 +165,7 @@ github_pages:
 			// Create temporary config file
 			tempDir := t.TempDir()
 			configPath := filepath.Join(tempDir, "deployment-config.yml")
-			
+
 			err := os.WriteFile(configPath, []byte(tt.configData), 0600)
 			require.NoError(t, err)
 
@@ -178,7 +178,7 @@ github_pages:
 			} else {
 				assert.NoError(t, err)
 				require.NotNil(t, config)
-				
+
 				// Run custom validation
 				if tt.validate != nil {
 					tt.validate(t, config)
@@ -210,16 +210,16 @@ github_pages:
 			expectedErr: "failed to parse config file",
 		},
 		{
-			name: "empty file",
-			configData: "",
-			expectedErr: "",  // Should succeed with empty config
+			name:        "empty file",
+			configData:  "",
+			expectedErr: "", // Should succeed with empty config
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var configPath string
-			
+
 			if tt.setupFunc != nil {
 				configPath = tt.setupFunc(t)
 			} else {
@@ -256,7 +256,7 @@ func TestFindDeploymentConfig(t *testing.T) {
 				configDir := filepath.Join(tempDir, "config")
 				err := os.MkdirAll(configDir, 0755)
 				require.NoError(t, err)
-				
+
 				configPath := filepath.Join(configDir, "deployment-config.yml")
 				err = os.WriteFile(configPath, []byte("test: config"), 0600)
 				require.NoError(t, err)
@@ -294,7 +294,7 @@ func TestFindDeploymentConfig(t *testing.T) {
 				beaverDir := filepath.Join(tempDir, ".beaver")
 				err := os.MkdirAll(beaverDir, 0755)
 				require.NoError(t, err)
-				
+
 				configPath := filepath.Join(beaverDir, "deployment-config.yml")
 				err = os.WriteFile(configPath, []byte("test: config"), 0600)
 				require.NoError(t, err)
@@ -312,7 +312,7 @@ func TestFindDeploymentConfig(t *testing.T) {
 			name: "no config found",
 			setupFunc: func(t *testing.T) (string, func()) {
 				tempDir := t.TempDir()
-				
+
 				// Change to temp directory without creating any config
 				originalDir, _ := os.Getwd()
 				err := os.Chdir(tempDir)

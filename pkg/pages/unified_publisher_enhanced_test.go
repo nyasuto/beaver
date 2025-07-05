@@ -122,7 +122,7 @@ func TestUnifiedPagesPublisher_Generate(t *testing.T) {
 			validate: func(t *testing.T, outputDir string) {
 				// Check that output directory exists
 				assert.DirExists(t, outputDir)
-				
+
 				// In a real implementation, we would check for generated HTML files
 				// For now, we just verify the directory structure
 			},
@@ -134,7 +134,7 @@ func TestUnifiedPagesPublisher_Generate(t *testing.T) {
 			validate: func(t *testing.T, outputDir string) {
 				// Check that output directory exists
 				assert.DirExists(t, outputDir)
-				
+
 				// In a real implementation, we would check for Jekyll files
 				// like _config.yml, _layouts/, etc.
 			},
@@ -190,10 +190,10 @@ func TestUnifiedPagesPublisher_Generate(t *testing.T) {
 				config.Mode = ModeHTML // Valid mode for publisher creation
 				publisher, err := NewUnifiedPagesPublisher(config)
 				require.NoError(t, err)
-				
+
 				// Change to unsupported mode after creation
 				publisher.config.Mode = tt.mode
-				
+
 				ctx := context.Background()
 				err = publisher.Generate(ctx, testIssues)
 				assert.Error(t, err)
@@ -354,7 +354,7 @@ func TestUnifiedPagesPublisher_generateJekyllWiki(t *testing.T) {
 
 func TestUnifiedPagesPublisher_copyGeneratedContent(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create source directory with test content
 	sourceDir := filepath.Join(tempDir, "source")
 	err := os.MkdirAll(sourceDir, 0755)
@@ -400,7 +400,7 @@ func TestUnifiedPagesPublisher_copyGeneratedContent(t *testing.T) {
 	for filePath, expectedContent := range testFiles {
 		destFilePath := filepath.Join(destDir, filePath)
 		assert.FileExists(t, destFilePath)
-		
+
 		content, err := os.ReadFile(destFilePath)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedContent, string(content))
@@ -426,7 +426,7 @@ func TestLoadConfigFromDeploymentConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// This is currently a placeholder implementation
 			config, err := LoadConfigFromDeploymentConfig("dummy-path", tt.mode)
-			
+
 			assert.NoError(t, err)
 			assert.NotNil(t, config)
 			assert.Equal(t, tt.mode, config.Mode)
@@ -438,7 +438,7 @@ func TestLoadConfigFromDeploymentConfig(t *testing.T) {
 
 func TestUnifiedPagesPublisher_IntegrationScenarios(t *testing.T) {
 	// Test realistic integration scenarios
-	
+
 	t.Run("complete HTML workflow", func(t *testing.T) {
 		tempDir := t.TempDir()
 		outputDir := filepath.Join(tempDir, "_site")
@@ -503,7 +503,7 @@ func TestUnifiedPagesPublisher_IntegrationScenarios(t *testing.T) {
 		// Generate content
 		ctx := context.Background()
 		err = publisher.Generate(ctx, issues)
-		
+
 		// May fail due to missing dependencies, but structure should be correct
 		if err != nil {
 			t.Logf("Generate failed (expected in test environment): %v", err)
@@ -570,7 +570,7 @@ func TestUnifiedPagesPublisher_IntegrationScenarios(t *testing.T) {
 		// Generate content
 		ctx := context.Background()
 		err = publisher.Generate(ctx, issues)
-		
+
 		// May fail due to missing dependencies, but structure should be correct
 		if err != nil {
 			t.Logf("Generate failed (expected in test environment): %v", err)
@@ -608,7 +608,7 @@ func BenchmarkUnifiedPagesPublisher_Generate(b *testing.B) {
 	}
 
 	ctx := context.Background()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = publisher.Generate(ctx, issues)
