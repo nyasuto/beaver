@@ -33,6 +33,10 @@ export interface Statistics {
   health_score: number;
   trends?: Trends;
   timeline?: TimelineData[];
+  // New unified fields from backend - eliminates frontend duplication
+  workflow_metrics?: WorkflowMetrics;
+  daily_metrics?: DailyMetrics;
+  next_actions?: ActionItem[];
 }
 
 export interface TimelineData {
@@ -57,6 +61,28 @@ export interface WeeklySummary {
   created_this_week: number;
   closed_this_week: number;
   active_contributors: number;
+}
+
+// New interfaces that replace frontend duplicate calculations
+export interface WorkflowMetrics {
+  new_this_week: number;
+  recently_updated: number;
+  total_open: number;
+  closed_this_week: number;
+  weekly_velocity: number;
+}
+
+export interface DailyMetrics {
+  new_today: number;
+  updated_today: number;
+  closed_today: number;
+  has_activity: boolean;
+}
+
+export interface ActionItem {
+  text: string;
+  issues: Issue[];
+  type: 'critical' | 'stale' | 'bug' | 'feature' | 'none';
 }
 
 export interface Navigation {

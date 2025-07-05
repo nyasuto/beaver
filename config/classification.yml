@@ -1,0 +1,98 @@
+# Shared classification configuration for Beaver
+# This file eliminates duplicate logic between frontend and backend
+
+# Priority Classification Rules
+priority_rules:
+  critical:
+    keywords: ["critical", "urgent", "emergency", "hotfix", "severe", "blocking"]
+    labels: ["critical", "urgent", "priority: critical", "priority: high"]
+    title_patterns: ["CRITICAL", "URGENT", "HOTFIX", "EMERGENCY"]
+    description: "Issues requiring immediate attention"
+    
+  high:
+    keywords: ["high", "important", "asap", "priority"]
+    labels: ["high", "important", "priority: high"]
+    title_patterns: ["HIGH", "IMPORTANT"]
+    description: "Issues with high importance"
+    
+  medium:
+    keywords: ["medium", "moderate", "normal"]
+    labels: ["medium", "priority: medium"]
+    title_patterns: ["MEDIUM"]
+    description: "Issues with medium priority"
+    
+  low:
+    keywords: ["low", "minor", "nice-to-have", "future"]
+    labels: ["low", "minor", "priority: low"]
+    title_patterns: ["LOW", "MINOR"]
+    description: "Issues with low priority"
+
+# Category Classification Rules
+category_rules:
+  bug:
+    keywords: ["bug", "error", "issue", "problem", "broken", "fail", "crash", "exception"]
+    labels: ["bug", "type: bug", "defect"]
+    title_patterns: ["BUG", "ERROR", "ISSUE", "PROBLEM", "FIX"]
+    description: "Bug reports and defects"
+    
+  feature:
+    keywords: ["feature", "enhancement", "improvement", "add", "implement", "support"]
+    labels: ["feature", "enhancement", "type: feature", "type: enhancement"]
+    title_patterns: ["FEATURE", "ENHANCEMENT", "ADD", "IMPLEMENT"]
+    description: "New features and enhancements"
+    
+  documentation:
+    keywords: ["docs", "documentation", "readme", "guide", "tutorial", "wiki"]
+    labels: ["documentation", "docs", "type: docs"]
+    title_patterns: ["DOCS", "README", "GUIDE", "TUTORIAL"]
+    description: "Documentation improvements"
+    
+  test:
+    keywords: ["test", "testing", "spec", "coverage", "unit test", "integration"]
+    labels: ["test", "testing", "type: test"]
+    title_patterns: ["TEST", "TESTING", "SPEC"]
+    description: "Testing related issues"
+    
+  refactor:
+    keywords: ["refactor", "cleanup", "optimize", "performance", "restructure"]
+    labels: ["refactor", "cleanup", "performance", "type: refactor"]
+    title_patterns: ["REFACTOR", "CLEANUP", "OPTIMIZE"]
+    description: "Code refactoring and optimization"
+    
+  general:
+    keywords: []
+    labels: []
+    title_patterns: []
+    description: "General or uncategorized issues"
+
+# Action Item Rules
+action_rules:
+  stale_threshold_days: 30
+  critical_action_limit: 5
+  feature_action_limit: 5
+  bug_action_limit: 5
+  
+# Search and Filtering Configuration
+search_config:
+  relevance_scores:
+    title_match: 10
+    label_match: 7
+    body_match: 5
+    comment_match: 3
+  max_search_results: 50
+  search_debounce_ms: 300
+
+# Workflow Metrics Configuration
+workflow_config:
+  time_periods:
+    daily_hours: 24
+    weekly_days: 7
+    monthly_days: 30
+  velocity_calculation: "closed_issues_per_week"
+  activity_threshold: 1  # minimum actions to show activity
+
+# Data Contract Definitions
+data_contract:
+  issue_required_fields: ["id", "number", "title", "state", "created_at", "labels"]
+  statistics_required_fields: ["total_issues", "open_issues", "closed_issues", "health_score"]
+  workflow_metrics_fields: ["new_this_week", "total_open", "weekly_velocity"]
