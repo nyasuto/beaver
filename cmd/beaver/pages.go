@@ -30,18 +30,16 @@ var (
 var pagesCmd = &cobra.Command{
 	Use:   "pages",
 	Short: "統合ページ生成・デプロイ管理",
-	Long: `HTMLサイトとJekyll Wikiの統合ページ生成・デプロイシステム。
+	Long: `統合ページ生成・デプロイシステム (Astroベースアーキテクチャ)。
 
 機能:
   - HTMLモード: カスタムBeaverテーマによる高品質サイト生成
-  - Jekyllモード: 構造化されたWiki生成
   - GitHub Pages自動デプロイ
   - 統合設定管理
-  - 重複排除されたアーキテクチャ
+  - Astroフロントエンドとの連携
 
 使用例:
-  beaver pages generate --mode html owner/repo     # HTMLサイト生成
-  beaver pages generate --mode jekyll owner/repo  # Jekyll Wiki生成
+  beaver pages generate --mode html owner/repo    # HTMLサイト生成
   beaver pages deploy owner/repo                  # 生成済みコンテンツをデプロイ`,
 }
 
@@ -51,8 +49,7 @@ var pagesGenerateCmd = &cobra.Command{
 	Long: `GitHub Issuesを取得してページコンテンツを生成します。
 
 モード:
-  html   - カスタムHTMLサイト生成 (旧site buildコマンド)
-  jekyll - Jekyll Wiki生成 (旧wiki generateコマンド)
+  html   - カスタムHTMLサイト生成 (Astroベース)
 
 統合機能:
   - 統一された設定管理 (deployment-config.yml)
@@ -62,7 +59,7 @@ var pagesGenerateCmd = &cobra.Command{
 
 例:
   beaver pages generate nyasuto/beaver --mode html
-  beaver pages generate nyasuto/beaver --mode jekyll --deploy
+  beaver pages generate nyasuto/beaver --deploy
   beaver pages generate nyasuto/beaver --config ./my-config.yml`,
 	Args: cobra.ExactArgs(1),
 	RunE: runPagesGenerateCommand,
@@ -74,7 +71,7 @@ var pagesDeployCmd = &cobra.Command{
 	Long: `既に生成されたページコンテンツをGitHub Pagesにデプロイします。
 
 統合デプロイ機能:
-  - HTMLとJekyll両モード対応
+  - HTMLモード対応 (Astroベース)
   - 統一されたGit操作
   - 自動ブランチ作成
   - エラー回復とリトライ
@@ -93,7 +90,7 @@ var pagesServeCmd = &cobra.Command{
 	Long: `生成されたページをローカルでプレビューします。
 
 機能:
-  - HTMLとJekyll両モード対応
+  - HTMLモード対応 (Astroベース)
   - 自動ブラウザ起動
   - ホットリロード（将来実装）
   - ポート設定可能
@@ -115,7 +112,7 @@ func init() {
 
 	// Generate command flags
 	pagesGenerateCmd.Flags().StringVarP(&pagesOutputDir, "output", "o", "", "出力ディレクトリ (デフォルト: _site)")
-	pagesGenerateCmd.Flags().StringVarP(&pagesMode, "mode", "m", "html", "生成モード (html, jekyll)")
+	pagesGenerateCmd.Flags().StringVarP(&pagesMode, "mode", "m", "html", "生成モード (html)")
 	pagesGenerateCmd.Flags().BoolVar(&pagesDeploy, "deploy", false, "生成後に自動デプロイ")
 	pagesGenerateCmd.Flags().StringVarP(&pagesConfigPath, "config", "c", "", "設定ファイルパス")
 
@@ -136,8 +133,8 @@ func runPagesGenerateCommand(cmd *cobra.Command, args []string) error {
 
 	// Validate mode
 	mode := pages.PublishingMode(pagesMode)
-	if mode != pages.ModeHTML && mode != pages.ModeJekyll {
-		return fmt.Errorf("無効なモード: %s (html または jekyll を指定してください)", pagesMode)
+	if mode != pages.ModeHTML {
+		return fmt.Errorf("無効なモード: %s (html モードのみサポートされています)", pagesMode)
 	}
 
 	// Load configuration
@@ -197,11 +194,11 @@ func runPagesDeployCommand(cmd *cobra.Command, args []string) error {
 	setupLogger := logger.GetLogger()
 	setupLogger.Info("🚀 ページデプロイ開始", "repository", repo)
 
-	// Load configuration (try both modes, prefer Jekyll for deploy-only)
-	config, err := loadPagesConfig(owner, repository, pages.ModeJekyll)
+	// Load configuration (HTML mode for deploy-only)
+	config, err := loadPagesConfig(owner, repository, pages.ModeHTML)
 	if err != nil {
 		setupLogger.Warn("設定ファイル読み込み失敗、デフォルト設定を使用", "error", err)
-		config = pages.LoadDefaultUnifiedConfig(owner, repository, pages.ModeJekyll)
+		config = pages.LoadDefaultUnifiedConfig(owner, repository, pages.ModeHTML)
 	}
 
 	// Enable deployment

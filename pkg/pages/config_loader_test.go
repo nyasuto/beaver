@@ -85,44 +85,6 @@ github_pages:
 			},
 		},
 		{
-			name: "valid GitHub Pages config for Jekyll mode",
-			configData: `
-github_pages:
-  enabled: true
-  branch: "main"
-  build_dir: "docs"
-  jekyll:
-    theme: "just-the-docs"
-    config:
-      title: "Wiki Documentation"
-      description: "Project wiki"
-    collections:
-      docs:
-        output: true
-        permalink: "/:collection/:name/"
-    plugins:
-      - "jekyll-feed"
-      - "jekyll-sitemap"
-      - "jekyll-seo-tag"
-`,
-			mode:        ModeJekyll,
-			owner:       "testowner",
-			repository:  "testrepo",
-			expectError: false,
-			validate: func(t *testing.T, config *UnifiedPagesConfig) {
-				assert.Equal(t, ModeJekyll, config.Mode)
-				assert.Equal(t, "docs", config.OutputDir)
-
-				// Wiki settings for Jekyll mode
-				assert.Equal(t, "just-the-docs", config.Wiki.Theme)
-				assert.Equal(t, "Wiki Documentation", config.Wiki.Title)
-				assert.Contains(t, config.Wiki.Collections, "docs")
-
-				expectedPlugins := []string{"jekyll-feed", "jekyll-sitemap", "jekyll-seo-tag"}
-				assert.Equal(t, expectedPlugins, config.Wiki.Plugins)
-			},
-		},
-		{
 			name: "GitHub Pages disabled",
 			configData: `
 github_pages:
@@ -425,51 +387,6 @@ func TestHelperFunctions(t *testing.T) {
 		}
 	})
 
-	t.Run("getConfigString", func(t *testing.T) {
-		tests := []struct {
-			name         string
-			config       map[string]interface{}
-			key          string
-			defaultValue string
-			expected     string
-		}{
-			{
-				name:         "nil config",
-				config:       nil,
-				key:          "title",
-				defaultValue: "default",
-				expected:     "default",
-			},
-			{
-				name:         "key exists as string",
-				config:       map[string]interface{}{"title": "My Title"},
-				key:          "title",
-				defaultValue: "default",
-				expected:     "My Title",
-			},
-			{
-				name:         "key exists but not string",
-				config:       map[string]interface{}{"title": 123},
-				key:          "title",
-				defaultValue: "default",
-				expected:     "default",
-			},
-			{
-				name:         "key does not exist",
-				config:       map[string]interface{}{"other": "value"},
-				key:          "title",
-				defaultValue: "default",
-				expected:     "default",
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				result := getConfigString(tt.config, tt.key, tt.defaultValue)
-				assert.Equal(t, tt.expected, result)
-			})
-		}
-	})
 }
 
 func TestComplexConfigMapping(t *testing.T) {
@@ -557,25 +474,4 @@ github_pages:
 		assert.Equal(t, "/guides/", config.Site.Navigation[1].URL)
 	})
 
-	t.Run("Jekyll mode with complex config", func(t *testing.T) {
-		config, err := LoadUnifiedConfigFromFile(configPath, "complex-owner", "complex-repo", ModeJekyll)
-		require.NoError(t, err)
-		require.NotNil(t, config)
-
-		// Wiki settings for Jekyll mode
-		assert.Equal(t, "custom-theme", config.Wiki.Theme)
-		assert.Equal(t, "Complex Documentation", config.Wiki.Title)
-
-		// Collections
-		assert.Contains(t, config.Wiki.Collections, "guides")
-		assert.Contains(t, config.Wiki.Collections, "tutorials")
-
-		// Plugins
-		expectedPlugins := []string{"jekyll-feed", "jekyll-sitemap", "jekyll-seo-tag", "jekyll-redirect-from"}
-		assert.Equal(t, expectedPlugins, config.Wiki.Plugins)
-
-		// Custom config
-		assert.Equal(t, "A complex setup", getConfigString(config.Wiki.Custom, "description", ""))
-		assert.Equal(t, "https://docs.example.com", getConfigString(config.Wiki.Custom, "url", ""))
-	})
 }
