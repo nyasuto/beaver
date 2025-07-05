@@ -1,27 +1,14 @@
-# Sample deployment configuration for testing
+# Sample deployment configuration for testing (Astro-based architecture)
 github_pages:
   enabled: true
   branch: "gh-pages"
   build_dir: "_site"
   custom_domain: "docs.example.com"
-  jekyll:
-    theme: "minima"
-    config:
-      title: "Test Documentation"
-      description: "Sample documentation for testing"
-      baseurl: "/docs"
-      url: "https://docs.example.com"
-    collections:
-      docs:
-        output: true
-        permalink: "/:collection/:name/"
-      guides:
-        output: true
-        permalink: "/guides/:name/"
-    plugins:
-      - "jekyll-feed"
-      - "jekyll-sitemap"
-      - "jekyll-seo-tag"
+  # Simplified configuration for HTML mode only
+  site:
+    title: "Test Documentation"
+    description: "Sample documentation for testing (Astro-based)"
+    theme: "beaver-default"
     navigation:
       - name: "Home"
         url: "/"
@@ -42,23 +29,3 @@ github_pages:
     minify_html: true
     compress_images: true
     generate_sitemap: true
-
-github_wiki:
-  enabled: false
-  branch: "wiki"
-  clone_url_template: "https://github.com/{owner}/{repo}.wiki.git"
-  content:
-    source_dir: "docs"
-    exclude_patterns:
-      - "_*"
-      - ".git*"
-    file_naming:
-      convert_spaces: true
-      replacement_char: "-"
-      preserve_case: false
-  templates:
-    home_page: "_layouts/home.html"
-    sidebar: "_includes/sidebar.html"
-  sync:
-    bidirectional: false
-    conflict_resolution: "local_wins"

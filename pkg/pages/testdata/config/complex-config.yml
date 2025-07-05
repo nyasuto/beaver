@@ -1,44 +1,17 @@
-# Complex deployment configuration for testing edge cases
+# Complex deployment configuration for testing edge cases (Astro-based)
 github_pages:
   enabled: true
   branch: "custom-pages"
   build_dir: "public"
   custom_domain: "custom.example.org"
-  jekyll:
-    theme: "just-the-docs"
-    config:
-      title: "Complex Documentation Site"
-      description: "A comprehensive documentation site with many features"
-      baseurl: "/complex"
-      url: "https://custom.example.org"
-      author:
-        name: "Test Organization"
-        email: "test@example.org"
-      markdown: "kramdown"
-      highlighter: "rouge"
-      kramdown:
-        input: "GFM"
-        hard_wrap: false
-        syntax_highlighter: "rouge"
-    collections:
-      docs:
-        output: true
-        permalink: "/:collection/:name/"
-      api:
-        output: true
-        permalink: "/api/:name/"
-      tutorials:
-        output: true
-        permalink: "/tutorials/:name/"
-      guides:
-        output: true
-        permalink: "/guides/:name/"
-    plugins:
-      - "jekyll-feed"
-      - "jekyll-sitemap"
-      - "jekyll-seo-tag"
-      - "jekyll-redirect-from"
-      - "jekyll-github-metadata"
+  # Simplified HTML-only configuration
+  site:
+    title: "Complex Documentation Site"
+    description: "A comprehensive documentation site with Astro architecture"
+    theme: "beaver-default"
+    author:
+      name: "Test Organization"
+      email: "test@example.org"
     navigation:
       - name: "Home"
         url: "/"
@@ -61,6 +34,11 @@ github_pages:
         url: "/community/"
         icon: "👥"
         external: true
+    features:
+      pwa: true
+      seo: true
+      minify_html: true
+      service_worker: true
   search:
     enabled: true
     provider: "algolia"
@@ -78,26 +56,3 @@ github_pages:
     generate_sitemap: true
     compress_css: true
     compress_js: true
-
-github_wiki:
-  enabled: true
-  branch: "wiki-content"
-  clone_url_template: "https://github.com/{owner}/{repo}.wiki.git"
-  content:
-    source_dir: "wiki-src"
-    exclude_patterns:
-      - "_*"
-      - ".git*"
-      - "*.tmp"
-      - "node_modules"
-    file_naming:
-      convert_spaces: true
-      replacement_char: "-"
-      preserve_case: false
-  templates:
-    home_page: "_layouts/wiki-home.html"
-    sidebar: "_includes/wiki-sidebar.html"
-  sync:
-    bidirectional: true
-    conflict_resolution: "manual"
-    auto_commit: false

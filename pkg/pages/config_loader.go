@@ -20,7 +20,6 @@ type GitHubPagesDeploymentConfig struct {
 	Branch       string             `yaml:"branch"`
 	BuildDir     string             `yaml:"build_dir"`
 	Domain       string             `yaml:"custom_domain"`
-	Jekyll       JekyllConfig       `yaml:"jekyll"`
 	Search       SearchConfig       `yaml:"search"`
 	Analytics    AnalyticsConfig    `yaml:"analytics"`
 	Optimization OptimizationConfig `yaml:"optimization"`
@@ -34,15 +33,6 @@ type GitHubWikiDeploymentConfig struct {
 	Content   ContentConfig   `yaml:"content"`
 	Templates TemplatesConfig `yaml:"templates"`
 	Sync      SyncConfig      `yaml:"sync"`
-}
-
-// JekyllConfig contains Jekyll-specific settings
-type JekyllConfig struct {
-	Theme       string                 `yaml:"theme"`
-	Plugins     []string               `yaml:"plugins"`
-	Config      map[string]interface{} `yaml:"config"`
-	Collections map[string]interface{} `yaml:"collections"`
-	Navigation  []NavigationItem       `yaml:"navigation"`
 }
 
 // SearchConfig contains search settings
@@ -118,7 +108,7 @@ func LoadUnifiedConfigFromFile(configPath string, owner, repository string, mode
 			Branch:       getStringWithDefault(deployConfig.GitHubPages.Branch, "gh-pages"),
 			Domain:       deployConfig.GitHubPages.Domain,
 			BuildDir:     getStringWithDefault(deployConfig.GitHubPages.BuildDir, "_site"),
-			BaseURL:      getConfigString(deployConfig.GitHubPages.Jekyll.Config, "baseurl", ""),
+			BaseURL:      "",
 			Analytics:    deployConfig.GitHubPages.Analytics.GoogleAnalyticsID,
 			EnableSearch: deployConfig.GitHubPages.Search.Enabled,
 		}
@@ -130,22 +120,14 @@ func LoadUnifiedConfigFromFile(configPath string, owner, repository string, mode
 	case ModeHTML:
 		unifiedConfig.Site = SiteSettings{
 			Theme:      "beaver-default",
-			Title:      getConfigString(deployConfig.GitHubPages.Jekyll.Config, "title", "Beaver Documentation"),
-			Navigation: deployConfig.GitHubPages.Jekyll.Navigation,
+			Title:      "Beaver Documentation",
+			Navigation: []NavigationItem{{Name: "Home", URL: "/"}, {Name: "Issues", URL: "/issues/"}},
 			Features: SiteFeatures{
 				PWA:           true,
 				ServiceWorker: true,
 				SEO:           deployConfig.GitHubPages.Optimization.GenerateSitemap,
 				MinifyHTML:    deployConfig.GitHubPages.Optimization.MinifyHTML,
 			},
-		}
-	case ModeJekyll:
-		unifiedConfig.Wiki = WikiSettings{
-			Theme:       deployConfig.GitHubPages.Jekyll.Theme,
-			Title:       getConfigString(deployConfig.GitHubPages.Jekyll.Config, "title", "Beaver Wiki"),
-			Collections: deployConfig.GitHubPages.Jekyll.Collections,
-			Plugins:     deployConfig.GitHubPages.Jekyll.Plugins,
-			Custom:      deployConfig.GitHubPages.Jekyll.Config,
 		}
 	}
 
@@ -202,22 +184,6 @@ func LoadDefaultUnifiedConfig(owner, repository string, mode PublishingMode) *Un
 				MinifyHTML:    true,
 			},
 		}
-	case ModeJekyll:
-		config.Wiki = WikiSettings{
-			Theme: "minima",
-			Title: "Beaver Wiki",
-			Plugins: []string{
-				"jekyll-feed",
-				"jekyll-sitemap",
-				"jekyll-seo-tag",
-			},
-			Collections: map[string]interface{}{
-				"docs": map[string]interface{}{
-					"output":    true,
-					"permalink": "/:collection/:name/",
-				},
-			},
-		}
 	}
 
 	return config
@@ -229,16 +195,6 @@ func getStringWithDefault(value, defaultValue string) string {
 		return defaultValue
 	}
 	return value
-}
-
-func getConfigString(config map[string]interface{}, key, defaultValue string) string {
-	if config == nil {
-		return defaultValue
-	}
-	if value, ok := config[key].(string); ok {
-		return value
-	}
-	return defaultValue
 }
 
 // SaveConfigToFile saves the unified config to a file (for debugging/validation)

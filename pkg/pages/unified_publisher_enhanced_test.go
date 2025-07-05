@@ -128,18 +128,6 @@ func TestUnifiedPagesPublisher_Generate(t *testing.T) {
 			},
 		},
 		{
-			name:        "Jekyll mode generation",
-			mode:        ModeJekyll,
-			expectError: false,
-			validate: func(t *testing.T, outputDir string) {
-				// Check that output directory exists
-				assert.DirExists(t, outputDir)
-
-				// In a real implementation, we would check for Jekyll files
-				// like _config.yml, _layouts/, etc.
-			},
-		},
-		{
 			name:        "unsupported mode",
 			mode:        PublishingMode("unsupported"),
 			expectError: true,
@@ -163,7 +151,7 @@ func TestUnifiedPagesPublisher_Generate(t *testing.T) {
 			}
 
 			// Only test with valid modes for publisher creation
-			if tt.mode == ModeHTML || tt.mode == ModeJekyll {
+			if tt.mode == ModeHTML {
 				publisher, err := NewUnifiedPagesPublisher(config)
 				require.NoError(t, err)
 
@@ -306,52 +294,6 @@ func TestUnifiedPagesPublisher_generateHTMLSite(t *testing.T) {
 	}
 }
 
-func TestUnifiedPagesPublisher_generateJekyllWiki(t *testing.T) {
-	tempDir := t.TempDir()
-	outputDir := filepath.Join(tempDir, "_site")
-
-	config := &UnifiedPagesConfig{
-		Owner:      "testowner",
-		Repository: "testrepo",
-		Mode:       ModeJekyll,
-		OutputDir:  outputDir,
-		Deploy:     false,
-		Wiki: WikiSettings{
-			Title: "Test Wiki",
-			Theme: "minima",
-		},
-		GitHubPages: GitHubPagesSettings{
-			Branch: "gh-pages",
-		},
-	}
-
-	publisher, err := NewUnifiedPagesPublisher(config)
-	require.NoError(t, err)
-
-	testIssues := []models.Issue{
-		{
-			Number: 1,
-			Title:  "Wiki Issue",
-			Body:   "Wiki issue content",
-			State:  "open",
-		},
-	}
-
-	ctx := context.Background()
-	err = publisher.generateJekyllWiki(ctx, testIssues)
-
-	// This will likely fail in test environment due to missing dependencies
-	// but the test structure is correct
-	if err != nil {
-		t.Logf("generateJekyllWiki failed (expected in test environment): %v", err)
-		// Still check that output directory was created
-		assert.DirExists(t, outputDir)
-	} else {
-		assert.NoError(t, err)
-		assert.DirExists(t, outputDir)
-	}
-}
-
 func TestUnifiedPagesPublisher_copyGeneratedContent(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -415,10 +357,6 @@ func TestLoadConfigFromDeploymentConfig(t *testing.T) {
 		{
 			name: "HTML mode",
 			mode: ModeHTML,
-		},
-		{
-			name: "Jekyll mode",
-			mode: ModeJekyll,
 		},
 	}
 
@@ -513,72 +451,6 @@ func TestUnifiedPagesPublisher_IntegrationScenarios(t *testing.T) {
 		assert.DirExists(t, outputDir)
 	})
 
-	t.Run("complete Jekyll workflow", func(t *testing.T) {
-		tempDir := t.TempDir()
-		outputDir := filepath.Join(tempDir, "docs")
-
-		config := &UnifiedPagesConfig{
-			Owner:      "example-org",
-			Repository: "example-wiki",
-			Mode:       ModeJekyll,
-			OutputDir:  outputDir,
-			Deploy:     false,
-			Wiki: WikiSettings{
-				Title: "Example Wiki",
-				Theme: "just-the-docs",
-				Plugins: []string{
-					"jekyll-feed",
-					"jekyll-sitemap",
-					"jekyll-seo-tag",
-				},
-				Collections: map[string]interface{}{
-					"docs": map[string]interface{}{
-						"output":    true,
-						"permalink": "/:collection/:name/",
-					},
-				},
-			},
-			GitHubPages: GitHubPagesSettings{
-				Branch:       "main",
-				BuildDir:     "docs",
-				EnableSearch: true,
-			},
-		}
-
-		// Validate config
-		err := config.Validate()
-		assert.NoError(t, err)
-
-		// Create publisher
-		publisher, err := NewUnifiedPagesPublisher(config)
-		require.NoError(t, err)
-
-		// Test with documentation-focused issues
-		issues := []models.Issue{
-			{
-				Number: 10,
-				Title:  "Documentation: API Reference",
-				Body:   "# API Reference\n\nDetailed API documentation...",
-				State:  "open",
-				Labels: []models.Label{
-					{Name: "documentation", Color: "0075ca"},
-					{Name: "type: guide", Color: "c5def5"},
-				},
-			},
-		}
-
-		// Generate content
-		ctx := context.Background()
-		err = publisher.Generate(ctx, issues)
-
-		// May fail due to missing dependencies, but structure should be correct
-		if err != nil {
-			t.Logf("Generate failed (expected in test environment): %v", err)
-		}
-
-		// Verify output directory exists
-		assert.DirExists(t, outputDir)
-	})
 }
 
 // Benchmark tests for performance analysis

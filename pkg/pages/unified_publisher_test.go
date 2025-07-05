@@ -24,15 +24,6 @@ func TestUnifiedPagesConfig_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid Jekyll config",
-			config: UnifiedPagesConfig{
-				Owner:      "testowner",
-				Repository: "testrepo",
-				Mode:       ModeJekyll,
-			},
-			expectError: false,
-		},
-		{
 			name: "missing owner",
 			config: UnifiedPagesConfig{
 				Repository: "testrepo",
@@ -58,7 +49,7 @@ func TestUnifiedPagesConfig_Validate(t *testing.T) {
 				Mode:       "invalid",
 			},
 			expectError: true,
-			errorMsg:    "mode must be either 'html' or 'jekyll'",
+			errorMsg:    "mode must be 'html' (only HTML mode is supported)",
 		},
 	}
 
@@ -111,30 +102,6 @@ func TestLoadDefaultUnifiedConfig(t *testing.T) {
 				assert.Equal(t, "/", config.Site.Navigation[0].URL)
 			},
 		},
-		{
-			name:       "Jekyll mode default config",
-			owner:      "testowner",
-			repository: "testrepo",
-			mode:       ModeJekyll,
-			validate: func(t *testing.T, config *UnifiedPagesConfig) {
-				assert.Equal(t, "testowner", config.Owner)
-				assert.Equal(t, "testrepo", config.Repository)
-				assert.Equal(t, ModeJekyll, config.Mode)
-				assert.Equal(t, "_site", config.OutputDir)
-				assert.False(t, config.Deploy) // Should default to false for safety
-
-				// Check wiki-specific settings
-				assert.Equal(t, "minima", config.Wiki.Theme)
-				assert.Equal(t, "Beaver Wiki", config.Wiki.Title)
-
-				// Check plugins
-				expectedPlugins := []string{"jekyll-feed", "jekyll-sitemap", "jekyll-seo-tag"}
-				assert.Equal(t, expectedPlugins, config.Wiki.Plugins)
-
-				// Check collections
-				assert.Contains(t, config.Wiki.Collections, "docs")
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -160,7 +127,6 @@ func TestPublishingMode_String(t *testing.T) {
 		expected string
 	}{
 		{ModeHTML, "html"},
-		{ModeJekyll, "jekyll"},
 		{PublishingMode("unknown"), "unknown"},
 	}
 

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nyasuto/beaver/internal/config"
 	"github.com/nyasuto/beaver/internal/models"
 	"github.com/nyasuto/beaver/pkg/content"
 )
@@ -18,8 +17,7 @@ import (
 type PublishingMode string
 
 const (
-	ModeHTML   PublishingMode = "html"   // Direct HTML generation (site)
-	ModeJekyll PublishingMode = "jekyll" // Jekyll-based generation (wiki)
+	ModeHTML PublishingMode = "html" // Direct HTML generation (site)
 )
 
 // UnifiedPagesConfig consolidates all pages configuration
@@ -36,9 +34,6 @@ type UnifiedPagesConfig struct {
 
 	// Site-specific settings (HTML mode)
 	Site SiteSettings `yaml:"site"`
-
-	// Wiki-specific settings (Jekyll mode)
-	Wiki WikiSettings `yaml:"wiki"`
 }
 
 // GitHubPagesSettings contains GitHub Pages deployment configuration
@@ -58,15 +53,6 @@ type SiteSettings struct {
 	Navigation []NavigationItem       `yaml:"navigation"`
 	Features   SiteFeatures           `yaml:"features"`
 	Custom     map[string]interface{} `yaml:"custom"`
-}
-
-// WikiSettings contains Jekyll wiki generation configuration
-type WikiSettings struct {
-	Theme       string                 `yaml:"theme"`
-	Title       string                 `yaml:"title"`
-	Collections map[string]interface{} `yaml:"collections"`
-	Plugins     []string               `yaml:"plugins"`
-	Custom      map[string]interface{} `yaml:"custom"`
 }
 
 // NavigationItem represents a navigation menu item
@@ -123,10 +109,8 @@ func (p *UnifiedPagesPublisher) Generate(ctx context.Context, issues []models.Is
 	switch p.config.Mode {
 	case ModeHTML:
 		return p.generateHTMLSite(ctx, issues)
-	case ModeJekyll:
-		return p.generateJekyllWiki(ctx, issues)
 	default:
-		return fmt.Errorf("unsupported publishing mode: %s", p.config.Mode)
+		return fmt.Errorf("unsupported publishing mode: %s (only 'html' mode is supported)", p.config.Mode)
 	}
 }
 
@@ -156,20 +140,6 @@ func (p *UnifiedPagesPublisher) generateHTMLSite(ctx context.Context, issues []m
 	// Generate HTML content using existing site generator logic
 	// This will be migrated from pkg/site/generator.go
 	return p.generateHTMLContent(issues)
-}
-
-// generateJekyllWiki generates Jekyll-based wiki content
-func (p *UnifiedPagesPublisher) generateJekyllWiki(ctx context.Context, issues []models.Issue) error {
-	p.logger.Info("Generating Jekyll wiki")
-
-	// Ensure output directory exists
-	if err := os.MkdirAll(p.config.OutputDir, 0755); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
-	}
-
-	// Generate Jekyll content using existing wiki generator logic
-	// This will be migrated from pkg/wiki/github_pages_publisher.go
-	return p.generateJekyllContent(issues)
 }
 
 // deployToGitHubPages handles deployment to GitHub Pages
@@ -223,8 +193,8 @@ func (c *UnifiedPagesConfig) Validate() error {
 	if c.Repository == "" {
 		return fmt.Errorf("repository is required")
 	}
-	if c.Mode != ModeHTML && c.Mode != ModeJekyll {
-		return fmt.Errorf("mode must be either 'html' or 'jekyll'")
+	if c.Mode != ModeHTML {
+		return fmt.Errorf("mode must be 'html' (only HTML mode is supported)")
 	}
 	if c.OutputDir == "" {
 		c.OutputDir = "_site" // Default output directory
@@ -266,43 +236,6 @@ func (p *UnifiedPagesPublisher) generateHTMLContent(issues []models.Issue) error
 	}
 
 	p.logger.Info("HTML content generation completed", "output_dir", p.config.OutputDir)
-	return nil
-}
-
-func (p *UnifiedPagesPublisher) generateJekyllContent(issues []models.Issue) error {
-	p.logger.Info("Generating Jekyll content using wiki generator")
-
-	// Create publisher configuration
-	publisherConfig := content.NewPublisherConfig(p.config.Owner, p.config.Repository, "")
-
-	// Create GitHub Pages configuration
-	pagesConfig := config.GitHubPagesConfig{
-		Theme:        p.config.Wiki.Theme,
-		Branch:       p.config.GitHubPages.Branch,
-		Domain:       p.config.GitHubPages.Domain,
-		BaseURL:      p.config.GitHubPages.BaseURL,
-		Analytics:    p.config.GitHubPages.Analytics,
-		EnableSearch: p.config.GitHubPages.EnableSearch,
-	}
-
-	// Create GitHub Pages publisher
-	publisher, err := content.NewGitHubPagesPublisher(publisherConfig, pagesConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create GitHub Pages publisher: %w", err)
-	}
-
-	// Generate and publish Jekyll wiki
-	ctx := context.Background()
-	projectName := p.config.Wiki.Title
-	if projectName == "" {
-		projectName = p.config.Repository
-	}
-
-	if err := publisher.GenerateAndPublishWiki(ctx, issues, projectName); err != nil {
-		return fmt.Errorf("failed to generate Jekyll content: %w", err)
-	}
-
-	p.logger.Info("Jekyll content generation completed", "output_dir", p.config.OutputDir)
 	return nil
 }
 
