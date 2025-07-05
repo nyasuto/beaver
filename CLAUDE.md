@@ -189,3 +189,48 @@ A deployment is considered successful only when:
 - Validate mobile responsiveness of dashboard
 
 **Important**: Never assume deployment success based on workflow completion alone. Always confirm the live site functionality.
+
+## 🚨 **Critical Development Rules**
+
+### **Claude Code Operational Restrictions**
+
+**ABSOLUTE PROHIBITIONS - These rules MUST be followed without exception:**
+
+1. **🚫 NEVER MERGE PULL REQUESTS**
+   - Claude Code is STRICTLY FORBIDDEN from merging any pull requests
+   - This includes using `gh pr merge`, `--auto`, `--admin`, or any merge commands
+   - Pull requests must be reviewed and merged by human developers only
+   - Violation of this rule is unacceptable under any circumstances
+
+2. **✅ PERMITTED ACTIONS**
+   - ✅ Create pull requests (`gh pr create`)
+   - ✅ Write, edit, and commit code changes
+   - ✅ Push branches to remote repository
+   - ✅ Analyze code and provide recommendations
+   - ✅ Run tests and quality checks
+   - ✅ Debug and troubleshoot issues
+
+3. **🔄 PROPER WORKFLOW**
+   ```bash
+   # ✅ Correct workflow:
+   git checkout -b feature/my-fix
+   # Make code changes
+   git add .
+   git commit -m "fix: description"
+   git push -u origin feature/my-fix
+   gh pr create --title "Fix: Description" --body "Details"
+   # ❌ STOP HERE - DO NOT MERGE
+   
+   # ❌ FORBIDDEN:
+   gh pr merge [PR_NUMBER]  # NEVER DO THIS
+   ```
+
+4. **📋 COMMUNICATION PROTOCOL**
+   - Always inform the user when a PR is created
+   - Explain what the PR contains and why it's needed
+   - Let the user decide when and how to merge
+   - If urgent fixes are needed, clearly state the urgency but still wait for human approval
+
+### **Enforcement**
+
+These rules are non-negotiable and must be followed in all circumstances. Any violation compromises the development workflow and repository integrity.
