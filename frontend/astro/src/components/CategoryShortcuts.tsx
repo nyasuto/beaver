@@ -22,7 +22,7 @@ const categories: CategoryConfig[] = [
     icon: '🐛',
     color: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30',
     description: 'バグレポートと修正',
-    filters: ['bug', 'error', 'defect', 'fix']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'feature',
@@ -30,7 +30,7 @@ const categories: CategoryConfig[] = [
     icon: '✨',
     color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30',
     description: '新機能とアイデア',
-    filters: ['feature', 'enhancement', 'new', 'add']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'critical',
@@ -38,7 +38,7 @@ const categories: CategoryConfig[] = [
     icon: '🚨',
     color: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30',
     description: '緊急対応が必要',
-    filters: ['critical', 'urgent', 'high', 'important', 'priority']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'docs',
@@ -46,7 +46,7 @@ const categories: CategoryConfig[] = [
     icon: '📚',
     color: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30',
     description: 'ドキュメント改善',
-    filters: ['docs', 'documentation', 'readme', 'guide']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'test',
@@ -54,7 +54,7 @@ const categories: CategoryConfig[] = [
     icon: '🧪',
     color: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30',
     description: 'テスト関連',
-    filters: ['test', 'testing', 'spec', 'qa']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'deploy',
@@ -62,7 +62,7 @@ const categories: CategoryConfig[] = [
     icon: '🚀',
     color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30',
     description: 'デプロイ・リリース',
-    filters: ['deploy', 'deployment', 'release', 'ci/cd', 'build']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'performance',
@@ -70,7 +70,7 @@ const categories: CategoryConfig[] = [
     icon: '⚡',
     color: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30',
     description: 'パフォーマンス改善',
-    filters: ['performance', 'speed', 'optimization', 'slow']
+    filters: [] // Backend handles categorization
   },
   {
     key: 'security',
@@ -78,34 +78,19 @@ const categories: CategoryConfig[] = [
     icon: '🔒',
     color: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30',
     description: 'セキュリティ対応',
-    filters: ['security', 'vulnerability', 'auth', 'permission']
+    filters: [] // Backend handles categorization
   }
 ];
 
-// Priority-based categorization to avoid duplicate counting
+// Use backend categorization from analysis.category
 function getPrimaryCategory(issue: Issue): string {
-  const searchText = `${issue.title} ${issue.body || ''} ${(issue.labels || []).join(' ')}`.toLowerCase();
-  
-  // Check categories in priority order (most specific first)
-  const categoryPriority = [
-    'critical',     // Highest priority
-    'bug',         // Second priority  
-    'security',    // Third priority
-    'performance', // Fourth priority
-    'deploy',      // Fifth priority
-    'test',        // Sixth priority
-    'docs',        // Seventh priority
-    'feature'      // Lowest priority (most general)
-  ];
-  
-  for (const categoryKey of categoryPriority) {
-    const category = categories.find(c => c.key === categoryKey);
-    if (category && category.filters.some(filter => searchText.includes(filter.toLowerCase()))) {
-      return categoryKey;
-    }
+  // Use backend's label-based categorization result
+  if (issue.analysis?.category) {
+    return issue.analysis.category;
   }
   
-  return 'general'; // Default category
+  // Fallback to general if no backend categorization
+  return 'general';
 }
 
 function getCategoryIssues(issues: Issue[], category: CategoryConfig): Issue[] {
