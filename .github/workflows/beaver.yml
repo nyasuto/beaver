@@ -65,7 +65,6 @@ jobs:
   preflight:
     name: 🔍 Pre-flight Checks
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/') }}
     outputs:
       should_update: ${{ steps.check_conditions.outputs.should_update }}
       update_type: ${{ steps.check_conditions.outputs.update_type }}
