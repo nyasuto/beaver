@@ -30,6 +30,23 @@ try {
 }
 
 const { issues, statistics, metadata } = beaverData!;
+
+// Load coverage data for quality summary
+let coverageData: any = null;
+try {
+  const response = await fetch('/beaver/coverage/coverage-data.json');
+  if (response.ok) {
+    coverageData = await response.json();
+  }
+} catch (error) {
+  console.warn('Coverage data not available:', error);
+}
+
+// Calculate quality metrics from coverage data
+const coveragePercentage = coverageData?.total_coverage ? Math.round(coverageData.total_coverage * 10) / 10 : 'NO_COVERAGE';
+const qualityGrade = coverageData?.quality_grade || 'NO_GRADE';
+const untestedCount = coverageData?.summary?.untested_packages || 'NO_DATA';
+const targetCoverage = 70.0;
 ---
 
 <BaseLayout title="🦫 Beaver AI知識ダム" description="GitHub Issuesを永続的な知識ベースに変換">
@@ -110,7 +127,7 @@ const { issues, statistics, metadata } = beaverData!;
                 <span class="text-sm">⚠️</span>
                 <div>
                   <div class="text-sm font-medium text-red-800 dark:text-red-200">
-                    カバレッジ 60.1% (D評価)
+                    カバレッジ {coveragePercentage}% ({qualityGrade}評価)
                   </div>
                   <div class="text-xs text-red-600 dark:text-red-300">
                     カバレッジ向上が必要
@@ -124,21 +141,21 @@ const { issues, statistics, metadata } = beaverData!;
             
             <div class="grid grid-cols-3 gap-2 mb-2 text-xs">
               <div class="text-center">
-                <div class="font-bold">60.1%</div>
+                <div class="font-bold">{coveragePercentage}%</div>
                 <div class="opacity-75">カバレッジ</div>
               </div>
               <div class="text-center">
-                <div class="font-bold">70.0%</div>
+                <div class="font-bold">{targetCoverage}%</div>
                 <div class="opacity-75">目標</div>
               </div>
               <div class="text-center">
-                <div class="font-bold">16</div>
+                <div class="font-bold">{untestedCount}</div>
                 <div class="opacity-75">未テスト</div>
               </div>
             </div>
             
             <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-1.5 mb-2">
-              <div class="h-1.5 bg-red-500 rounded-full" style="width: 60.1%"></div>
+              <div class="h-1.5 bg-red-500 rounded-full" style={`width: ${typeof coveragePercentage === 'number' ? coveragePercentage : 0}%`}></div>
             </div>
             
             <div class="flex items-center justify-between">

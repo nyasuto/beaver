@@ -25,18 +25,18 @@ try {
 const mockCoverageData: CoverageData = {
   project_name: 'beaver',
   generated_at: new Date().toISOString(),
-  total_coverage: 60.1,
+  total_coverage: -1, // NO_COVERAGE indicator
   quality_rating: {
-    overall_grade: 'D',
-    description: 'カバレッジ向上が必要',
+    overall_grade: 'NO_GRADE',
+    description: 'カバレッジデータが利用できません',
     next_target: 70.0
   },
   summary: {
-    total_packages: 16,
-    tested_packages: 0,
-    untested_packages: 16,
-    total_files: 45,
-    tested_files: 12
+    total_packages: -1,
+    tested_packages: -1,
+    untested_packages: -1,
+    total_files: -1,
+    tested_files: -1
   },
   package_stats: [
     {
