@@ -151,56 +151,74 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-              📋 推奨アクション
-            </h4>
-            <ul className="space-y-1">
-              {nextActions.map((action, index) => (
-                <li key={index} className="text-sm text-blue-700 dark:text-blue-300">
-                  {action}
-                </li>
-              ))}
-            </ul>
+        {/* 3列レイアウト - カード形式統一 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 推奨アクション - 2列分 */}
+          <div className="md:col-span-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
+              <div className="flex items-center mb-3">
+                <span className="text-lg mr-2">📋</span>
+                <h4 className="font-medium text-blue-800 dark:text-blue-200">推奨アクション</h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {nextActions.map((action, index) => (
+                  <div key={index} className="bg-blue-50 dark:bg-blue-900/20 rounded-md p-3 border-l-4 border-blue-500">
+                    <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      {action}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           
+          {/* 進捗サマリー - 1列分 */}
           <div>
-            {/* 日次進捗（活動がある場合のみ表示） */}
-            {dailyMetrics.hasActivity && (
-              <>
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
-                  🌟 本日の進捗（24h）
-                </h4>
-                <div className="grid grid-cols-3 gap-2 text-sm mb-4">
-                  <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                    <div className="font-bold text-green-600">{dailyMetrics.newToday}</div>
-                    <div className="text-gray-600 dark:text-gray-400">新規</div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
+              <div className="flex items-center mb-3">
+                <span className="text-lg mr-2">📊</span>
+                <h4 className="font-medium text-gray-800 dark:text-gray-200">進捗サマリー</h4>
+              </div>
+              <div className="space-y-4">
+                {/* 日次進捗（活動がある場合のみ表示） */}
+                {dailyMetrics.hasActivity && (
+                  <div>
+                    <div className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                      🌟 本日（24h）
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 text-xs">
+                      <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                        <div className="font-bold text-green-600">{dailyMetrics.newToday}</div>
+                        <div className="text-gray-600 dark:text-gray-400">新規</div>
+                      </div>
+                      <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        <div className="font-bold text-blue-600">{dailyMetrics.updatedToday}</div>
+                        <div className="text-gray-600 dark:text-gray-400">更新</div>
+                      </div>
+                      <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                        <div className="font-bold text-purple-600">{dailyMetrics.closedToday}</div>
+                        <div className="text-gray-600 dark:text-gray-400">完了</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                    <div className="font-bold text-blue-600">{dailyMetrics.updatedToday}</div>
-                    <div className="text-gray-600 dark:text-gray-400">更新</div>
+                )}
+                
+                {/* 週次進捗 */}
+                <div>
+                  <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
+                    📈 今週
                   </div>
-                  <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                    <div className="font-bold text-purple-600">{dailyMetrics.closedToday}</div>
-                    <div className="text-gray-600 dark:text-gray-400">完了</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      <div className="font-bold text-green-600">{metrics.newThisWeek}</div>
+                      <div className="text-gray-600 dark:text-gray-400">新規</div>
+                    </div>
+                    <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded border">
+                      <div className="font-bold text-blue-600">{metrics.closedThisWeek}</div>
+                      <div className="text-gray-600 dark:text-gray-400">完了</div>
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
-            
-            {/* 週次進捗 */}
-            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-              📊 今週の進捗
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="text-center p-2 bg-white dark:bg-gray-800 rounded">
-                <div className="font-bold text-green-600">{metrics.newThisWeek}</div>
-                <div className="text-gray-600 dark:text-gray-400">新規</div>
-              </div>
-              <div className="text-center p-2 bg-white dark:bg-gray-800 rounded">
-                <div className="font-bold text-blue-600">{metrics.closedThisWeek}</div>
-                <div className="text-gray-600 dark:text-gray-400">完了</div>
               </div>
             </div>
           </div>
