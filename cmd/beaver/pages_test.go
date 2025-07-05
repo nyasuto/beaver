@@ -254,7 +254,7 @@ func TestLoadPagesConfig(t *testing.T) {
 
 func TestFetchIssuesForPages(t *testing.T) {
 	t.SkipNow() // proper testing with mocks later
-	
+
 	tests := []struct {
 		name    string
 		setup   func() func()
