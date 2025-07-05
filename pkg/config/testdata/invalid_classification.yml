@@ -1,0 +1,8 @@
+# Invalid YAML for testing error handling
+priority_rules:
+  critical:
+    keywords: ["critical"
+    # Missing closing bracket - invalid YAML
+    labels: ["critical"]
+    title_patterns: ["CRITICAL"]
+    description: "Critical only"

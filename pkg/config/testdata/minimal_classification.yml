@@ -1,0 +1,42 @@
+# Minimal test classification configuration
+priority_rules:
+  critical:
+    keywords: ["critical"]
+    labels: ["critical"]
+    title_patterns: ["CRITICAL"]
+    description: "Critical only"
+
+category_rules:
+  bug:
+    keywords: ["bug"]
+    labels: ["bug"]
+    title_patterns: ["BUG"]
+    description: "Bug only"
+
+action_rules:
+  stale_threshold_days: 15
+  critical_action_limit: 1
+  feature_action_limit: 1
+  bug_action_limit: 1
+
+search_config:
+  relevance_scores:
+    title_match: 5
+    label_match: 3
+    body_match: 2
+    comment_match: 1
+  max_search_results: 10
+  search_debounce_ms: 100
+
+workflow_config:
+  time_periods:
+    daily_hours: 8
+    weekly_days: 5
+    monthly_days: 22
+  velocity_calculation: "simple"
+  activity_threshold: 0
+
+data_contract:
+  issue_required_fields: ["id", "title"]
+  statistics_required_fields: ["total_issues"]
+  workflow_metrics_fields: ["total_open"]

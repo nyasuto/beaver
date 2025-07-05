@@ -1,0 +1,77 @@
+# Valid test classification configuration
+priority_rules:
+  critical:
+    keywords: ["critical", "urgent", "emergency"]
+    labels: ["critical", "urgent", "priority: critical"]
+    title_patterns: ["CRITICAL", "URGENT", "EMERGENCY"]
+    description: "Critical issues"
+  high:
+    keywords: ["high", "important"]
+    labels: ["high", "priority: high"]
+    title_patterns: ["HIGH", "IMPORTANT"]
+    description: "High priority issues"
+  medium:
+    keywords: ["medium", "normal"]
+    labels: ["medium", "priority: medium"]
+    title_patterns: ["MEDIUM"]
+    description: "Medium priority issues"
+  low:
+    keywords: ["low", "minor"]
+    labels: ["low", "priority: low"]
+    title_patterns: ["LOW", "MINOR"]
+    description: "Low priority issues"
+
+category_rules:
+  bug:
+    keywords: ["bug", "error", "issue", "problem"]
+    labels: ["bug", "type: bug"]
+    title_patterns: ["BUG", "ERROR", "FIX"]
+    description: "Bug reports"
+  feature:
+    keywords: ["feature", "enhancement", "add"]
+    labels: ["feature", "type: feature"]
+    title_patterns: ["FEATURE", "ADD"]
+    description: "New features"
+  documentation:
+    keywords: ["docs", "documentation", "readme"]
+    labels: ["documentation", "docs"]
+    title_patterns: ["DOCS", "README"]
+    description: "Documentation"
+  test:
+    keywords: ["test", "testing", "coverage"]
+    labels: ["test", "testing"]
+    title_patterns: ["TEST", "TESTING"]
+    description: "Testing"
+  refactor:
+    keywords: ["refactor", "cleanup", "optimize"]
+    labels: ["refactor", "cleanup"]
+    title_patterns: ["REFACTOR", "CLEANUP"]
+    description: "Code refactoring"
+
+action_rules:
+  stale_threshold_days: 30
+  critical_action_limit: 5
+  feature_action_limit: 3
+  bug_action_limit: 4
+
+search_config:
+  relevance_scores:
+    title_match: 10
+    label_match: 7
+    body_match: 5
+    comment_match: 3
+  max_search_results: 50
+  search_debounce_ms: 300
+
+workflow_config:
+  time_periods:
+    daily_hours: 24
+    weekly_days: 7
+    monthly_days: 30
+  velocity_calculation: "closed_issues_per_week"
+  activity_threshold: 1
+
+data_contract:
+  issue_required_fields: ["id", "number", "title", "state"]
+  statistics_required_fields: ["total_issues", "open_issues"]
+  workflow_metrics_fields: ["new_this_week", "total_open"]
