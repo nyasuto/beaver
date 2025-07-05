@@ -185,6 +185,45 @@ jobs:
         run: |
           echo "🧪 Running unit tests (fast, no external dependencies)"
           make test-unit
+
+      - name: 📊 Generate Coverage Data
+        run: |
+          echo "📊 Generating coverage data for dashboard..."
+          # Run tests with coverage profile
+          go test -v -coverprofile=coverage.out ./...
+          
+          # Install beaver for coverage analysis
+          go install ./cmd/beaver
+          
+          # Generate coverage dashboard files
+          if [ -f "coverage.out" ]; then
+            echo "✅ Coverage data generated"
+            
+            # Generate interactive HTML dashboard
+            beaver coverage report --input coverage.out --format html --output coverage-dashboard.html
+            
+            # Export for GitHub Pages integration
+            beaver coverage export --input coverage.out --format github-pages --output coverage-data.json
+            
+            # Export CI summary for validation
+            beaver coverage export --input coverage.out --format ci-summary --output coverage-summary.json
+            
+            echo "📊 Coverage dashboard files generated successfully"
+          else
+            echo "⚠️ No coverage data found, skipping coverage dashboard generation"
+          fi
+
+      - name: 📊 Coverage Quality Check
+        if: hashFiles('coverage-summary.json') != ''
+        run: |
+          echo "📊 Checking coverage quality..."
+          # Show coverage summary but don't fail build
+          beaver coverage validate --min-coverage 70 --fail-on-low=false || echo "::warning::Coverage below 70% threshold"
+          
+          # Display coverage summary
+          if [ -f "coverage-summary.json" ]; then
+            echo "::notice::Coverage analysis completed - dashboard will be deployed"
+          fi
           
       - name: ✅ Verify installation
         env:
@@ -289,6 +328,27 @@ jobs:
             rm -rf _site
             cp -r frontend/astro/dist _site
             echo "🔧 Copied frontend/astro/dist to _site for GitHub Pages deployment"
+            
+            # Integrate coverage dashboard into site
+            if [ -f "coverage-dashboard.html" ] && [ -f "coverage-data.json" ]; then
+              echo "📊 Integrating coverage dashboard into GitHub Pages..."
+              
+              # Create coverage subdirectory in site
+              mkdir -p _site/coverage
+              
+              # Copy coverage files to site
+              cp coverage-dashboard.html _site/coverage/index.html
+              cp coverage-data.json _site/coverage/coverage-data.json
+              
+              # Copy additional coverage files if they exist
+              [ -f "coverage-summary.json" ] && cp coverage-summary.json _site/coverage/
+              [ -f "coverage.out" ] && cp coverage.out _site/coverage/
+              
+              echo "✅ Coverage dashboard integrated at /coverage/"
+              echo "🌐 Dashboard will be available at: https://${{ github.repository_owner }}.github.io/beaver/coverage/"
+            else
+              echo "⚠️ Coverage dashboard files not found, skipping coverage integration"
+            fi
           else
             echo "❌ No frontend/astro/dist directory found - Astro build may have failed"
             exit 1
@@ -381,6 +441,9 @@ jobs:
             .beaver/
             *.md
             !README.md
+            coverage-*.html
+            coverage-*.json
+            coverage.out
           retention-days: 7
           if-no-files-found: warn
 
