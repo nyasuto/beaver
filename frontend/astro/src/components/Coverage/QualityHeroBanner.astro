@@ -1,0 +1,188 @@
+---
+import type { CoverageData } from '../../types/beaver';
+
+interface Props {
+  className?: string;
+}
+
+const { className = '' } = Astro.props;
+
+// Try to load coverage data
+let coverageData: CoverageData | null = null;
+let isDataAvailable = false;
+
+try {
+  // In a real deployment, this would fetch from the actual API endpoint
+  // For now, we'll simulate the data availability check
+  const mockData: CoverageData = {
+    project_name: 'beaver',
+    generated_at: new Date().toISOString(),
+    total_coverage: 60.1,
+    quality_rating: {
+      overall_grade: 'D',
+      description: 'カバレッジ向上が必要',
+      next_target: 70.0
+    },
+    summary: {
+      total_packages: 16,
+      tested_packages: 0,
+      untested_packages: 16,
+      total_files: 45,
+      tested_files: 12
+    },
+    package_stats: [],
+    file_coverage: [],
+    recommendations: [
+      {
+        priority: 'High',
+        title: 'テストカバレッジの向上',
+        description: '基本的なユニットテストの追加が必要です'
+      }
+    ]
+  };
+  
+  coverageData = mockData;
+  isDataAvailable = true;
+} catch (error) {
+  isDataAvailable = false;
+}
+
+// Grade color mapping
+const getGradeColor = (grade: string) => {
+  const colors = {
+    'A': 'from-green-500 to-green-600 text-white',
+    'B': 'from-lime-500 to-lime-600 text-white',
+    'C': 'from-orange-500 to-orange-600 text-white',
+    'D': 'from-red-500 to-red-600 text-white',
+    'F': 'from-red-700 to-red-800 text-white'
+  };
+  return colors[grade as keyof typeof colors] || 'from-gray-500 to-gray-600 text-white';
+};
+
+const getStatusIcon = (grade: string) => {
+  const icons = {
+    'A': '🎉',
+    'B': '👍', 
+    'C': '📈',
+    'D': '⚠️',
+    'F': '🚨'
+  };
+  return icons[grade as keyof typeof icons] || '📊';
+};
+---
+
+<div class={`bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/30 dark:via-purple-900/30 dark:to-pink-900/30 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 ${className}`}>
+  <div class="p-8">
+    {isDataAvailable && coverageData ? (
+      <Fragment>
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center space-x-4">
+            <div class={`inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r ${getGradeColor(coverageData.quality_rating.overall_grade)} font-bold text-2xl shadow-lg`}>
+              <span class="mr-2">{getStatusIcon(coverageData.quality_rating.overall_grade)}</span>
+              <span>品質評価: {coverageData.quality_rating.overall_grade}</span>
+            </div>
+          </div>
+          <a 
+            href="/beaver/coverage" 
+            class="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 rounded-xl shadow-lg hover:shadow-xl transition-all font-semibold border border-gray-200 dark:border-gray-700"
+          >
+            詳細分析を見る →
+          </a>
+        </div>
+
+        <!-- Main Metrics Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+          <!-- Total Coverage -->
+          <div class="text-center bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class={`text-3xl font-bold mb-1 ${getGradeColor(coverageData.quality_rating.overall_grade).split(' ')[0]} bg-gradient-to-r bg-clip-text text-transparent`}>
+              {coverageData.total_coverage.toFixed(1)}%
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              総合カバレッジ
+            </div>
+          </div>
+
+          <!-- Target Progress -->
+          <div class="text-center bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="text-3xl font-bold mb-1 text-blue-600 dark:text-blue-400">
+              {coverageData.quality_rating.next_target.toFixed(1)}%
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              目標値
+            </div>
+          </div>
+
+          <!-- Packages -->
+          <div class="text-center bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="text-3xl font-bold mb-1 text-purple-600 dark:text-purple-400">
+              {coverageData.summary.total_packages}
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              パッケージ
+            </div>
+          </div>
+
+          <!-- Critical Issues -->
+          <div class="text-center bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="text-3xl font-bold mb-1 text-red-600 dark:text-red-400">
+              {coverageData.recommendations.filter(r => r.priority === 'High').length}
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              緊急課題
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <span class="font-medium">進捗状況</span>
+            <span>目標まで <strong class="text-gray-800 dark:text-white">{Math.max(0, coverageData.quality_rating.next_target - coverageData.total_coverage).toFixed(1)}%</strong></span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-3">
+            <div 
+              class={`h-4 rounded-full transition-all duration-500 bg-gradient-to-r ${
+                coverageData.quality_rating.overall_grade === 'A' ? 'from-green-500 to-green-600' :
+                coverageData.quality_rating.overall_grade === 'B' ? 'from-lime-500 to-lime-600' :
+                coverageData.quality_rating.overall_grade === 'C' ? 'from-orange-500 to-orange-600' :
+                coverageData.quality_rating.overall_grade === 'D' ? 'from-red-500 to-red-600' : 'from-red-700 to-red-800'
+              }`}
+              style={`width: ${Math.min(coverageData.total_coverage, 100)}%`}
+            ></div>
+          </div>
+          
+          <!-- Status Message -->
+          <div class="flex items-center justify-center space-x-3 text-center">
+            <span class="text-2xl">{getStatusIcon(coverageData.quality_rating.overall_grade)}</span>
+            <div>
+              <p class="font-semibold text-gray-800 dark:text-white">
+                {coverageData.quality_rating.description}
+              </p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                最終更新: {new Date(coverageData.generated_at).toLocaleDateString('ja-JP')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Fragment>
+    ) : (
+      <!-- No Data State -->
+      <div class="text-center py-12">
+        <div class="text-6xl mb-4">📊</div>
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-3">
+          品質データ準備中
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+          テストを実行してカバレッジデータを生成してください
+        </p>
+        <a 
+          href="/beaver/coverage" 
+          class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-semibold shadow-lg"
+        >
+          📊 品質分析を開始
+        </a>
+      </div>
+    )}
+  </div>
+</div>
