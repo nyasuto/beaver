@@ -165,9 +165,6 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ issues, className
                     <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
                       {open} Open
                     </span>
-                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 rounded-full">
-                      {categoryIssues.length} Total
-                    </span>
                   </div>
                 </div>
               </button>
