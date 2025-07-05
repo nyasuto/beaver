@@ -217,9 +217,7 @@ func (dg *DashboardGenerator) getTopNavigation() string {
 	options := components.HeaderOptions{
 		CurrentPage: "coverage",
 		BaseURL:     "../",
-		ExtraNavItems: []components.NavItem{
-			{Label: "GitHub", URL: "https://github.com/nyasuto/beaver", IsExternal: true},
-		},
+		// Note: GitHub link removed to match exact Home/Issues design
 	}
 	return headerGen.GenerateHeader(options)
 }

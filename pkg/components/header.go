@@ -52,32 +52,40 @@ func (hg *HeaderGenerator) GenerateHeader(options HeaderOptions) string {
         </header>`
 }
 
-// buildNavigationItems builds the navigation items HTML
+// buildNavigationItems builds the navigation items HTML matching actual site design
 func (hg *HeaderGenerator) buildNavigationItems(options HeaderOptions) string {
 	var navHTML string
 
-	// Standard navigation items
+	// Determine the base paths based on current location
+	basePath := options.BaseURL
+	if basePath == "../" {
+		// Coverage dashboard case
+		basePath = "/beaver/"
+	} else if basePath == "" || basePath == "./" {
+		// Same level case
+		basePath = "/beaver/"
+	}
+
+	// Standard navigation items (matching actual site)
 	standardItems := []struct {
 		label string
 		url   string
 		page  string
 	}{
-		{"ホーム", options.BaseURL, "home"},
-		{"Issues", options.BaseURL + "issues", "issues"},
-		{"カバレッジ", options.BaseURL + "coverage/", "coverage"},
+		{"ホーム", basePath, "home"},
+		{"Issues", basePath + "issues", "issues"},
 	}
 
-	// Add standard items
+	// Add standard items (all use same styling as actual site - no active state distinction)
 	for _, item := range standardItems {
-		if item.page == options.CurrentPage {
-			// Active page
-			navHTML += `
-                        <a href="` + item.url + `" class="text-blue-600 dark:text-blue-400 font-medium">` + item.label + `</a>`
-		} else {
-			// Regular page
-			navHTML += `
+		navHTML += `
                         <a href="` + item.url + `" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">` + item.label + `</a>`
-		}
+	}
+
+	// Add coverage link only if not the main home/issues pages
+	if options.CurrentPage == "coverage" {
+		navHTML += `
+                        <a href="` + options.BaseURL + `coverage/" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">カバレッジ</a>`
 	}
 
 	// Add extra navigation items
@@ -98,31 +106,12 @@ func (hg *HeaderGenerator) GetTailwindCSSCDN() string {
 	return `<script src="https://cdn.tailwindcss.com"></script>`
 }
 
-// GetHeaderCSS returns additional CSS for header compatibility
+// GetHeaderCSS returns minimal CSS for header compatibility (Tailwind handles most styling)
 func (hg *HeaderGenerator) GetHeaderCSS() string {
 	return `
-        /* Header component compatibility styles */
+        /* Essential compatibility styles for older browsers */
         .bg-clip-text {
             -webkit-background-clip: text;
             background-clip: text;
-        }
-        
-        /* Ensure header is on top */
-        header {
-            position: relative;
-            z-index: 1000;
-        }
-        
-        /* Dark mode support for older browsers */
-        @media (prefers-color-scheme: dark) {
-            .dark\\:bg-gray-800 {
-                background-color: #1f2937;
-            }
-            .dark\\:text-gray-300 {
-                color: #d1d5db;
-            }
-            .dark\\:border-gray-700 {
-                border-color: #374151;
-            }
         }`
 }
