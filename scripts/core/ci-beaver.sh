@@ -335,7 +335,7 @@ execute_build() {
     log_info "Executing Beaver build..."
     
     local flags
-    flags=($(build_flags))
+    mapfile -t flags < <(build_flags)
     
     log_info "Build command: $BEAVER_BIN build ${flags[*]}"
     
@@ -646,8 +646,10 @@ description: \"Beaver AI駆動型ナレッジベース - GitHub Issues から自
         # Add links to core Beaver pages
         for md_file in _site/beaver-*.md; do
             if [[ -f "$md_file" ]]; then
-                local page_name=$(basename "$md_file" .md)
-                local clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g')
+                local page_name
+                page_name=$(basename "$md_file" .md)
+                local clean_title
+                clean_title=$(echo "$page_name" | sed 's/beaver-//' | sed 's/-/ /g')
                 # Convert to Japanese titles
                 case "$clean_title" in
                     "Home") clean_title="ホーム" ;;
@@ -671,8 +673,10 @@ description: \"Beaver AI駆動型ナレッジベース - GitHub Issues から自
         # Add links to other documentation files
         for md_file in _site/*.md; do
             if [[ -f "$md_file" && "$(basename "$md_file")" != "index.md" && "$(basename "$md_file")" != beaver-*.md ]]; then
-                local page_name=$(basename "$md_file" .md)
-                local page_title=$(echo "$page_name" | sed 's/-/ /g')
+                local page_name
+                page_name=$(basename "$md_file" .md)
+                local page_title
+                page_title=$(echo "$page_name" | sed 's/-/ /g')
                 index_content+="- [$page_title]($page_name)"$'\n'
             fi
         done
@@ -709,7 +713,17 @@ except Exception as e:
     print(f'ERROR: {e}', file=sys.stderr)
     sys.exit(1)
 " >/dev/null 2>&1
-            if [[ $? -eq 0 ]]; then
+            if python3 -c "
+import sys
+try:
+    content = '''$index_content'''
+    with open('_site/index.md', 'w', encoding='utf-8') as f:
+        f.write(content)
+    print('SUCCESS')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" >/dev/null 2>&1; then
                 log_success "✅ index.md created successfully with UTF-8 encoding"
             else
                 log_warn "Python UTF-8 write failed, using fallback"
@@ -774,7 +788,8 @@ except Exception as e:
     done
     
     # Count total files
-    local total_files=$(find "_site" -name "*.md" -o -name "*.yml" | wc -l | tr -d ' ')
+    local total_files
+    total_files=$(find "_site" -name "*.md" -o -name "*.yml" | wc -l | tr -d ' ')
     log_info "Total files in _site: $total_files"
     log_info "Content files copied: $files_copied"
     log_info "Missing essential files: $missing_files"
@@ -840,7 +855,8 @@ EOF
         else
             file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
         fi
-        local human_size=$(format_bytes "$file_size")
+        local human_size
+        human_size=$(format_bytes "$file_size")
         log_info "    📋 $(basename "$file"): ${human_size}"
         echo "  📋 $(basename "$file"): ${human_size} (${file_size} bytes)" >> "$deployment_manifest"
         ((total_size += file_size))
@@ -856,8 +872,10 @@ EOF
         else
             file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
         fi
-        local human_size=$(format_bytes "$file_size")
-        local content_type=$(basename "$file" | sed 's/beaver-//' | sed 's/\.md$//')
+        local human_size
+        human_size=$(format_bytes "$file_size")
+        local content_type
+        content_type=$(basename "$file" | sed 's/beaver-//' | sed 's/\.md$//')
         log_info "    🦫 $content_type: ${human_size}"
         echo "  🦫 $(basename "$file"): ${human_size} (${file_size} bytes)" >> "$deployment_manifest"
         ((total_size += file_size))
@@ -873,7 +891,8 @@ EOF
         else
             file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
         fi
-        local human_size=$(format_bytes "$file_size")
+        local human_size
+        human_size=$(format_bytes "$file_size")
         log_info "    📖 $(basename "$file"): ${human_size}"
         echo "  📖 $(basename "$file"): ${human_size} (${file_size} bytes)" >> "$deployment_manifest"
         ((total_size += file_size))
@@ -888,7 +907,8 @@ EOF
         else
             index_size=$(stat -c%s "index.md" 2>/dev/null || echo '0')
         fi
-        local index_human_size=$(format_bytes "$index_size")
+        local index_human_size
+        index_human_size=$(format_bytes "$index_size")
         log_info "  🏠 インデックスページ: ${index_human_size}"
         echo "  🏠 index.md: ${index_human_size} (${index_size} bytes)" >> "$deployment_manifest"
         ((total_size += index_size))
@@ -896,7 +916,8 @@ EOF
     fi
     
     # Calculate totals and statistics
-    local total_human_size=$(format_bytes "$total_size")
+    local total_human_size
+    total_human_size=$(format_bytes "$total_size")
     
     # Add statistics to manifest
     cat >> "$deployment_manifest" << EOF
@@ -921,8 +942,10 @@ EOF
         else
             file_size=$(stat -c%s "$file" 2>/dev/null || echo '0')
         fi
-        local human_size=$(format_bytes "$file_size")
-        local file_path=$(echo "$file" | sed 's|^\./||')
+        local human_size
+        human_size=$(format_bytes "$file_size")
+        local file_path
+        file_path=$(echo "$file" | sed 's|^\./||')
         printf "%-50s %10s (%s bytes)\n" "$file_path" "$human_size" "$file_size" >> "$deployment_manifest"
     done
     
@@ -963,7 +986,8 @@ EOF
         log_error "  ❌ インデックスページ (index.md) が見つかりません"
     fi
     
-    local beaver_files=$(find . -name "beaver-*.md" | wc -l | tr -d ' ')
+    local beaver_files
+    beaver_files=$(find . -name "beaver-*.md" | wc -l | tr -d ' ')
     if [[ $beaver_files -gt 0 ]]; then
         log_info "  ✅ Beaverコンテンツファイル (${beaver_files}件)"
         ((essential_checks++))
@@ -1128,7 +1152,8 @@ clean_up() {
 send_test_notifications() {
     log_info "Sending test notifications..."
     
-    local test_message="🧪 Test notification from Beaver CI script at $(date)"
+    local test_message
+    test_message="🧪 Test notification from Beaver CI script at $(date)"
     
     # Test Slack notification
     if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
@@ -1227,7 +1252,8 @@ convert_file_to_utf8() {
     # First, try to detect the current encoding
     local current_encoding="UTF-8"
     if command -v file >/dev/null 2>&1; then
-        local file_info=$(file -bi "$input_file" 2>/dev/null || echo "")
+        local file_info
+        file_info=$(file -bi "$input_file" 2>/dev/null || echo "")
         if [[ "$file_info" =~ charset=([^;]+) ]]; then
             current_encoding="${BASH_REMATCH[1]}"
             log_debug "Detected encoding: $current_encoding"
@@ -1298,7 +1324,8 @@ verify_utf8_encoding() {
     
     # Method 1: Use file command if available
     if command -v file >/dev/null 2>&1; then
-        local file_info=$(file -bi "$file_path" 2>/dev/null || echo "")
+        local file_info
+        file_info=$(file -bi "$file_path" 2>/dev/null || echo "")
         if [[ "$file_info" =~ charset=utf-8 ]]; then
             return 0
         fi
