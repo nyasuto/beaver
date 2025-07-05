@@ -257,10 +257,9 @@ func (c *Collector) CollectCoverageForPackage(packagePath string) (*CoverageData
 
 // GenerateHTMLReport generates an HTML coverage report
 func (c *Collector) GenerateHTMLReport(coverageData *CoverageData, outputPath string) error {
-	// This would generate an HTML report
-	// For now, we'll create a simple report file
-
-	report := c.generateHTMLContent(coverageData)
+	// Generate enhanced interactive dashboard
+	dashboardGen := NewDashboardGenerator(c.config)
+	report := dashboardGen.GenerateInteractiveDashboard(coverageData)
 
 	err := os.WriteFile(outputPath, []byte(report), 0600)
 	if err != nil {
@@ -268,134 +267,6 @@ func (c *Collector) GenerateHTMLReport(coverageData *CoverageData, outputPath st
 	}
 
 	return nil
-}
-
-// generateHTMLContent creates HTML content for the coverage report
-func (c *Collector) generateHTMLContent(data *CoverageData) string {
-	html := fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Coverage Report - %s</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background: #f5f5f5; padding: 20px; border-radius: 8px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
-        .stat-card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
-        .stat-value { font-size: 2em; font-weight: bold; color: #333; }
-        .stat-label { color: #666; margin-top: 5px; }
-        .grade-A { color: #4CAF50; }
-        .grade-B { color: #8BC34A; }
-        .grade-C { color: #FF9800; }
-        .grade-D { color: #FF5722; }
-        .grade-F { color: #F44336; }
-        table { width: 100%%; border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f5f5f5; }
-        .coverage-bar { width: 100px; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
-        .coverage-fill { height: 100%%; background: linear-gradient(90deg, #f44336 0%%, #ff9800 50%%, #4caf50 100%%); }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Coverage Report: %s</h1>
-        <p>Generated: %s</p>
-        <p>Overall Grade: <span class="grade-%s">%s</span> (%.1f%%)</p>
-    </div>
-    
-    <div class="stats">
-        <div class="stat-card">
-            <div class="stat-value">%.1f%%</div>
-            <div class="stat-label">Total Coverage</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">%d</div>
-            <div class="stat-label">Packages</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">%d</div>
-            <div class="stat-label">Files</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">%d</div>
-            <div class="stat-label">With Tests</div>
-        </div>
-    </div>
-    
-    <h2>Package Coverage</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Package</th>
-                <th>Coverage</th>
-                <th>Grade</th>
-                <th>Statements</th>
-                <th>Tests</th>
-            </tr>
-        </thead>
-        <tbody>`,
-		data.ProjectName,
-		data.ProjectName,
-		data.GeneratedAt.Format("2006-01-02 15:04:05"),
-		data.QualityRating.OverallGrade,
-		data.QualityRating.OverallGrade,
-		data.TotalCoverage,
-		data.TotalCoverage,
-		data.Summary.TotalPackages,
-		data.Summary.TotalFiles,
-		data.Summary.TestedPackages,
-	)
-
-	// Add package rows
-	for _, pkg := range data.PackageStats {
-		html += fmt.Sprintf(`
-            <tr>
-                <td>%s</td>
-                <td>
-                    <div class="coverage-bar">
-                        <div class="coverage-fill" style="width: %.1f%%"></div>
-                    </div>
-                    %.1f%%
-                </td>
-                <td><span class="grade-%s">%s</span></td>
-                <td>%d/%d</td>
-                <td>%d</td>
-            </tr>`,
-			pkg.PackageName,
-			pkg.Coverage,
-			pkg.Coverage,
-			pkg.QualityGrade,
-			pkg.QualityGrade,
-			pkg.CoveredStatements,
-			pkg.TotalStatements,
-			pkg.TestFiles,
-		)
-	}
-
-	html += `
-        </tbody>
-    </table>
-    
-    <h2>Recommendations</h2>
-    <ul>`
-
-	// Add recommendations
-	for _, rec := range data.Recommendations {
-		html += fmt.Sprintf(`
-        <li><strong>%s:</strong> %s <em>(%s priority, %s effort)</em></li>`,
-			rec.Title,
-			rec.Description,
-			rec.Priority,
-			rec.Effort,
-		)
-	}
-
-	html += `
-    </ul>
-</body>
-</html>`
-
-	return html
 }
 
 // ValidateGoEnvironment checks if Go tools are available for coverage collection
