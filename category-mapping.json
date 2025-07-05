@@ -1,0 +1,30 @@
+{
+  "label_mappings": {
+    "type: bug": "bug",
+    "bug": "bug",
+    "type: security": "security",
+    "type: performance": "performance",
+    "type: ci/cd": "deploy",
+    "type: test": "test",
+    "type: docs": "docs",
+    "documentation": "docs",
+    "type: feature": "feature",
+    "type: enhancement": "feature",
+    "enhancement": "feature",
+    "priority: critical": "critical"
+  },
+  "content_keywords": {
+    "critical": ["critical", "urgent"],
+    "bug": ["bug", "error", "fix"],
+    "security": ["security", "vulnerability"],
+    "performance": ["performance", "speed", "optimization"],
+    "deploy": ["deploy", "deployment", "ci/cd"],
+    "test": ["test", "testing"],
+    "docs": ["docs", "documentation", "文書化", "wiki"],
+    "feature": ["feature", "enhancement"]
+  },
+  "default_category": "general",
+  "special_rules": {
+    "critical_exclude_patterns": ["critical偏重"]
+  }
+}

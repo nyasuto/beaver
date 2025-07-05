@@ -108,6 +108,19 @@ type AstroBuildInfo struct {
 	BuildTime  string `json:"build_time,omitempty"`
 }
 
+// CategoryMapping represents the external configuration for category classification
+type CategoryMapping struct {
+	LabelMappings   map[string]string           `json:"label_mappings"`
+	ContentKeywords map[string][]string         `json:"content_keywords"`
+	DefaultCategory string                      `json:"default_category"`
+	SpecialRules    CategoryMappingSpecialRules `json:"special_rules"`
+}
+
+// CategoryMappingSpecialRules contains special rules for category classification
+type CategoryMappingSpecialRules struct {
+	CriticalExcludePatterns []string `json:"critical_exclude_patterns"`
+}
+
 // ExportAstroData generates JSON data for Astro frontend
 func ExportAstroData(cfg *config.Config) error {
 	slog.Info("🎨 Generating Astro data export...")
@@ -331,41 +344,123 @@ func writeAstroData(data AstroDataExport) error {
 }
 
 // Helper functions
+
+// loadCategoryMapping loads category mapping configuration from external JSON file
+func loadCategoryMapping() (*CategoryMapping, error) {
+	// Try to load from current directory first, then from config directory
+	configPaths := []string{
+		"category-mapping.json",
+		"config/category-mapping.json",
+		".beaver/category-mapping.json",
+	}
+
+	for _, path := range configPaths {
+		if _, err := os.Stat(path); err == nil {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				continue
+			}
+
+			var mapping CategoryMapping
+			if err := json.Unmarshal(data, &mapping); err != nil {
+				slog.Warn("Failed to parse category mapping", "path", path, "error", err)
+				continue
+			}
+
+			slog.Info("Loaded category mapping", "path", path)
+			return &mapping, nil
+		}
+	}
+
+	// Return default mapping if no configuration file found
+	slog.Info("No category mapping configuration found, using default")
+	return getDefaultCategoryMapping(), nil
+}
+
+// getDefaultCategoryMapping returns the default category mapping configuration
+func getDefaultCategoryMapping() *CategoryMapping {
+	return &CategoryMapping{
+		LabelMappings: map[string]string{
+			"type: bug":          "bug",
+			"bug":                "bug",
+			"type: security":     "security",
+			"type: performance":  "performance",
+			"type: ci/cd":        "deploy",
+			"type: test":         "test",
+			"type: docs":         "docs",
+			"documentation":      "docs",
+			"type: feature":      "feature",
+			"type: enhancement":  "feature",
+			"enhancement":        "feature",
+			"priority: critical": "critical",
+		},
+		ContentKeywords: map[string][]string{
+			"critical":    []string{"critical", "urgent"},
+			"bug":         []string{"bug", "error", "fix"},
+			"security":    []string{"security", "vulnerability"},
+			"performance": []string{"performance", "speed", "optimization"},
+			"deploy":      []string{"deploy", "deployment", "ci/cd"},
+			"test":        []string{"test", "testing"},
+			"docs":        []string{"docs", "documentation", "文書化", "wiki"},
+			"feature":     []string{"feature", "enhancement"},
+		},
+		DefaultCategory: "general",
+		SpecialRules: CategoryMappingSpecialRules{
+			CriticalExcludePatterns: []string{"critical偏重"},
+		},
+	}
+}
+
 func categorizeIssue(issue models.Issue) string {
-	// Build search text similar to frontend logic
+	// Load category mapping configuration
+	mapping, err := loadCategoryMapping()
+	if err != nil {
+		slog.Warn("Failed to load category mapping, using default", "error", err)
+		mapping = getDefaultCategoryMapping()
+	}
+
+	// First priority: Check explicit label mappings
+	for _, label := range issue.Labels {
+		if category, exists := mapping.LabelMappings[label.Name]; exists {
+			return category
+		}
+	}
+
+	// Second priority: Content-based classification using configured keywords
 	searchText := strings.ToLower(issue.Title + " " + issue.Body)
 
-	// Add all labels to search text
-	for _, label := range issue.Labels {
-		searchText += " " + strings.ToLower(label.Name)
-	}
+	// Check each category's keywords in priority order
+	categoryOrder := []string{"critical", "bug", "security", "performance", "deploy", "test", "docs", "feature"}
 
-	// Priority-based categorization to match frontend CategoryShortcuts.tsx exactly
-	// Check categories in priority order (most specific first)
-	categoryPriority := []struct {
-		key     string
-		filters []string
-	}{
-		{"critical", []string{"critical", "urgent", "priority: critical", "priority: high", "important"}},
-		{"bug", []string{"bug", "error", "defect", "fix"}},
-		{"security", []string{"security", "vulnerability", "auth", "permission"}},
-		{"performance", []string{"performance", "speed", "optimization", "slow"}},
-		{"deploy", []string{"deploy", "deployment", "release", "ci/cd", "build"}},
-		{"test", []string{"testing", "spec", "qa"}}, // Removed "test" as it's too generic
-		{"docs", []string{"docs", "documentation", "readme", "guide"}},
-		{"feature", []string{"feature", "enhancement", "new", "add"}},
-	}
+	for _, category := range categoryOrder {
+		keywords, exists := mapping.ContentKeywords[category]
+		if !exists {
+			continue
+		}
 
-	// Check each category in priority order
-	for _, category := range categoryPriority {
-		for _, keyword := range category.filters {
+		for _, keyword := range keywords {
 			if strings.Contains(searchText, keyword) {
-				return category.key
+				// Special handling for critical category to avoid false positives
+				if category == "critical" {
+					// Check exclude patterns
+					shouldExclude := false
+					for _, excludePattern := range mapping.SpecialRules.CriticalExcludePatterns {
+						if strings.Contains(searchText, excludePattern) {
+							shouldExclude = true
+							break
+						}
+					}
+					if !shouldExclude {
+						return category
+					}
+				} else {
+					return category
+				}
 			}
 		}
 	}
 
-	return "general"
+	return mapping.DefaultCategory
 }
 
 func extractTags(issue models.Issue) []string {
