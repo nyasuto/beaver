@@ -43,9 +43,9 @@ try {
 }
 
 // Calculate quality metrics from coverage data
-const coveragePercentage = coverageData?.total_coverage ? Math.round(coverageData.total_coverage * 10) / 10 : 'NO_COVERAGE';
+const coveragePercentage = coverageData?.total_coverage !== undefined ? Math.round(coverageData.total_coverage * 10) / 10 : 'NO_COVERAGE';
 const qualityGrade = coverageData?.quality_grade || 'NO_GRADE';
-const untestedCount = coverageData?.summary?.untested_packages || 'NO_DATA';
+const untestedCount = coverageData?.summary?.untested_packages !== undefined ? coverageData.summary.untested_packages : 'NO_DATA';
 const targetCoverage = 70.0;
 ---
 
