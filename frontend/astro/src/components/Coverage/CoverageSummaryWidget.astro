@@ -20,18 +20,18 @@ try {
     coverageData = {
       project_name: realData.project_name || 'beaver',
       generated_at: realData.generated_at || new Date().toISOString(),
-      total_coverage: realData.total_coverage || 62.5,
+      total_coverage: realData.total_coverage || -1, // NO_COVERAGE indicator
       quality_rating: {
-        overall_grade: realData.quality_grade || 'D',
-        description: 'カバレッジ向上が必要',
+        overall_grade: realData.quality_grade || 'NO_GRADE',
+        description: 'カバレッジデータ取得エラー',
         next_target: 70.0
       },
       summary: {
-        total_packages: realData.summary?.total_packages || 16,
-        tested_packages: realData.summary?.tested_packages || 0,
-        untested_packages: realData.summary?.untested_packages || 16,
-        total_files: realData.summary?.total_files || 45,
-        tested_files: realData.summary?.tested_files || 12
+        total_packages: realData.summary?.total_packages || -1,
+        tested_packages: realData.summary?.tested_packages || -1,
+        untested_packages: realData.summary?.untested_packages || -1,
+        total_files: realData.summary?.total_files || -1,
+        tested_files: realData.summary?.tested_files || -1
       },
       package_stats: [],
       file_coverage: [],
@@ -49,18 +49,18 @@ try {
     coverageData = {
       project_name: 'beaver',
       generated_at: new Date().toISOString(),
-      total_coverage: 62.5,
+      total_coverage: -1, // NO_COVERAGE indicator
       quality_rating: {
-        overall_grade: 'D',
-        description: 'カバレッジ向上が必要',
+        overall_grade: 'NO_GRADE',
+        description: 'カバレッジデータが利用できません',
         next_target: 70.0
       },
       summary: {
-        total_packages: 16,
-        tested_packages: 0,
-        untested_packages: 16,
-        total_files: 45,
-        tested_files: 12
+        total_packages: -1,
+        tested_packages: -1,
+        untested_packages: -1,
+        total_files: -1,
+        tested_files: -1
       },
       package_stats: [],
       file_coverage: [],
@@ -123,7 +123,7 @@ const getGradeColor = (grade: string) => {
           <!-- Total Coverage -->
           <div class="text-center">
             <div class={`text-2xl font-bold mb-1 ${getGradeColor(coverageData.quality_rating.overall_grade).split(' ')[0]}`}>
-              {coverageData.total_coverage.toFixed(1)}%
+              {coverageData.total_coverage >= 0 ? coverageData.total_coverage.toFixed(1) + '%' : 'NO_COVERAGE'}
             </div>
             <div class="text-xs text-gray-600 dark:text-gray-400">
               総合カバレッジ
@@ -143,7 +143,7 @@ const getGradeColor = (grade: string) => {
           <!-- Packages -->
           <div class="text-center">
             <div class="text-2xl font-bold mb-1 text-blue-600 dark:text-blue-400">
-              {coverageData.summary.total_packages}
+              {coverageData.summary.total_packages >= 0 ? coverageData.summary.total_packages : 'NO_DATA'}
             </div>
             <div class="text-xs text-gray-600 dark:text-gray-400">
               パッケージ
@@ -164,7 +164,7 @@ const getGradeColor = (grade: string) => {
         <!-- Progress Bar -->
         <div class="space-y-2">
           <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>進捗: {coverageData.total_coverage.toFixed(1)}%</span>
+            <span>進捗: {coverageData.total_coverage >= 0 ? coverageData.total_coverage.toFixed(1) + '%' : 'NO_COVERAGE'}</span>
             <span>目標: {coverageData.quality_rating.next_target.toFixed(1)}%</span>
           </div>
           <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -175,11 +175,14 @@ const getGradeColor = (grade: string) => {
                 coverageData.quality_rating.overall_grade === 'C' ? 'bg-orange-500' :
                 coverageData.quality_rating.overall_grade === 'D' ? 'bg-red-500' : 'bg-red-600'
               }`}
-              style={`width: ${Math.min(coverageData.total_coverage, 100)}%`}
+              style={`width: ${coverageData.total_coverage >= 0 ? Math.min(coverageData.total_coverage, 100) : 0}%`}
             ></div>
           </div>
           <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
-            目標まで あと {Math.max(0, coverageData.quality_rating.next_target - coverageData.total_coverage).toFixed(1)}%
+            {coverageData.total_coverage >= 0 ? 
+              `目標まで あと ${Math.max(0, coverageData.quality_rating.next_target - coverageData.total_coverage).toFixed(1)}%` :
+              'データ利用不可'
+            }
           </div>
         </div>
 

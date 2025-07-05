@@ -43,9 +43,9 @@ try {
 }
 
 // Calculate quality metrics from coverage data
-const coveragePercentage = coverageData?.total_coverage ? Math.round(coverageData.total_coverage * 10) / 10 : 60.1;
-const qualityGrade = coverageData?.quality_grade || 'D';
-const untestedCount = coverageData?.summary?.untested_packages || 16;
+const coveragePercentage = coverageData?.total_coverage ? Math.round(coverageData.total_coverage * 10) / 10 : 'NO_COVERAGE';
+const qualityGrade = coverageData?.quality_grade || 'NO_GRADE';
+const untestedCount = coverageData?.summary?.untested_packages || 'NO_DATA';
 const targetCoverage = 70.0;
 ---
 
@@ -155,7 +155,7 @@ const targetCoverage = 70.0;
             </div>
             
             <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-1.5 mb-2">
-              <div class="h-1.5 bg-red-500 rounded-full" style={`width: ${coveragePercentage}%`}></div>
+              <div class="h-1.5 bg-red-500 rounded-full" style={`width: ${typeof coveragePercentage === 'number' ? coveragePercentage : 0}%`}></div>
             </div>
             
             <div class="flex items-center justify-between">
