@@ -1,8 +1,8 @@
-name: 🦫 Beaver Self-Documentation Automation
+name: 📚 Documentation Deployment
 
-# GitHub Pages-focused automation for Beaver self-management
-# Meta-documentation: Beaver managing its own project development through automated knowledge capture
-# v1.0: GitHub Pages only deployment with incremental updates and comprehensive self-analysis
+# GitHub Pages deployment automation for Beaver documentation
+# Automated generation and deployment of project knowledge base
+# Converts GitHub Issues into structured, searchable documentation
 
 permissions:
   contents: read

@@ -340,18 +340,18 @@ func categorizeIssue(issue models.Issue) string {
 		searchText += " " + strings.ToLower(label.Name)
 	}
 
-	// Priority-based categorization to match frontend CategoryShortcuts.tsx
+	// Priority-based categorization to match frontend CategoryShortcuts.tsx exactly
 	// Check categories in priority order (most specific first)
 	categoryPriority := []struct {
 		key     string
 		filters []string
 	}{
-		{"critical", []string{"critical", "urgent", "high", "important", "priority"}},
+		{"critical", []string{"critical", "urgent", "priority: critical", "priority: high", "important"}},
 		{"bug", []string{"bug", "error", "defect", "fix"}},
 		{"security", []string{"security", "vulnerability", "auth", "permission"}},
 		{"performance", []string{"performance", "speed", "optimization", "slow"}},
 		{"deploy", []string{"deploy", "deployment", "release", "ci/cd", "build"}},
-		{"test", []string{"test", "testing", "spec", "qa"}},
+		{"test", []string{"testing", "spec", "qa"}}, // Removed "test" as it's too generic
 		{"docs", []string{"docs", "documentation", "readme", "guide"}},
 		{"feature", []string{"feature", "enhancement", "new", "add"}},
 	}
