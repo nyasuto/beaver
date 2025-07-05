@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/models"
@@ -207,36 +206,214 @@ func (c *UnifiedPagesConfig) Validate() error {
 
 // Helper methods implementation
 func (p *UnifiedPagesPublisher) generateHTMLContent(issues []models.Issue) error {
-	p.logger.Info("Generating HTML content using site generator")
+	p.logger.Info("Generating HTML content using shared component-based generators")
 
-	// Use wiki generator for HTML mode (legacy site package removed)
-	generator := content.NewGenerator()
+	// Convert models.Issue to internal IssueInfo format
+	issueInfos := p.convertModelsToIssueInfo(issues)
+
+	// Calculate statistics from issues
+	stats := p.calculateStatistics(issues)
+
+	// Set up common configuration
+	baseURL := p.config.GitHubPages.BaseURL
+	if baseURL == "" {
+		baseURL = "/beaver/"
+	}
 
 	projectName := p.config.Site.Title
 	if projectName == "" {
 		projectName = p.config.Repository
 	}
 
-	// Generate all pages using wiki system
-	pages, err := generator.GenerateAllPages(issues, projectName)
-	if err != nil {
-		return fmt.Errorf("failed to generate wiki pages: %w", err)
+	repository := fmt.Sprintf("%s/%s", p.config.Owner, p.config.Repository)
+
+	// Create configuration for page generators
+	homeConfig := HomePageConfig{
+		ProjectName:  projectName,
+		Repository:   repository,
+		GeneratedAt:  time.Now(),
+		Version:      "1.0.0", // Could be passed from build info
+		Build:        "Latest",
+		BaseURL:      baseURL,
+		TotalIssues:  stats.TotalIssues,
+		OpenIssues:   stats.OpenIssues,
+		ClosedIssues: stats.ClosedIssues,
+		HealthScore:  stats.HealthScore,
 	}
 
-	// Save pages as HTML files
-	for _, page := range pages {
-		outputPath := filepath.Join(p.config.OutputDir, page.Filename)
-		if !strings.HasSuffix(outputPath, ".html") {
-			outputPath = strings.TrimSuffix(outputPath, ".md") + ".html"
-		}
-
-		if err := os.WriteFile(outputPath, []byte(page.Content), 0600); err != nil {
-			return fmt.Errorf("failed to write page %s: %w", outputPath, err)
-		}
+	issuesConfig := IssuesPageConfig{
+		Repository:   repository,
+		GeneratedAt:  time.Now(),
+		BaseURL:      baseURL,
+		TotalIssues:  stats.TotalIssues,
+		OpenIssues:   stats.OpenIssues,
+		ClosedIssues: stats.ClosedIssues,
+		HealthScore:  stats.HealthScore,
+		Issues:       issueInfos,
 	}
 
-	p.logger.Info("HTML content generation completed", "output_dir", p.config.OutputDir)
+	// Generate pages using shared components
+	if err := p.generateHomePage(homeConfig); err != nil {
+		return fmt.Errorf("failed to generate home page: %w", err)
+	}
+
+	if err := p.generateIssuesPage(issuesConfig); err != nil {
+		return fmt.Errorf("failed to generate issues page: %w", err)
+	}
+
+	// Also generate Astro-compatible data for potential hybrid mode
+	if err := p.generateAstroCompatibleData(homeConfig, issueInfos); err != nil {
+		p.logger.Warn("Failed to generate Astro-compatible data", "error", err)
+		// Don't fail the whole process for this
+	}
+
+	p.logger.Info("HTML content generation completed using shared components",
+		"output_dir", p.config.OutputDir,
+		"pages_generated", 2,
+		"issues_processed", len(issues))
 	return nil
+}
+
+// generateHomePage generates the home page using shared components
+func (p *UnifiedPagesPublisher) generateHomePage(config HomePageConfig) error {
+	generator := NewHomepageGenerator(config)
+	html := generator.GenerateHomepage()
+
+	outputPath := filepath.Join(p.config.OutputDir, "index.html")
+	if err := os.WriteFile(outputPath, []byte(html), 0600); err != nil {
+		return fmt.Errorf("failed to write home page: %w", err)
+	}
+
+	p.logger.Info("Home page generated", "path", outputPath)
+	return nil
+}
+
+// generateIssuesPage generates the issues page using shared components
+func (p *UnifiedPagesPublisher) generateIssuesPage(config IssuesPageConfig) error {
+	generator := NewIssuesPageGenerator(config)
+	html := generator.GenerateIssuesPage()
+
+	// Ensure issues directory exists
+	issuesDir := filepath.Join(p.config.OutputDir, "issues")
+	if err := os.MkdirAll(issuesDir, 0755); err != nil {
+		return fmt.Errorf("failed to create issues directory: %w", err)
+	}
+
+	outputPath := filepath.Join(issuesDir, "index.html")
+	if err := os.WriteFile(outputPath, []byte(html), 0600); err != nil {
+		return fmt.Errorf("failed to write issues page: %w", err)
+	}
+
+	p.logger.Info("Issues page generated", "path", outputPath)
+	return nil
+}
+
+// generateAstroCompatibleData generates Astro-compatible JSON data
+func (p *UnifiedPagesPublisher) generateAstroCompatibleData(homeConfig HomePageConfig, issues []IssueInfo) error {
+	astroConfig := AstroIntegrationConfig{
+		BaseURL:             homeConfig.BaseURL,
+		OutputDirectory:     p.config.OutputDir,
+		UseSharedComponents: true,
+	}
+
+	generator := NewAstroDataGenerator(astroConfig)
+	jsonData := generator.generateAstroDataJSON(homeConfig, issues)
+
+	// Ensure data directory exists
+	dataDir := filepath.Join(p.config.OutputDir, "data")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return fmt.Errorf("failed to create data directory: %w", err)
+	}
+
+	outputPath := filepath.Join(dataDir, "beaver.json")
+	if err := os.WriteFile(outputPath, []byte(jsonData), 0600); err != nil {
+		return fmt.Errorf("failed to write Astro data: %w", err)
+	}
+
+	p.logger.Info("Astro-compatible data generated", "path", outputPath)
+	return nil
+}
+
+// convertModelsToIssueInfo converts models.Issue to IssueInfo
+func (p *UnifiedPagesPublisher) convertModelsToIssueInfo(issues []models.Issue) []IssueInfo {
+	issueInfos := make([]IssueInfo, len(issues))
+
+	for i, issue := range issues {
+		labels := make([]string, len(issue.Labels))
+		for j, label := range issue.Labels {
+			labels[j] = label.Name
+		}
+
+		// Default values for missing fields
+		urgencyScore := 0
+		category := "general"
+
+		// Extract category from classification if available
+		if issue.Classification != nil {
+			category = issue.Classification.Category
+		}
+
+		issueInfos[i] = IssueInfo{
+			Number:       issue.Number,
+			Title:        issue.Title,
+			Body:         issue.Body,
+			State:        issue.State,
+			Labels:       labels,
+			Author:       issue.User.Login,
+			CreatedAt:    issue.CreatedAt,
+			UpdatedAt:    issue.UpdatedAt,
+			HTMLURL:      issue.HTMLURL,
+			UrgencyScore: urgencyScore,
+			Category:     category,
+		}
+	}
+
+	return issueInfos
+}
+
+// calculateStatistics calculates statistics from issues
+func (p *UnifiedPagesPublisher) calculateStatistics(issues []models.Issue) struct {
+	TotalIssues  int
+	OpenIssues   int
+	ClosedIssues int
+	HealthScore  float64
+} {
+	total := len(issues)
+	open := 0
+	closed := 0
+
+	for _, issue := range issues {
+		if issue.State == "open" {
+			open++
+		} else {
+			closed++
+		}
+	}
+
+	// Calculate health score based on resolution rate and activity
+	healthScore := 0.0
+	if total > 0 {
+		resolutionRate := float64(closed) / float64(total)
+		healthScore = resolutionRate * 100
+
+		// Adjust based on recent activity and urgency
+		// This is a simplified calculation - could be enhanced
+		if healthScore < 30 {
+			healthScore = 30 // Minimum baseline
+		}
+	}
+
+	return struct {
+		TotalIssues  int
+		OpenIssues   int
+		ClosedIssues int
+		HealthScore  float64
+	}{
+		TotalIssues:  total,
+		OpenIssues:   open,
+		ClosedIssues: closed,
+		HealthScore:  healthScore,
+	}
 }
 
 func (p *UnifiedPagesPublisher) createOrphanBranch(ctx context.Context, deployDir, repoURL string) error {
