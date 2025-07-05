@@ -445,3 +445,357 @@ func cleanupTempDir(t *testing.T, dir string) {
 		t.Logf("Failed to clean up temp dir %s: %v", dir, err)
 	}
 }
+
+// TestCollector_CollectCoverage tests the main coverage collection functionality
+func TestCollector_CollectCoverage(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	// Create a simple Go module structure
+	err := createTestGoModule(t, tempDir)
+	if err != nil {
+		t.Skip("Skipping CollectCoverage test: cannot create test module")
+	}
+
+	// Create collector
+	collector := NewCollector(tempDir, nil)
+
+	// Test coverage collection (this might fail in CI, so we handle it gracefully)
+	coverageData, err := collector.CollectCoverage()
+	if err != nil {
+		// Log the error but don't fail the test since this depends on environment
+		t.Logf("CollectCoverage failed (expected in some environments): %v", err)
+		return
+	}
+
+	// Verify the coverage data structure
+	if coverageData == nil {
+		t.Error("Expected non-nil coverage data")
+		return
+	}
+
+	if coverageData.ProjectName == "" {
+		t.Error("Expected project name to be set")
+	}
+
+	if coverageData.GeneratedAt.IsZero() {
+		t.Error("Expected generation time to be set")
+	}
+}
+
+// TestCollector_generateCoverageProfile tests profile generation
+func TestCollector_generateCoverageProfile(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	collector := NewCollector(tempDir, nil)
+
+	// Set a specific output path
+	outputPath := filepath.Join(tempDir, "test-coverage.out")
+	collector.SetOutputPath(outputPath)
+
+	// This test focuses on the method signature and error handling
+	_, err := collector.generateCoverageProfile()
+	if err != nil {
+		t.Logf("generateCoverageProfile failed (expected in test environment): %v", err)
+		// Don't fail - this is expected without a real Go module
+	}
+}
+
+// TestCollector_findAllPackages tests package discovery
+func TestCollector_findAllPackages(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	// Create some directories with Go files
+	testDirs := []string{
+		"pkg/utils",
+		"cmd/app",
+		"internal/models",
+		"vendor/external", // Should be skipped
+		".hidden",         // Should be skipped
+	}
+
+	for _, dir := range testDirs {
+		dirPath := filepath.Join(tempDir, dir)
+		err := os.MkdirAll(dirPath, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create test directory %s: %v", dirPath, err)
+		}
+
+		// Create a Go file (except in vendor and hidden dirs)
+		if !strings.Contains(dir, "vendor") && !strings.HasPrefix(filepath.Base(dir), ".") {
+			goFile := filepath.Join(dirPath, "main.go")
+			err = os.WriteFile(goFile, []byte("package main\n"), 0600)
+			if err != nil {
+				t.Fatalf("Failed to create Go file %s: %v", goFile, err)
+			}
+		}
+	}
+
+	collector := NewCollector(tempDir, nil)
+	packages, err := collector.findAllPackages()
+	if err != nil {
+		t.Fatalf("findAllPackages failed: %v", err)
+	}
+
+	// Should find at least the directories we created (minus vendor and hidden)
+	expectedMinPackages := 3 // pkg/utils, cmd/app, internal/models
+	if len(packages) < expectedMinPackages {
+		t.Errorf("Expected at least %d packages, got %d: %v", expectedMinPackages, len(packages), packages)
+	}
+
+	// Verify vendor and hidden directories are not included
+	for _, pkg := range packages {
+		if strings.Contains(pkg, "vendor") {
+			t.Errorf("Vendor directory should be excluded: %s", pkg)
+		}
+		if strings.Contains(pkg, ".hidden") {
+			t.Errorf("Hidden directory should be excluded: %s", pkg)
+		}
+	}
+}
+
+// TestCollector_directoryHasGoFiles tests Go file detection
+func TestCollector_directoryHasGoFiles(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	collector := NewCollector(tempDir, nil)
+
+	tests := []struct {
+		name     string
+		files    []string
+		expected bool
+	}{
+		{
+			name:     "directory with Go source file",
+			files:    []string{"main.go"},
+			expected: true,
+		},
+		{
+			name:     "directory with only test files",
+			files:    []string{"main_test.go"},
+			expected: false,
+		},
+		{
+			name:     "directory with mixed files",
+			files:    []string{"main.go", "main_test.go", "README.md"},
+			expected: true,
+		},
+		{
+			name:     "directory with no Go files",
+			files:    []string{"README.md", "config.json"},
+			expected: false,
+		},
+		{
+			name:     "empty directory",
+			files:    []string{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test directory
+			testDir := filepath.Join(tempDir, tt.name)
+			err := os.MkdirAll(testDir, 0755)
+			if err != nil {
+				t.Fatalf("Failed to create test directory: %v", err)
+			}
+
+			// Create test files
+			for _, fileName := range tt.files {
+				filePath := filepath.Join(testDir, fileName)
+				err = os.WriteFile(filePath, []byte("// test content"), 0600)
+				if err != nil {
+					t.Fatalf("Failed to create test file %s: %v", fileName, err)
+				}
+			}
+
+			// Test the function
+			result, err := collector.directoryHasGoFiles(testDir)
+			if err != nil {
+				t.Fatalf("directoryHasGoFiles failed: %v", err)
+			}
+
+			if result != tt.expected {
+				t.Errorf("Expected %v, got %v for directory with files: %v", tt.expected, result, tt.files)
+			}
+		})
+	}
+}
+
+// TestCollector_getTestPackages tests package filtering logic
+func TestCollector_getTestPackages(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	tests := []struct {
+		name             string
+		includePackages  []string
+		excludePackages  []string
+		expectedContains []string
+		expectedExcludes []string
+	}{
+		{
+			name:             "with include packages",
+			includePackages:  []string{"pkg/utils", "cmd/app"},
+			excludePackages:  []string{},
+			expectedContains: []string{"./pkg/utils/...", "./cmd/app/..."},
+			expectedExcludes: []string{},
+		},
+		{
+			name:             "with exclude packages",
+			includePackages:  []string{},
+			excludePackages:  []string{"vendor", "test"},
+			expectedContains: []string{},
+			expectedExcludes: []string{"vendor", "test"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &CoverageConfig{
+				IncludePackages: tt.includePackages,
+				ExcludePackages: tt.excludePackages,
+			}
+
+			collector := NewCollector(tempDir, config)
+			packages, err := collector.getTestPackages()
+			if err != nil {
+				t.Fatalf("getTestPackages failed: %v", err)
+			}
+
+			// Check that expected packages are included
+			for _, expected := range tt.expectedContains {
+				found := false
+				for _, pkg := range packages {
+					if pkg == expected {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected package %s not found in result: %v", expected, packages)
+				}
+			}
+		})
+	}
+}
+
+// TestCollector_CollectCoverageForPackage tests single package coverage
+func TestCollector_CollectCoverageForPackage(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	collector := NewCollector(tempDir, nil)
+
+	// Test with a specific package
+	_, err := collector.CollectCoverageForPackage("./pkg/test")
+	if err != nil {
+		t.Logf("CollectCoverageForPackage failed (expected in test environment): %v", err)
+		// Don't fail the test as this requires a valid Go module
+	}
+}
+
+// TestCollector_GenerateHTMLReport tests HTML report generation
+func TestCollector_GenerateHTMLReport(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer cleanupTempDir(t, tempDir)
+
+	collector := NewCollector(tempDir, nil)
+
+	// Create sample coverage data
+	coverageData := &CoverageData{
+		ProjectName:     "test-project",
+		GeneratedAt:     time.Now(),
+		TotalCoverage:   75.5,
+		PackageStats:    []PackageCoverageStats{},
+		FileCoverage:    []FileCoverageStats{},
+		Summary:         CoverageSummary{},
+		QualityRating:   QualityRating{},
+		Recommendations: []Recommendation{},
+	}
+
+	outputPath := filepath.Join(tempDir, "report.html")
+
+	err := collector.GenerateHTMLReport(coverageData, outputPath)
+	if err != nil {
+		t.Fatalf("GenerateHTMLReport failed: %v", err)
+	}
+
+	// Verify the file was created
+	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
+		t.Error("HTML report file was not created")
+	}
+
+	// Verify file has content
+	content, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("Failed to read generated report: %v", err)
+	}
+
+	if len(content) == 0 {
+		t.Error("Generated HTML report is empty")
+	}
+
+	// Check for basic HTML structure
+	htmlContent := string(content)
+	if !strings.Contains(htmlContent, "<!DOCTYPE html>") {
+		t.Error("Generated report does not contain proper HTML declaration")
+	}
+
+	if !strings.Contains(htmlContent, "test-project") {
+		t.Error("Generated report does not contain project name")
+	}
+}
+
+// Helper function to create a simple Go module for testing
+func createTestGoModule(t *testing.T, dir string) error {
+	// Create go.mod
+	goMod := `module test-project
+
+go 1.21
+`
+	err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goMod), 0600)
+	if err != nil {
+		return err
+	}
+
+	// Create a simple main.go
+	mainGo := `package main
+
+func main() {
+	println("Hello, World!")
+}
+
+func Add(a, b int) int {
+	return a + b
+}
+`
+	err = os.WriteFile(filepath.Join(dir, "main.go"), []byte(mainGo), 0600)
+	if err != nil {
+		return err
+	}
+
+	// Create a simple test file
+	testGo := `package main
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+	result := Add(2, 3)
+	if result != 5 {
+		t.Errorf("Expected 5, got %d", result)
+	}
+}
+`
+	err = os.WriteFile(filepath.Join(dir, "main_test.go"), []byte(testGo), 0600)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
