@@ -143,7 +143,8 @@ generate_astro_data() {
     
     # Check if data was generated
     if [ -f "$ASTRO_DIR/src/data/beaver.json" ]; then
-        local data_size=$(du -h "$ASTRO_DIR/src/data/beaver.json" | cut -f1)
+        local data_size
+        data_size=$(du -h "$ASTRO_DIR/src/data/beaver.json" | cut -f1)
         log_success "✅ Astro data generated -> $data_size"
     else
         log_error "Astro data file not found"
@@ -188,8 +189,10 @@ compare_outputs() {
     
     # Go traditional output
     if [ -d "$PROJECT_ROOT/_site-go" ]; then
-        local go_size=$(du -sh "$PROJECT_ROOT/_site-go" | cut -f1)
-        local go_files=$(find "$PROJECT_ROOT/_site-go" -type f | wc -l)
+        local go_size
+        local go_files
+        go_size=$(du -sh "$PROJECT_ROOT/_site-go" | cut -f1)
+        go_files=$(find "$PROJECT_ROOT/_site-go" -type f | wc -l)
         echo "🐹 Go Traditional Build:"
         echo "   Size: $go_size"
         echo "   Files: $go_files"
@@ -201,8 +204,10 @@ compare_outputs() {
     
     # Astro output
     if [ -d "$ASTRO_DIR/dist" ]; then
-        local astro_size=$(du -sh "$ASTRO_DIR/dist" | cut -f1)
-        local astro_files=$(find "$ASTRO_DIR/dist" -type f | wc -l)
+        local astro_size
+        local astro_files
+        astro_size=$(du -sh "$ASTRO_DIR/dist" | cut -f1)
+        astro_files=$(find "$ASTRO_DIR/dist" -type f | wc -l)
         echo "🎨 Astro Frontend Build:"
         echo "   Size: $astro_size"
         echo "   Files: $astro_files"
@@ -214,7 +219,8 @@ compare_outputs() {
     
     # Data file comparison
     if [ -f "$ASTRO_DIR/src/data/beaver.json" ]; then
-        local data_size=$(du -sh "$ASTRO_DIR/src/data/beaver.json" | cut -f1)
+        local data_size
+        data_size=$(du -sh "$ASTRO_DIR/src/data/beaver.json" | cut -f1)
         echo "📄 Generated Data:"
         echo "   beaver.json: $data_size"
     fi

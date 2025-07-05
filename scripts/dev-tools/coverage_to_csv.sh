@@ -16,7 +16,7 @@ echo "Package,File,Coverage" > "$OUTPUT"
 
 go tool cover -func="$PROFILE" | grep -v "total:" | while read -r line; do
   file_and_line=$(echo "$line" | awk '{print $1}')
-  function=$(echo "$line" | awk '{print $2}')
+  # function=$(echo "$line" | awk '{print $2}')  # Unused variable removed
   coverage=$(echo "$line" | awk '{print $3}' | tr -d '%')
 
   file=$(echo "$file_and_line" | cut -d':' -f1)

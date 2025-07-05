@@ -61,7 +61,7 @@ is_github_actions() {
 get_project_root() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    echo "$(cd "${script_dir}/.." && pwd)"
+    (cd "${script_dir}/.." && pwd)
 }
 
 # Validate repository format (owner/repo)
@@ -249,7 +249,7 @@ cleanup_on_exit() {
     # Cleanup temporary files if any were created
     if [[ -n "${TEMP_FILES:-}" ]]; then
         log_debug "Cleaning up temporary files: $TEMP_FILES"
-        rm -f $TEMP_FILES
+        rm -f "$TEMP_FILES"
     fi
 }
 

@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}/../core/ci-common.sh"
 
 # Test configuration
 TEST_REPOSITORY="test/repo"
-VERBOSE=false
+# VERBOSE removed as unused
 DRY_RUN=true
 
 # Show usage information
@@ -50,7 +50,6 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --verbose)
-            VERBOSE=true
             export DEBUG=true
             shift
             ;;

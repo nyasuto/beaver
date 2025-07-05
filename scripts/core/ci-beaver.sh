@@ -108,7 +108,7 @@ EOF
 # Parse command line arguments
 COMMAND=""
 REPOSITORY=""
-CONFIG_FILE="${BEAVER_CONFIG_FILE:-beaver.yml}"
+# CONFIG_FILE removed as unused
 STATE_FILE=""
 MAX_ITEMS=""
 NOTIFY_SUCCESS=false
@@ -129,7 +129,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --config)
-            CONFIG_FILE="$2"
+            # Config file parameter reserved for future use
             shift 2
             ;;
         --state-file)
@@ -676,7 +676,7 @@ description: \"Beaver AI駆動型ナレッジベース - GitHub Issues から自
                 local page_name
                 page_name=$(basename "$md_file" .md)
                 local page_title
-                page_title=$(echo "$page_name" | sed 's/-/ /g')
+                page_title=${page_name//-/ }
                 index_content+="- [$page_title]($page_name)"$'\n'
             fi
         done
@@ -945,7 +945,7 @@ EOF
         local human_size
         human_size=$(format_bytes "$file_size")
         local file_path
-        file_path=$(echo "$file" | sed 's|^\./||')
+        file_path=${file#./}
         printf "%-50s %10s (%s bytes)\n" "$file_path" "$human_size" "$file_size" >> "$deployment_manifest"
     done
     

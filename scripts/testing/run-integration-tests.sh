@@ -104,7 +104,8 @@ check_environment() {
         print_error "Go is not installed or not in PATH"
         issues=$((issues + 1))
     else
-        local go_version=$(go version | awk '{print $3}')
+        local go_version
+        go_version=$(go version | awk '{print $3}')
         print_success "Go is available: ${go_version}"
     fi
     
@@ -113,7 +114,8 @@ check_environment() {
         print_error "Git is not installed or not in PATH"
         issues=$((issues + 1))
     else
-        local git_version=$(git --version | awk '{print $3}')
+        local git_version
+        git_version=$(git --version | awk '{print $3}')
         print_success "Git is available: ${git_version}"
     fi
     
@@ -133,7 +135,7 @@ setup_environment() {
     # Check if .env.integration exists
     if [[ -f ".env.integration" ]]; then
         print_warning ".env.integration already exists"
-        read -p "Do you want to overwrite it? (y/N): " overwrite
+        read -r -p "Do you want to overwrite it? (y/N): " overwrite
         if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
             print_status "Skipping .env.integration creation"
         else
@@ -151,7 +153,7 @@ setup_environment() {
             print_status "Go to: https://github.com/settings/tokens"
             print_status "Create a token with 'repo' or 'public_repo' scope"
             echo
-            read -s -p "Enter your GitHub token: " github_token
+            read -r -s -p "Enter your GitHub token: " github_token
             echo
         else
             github_token="${GITHUB_TOKEN}"
@@ -160,7 +162,7 @@ setup_environment() {
         
         # Get repository info
         if [[ -z "${BEAVER_TEST_REPO_OWNER}" ]]; then
-            read -p "Enter your GitHub username: " repo_owner
+            read -r -p "Enter your GitHub username: " repo_owner
         else
             repo_owner="${BEAVER_TEST_REPO_OWNER}"
             print_success "Using existing BEAVER_TEST_REPO_OWNER: ${repo_owner}"
@@ -170,7 +172,7 @@ setup_environment() {
             echo
             print_status "Recommended: Create a dedicated test repository"
             print_status "Example: beaver-integration-test"
-            read -p "Enter test repository name: " repo_name
+            read -r -p "Enter test repository name: " repo_name
         else
             repo_name="${BEAVER_TEST_REPO_NAME}"
             print_success "Using existing BEAVER_TEST_REPO_NAME: ${repo_name}"
@@ -290,7 +292,7 @@ run_tests() {
 SETUP=false
 RUN=false
 CHECK=false
-ALL_TESTS=false
+# ALL_TESTS flag removed as unused
 QUICK_TESTS=false
 VERBOSE=false
 DRY_RUN=false
@@ -314,7 +316,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -a|--all)
-            ALL_TESTS=true
+            # All tests flag reserved for future use
             shift
             ;;
         -q|--quick)
