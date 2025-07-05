@@ -151,7 +151,8 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-6">
+          {/* 推奨アクション */}
           <div>
             <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
               📋 推奨アクション
@@ -165,14 +166,15 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
             </ul>
           </div>
           
-          <div>
+          {/* 進捗情報を横並びに */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 日次進捗（活動がある場合のみ表示） */}
             {dailyMetrics.hasActivity && (
-              <>
+              <div>
                 <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
                   🌟 本日の進捗（24h）
                 </h4>
-                <div className="grid grid-cols-3 gap-2 text-sm mb-4">
+                <div className="grid grid-cols-3 gap-2 text-sm">
                   <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
                     <div className="font-bold text-green-600">{dailyMetrics.newToday}</div>
                     <div className="text-gray-600 dark:text-gray-400">新規</div>
@@ -186,21 +188,23 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                     <div className="text-gray-600 dark:text-gray-400">完了</div>
                   </div>
                 </div>
-              </>
+              </div>
             )}
             
             {/* 週次進捗 */}
-            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-              📊 今週の進捗
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="text-center p-2 bg-white dark:bg-gray-800 rounded">
-                <div className="font-bold text-green-600">{metrics.newThisWeek}</div>
-                <div className="text-gray-600 dark:text-gray-400">新規</div>
-              </div>
-              <div className="text-center p-2 bg-white dark:bg-gray-800 rounded">
-                <div className="font-bold text-blue-600">{metrics.closedThisWeek}</div>
-                <div className="text-gray-600 dark:text-gray-400">完了</div>
+            <div>
+              <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                📊 今週の進捗
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="text-center p-2 bg-white dark:bg-gray-800 rounded">
+                  <div className="font-bold text-green-600">{metrics.newThisWeek}</div>
+                  <div className="text-gray-600 dark:text-gray-400">新規</div>
+                </div>
+                <div className="text-center p-2 bg-white dark:bg-gray-800 rounded">
+                  <div className="font-bold text-blue-600">{metrics.closedThisWeek}</div>
+                  <div className="text-gray-600 dark:text-gray-400">完了</div>
+                </div>
               </div>
             </div>
           </div>
