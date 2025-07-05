@@ -392,7 +392,7 @@ func runCoverageReport(inputFile, outputFile, format string) error {
 		return err
 	}
 
-	// Generate HTML report if requested  
+	// Generate HTML report if requested
 	if opts.htmlReport {
 		// Create a dummy collector for HTML generation
 		collector := coverage.NewCollector(projectRoot, coverage.DefaultCoverageConfig())

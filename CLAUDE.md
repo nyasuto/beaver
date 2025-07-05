@@ -93,3 +93,99 @@ The project uses YAML configuration (beaver.yml) for:
 - **Structured output**: Generates organized Wiki documentation
 - **Collaborative knowledge building**: Team-focused knowledge aggregation
 - **Self-documenting**: The tool documents its own development process
+
+## Deployment Verification Rules
+
+When working with GitHub Actions deployments and GitHub Pages, always verify the actual deployment results:
+
+### 🔍 **Mandatory Verification Steps**
+
+1. **Check GitHub Actions Workflow Status**
+   ```bash
+   gh run list --workflow=docs-deployment.yml --limit=3
+   gh run view [RUN_ID] --log | grep -A 10 -B 5 "key_step_name"
+   ```
+
+2. **Verify GitHub Pages Deployment**
+   ```bash
+   # Check GitHub Pages settings and build status
+   gh api repos/:owner/:repo/pages
+   ```
+
+3. **Confirm Live Site Accessibility**
+   - **Primary URL**: https://nyasuto.github.io/beaver/
+   - **Coverage Dashboard**: https://nyasuto.github.io/beaver/coverage/
+   - **Test with browser tools**: Check for 404s, console errors, loading issues
+
+4. **Validate File Integration**
+   ```bash
+   # Check artifacts from latest workflow run
+   gh run download [RUN_ID] --name beaver-automation-[RUN_ID]-[JOB_NAME]
+   
+   # Verify expected files exist:
+   # - _site/coverage/index.html (coverage dashboard)
+   # - _site/coverage/coverage-data.json (data file)
+   # - _site/coverage/coverage-summary.json (summary)
+   ```
+
+### 📊 **Coverage Dashboard Specific Checks**
+
+1. **HTML File Generation Verification**
+   ```bash
+   # In workflow logs, confirm:
+   # ✅ HTMLレポート生成完了: coverage-dashboard.html
+   # ✅ coverage-dashboard.html found (size > 0)
+   ```
+
+2. **File Integration Verification**
+   ```bash
+   # In workflow logs, confirm:
+   # ✅ Coverage dashboard integrated at /coverage/
+   # 🌐 Dashboard will be available at: https://nyasuto.github.io/beaver/coverage/
+   ```
+
+3. **Live Dashboard Functionality**
+   - Open https://nyasuto.github.io/beaver/coverage/
+   - Verify interactive charts load (Chart.js)
+   - Check coverage percentages display correctly
+   - Confirm responsive design works
+   - Test all dashboard sections render properly
+
+### 🚨 **Troubleshooting Commands**
+
+```bash
+# Debug workflow execution
+gh run view [RUN_ID] --log | grep -i error
+gh run view [RUN_ID] --log | grep -A 20 -B 5 "coverage"
+
+# Check GitHub Pages build status
+gh api repos/:owner/:repo/pages/builds/latest
+
+# Verify file artifacts
+gh run download [LATEST_RUN_ID] --name beaver-automation-*
+ls -la downloaded_artifacts/
+
+# Test URL accessibility
+curl -I https://nyasuto.github.io/beaver/coverage/
+curl -s https://nyasuto.github.io/beaver/coverage/ | grep -o '<title>.*</title>'
+```
+
+### ✅ **Definition of Success**
+
+A deployment is considered successful only when:
+
+1. ✅ GitHub Actions workflow completes without errors
+2. ✅ Coverage dashboard HTML file is generated (size > 10KB typically)
+3. ✅ File integration logs show successful copying to `_site/coverage/`
+4. ✅ Live URL https://nyasuto.github.io/beaver/coverage/ returns 200 OK
+5. ✅ Interactive dashboard loads with charts and data
+6. ✅ Coverage percentages and statistics display correctly
+
+### 🔄 **Continuous Verification**
+
+- Always verify deployment after any changes to coverage functionality
+- Check both main branch and feature branch deployments
+- Test across different browsers (Chrome, Firefox, Safari)
+- Validate mobile responsiveness of dashboard
+
+**Important**: Never assume deployment success based on workflow completion alone. Always confirm the live site functionality.
