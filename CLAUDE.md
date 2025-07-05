@@ -11,11 +11,13 @@ Beaver is a GitHub knowledge base construction tool that transforms development 
 ## Architecture
 
 **Simplified Single-Service Design:**
+
 - **Backend**: Go services for GitHub API integration and high-performance processing
 - **Processing**: Rule-based classification and analysis
 - **Output**: GitHub Pages, Wiki platforms (configurable)
 
 **Technology Stack:**
+
 - Go 1.21+ for all services
 - GitHub API integration
 - Rule-based pattern matching and classification
@@ -51,6 +53,7 @@ go install github.com/getbeaver/beaver@latest
 ## Project Structure
 
 The project is organized as:
+
 - `cmd/` - CLI applications
 - `pkg/` - Shared Go packages
 - `internal/` - Private Go packages
@@ -61,6 +64,7 @@ The project is organized as:
 ## Development Philosophy
 
 **Simple and Reliable:**
+
 - Single binary deployment for easy distribution
 - Rule-based processing for predictable results
 - Self-documenting: Beaver documents its own development process
@@ -69,6 +73,7 @@ The project is organized as:
 ## Configuration
 
 The project uses YAML configuration (beaver.yml) for:
+
 - Project metadata
 - Source configuration (GitHub integration)
 - Output settings (Wiki platforms)
@@ -101,27 +106,32 @@ When working with GitHub Actions deployments and GitHub Pages, always verify the
 ### 🔍 **Mandatory Verification Steps**
 
 1. **Check GitHub Actions Workflow Status**
+
    ```bash
    gh run list --workflow=docs-deployment.yml --limit=3
    gh run view [RUN_ID] --log | grep -A 10 -B 5 "key_step_name"
    ```
 
 2. **Verify GitHub Pages Deployment**
+
    ```bash
    # Check GitHub Pages settings and build status
    gh api repos/:owner/:repo/pages
    ```
 
 3. **Confirm Live Site Accessibility**
+   You can use MCP playwright to fetch UI screenshot when needed.
+
    - **Primary URL**: https://nyasuto.github.io/beaver/
    - **Coverage Dashboard**: https://nyasuto.github.io/beaver/coverage/
    - **Test with browser tools**: Check for 404s, console errors, loading issues
 
 4. **Validate File Integration**
+
    ```bash
    # Check artifacts from latest workflow run
    gh run download [RUN_ID] --name beaver-automation-[RUN_ID]-[JOB_NAME]
-   
+
    # Verify expected files exist:
    # - _site/coverage/index.html (coverage dashboard)
    # - _site/coverage/coverage-data.json (data file)
@@ -131,6 +141,7 @@ When working with GitHub Actions deployments and GitHub Pages, always verify the
 ### 📊 **Coverage Dashboard Specific Checks**
 
 1. **HTML File Generation Verification**
+
    ```bash
    # In workflow logs, confirm:
    # ✅ HTMLレポート生成完了: coverage-dashboard.html
@@ -138,6 +149,7 @@ When working with GitHub Actions deployments and GitHub Pages, always verify the
    ```
 
 2. **File Integration Verification**
+
    ```bash
    # In workflow logs, confirm:
    # ✅ Coverage dashboard integrated at /coverage/
@@ -197,12 +209,14 @@ A deployment is considered successful only when:
 **ABSOLUTE PROHIBITIONS - These rules MUST be followed without exception:**
 
 1. **🚫 NEVER MERGE PULL REQUESTS**
+
    - Claude Code is STRICTLY FORBIDDEN from merging any pull requests
    - This includes using `gh pr merge`, `--auto`, `--admin`, or any merge commands
    - Pull requests must be reviewed and merged by human developers only
    - Violation of this rule is unacceptable under any circumstances
 
 2. **✅ PERMITTED ACTIONS**
+
    - ✅ Create pull requests (`gh pr create`)
    - ✅ Write, edit, and commit code changes
    - ✅ Push branches to remote repository
@@ -211,6 +225,7 @@ A deployment is considered successful only when:
    - ✅ Debug and troubleshoot issues
 
 3. **🔄 PROPER WORKFLOW**
+
    ```bash
    # ✅ Correct workflow:
    git checkout -b feature/my-fix
@@ -220,7 +235,7 @@ A deployment is considered successful only when:
    git push -u origin feature/my-fix
    gh pr create --title "Fix: Description" --body "Details"
    # ❌ STOP HERE - DO NOT MERGE
-   
+
    # ❌ FORBIDDEN:
    gh pr merge [PR_NUMBER]  # NEVER DO THIS
    ```
