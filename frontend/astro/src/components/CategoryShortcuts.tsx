@@ -162,9 +162,6 @@ const CategoryShortcuts: React.FC<CategoryShortcutsProps> = ({ issues, className
                   <div className="text-xs opacity-75 mb-2">{category.description}</div>
                   
                   <div className="flex justify-center space-x-2 text-xs">
-                    <span className="px-2 py-1 bg-white dark:bg-gray-800 rounded-full">
-                      {categoryIssues.length}件
-                    </span>
                     {open > 0 && (
                       <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
                         {open} Open
