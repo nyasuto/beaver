@@ -58,11 +58,9 @@ func (hg *HeaderGenerator) buildNavigationItems(options HeaderOptions) string {
 
 	// Determine the base paths based on current location
 	basePath := options.BaseURL
-	if basePath == "../" {
-		// Coverage dashboard case
-		basePath = "/beaver/"
-	} else if basePath == "" || basePath == "./" {
-		// Same level case
+	switch basePath {
+	case "../", "", "./":
+		// Coverage dashboard case or same level case
 		basePath = "/beaver/"
 	}
 
