@@ -1,11 +1,13 @@
 package analytics
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/nyasuto/beaver/internal/models"
+	"github.com/nyasuto/beaver/pkg/config"
 )
 
 // ClassificationSummary contains classification statistics
@@ -41,6 +43,10 @@ type StatisticsData struct {
 	DataRange           *DateRange
 	NextUpdate          *time.Time
 	AutoUpdate          bool
+	// New unified workflow metrics that replace frontend duplicates
+	WorkflowMetrics *WorkflowMetrics `json:"workflow_metrics"`
+	DailyMetrics    *DailyMetrics    `json:"daily_metrics"`
+	NextActions     []ActionItem     `json:"next_actions"`
 }
 
 // TimeStatistics contains time-based analysis
@@ -167,19 +173,52 @@ type DateRange struct {
 	EndDate   time.Time
 }
 
+// WorkflowMetrics contains workflow statistics that replace frontend calculations
+type WorkflowMetrics struct {
+	NewThisWeek     int `json:"new_this_week"`
+	RecentlyUpdated int `json:"recently_updated"`
+	TotalOpen       int `json:"total_open"`
+	ClosedThisWeek  int `json:"closed_this_week"`
+	WeeklyVelocity  int `json:"weekly_velocity"`
+}
+
+// DailyMetrics contains daily activity metrics
+type DailyMetrics struct {
+	NewToday     int  `json:"new_today"`
+	UpdatedToday int  `json:"updated_today"`
+	ClosedToday  int  `json:"closed_today"`
+	HasActivity  bool `json:"has_activity"`
+}
+
+// ActionItem represents a recommended action for developers
+type ActionItem struct {
+	Text   string         `json:"text"`
+	Issues []models.Issue `json:"issues"`
+	Type   string         `json:"type"` // 'critical', 'stale', 'bug', 'feature', 'none'
+}
+
 // StatisticsCalculator calculates comprehensive statistics from issues
 type StatisticsCalculator struct {
-	issues      []models.Issue
-	projectName string
-	generatedAt time.Time
+	issues            []models.Issue
+	projectName       string
+	generatedAt       time.Time
+	classificationCfg *config.ClassificationConfig
 }
 
 // NewStatisticsCalculator creates a new statistics calculator
 func NewStatisticsCalculator(issues []models.Issue, projectName string) *StatisticsCalculator {
+	// Try to load shared classification config
+	classificationCfg, err := config.LoadClassificationConfig()
+	if err != nil {
+		// If config loading fails, use nil and fall back to hardcoded logic
+		classificationCfg = nil
+	}
+
 	return &StatisticsCalculator{
-		issues:      issues,
-		projectName: projectName,
-		generatedAt: time.Now(),
+		issues:            issues,
+		projectName:       projectName,
+		generatedAt:       time.Now(),
+		classificationCfg: classificationCfg,
 	}
 }
 
@@ -236,6 +275,15 @@ func (sc *StatisticsCalculator) Calculate() *StatisticsData {
 
 	// Generate recommendations
 	stats.Recommendations = sc.generateRecommendations(stats)
+
+	// Calculate new unified workflow metrics
+	stats.WorkflowMetrics = sc.calculateWorkflowMetrics()
+
+	// Calculate daily metrics
+	stats.DailyMetrics = sc.calculateDailyMetrics()
+
+	// Generate next actions
+	stats.NextActions = sc.generateNextActions()
 
 	// Set data range
 	if len(sc.issues) > 0 {
@@ -823,4 +871,247 @@ func (sc *StatisticsCalculator) getDateRange() (time.Time, time.Time) {
 	}
 
 	return earliest, latest
+}
+
+// calculateWorkflowMetrics calculates workflow metrics (replaces frontend getWorkflowMetrics)
+func (sc *StatisticsCalculator) calculateWorkflowMetrics() *WorkflowMetrics {
+	now := time.Now()
+	oneWeekAgo := now.AddDate(0, 0, -7)
+
+	var newThisWeek, recentlyUpdated, totalOpen, closedThisWeek int
+
+	for _, issue := range sc.issues {
+		// Count issues created this week
+		if issue.CreatedAt.After(oneWeekAgo) {
+			newThisWeek++
+		}
+
+		// Count recently updated issues
+		if !issue.UpdatedAt.IsZero() && issue.UpdatedAt.After(oneWeekAgo) {
+			recentlyUpdated++
+		}
+
+		// Count open issues
+		if issue.State == "open" {
+			totalOpen++
+		}
+
+		// Count issues closed this week
+		if issue.State == "closed" && !issue.UpdatedAt.IsZero() && issue.UpdatedAt.After(oneWeekAgo) {
+			closedThisWeek++
+		}
+	}
+
+	// Weekly velocity is same as closed this week
+	weeklyVelocity := closedThisWeek
+
+	return &WorkflowMetrics{
+		NewThisWeek:     newThisWeek,
+		RecentlyUpdated: recentlyUpdated,
+		TotalOpen:       totalOpen,
+		ClosedThisWeek:  closedThisWeek,
+		WeeklyVelocity:  weeklyVelocity,
+	}
+}
+
+// calculateDailyMetrics calculates daily activity metrics (replaces frontend getDailyMetrics)
+func (sc *StatisticsCalculator) calculateDailyMetrics() *DailyMetrics {
+	now := time.Now()
+	twentyFourHoursAgo := now.Add(-24 * time.Hour)
+
+	var newToday, updatedToday, closedToday int
+
+	for _, issue := range sc.issues {
+		// Count issues created today
+		if issue.CreatedAt.After(twentyFourHoursAgo) {
+			newToday++
+		}
+
+		// Count issues updated today
+		if !issue.UpdatedAt.IsZero() && issue.UpdatedAt.After(twentyFourHoursAgo) {
+			updatedToday++
+		}
+
+		// Count issues closed today
+		if issue.State == "closed" && !issue.UpdatedAt.IsZero() && issue.UpdatedAt.After(twentyFourHoursAgo) {
+			closedToday++
+		}
+	}
+
+	hasActivity := newToday > 0 || updatedToday > 0 || closedToday > 0
+
+	return &DailyMetrics{
+		NewToday:     newToday,
+		UpdatedToday: updatedToday,
+		ClosedToday:  closedToday,
+		HasActivity:  hasActivity,
+	}
+}
+
+// generateNextActions generates recommended actions (replaces frontend getNextActions)
+func (sc *StatisticsCalculator) generateNextActions() []ActionItem {
+	var actions []ActionItem
+
+	// Check for critical/high priority issues using shared config
+	var criticalIssues []models.Issue
+	for _, issue := range sc.issues {
+		if issue.State == "open" {
+			// Convert labels to string slice
+			var labelNames []string
+			for _, label := range issue.Labels {
+				labelNames = append(labelNames, label.Name)
+			}
+
+			// Use shared config if available, otherwise fall back to hardcoded logic
+			var isCritical bool
+			if sc.classificationCfg != nil {
+				priority := sc.classificationCfg.GetPriorityFromLabels(labelNames)
+				isCritical = priority == "critical" || priority == "high"
+			} else {
+				// Fallback to hardcoded logic
+				labelText := strings.ToLower(strings.Join(labelNames, " "))
+				isCritical = strings.Contains(labelText, "critical") ||
+					strings.Contains(labelText, "urgent") ||
+					strings.Contains(labelText, "high")
+			}
+
+			if isCritical {
+				criticalIssues = append(criticalIssues, issue)
+			}
+		}
+	}
+
+	if len(criticalIssues) > 0 {
+		// Limit to first 5 issues for display
+		displayIssues := criticalIssues
+		if len(displayIssues) > 5 {
+			displayIssues = displayIssues[:5]
+		}
+		actions = append(actions, ActionItem{
+			Text:   fmt.Sprintf("🚨 %d件の緊急対応が必要", len(criticalIssues)),
+			Issues: displayIssues,
+			Type:   "critical",
+		})
+	}
+
+	// Check for stale issues using config or default
+	var staleThreshold int
+	if sc.classificationCfg != nil {
+		staleThreshold = sc.classificationCfg.ActionRules.StaleThresholdDays
+	} else {
+		staleThreshold = 30 // Default fallback
+	}
+	staleDate := time.Now().AddDate(0, 0, -staleThreshold)
+	var staleIssues []models.Issue
+	for _, issue := range sc.issues {
+		if issue.State == "open" &&
+			(issue.UpdatedAt.IsZero() || issue.UpdatedAt.Before(staleDate)) {
+			staleIssues = append(staleIssues, issue)
+		}
+	}
+
+	if len(staleIssues) > 0 {
+		displayIssues := staleIssues
+		if len(displayIssues) > 5 {
+			displayIssues = displayIssues[:5]
+		}
+		actions = append(actions, ActionItem{
+			Text:   fmt.Sprintf("📅 %d件の長期停滞Issues要確認", len(staleIssues)),
+			Issues: displayIssues,
+			Type:   "stale",
+		})
+	}
+
+	// Check for bugs using shared config
+	var bugIssues []models.Issue
+	for _, issue := range sc.issues {
+		if issue.State == "open" {
+			// Convert labels to string slice
+			var labelNames []string
+			for _, label := range issue.Labels {
+				labelNames = append(labelNames, label.Name)
+			}
+
+			// Use shared config if available, otherwise fall back to hardcoded logic
+			var isBug bool
+			if sc.classificationCfg != nil {
+				category := sc.classificationCfg.GetCategoryFromContent(issue.Title, issue.Body, labelNames)
+				isBug = category == "bug"
+			} else {
+				// Fallback to hardcoded logic
+				labelText := strings.ToLower(strings.Join(labelNames, " "))
+				isBug = strings.Contains(labelText, "bug")
+			}
+
+			if isBug {
+				bugIssues = append(bugIssues, issue)
+			}
+		}
+	}
+
+	if len(bugIssues) > 0 {
+		displayIssues := bugIssues
+		if len(displayIssues) > 5 {
+			displayIssues = displayIssues[:5]
+		}
+		actions = append(actions, ActionItem{
+			Text:   fmt.Sprintf("🐛 %d件のバグ修正待ち", len(bugIssues)),
+			Issues: displayIssues,
+			Type:   "bug",
+		})
+	}
+
+	// Check for feature requests using shared config
+	var featureIssues []models.Issue
+	for _, issue := range sc.issues {
+		if issue.State == "open" {
+			// Convert labels to string slice
+			var labelNames []string
+			for _, label := range issue.Labels {
+				labelNames = append(labelNames, label.Name)
+			}
+
+			// Use shared config if available, otherwise fall back to hardcoded logic
+			var isFeature bool
+			if sc.classificationCfg != nil {
+				category := sc.classificationCfg.GetCategoryFromContent(issue.Title, issue.Body, labelNames)
+				isFeature = category == "feature"
+			} else {
+				// Fallback to hardcoded logic
+				labelText := strings.ToLower(strings.Join(labelNames, " "))
+				isFeature = strings.Contains(labelText, "feature") || strings.Contains(labelText, "enhancement")
+			}
+
+			if isFeature {
+				featureIssues = append(featureIssues, issue)
+			}
+		}
+	}
+
+	if len(featureIssues) > 0 {
+		displayIssues := featureIssues
+		if len(displayIssues) > 5 {
+			displayIssues = displayIssues[:5]
+		}
+		actions = append(actions, ActionItem{
+			Text:   fmt.Sprintf("✨ %d件の新機能実装待ち", len(featureIssues)),
+			Issues: displayIssues,
+			Type:   "feature",
+		})
+	}
+
+	if len(actions) == 0 {
+		actions = append(actions, ActionItem{
+			Text:   "✅ 緊急対応事項はありません",
+			Issues: []models.Issue{},
+			Type:   "none",
+		})
+	}
+
+	// Limit to max 4 actions
+	if len(actions) > 4 {
+		actions = actions[:4]
+	}
+
+	return actions
 }

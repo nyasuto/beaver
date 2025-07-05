@@ -2,7 +2,7 @@ import React from 'react';
 import UrgentTasks from './UrgentTasks';
 import QuickSearch from './QuickSearch';
 import CategoryShortcuts from './CategoryShortcuts';
-import type { Issue, Statistics } from '../types/beaver';
+import type { Issue, Statistics, WorkflowMetrics, DailyMetrics, ActionItem } from '../types/beaver';
 
 interface DeveloperDashboardProps {
   issues: Issue[];
@@ -10,7 +10,8 @@ interface DeveloperDashboardProps {
   className?: string;
 }
 
-function getWorkflowMetrics(issues: Issue[]) {
+// Legacy functions for fallback when backend data is not available
+function getWorkflowMetricsFallback(issues: Issue[]) {
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   
@@ -30,15 +31,15 @@ function getWorkflowMetrics(issues: Issue[]) {
   );
 
   return {
-    newThisWeek: thisWeekIssues.length,
-    recentlyUpdated: recentlyUpdated.length,
-    totalOpen: openIssues.length,
-    closedThisWeek: closedThisWeek.length,
-    weeklyVelocity: closedThisWeek.length > 0 ? closedThisWeek.length : 0
+    new_this_week: thisWeekIssues.length,
+    recently_updated: recentlyUpdated.length,
+    total_open: openIssues.length,
+    closed_this_week: closedThisWeek.length,
+    weekly_velocity: closedThisWeek.length > 0 ? closedThisWeek.length : 0
   };
 }
 
-function getDailyMetrics(issues: Issue[]) {
+function getDailyMetricsFallback(issues: Issue[]) {
   const now = new Date();
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   
@@ -59,20 +60,14 @@ function getDailyMetrics(issues: Issue[]) {
   const hasActivity = newToday.length > 0 || updatedToday.length > 0 || closedToday.length > 0;
   
   return {
-    newToday: newToday.length,
-    updatedToday: updatedToday.length,
-    closedToday: closedToday.length,
-    hasActivity
+    new_today: newToday.length,
+    updated_today: updatedToday.length,
+    closed_today: closedToday.length,
+    has_activity: hasActivity
   };
 }
 
-interface ActionItem {
-  text: string;
-  issues: Issue[];
-  type: 'critical' | 'stale' | 'bug' | 'feature' | 'none';
-}
-
-function getNextActions(issues: Issue[]): ActionItem[] {
+function getNextActionsFallback(issues: Issue[]): ActionItem[] {
   const actions: ActionItem[] = [];
   
   // Check for critical/high priority issues
@@ -156,9 +151,11 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   className = '' 
 }) => {
   const [hoveredAction, setHoveredAction] = React.useState<number | null>(null);
-  const metrics = getWorkflowMetrics(issues);
-  const dailyMetrics = getDailyMetrics(issues);
-  const nextActions = getNextActions(issues);
+  
+  // Use backend data when available, fallback to frontend calculations
+  const metrics = statistics.workflow_metrics || getWorkflowMetricsFallback(issues);
+  const dailyMetrics = statistics.daily_metrics || getDailyMetricsFallback(issues);
+  const nextActions = statistics.next_actions || getNextActionsFallback(issues);
 
   return (
     <div className={`space-y-8 ${className}`}>
@@ -281,22 +278,22 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               </div>
               <div className="space-y-4">
                 {/* 日次進捗（活動がある場合のみ表示） */}
-                {dailyMetrics.hasActivity && (
+                {dailyMetrics.has_activity && (
                   <div>
                     <div className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                       🌟 本日（24h）
                     </div>
                     <div className="grid grid-cols-3 gap-1 text-xs">
                       <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                        <div className="font-bold text-green-600">{dailyMetrics.newToday}</div>
+                        <div className="font-bold text-green-600">{dailyMetrics.new_today}</div>
                         <div className="text-gray-600 dark:text-gray-400">新規</div>
                       </div>
                       <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                        <div className="font-bold text-blue-600">{dailyMetrics.updatedToday}</div>
+                        <div className="font-bold text-blue-600">{dailyMetrics.updated_today}</div>
                         <div className="text-gray-600 dark:text-gray-400">更新</div>
                       </div>
                       <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                        <div className="font-bold text-purple-600">{dailyMetrics.closedToday}</div>
+                        <div className="font-bold text-purple-600">{dailyMetrics.closed_today}</div>
                         <div className="text-gray-600 dark:text-gray-400">完了</div>
                       </div>
                     </div>
@@ -310,11 +307,11 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded border">
-                      <div className="font-bold text-green-600">{metrics.newThisWeek}</div>
+                      <div className="font-bold text-green-600">{metrics.new_this_week}</div>
                       <div className="text-gray-600 dark:text-gray-400">新規</div>
                     </div>
                     <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded border">
-                      <div className="font-bold text-blue-600">{metrics.closedThisWeek}</div>
+                      <div className="font-bold text-blue-600">{metrics.closed_this_week}</div>
                       <div className="text-gray-600 dark:text-gray-400">完了</div>
                     </div>
                   </div>
@@ -350,7 +347,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg">
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {metrics.totalOpen}
+                  {metrics.total_open}
                 </div>
                 <div className="text-sm text-green-800 dark:text-green-300">
                   アクティブIssue
@@ -359,7 +356,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               
               <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {metrics.weeklyVelocity}
+                  {metrics.weekly_velocity}
                 </div>
                 <div className="text-sm text-blue-800 dark:text-blue-300">
                   今週の完了数
@@ -368,7 +365,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               
               <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {metrics.recentlyUpdated}
+                  {metrics.recently_updated}
                 </div>
                 <div className="text-sm text-purple-800 dark:text-purple-300">
                   最近更新
