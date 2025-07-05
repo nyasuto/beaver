@@ -187,11 +187,6 @@ const UrgentTasks: React.FC<UrgentTasksProps> = ({ issues, className = '' }) => 
                   )}
                 </div>
                 
-                <div className="ml-4 flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full ${config.bgColor} ${config.borderColor} border-2 flex items-center justify-center font-bold text-sm ${config.color}`}>
-                    {index + 1}
-                  </div>
-                </div>
               </div>
             </div>
           );

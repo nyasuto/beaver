@@ -38,7 +38,7 @@ const categories: CategoryConfig[] = [
     icon: '🚨',
     color: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30',
     description: '緊急対応が必要',
-    filters: ['critical', 'urgent', 'high', 'important', 'priority']
+    filters: ['critical', 'urgent']
   },
   {
     key: 'docs',
@@ -83,10 +83,27 @@ const categories: CategoryConfig[] = [
 ];
 
 function getCategoryIssues(issues: Issue[], category: CategoryConfig): Issue[] {
-  return issues.filter(issue => {
-    const searchText = `${issue.title} ${issue.body || ''} ${(issue.labels || []).join(' ')}`.toLowerCase();
-    return category.filters.some(filter => searchText.includes(filter.toLowerCase()));
+  const filteredIssues = issues.filter(issue => {
+    // Prioritize label-based matching for better accuracy
+    const labelText = (issue.labels || []).join(' ').toLowerCase();
+    const titleText = issue.title.toLowerCase();
+    const bodyText = (issue.body || '').toLowerCase();
+    
+    // Check labels first for more accurate categorization
+    const hasLabelMatch = category.filters.some(filter => 
+      labelText.includes(filter.toLowerCase())
+    );
+    
+    // If no label match, check title and body (with stricter matching for critical)
+    if (!hasLabelMatch) {
+      const searchText = `${titleText} ${bodyText}`;
+      return category.filters.some(filter => searchText.includes(filter.toLowerCase()));
+    }
+    
+    return hasLabelMatch;
   });
+  
+  return filteredIssues;
 }
 
 function getStateDistribution(issues: Issue[]): { open: number; closed: number } {
