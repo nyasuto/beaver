@@ -60,16 +60,6 @@ const { issues, statistics, metadata } = beaverData!;
       </div>
     </div>
 
-    <!-- Developer Dashboard (Issue #367) -->
-    {issues.length > 0 && (
-      <DeveloperDashboard 
-        issues={issues} 
-        statistics={statistics}
-        client:load
-        className="mb-12"
-      />
-    )}
-
     <!-- Enhanced Today's Actions Section with 3 parallel components -->
     <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800 mb-8">
       <div class="flex items-center justify-between mb-6">
@@ -213,6 +203,16 @@ const { issues, statistics, metadata } = beaverData!;
         </div>
       </div>
     </div>
+
+    <!-- Developer Dashboard (Issue #367) -->
+    {issues.length > 0 && (
+      <DeveloperDashboard 
+        issues={issues} 
+        statistics={statistics}
+        client:load
+        className="mb-12"
+      />
+    )}
 
     <!-- Repository Info -->
     <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
