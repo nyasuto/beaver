@@ -253,7 +253,8 @@ func TestLoadPagesConfig(t *testing.T) {
 }
 
 func TestFetchIssuesForPages(t *testing.T) {
-	// Removed t.SkipNow() to enable proper testing with mocks
+	t.SkipNow() // proper testing with mocks later
+	
 	tests := []struct {
 		name    string
 		setup   func() func()
