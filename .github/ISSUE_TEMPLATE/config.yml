@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/nyasuto/beaver/discussions
+    about: 質問、アイデア、一般的な議論はこちらで
+  - name: 📖 ドキュメント
+    url: https://github.com/nyasuto/beaver/blob/main/README.md
+    about: プロジェクトのドキュメントを確認
+  - name: 🛠️ 開発ガイド
+    url: https://github.com/nyasuto/beaver/blob/main/CLAUDE.md
+    about: 開発者向けガイドとベストプラクティス
+  - name: 🔒 セキュリティ報告
+    url: https://github.com/nyasuto/beaver/security/advisories/new
+    about: セキュリティ脆弱性の報告（非公開）

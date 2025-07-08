@@ -1,0 +1,132 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "nyasuto"
+    assignees:
+      - "nyasuto"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    milestone: null
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignore major version updates for critical dependencies
+      - dependency-name: "astro"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Group Astro-related updates
+      astro-ecosystem:
+        patterns:
+          - "@astrojs/*"
+          - "astro"
+      # Group TypeScript-related updates
+      typescript-ecosystem:
+        patterns:
+          - "typescript"
+          - "@typescript-eslint/*"
+          - "@types/*"
+      # Group testing-related updates
+      testing-ecosystem:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "jsdom"
+      # Group linting and formatting updates
+      code-quality:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "prettier"
+          - "prettier-*"
+      # Group Tailwind CSS updates
+      tailwind-ecosystem:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+      # Group Chart.js updates
+      chart-ecosystem:
+        patterns:
+          - "chart.js"
+          - "chartjs-*"
+      # Group GitHub-related updates
+      github-ecosystem:
+        patterns:
+          - "@octokit/*"
+          - "octokit"
+      # Group utility updates
+      utilities:
+        patterns:
+          - "zod"
+          - "date-fns"
+          - "gray-matter"
+          - "remark"
+          - "rehype"
+          - "sharp"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "nyasuto"
+    assignees:
+      - "nyasuto"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      # Group GitHub Actions updates
+      github-actions:
+        patterns:
+          - "actions/*"
+          - "github/codeql-action"
+          - "peaceiris/actions-gh-pages"
+          - "codecov/codecov-action"
+          - "rtCamp/action-slack-notify"
+
+  # Enable version updates for Docker (if we add Docker support later)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "nyasuto"
+    assignees:
+      - "nyasuto"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
