@@ -146,7 +146,7 @@ const modalClasses = [containerClasses, sizeClasses[size], className].filter(Boo
       aria-labelledby={titleId}
       aria-describedby={ariaDescribedBy || bodyId}
       aria-modal="true"
-      role={(role || 'dialog') as any}
+      role={role || 'dialog'}
       style={style}
       {...rest}
     >
