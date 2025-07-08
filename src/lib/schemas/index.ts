@@ -70,6 +70,19 @@ export type {
   AnalyticsQuery,
 } from './analytics';
 
+// Classification schemas
+export * from './classification';
+export type {
+  ClassificationCategory,
+  PriorityLevel,
+  IssueClassification,
+  CategoryClassification,
+  ClassificationRule,
+  ClassificationConfig,
+  ClassificationMetrics,
+  BatchClassificationResult,
+} from './classification';
+
 // UI component schemas
 export * from './ui';
 export type {
@@ -123,7 +136,6 @@ export type {
   DataExportConfig,
   DataImportConfig,
   ProcessingResult,
-  ClassificationCategory,
 } from './processing';
 
 // GitHub schemas (consolidated)
@@ -256,7 +268,7 @@ export const ProcessingSchemas = {
   FilterGroup: () => import('./processing').then(m => m.FilterGroupSchema),
   DataPipeline: () => import('./processing').then(m => m.DataPipelineSchema),
   ProcessingResult: () => import('./processing').then(m => m.ProcessingResultSchema),
-  ClassificationCategory: () => import('./processing').then(m => m.ClassificationCategorySchema),
+  DataCategory: () => import('./processing').then(m => m.DataCategorySchema),
 } as const;
 
 export const GitHubSchemas = {
