@@ -1,0 +1,59 @@
+#!/bin/sh
+# 品質チェックとブランチルールを強制
+
+set -e
+
+echo "🪝 Pre-commit フック実行中..."
+
+# 現在のブランチ名を取得
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+
+# mainブランチへの直接コミット禁止
+if [ "$current_branch" = "main" ]; then
+    echo "❌ エラー: mainブランチへの直接コミットは禁止されています"
+    echo "   機能ブランチを作成してください:"
+    echo "   git checkout -b feat/your-feature-name"
+    exit 1
+fi
+
+# ブランチ命名規則チェック（mainブランチ以外）
+if [ "$current_branch" != "main" ]; then
+    valid_patterns="^(feat|fix|hotfix|test|docs|ci|cicd|refactor|perf|security|deps)/"
+    if ! echo "$current_branch" | grep -qE "$valid_patterns"; then
+        echo "❌ エラー: ブランチ名が命名規則に従っていません: $current_branch"
+        echo "   正しい形式:"
+        echo "   - feat/issue-X-feature-name     (新機能)"
+        echo "   - fix/issue-X-description       (バグ修正)"
+        echo "   - hotfix/X-description          (緊急修正)"
+        echo "   - test/X-description            (テスト)"
+        echo "   - docs/X-description            (ドキュメント)"
+        echo "   - ci/X-description              (CI/CD)"
+        echo "   - refactor/X-description        (リファクタリング)"
+        echo "   - perf/X-description           (性能改善)"
+        echo "   - security/X-description        (セキュリティ)"
+        echo "   - deps/X-description           (依存関係)"
+        exit 1
+    fi
+    
+fi
+
+# 空のコミットメッセージチェック
+if [ -z "$(git diff --cached --name-only)" ]; then
+    echo "❌ エラー: ステージされた変更がありません"
+    exit 1
+fi
+
+make quality
+
+# Makefileの変更がある場合
+makefile_changed=$(git diff --cached --name-only | grep -E '^Makefile$' || true)
+if [ -n "$makefile_changed" ]; then
+    echo "🔧 Makefile構文チェック..."
+    if ! make -n help >/dev/null 2>&1; then
+        echo "❌ エラー: Makefile構文エラーがあります"
+        exit 1
+    fi
+fi
+
+
+echo "✅ Pre-commit チェック完了"

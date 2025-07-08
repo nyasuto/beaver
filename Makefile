@@ -118,13 +118,18 @@ validate: ## Validate project configuration and dependencies
 	@echo "$(BLUE)✅ Validating project...$(NC)"
 	@npm run validate
 
-# Git and Development Workflow
-git-hooks: ## Setup git hooks for quality checks
-	@echo "$(BLUE)🎣 Setting up git hooks...$(NC)"
-	@if [ -f package.json ]; then \
-		echo "$(GREEN)✅ Git hooks would be set up here$(NC)"; \
+## git-hooks: Setup git pre-commit hooks from .git-hooks folder
+git-hooks:
+	@echo "🔗 Git pre-commit hookを設定中..."
+	@mkdir -p .git/hooks
+	@if [ -f .git-hooks/pre-commit ]; then \
+		cp .git-hooks/pre-commit .git/hooks/pre-commit; \
+		chmod +x .git/hooks/pre-commit; \
+		echo "✅ Pre-commit hook設定完了 (.git-hooks/pre-commit から)"; \
 	else \
-		echo "$(RED)❌ package.json not found$(NC)"; \
+    	echo '#!/bin/sh\nmake quality' > .git/hooks/pre-commit; \
+		chmod +x .git/hooks/pre-commit; \
+    	echo "✅ Pre-commit hook設定完了 (フォールバック)"; \
 	fi
 
 pr-ready: ## Prepare code for pull request (quality + build)
