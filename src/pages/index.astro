@@ -1,0 +1,97 @@
+---
+import '../styles/global.css';
+
+const title = 'Beaver Astro Edition';
+const description =
+  'AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="Beaver Team" />
+    <meta
+      name="keywords"
+      content="astro, typescript, github, knowledge-management, ai-agents, analytics"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://nyasuto.github.io/beaver/" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="antialiased">
+    <main
+      class="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-gray-900 dark:to-gray-800"
+    >
+      <div class="container mx-auto px-4 py-16">
+        <div class="text-center">
+          <h1 class="text-4xl font-bold text-heading mb-4">
+            🦫 <span class="text-gradient">Beaver Astro Edition</span>
+          </h1>
+          <p class="text-xl text-muted mb-8 max-w-2xl mx-auto">
+            AI-first knowledge management system that transforms GitHub development activities into
+            structured, persistent knowledge bases
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <a href="/issues" class="btn btn-primary"> View Issues </a>
+            <a href="/analytics" class="btn btn-outline"> Analytics Dashboard </a>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-2">🤖 AI-First Design</h3>
+              <p class="text-muted">
+                Built from the ground up to be AI agent-friendly with comprehensive TypeScript types
+                and modular architecture
+              </p>
+            </div>
+
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-2">📊 Smart Analytics</h3>
+              <p class="text-muted">
+                Automatically classifies and analyzes GitHub issues to generate meaningful insights
+                and trends
+              </p>
+            </div>
+
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-2">🔧 Modern Stack</h3>
+              <p class="text-muted">
+                Built with Astro, TypeScript, Tailwind CSS, and Zod for maximum developer experience
+                and type safety
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-12 text-center">
+            <p class="text-muted text-sm">
+              Status: <span class="inline-block w-2 h-2 bg-accent-500 rounded-full mr-1"></span>
+              Project foundation configured successfully
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
