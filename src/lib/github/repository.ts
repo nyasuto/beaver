@@ -275,11 +275,11 @@ export class GitHubRepositoryService {
       const response = await octokit.rest.repos.listCommits({
         owner: config.owner,
         repo: config.repo,
-        sha: validatedQuery.sha,
-        path: validatedQuery.path,
-        author: validatedQuery.author,
-        since: validatedQuery.since,
-        until: validatedQuery.until,
+        ...(validatedQuery.sha && { sha: validatedQuery.sha }),
+        ...(validatedQuery.path && { path: validatedQuery.path }),
+        ...(validatedQuery.author && { author: validatedQuery.author }),
+        ...(validatedQuery.since && { since: validatedQuery.since }),
+        ...(validatedQuery.until && { until: validatedQuery.until }),
         page: validatedQuery.page,
         per_page: validatedQuery.per_page,
       });
@@ -491,18 +491,16 @@ export class GitHubRepositoryService {
       return error;
     }
 
-    if (error?.status) {
+    if (error && typeof error === 'object' && error !== null && 'status' in error) {
+      const errorObj = error as { status?: number; message?: string };
       return new GitHubError(
-        `${context}: ${error.message || 'GitHub API error'}`,
-        error.status,
+        `${context}: ${errorObj.message || 'GitHub API error'}`,
+        errorObj.status,
         'API_ERROR'
       );
     }
 
-    return new GitHubError(
-      `${context}: ${error.message || 'Unknown error'}`,
-      undefined,
-      'UNKNOWN_ERROR'
-    );
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new GitHubError(`${context}: ${message}`, undefined, 'UNKNOWN_ERROR');
   }
 }

@@ -53,7 +53,7 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
     const issuesResult = await issuesService.getIssues(issuesQuery);
 
     if (!issuesResult.success) {
-      const gitHubError = issuesResult.error as any;
+      const gitHubError = issuesResult.error as { status?: number; message: string; code?: string };
       const status = gitHubError.status || 500;
       return new Response(
         JSON.stringify({
@@ -180,7 +180,7 @@ export const POST: APIRoute = async ({ request }) => {
     const createResult = await issuesService.createIssue(body);
 
     if (!createResult.success) {
-      const gitHubError = createResult.error as any;
+      const gitHubError = createResult.error as { status?: number; message: string; code?: string };
       const status = gitHubError.status || 500;
       return new Response(
         JSON.stringify({

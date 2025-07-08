@@ -119,18 +119,20 @@ export const GET: APIRoute = async ({ request: _request }) => {
       data: {
         authenticated_user: authUser
           ? {
-              login: (authUser as any).login,
-              id: (authUser as any).id,
-              type: (authUser as any).type,
-              plan: (authUser as any).plan,
+              login: (authUser as { login: string }).login,
+              id: (authUser as { id: number }).id,
+              type: (authUser as { type: string }).type,
+              plan: (authUser as { plan?: unknown }).plan,
             }
           : null,
         rate_limit: rateLimit
           ? {
-              limit: (rateLimit as any).rate.limit,
-              remaining: (rateLimit as any).rate.remaining,
-              reset: new Date((rateLimit as any).rate.reset * 1000).toISOString(),
-              used: (rateLimit as any).rate.used,
+              limit: (rateLimit as { rate: { limit: number } }).rate.limit,
+              remaining: (rateLimit as { rate: { remaining: number } }).rate.remaining,
+              reset: new Date(
+                (rateLimit as { rate: { reset: number } }).rate.reset * 1000
+              ).toISOString(),
+              used: (rateLimit as { rate: { used: number } }).rate.used,
             }
           : null,
         repository: repositoryInfo,

@@ -189,16 +189,16 @@ export class GitHubIssuesService {
         owner: config.owner,
         repo: config.repo,
         state: validatedQuery.state,
-        labels: validatedQuery.labels,
+        ...(validatedQuery.labels && { labels: validatedQuery.labels }),
         sort: validatedQuery.sort,
         direction: validatedQuery.direction,
-        since: validatedQuery.since,
+        ...(validatedQuery.since && { since: validatedQuery.since }),
         page: validatedQuery.page,
         per_page: validatedQuery.per_page,
-        milestone: validatedQuery.milestone,
-        assignee: validatedQuery.assignee,
-        creator: validatedQuery.creator,
-        mentioned: validatedQuery.mentioned,
+        ...(validatedQuery.milestone && { milestone: validatedQuery.milestone }),
+        ...(validatedQuery.assignee && { assignee: validatedQuery.assignee }),
+        ...(validatedQuery.creator && { creator: validatedQuery.creator }),
+        ...(validatedQuery.mentioned && { mentioned: validatedQuery.mentioned }),
       });
 
       // Validate response data
@@ -258,10 +258,10 @@ export class GitHubIssuesService {
         owner: config.owner,
         repo: config.repo,
         title: validatedParams.title,
-        body: validatedParams.body,
-        milestone: validatedParams.milestone,
-        labels: validatedParams.labels,
-        assignees: validatedParams.assignees,
+        ...(validatedParams.body && { body: validatedParams.body }),
+        ...(validatedParams.milestone && { milestone: validatedParams.milestone }),
+        ...(validatedParams.labels && { labels: validatedParams.labels }),
+        ...(validatedParams.assignees && { assignees: validatedParams.assignees }),
       });
 
       // Validate response data
@@ -293,12 +293,12 @@ export class GitHubIssuesService {
         owner: config.owner,
         repo: config.repo,
         issue_number: issueNumber,
-        title: validatedParams.title,
-        body: validatedParams.body,
-        milestone: validatedParams.milestone,
-        labels: validatedParams.labels,
-        assignees: validatedParams.assignees,
-        state: validatedParams.state,
+        ...(validatedParams.title && { title: validatedParams.title }),
+        ...(validatedParams.body && { body: validatedParams.body }),
+        ...(validatedParams.milestone !== undefined && { milestone: validatedParams.milestone }),
+        ...(validatedParams.labels && { labels: validatedParams.labels }),
+        ...(validatedParams.assignees && { assignees: validatedParams.assignees }),
+        ...(validatedParams.state && { state: validatedParams.state }),
       });
 
       // Validate response data

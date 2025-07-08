@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
     const repoResult = await repoService.getRepository();
 
     if (!repoResult.success) {
-      const gitHubError = repoResult.error as any;
+      const gitHubError = repoResult.error as { status?: number; message: string; code?: string };
       const status = gitHubError.status || 500;
       return new Response(
         JSON.stringify({
@@ -79,41 +79,49 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
 
     if (query.include_languages) {
       additionalDataPromises.push(
-        repoService.getLanguages().then((result: any) => ({
-          type: 'languages',
-          data: result.success ? result.data : null,
-          error: result.success ? null : result.error.message,
-        }))
+        repoService
+          .getLanguages()
+          .then((result: { success: boolean; data?: unknown; error?: { message: string } }) => ({
+            type: 'languages',
+            data: result.success ? result.data : null,
+            error: result.success ? null : (result.error?.message ?? null),
+          }))
       );
     }
 
     if (query.include_commits) {
       additionalDataPromises.push(
-        repoService.getCommits({ per_page: query.commits_limit }).then((result: any) => ({
-          type: 'commits',
-          data: result.success ? result.data : null,
-          error: result.success ? null : result.error.message,
-        }))
+        repoService
+          .getCommits({ per_page: query.commits_limit })
+          .then((result: { success: boolean; data?: unknown; error?: { message: string } }) => ({
+            type: 'commits',
+            data: result.success ? result.data : null,
+            error: result.success ? null : (result.error?.message ?? null),
+          }))
       );
     }
 
     if (query.include_contributors) {
       additionalDataPromises.push(
-        repoService.getContributors(1, 20).then((result: any) => ({
-          type: 'contributors',
-          data: result.success ? result.data : null,
-          error: result.success ? null : result.error.message,
-        }))
+        repoService
+          .getContributors(1, 20)
+          .then((result: { success: boolean; data?: unknown; error?: { message: string } }) => ({
+            type: 'contributors',
+            data: result.success ? result.data : null,
+            error: result.success ? null : (result.error?.message ?? null),
+          }))
       );
     }
 
     if (query.include_stats) {
       additionalDataPromises.push(
-        repoService.getRepositoryStats().then((result: any) => ({
-          type: 'stats',
-          data: result.success ? result.data : null,
-          error: result.success ? null : result.error.message,
-        }))
+        repoService
+          .getRepositoryStats()
+          .then((result: { success: boolean; data?: unknown; error?: { message: string } }) => ({
+            type: 'stats',
+            data: result.success ? result.data : null,
+            error: result.success ? null : (result.error?.message ?? null),
+          }))
       );
     }
 
