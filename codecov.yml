@@ -1,0 +1,62 @@
+coverage:
+  ignore:
+    # Astro component files - レイアウトとUIコンポーネントは無視
+    - "src/components/**/*.astro"
+    - "src/pages/**/*.astro"
+    
+    # 設定ファイル - configuration files
+    - "**/*.config.*"
+    - "**/*.d.ts"
+    
+    # テストファイル - test files
+    - "src/test/**"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+    - "**/*.test.*"
+    - "**/*.spec.*"
+    
+    # ビルドとデプロイ関連 - build and deployment
+    - "dist/**"
+    - ".astro/**"
+    - "coverage/**"
+    - "node_modules/**"
+    
+    # 開発ツール - development tools
+    - "*.md"
+    - "*.json"
+    - "Makefile"
+    - "package-lock.json"
+
+  # カバレージ要件を TypeScript ロジックファイルのみに適用
+  target: 
+    default:
+      target: 80%
+      threshold: 1%
+      
+  # プロジェクト別設定
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+        # TypeScript ロジックファイルのみをカバレージ対象にする
+        paths:
+          - "src/lib/**/*.ts"
+          
+    patch:
+      default:
+        target: 70%
+        threshold: 1%
+
+# コメント設定
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+# 通知設定
+notifications:
+  email: false
+  slack: false

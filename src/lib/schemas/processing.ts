@@ -321,9 +321,9 @@ export const ProcessingResultSchema = z.object({
 export type ProcessingResult = z.infer<typeof ProcessingResultSchema>;
 
 /**
- * Data classification category schema
+ * Data category schema for processing
  */
-export const ClassificationCategorySchema = z.object({
+export const DataCategorySchema = z.object({
   id: z.string().min(1, 'Category ID is required'),
   name: z.string().min(1, 'Category name is required'),
   description: z.string().optional(),
@@ -351,7 +351,7 @@ export const ClassificationCategorySchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
-export type ClassificationCategory = z.infer<typeof ClassificationCategorySchema>;
+export type DataCategory = z.infer<typeof DataCategorySchema>;
 
 /**
  * Validation helper for processing data
