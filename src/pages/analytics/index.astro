@@ -6,6 +6,12 @@
  */
 
 import DashboardLayout from '../../components/layouts/DashboardLayout.astro';
+import {
+  IssueTrendsChart,
+  IssueCategoriesChart,
+  ResolutionTimeChart,
+  ContributorActivityChart,
+} from '../../components/charts/AnalyticsCharts.tsx';
 
 const title = 'Analytics Dashboard';
 const description = 'View analytics and insights about your GitHub repository activity';
@@ -81,21 +87,27 @@ const breadcrumbs = [
       </div>
     </div>
 
+    <!-- Interactive Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <!-- Issue Trend Chart -->
-      <div class="card">
-        <h2 class="text-lg font-semibold text-heading mb-4">Issue Trends</h2>
-        <div class="h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md">
-          <p class="text-muted">Chart placeholder - Chart.js integration needed</p>
-        </div>
+      <div class="h-80">
+        <IssueTrendsChart client:load height={300} />
       </div>
 
       <!-- Issue Categories -->
-      <div class="card">
-        <h2 class="text-lg font-semibold text-heading mb-4">Issue Categories</h2>
-        <div class="h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md">
-          <p class="text-muted">Pie chart placeholder - Chart.js integration needed</p>
-        </div>
+      <div class="h-80">
+        <IssueCategoriesChart client:load height={300} />
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="h-80">
+        <ResolutionTimeChart client:load height={300} />
+      </div>
+
+      <div class="h-80">
+        <ContributorActivityChart client:load height={300} />
       </div>
     </div>
 
