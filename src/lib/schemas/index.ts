@@ -2,7 +2,7 @@
  * Zod Validation Schemas Index
  *
  * This module exports all Zod validation schemas for the Beaver Astro application.
- * It provides runtime type validation and ensures data integrity.
+ * It provides runtime type validation and ensures data integrity throughout the system.
  *
  * @module ValidationSchemas
  */
@@ -40,12 +40,239 @@ export const ApiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
     pagination: PaginationSchema.optional(),
   });
 
-// Validation schemas will be exported here
-// Example exports (to be implemented):
-// export { GitHubIssueSchema, GitHubPullRequestSchema } from './github';
-// export { BeaverConfigSchema, ClassificationRuleSchema } from './config';
-// export { AnalyticsDataSchema, MetricsSchema } from './analytics';
+// Configuration schemas
+export * from './config';
+export type {
+  BeaverConfig,
+  GitHubConfig as GitHubConfigType,
+  SiteConfig,
+  AnalyticsConfig,
+  AIConfig,
+  PerformanceConfig,
+  SecurityConfig,
+  NotificationConfig,
+  UserPreferences,
+  Environment,
+} from './config';
 
+// Analytics schemas
+export * from './analytics';
+export type {
+  TimeSeriesData,
+  IssueMetrics,
+  RepositoryMetrics,
+  ClassificationResult,
+  ProcessedIssue,
+  TrendAnalysis,
+  InsightData,
+  AnalyticsDashboard,
+  DataExport,
+  AnalyticsQuery,
+} from './analytics';
+
+// UI component schemas
+export * from './ui';
+export type {
+  BaseUIProps,
+  ColorScheme,
+  ThemeConfig,
+  ButtonProps,
+  CardProps,
+  InputProps,
+  ModalProps,
+  NavigationItem,
+  LayoutConfig,
+  ChartConfig,
+  ChartData,
+  PaginationControls,
+  Toast,
+  FormValidation,
+} from './ui';
+
+// API response schemas
+export * from './api';
+export type {
+  BaseAPIResponse,
+  ErrorDetails,
+  ErrorAPIResponse,
+  PaginationMeta,
+  HealthCheckResponse,
+  RateLimit,
+  APIRequest,
+  APIResponseValidation,
+  ValidationError as APIValidationError,
+  BatchOperationResponse,
+  FileUploadResponse,
+  HTTPStatus,
+  APIEndpoint,
+} from './api';
+
+// Data processing schemas
+export * from './processing';
+export type {
+  FilterOperator,
+  FilterCondition,
+  FilterGroup,
+  SortConfig,
+  DataProcessingOptions,
+  IssueProcessingOptions,
+  DataTransformation,
+  DataPipeline,
+  DataValidationRule,
+  DataQualityAssessment,
+  DataExportConfig,
+  DataImportConfig,
+  ProcessingResult,
+  ClassificationCategory,
+} from './processing';
+
+// GitHub schemas (consolidated)
+export {
+  GitHubWebhookEventSchema,
+  GitHubAppInstallationSchema,
+  GitHubRateLimitSchema,
+  GitHubIssueSearchResultSchema,
+  GitHubRepositorySearchResultSchema,
+  GitHubAPIErrorSchema,
+  GitHubCheckRunSchema,
+  GitHubDeploymentSchema,
+  GitHubReleaseSchema,
+  GitHubOrganizationSchema,
+  GITHUB_API_CONSTANTS,
+} from './github';
+export type {
+  GitHubWebhookEvent,
+  GitHubAppInstallation,
+  GitHubRateLimit,
+  GitHubIssueSearchResult,
+  GitHubRepositorySearchResult,
+  GitHubAPIError,
+  GitHubCheckRun,
+  GitHubDeployment,
+  GitHubRelease,
+  GitHubOrganization,
+} from './github';
+// Re-export from base GitHub modules (avoiding conflicts)
+export {
+  GitHubClient,
+  GitHubError,
+  createGitHubClient,
+  type GitHubConfig as GitHubClientConfig,
+  type GitHubAppConfig,
+} from '../github/client';
+export {
+  IssueSchema,
+  LabelSchema,
+  UserSchema,
+  MilestoneSchema,
+  IssuesQuerySchema,
+  CreateIssueSchema,
+  UpdateIssueSchema,
+  IssueState,
+  IssueSort,
+  IssueDirection,
+  GitHubIssuesService,
+  type Issue,
+  type Label,
+  type User,
+  type Milestone,
+  type IssuesQuery,
+  type CreateIssueParams,
+  type UpdateIssueParams,
+  type IssueState as IssueStateType,
+  type IssueSort as IssueSortType,
+  type IssueDirection as IssueDirectionType,
+} from '../github/issues';
+export {
+  RepositorySchema,
+  CommitSchema,
+  CommitsQuerySchema,
+  RepositoryStatsSchema,
+  GitHubRepositoryService,
+  type Repository,
+  type Commit,
+  type CommitsQuery,
+  type RepositoryStats,
+} from '../github/repository';
+export {
+  createGitHubServices,
+  createGitHubServicesFromEnv,
+  GITHUB_API_CONFIG,
+  RATE_LIMIT_CONFIG,
+} from '../github';
+// GitHub helper functions
+
+// Validation utilities
+export * from './validation';
+export type { ValidationResult } from './validation';
+export { ValidationError } from './validation';
+
+// Legacy type exports for backward compatibility
 export type Pagination = z.infer<typeof PaginationSchema>;
 export type ApiError = z.infer<typeof ErrorSchema>;
-export type ApiResponse<T> = z.infer<ReturnType<typeof ApiResponseSchema<z.ZodType<T>>>>;
+export type ApiResponse<T> = z.infer<
+  ReturnType<typeof ApiResponseSchema<z.ZodType<T, z.ZodTypeDef, T>>>
+>;
+
+// Common validation helpers
+export { validateData, validateDataOrThrow } from './validation';
+export { validateConfig, createDefaultConfig, parseEnvironment } from './config';
+export { validateAnalyticsData, createDefaultDashboard } from './analytics';
+export { validateUIProps, createDefaultTheme, generateUIId } from './ui';
+export { validateAPIResponse, createSuccessResponse, createErrorResponse } from './api';
+export { validateProcessingData, applyFilters, createDefaultProcessingOptions } from './processing';
+export { validateGitHubData, createGitHubResponse, parseGitHubPagination } from './github';
+
+// Schema collections for easy access
+export const ConfigSchemas = {
+  BeaverConfig: () => import('./config').then(m => m.BeaverConfigSchema),
+  GitHubConfig: () => import('./config').then(m => m.GitHubConfigSchema),
+  Environment: () => import('./config').then(m => m.EnvironmentSchema),
+} as const;
+
+export const AnalyticsSchemas = {
+  TimeSeriesData: () => import('./analytics').then(m => m.TimeSeriesDataSchema),
+  IssueMetrics: () => import('./analytics').then(m => m.IssueMetricsSchema),
+  RepositoryMetrics: () => import('./analytics').then(m => m.RepositoryMetricsSchema),
+  AnalyticsDashboard: () => import('./analytics').then(m => m.AnalyticsDashboardSchema),
+} as const;
+
+export const UISchemas = {
+  ThemeConfig: () => import('./ui').then(m => m.ThemeConfigSchema),
+  ButtonProps: () => import('./ui').then(m => m.ButtonPropsSchema),
+  CardProps: () => import('./ui').then(m => m.CardPropsSchema),
+  InputProps: () => import('./ui').then(m => m.InputPropsSchema),
+  ModalProps: () => import('./ui').then(m => m.ModalPropsSchema),
+} as const;
+
+export const APISchemas = {
+  SuccessResponse: () => import('./api').then(m => m.SuccessAPIResponseSchema),
+  ErrorResponse: () => import('./api').then(m => m.ErrorAPIResponseSchema),
+  PaginatedResponse: () => import('./api').then(m => m.PaginatedAPIResponseSchema),
+  HealthCheck: () => import('./api').then(m => m.HealthCheckResponseSchema),
+} as const;
+
+export const ProcessingSchemas = {
+  FilterGroup: () => import('./processing').then(m => m.FilterGroupSchema),
+  DataPipeline: () => import('./processing').then(m => m.DataPipelineSchema),
+  ProcessingResult: () => import('./processing').then(m => m.ProcessingResultSchema),
+  ClassificationCategory: () => import('./processing').then(m => m.ClassificationCategorySchema),
+} as const;
+
+export const GitHubSchemas = {
+  Issue: () => import('./github').then(m => m.IssueSchema),
+  Repository: () => import('./github').then(m => m.RepositorySchema),
+  Commit: () => import('./github').then(m => m.CommitSchema),
+  WebhookEvent: () => import('./github').then(m => m.GitHubWebhookEventSchema),
+} as const;
+
+// Validation constants
+export const VALIDATION_CONSTANTS = {
+  MAX_STRING_LENGTH: 1000,
+  MAX_ARRAY_LENGTH: 100,
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  MAX_PAGINATION_LIMIT: 100,
+  DEFAULT_PAGINATION_LIMIT: 30,
+  MAX_SEARCH_RESULTS: 1000,
+  MAX_BATCH_SIZE: 1000,
+} as const;
