@@ -67,8 +67,8 @@ export class GitHubClient {
   private octokit: Octokit;
   private config: GitHubConfig;
 
-  constructor(config: GitHubConfig) {
-    // Validate configuration
+  constructor(config: Partial<GitHubConfig> & { token: string; owner: string; repo: string }) {
+    // Validate configuration and apply defaults
     this.config = GitHubConfigSchema.parse(config);
 
     // Initialize Octokit client
@@ -286,7 +286,9 @@ export class GitHubClient {
  * @param config - GitHub configuration
  * @returns Result with GitHubClient instance or error
  */
-export function createGitHubClient(config: GitHubConfig): Result<GitHubClient> {
+export function createGitHubClient(
+  config: Partial<GitHubConfig> & { token: string; owner: string; repo: string }
+): Result<GitHubClient> {
   try {
     const client = new GitHubClient(config);
     return { success: true, data: client };
