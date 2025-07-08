@@ -6,15 +6,6 @@
 # Default target
 .DEFAULT_GOAL := help
 
-# Colors for output
-RED := \033[0;31m
-GREEN := \033[0;32m
-YELLOW := \033[1;33m
-BLUE := \033[0;34m
-PURPLE := \033[0;35m
-CYAN := \033[0;36m
-WHITE := \033[1;37m
-NC := \033[0m # No Color
 
 # Help target
 help: ## Show this help message
@@ -103,7 +94,7 @@ quality: ## Run all quality checks (lint + format + type-check + test)
 	@echo "$(BLUE)1/4 Linting...$(NC)"
 	@npm run lint
 	@echo "$(BLUE)2/4 Format checking...$(NC)"
-	@npm run format:check
+	@npm run format
 	@echo "$(BLUE)3/4 Type checking...$(NC)"
 	@npm run type-check
 	@echo "$(BLUE)4/4 Testing...$(NC)"
