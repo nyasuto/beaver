@@ -63,7 +63,7 @@ jobs:
         continue-on-error: true  # Tests may not exist yet
         
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: success()
         with:
           file: ./coverage/lcov.info
