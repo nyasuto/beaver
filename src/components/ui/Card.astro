@@ -116,7 +116,7 @@ const Tag = clickable ? 'button' : 'div';
   data-testid={testId}
   aria-label={ariaLabel}
   aria-describedby={ariaDescribedBy}
-  role={(role || (clickable ? 'button' : undefined)) as any}
+  role={role || (clickable ? 'button' : undefined)}
   tabindex={clickable ? 0 : undefined}
   {...rest}
 >
