@@ -1,0 +1,97 @@
+{
+  "name": "beaver-astro",
+  "version": "0.1.0",
+  "description": "AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx,.astro src",
+    "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.astro src --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
+    "type-check": "astro check && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "quality": "npm run lint && npm run format:check && npm run type-check && npm run test",
+    "quality-fix": "npm run lint:fix && npm run format && npm run type-check",
+    "validate": "npm run quality",
+    "analyze": "astro build --analyze",
+    "deploy": "astro build && gh-pages -d dist"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.3",
+    "@astrojs/react": "^3.6.2",
+    "@astrojs/tailwind": "^5.1.0",
+    "@octokit/auth-app": "^7.1.0",
+    "@octokit/rest": "^21.0.2",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.9",
+    "@tailwindcss/typography": "^0.5.15",
+    "astro": "^4.15.9",
+    "chart.js": "^4.4.4",
+    "date-fns": "^4.1.0",
+    "gray-matter": "^4.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rehype-stringify": "^10.0.1",
+    "remark": "^15.0.1",
+    "remark-rehype": "^11.1.1",
+    "sharp": "^0.33.5",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.6.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "@types/node": "^22.7.4",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vitest/coverage-v8": "^2.1.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-astro": "^1.2.4",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react": "^7.36.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "gh-pages": "^6.1.1",
+    "globals": "^15.9.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.3.3",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "astro",
+    "typescript",
+    "github",
+    "knowledge-management",
+    "ai-agents",
+    "analytics",
+    "issues",
+    "data-visualization"
+  ],
+  "author": {
+    "name": "Beaver Team",
+    "email": "team@beaver.dev"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nyasuto/beaver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nyasuto/beaver/issues"
+  },
+  "homepage": "https://github.com/nyasuto/beaver#readme"
+}
