@@ -1,22 +1,25 @@
 /**
  * Layout Components Index
  *
- * This module exports all layout components for the Beaver Astro application.
+ * This module exports layout component names and types for the Beaver Astro application.
  * These components provide the structural foundation for pages.
+ *
+ * Note: Actual component imports should be done directly in .astro files using import statements.
+ * This index provides component name constants and type information for TypeScript support.
  *
  * @module LayoutComponents
  */
 
-// Layout components will be exported here
-// Example exports (to be implemented):
-// export { BaseLayout } from './BaseLayout.astro';
-// export { PageLayout } from './PageLayout.astro';
-// export { DashboardLayout } from './DashboardLayout.astro';
-// export { AuthLayout } from './AuthLayout.astro';
-
-// Placeholder for future layout components
+// Layout component references for programmatic use
 export const LAYOUT_COMPONENTS = {
-  // Will contain layout component references
+  base: 'BaseLayout',
+  page: 'PageLayout',
+  dashboard: 'DashboardLayout',
 } as const;
 
 export type LayoutComponentName = keyof typeof LAYOUT_COMPONENTS;
+
+// Component name exports for consistency
+export const BaseLayout = 'BaseLayout';
+export const PageLayout = 'PageLayout';
+export const DashboardLayout = 'DashboardLayout';

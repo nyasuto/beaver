@@ -1,23 +1,32 @@
 /**
  * Navigation Components Index
  *
- * This module exports all navigation-related components for the Beaver Astro application.
+ * This module exports navigation component names and types for the Beaver Astro application.
  * These components handle user navigation and menu interactions.
+ *
+ * Note: Actual component imports should be done directly in .astro files using import statements.
+ * This index provides component name constants and type information for TypeScript support.
  *
  * @module NavigationComponents
  */
 
-// Navigation components will be exported here
-// Example exports (to be implemented):
-// export { Header } from './Header.astro';
-// export { Sidebar } from './Sidebar.astro';
-// export { Breadcrumb } from './Breadcrumb.astro';
-// export { NavLink } from './NavLink.astro';
-// export { MobileMenu } from './MobileMenu.astro';
-
-// Placeholder for future navigation components
+// Navigation component references for programmatic use
 export const NAVIGATION_COMPONENTS = {
-  // Will contain navigation component references
+  header: 'Header',
+  footer: 'Footer',
+  breadcrumb: 'Breadcrumb',
 } as const;
 
 export type NavigationComponentName = keyof typeof NAVIGATION_COMPONENTS;
+
+// Component name exports for consistency
+export const Header = 'Header';
+export const Footer = 'Footer';
+export const Breadcrumb = 'Breadcrumb';
+
+// BreadcrumbItem type definition (commonly used across components)
+export interface BreadcrumbItem {
+  name: string;
+  href: string;
+  current?: boolean;
+}

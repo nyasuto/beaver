@@ -1,0 +1,76 @@
+---
+/**
+ * Breadcrumb Navigation Component
+ *
+ * Displays navigation breadcrumbs for better user orientation.
+ */
+
+export interface BreadcrumbItem {
+  name: string;
+  href?: string;
+  current?: boolean;
+}
+
+export interface Props {
+  items: BreadcrumbItem[];
+  separator?: 'slash' | 'chevron' | 'arrow';
+  class?: string;
+}
+
+const { items, separator = 'chevron', class: className = '' } = Astro.props;
+
+// Ensure the last item is marked as current
+const breadcrumbItems = items.map((item, index) => ({
+  ...item,
+  current: index === items.length - 1,
+}));
+---
+
+<nav class={`flex ${className}`} aria-label="Breadcrumb">
+  <ol class="flex items-center space-x-2">
+    {
+      breadcrumbItems.map((item, index) => (
+        <li class="flex items-center">
+          {index > 0 && (
+            <span class="text-gray-400 mx-2" aria-hidden="true">
+              {separator === 'slash' && '/'}
+              {separator === 'chevron' && (
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              )}
+              {separator === 'arrow' && (
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              )}
+            </span>
+          )}
+
+          {item.current ? (
+            <span class="text-gray-500 dark:text-gray-400 text-sm font-medium" aria-current="page">
+              {item.name}
+            </span>
+          ) : (
+            <a
+              href={item.href}
+              class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 text-sm font-medium transition-colors duration-200"
+            >
+              {item.name}
+            </a>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

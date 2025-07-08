@@ -1,0 +1,164 @@
+---
+/**
+ * Page Layout Component
+ *
+ * Standard page layout with header, main content, and footer.
+ * Includes navigation and responsive design.
+ */
+
+import BaseLayout from './BaseLayout.astro';
+import Header from '../navigation/Header.astro';
+import Footer from '../navigation/Footer.astro';
+import Breadcrumb, { type BreadcrumbItem } from '../navigation/Breadcrumb.astro';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  author?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article' | 'profile';
+  canonical?: string;
+  noindex?: boolean;
+  lang?: string;
+
+  // Layout specific props
+  showHeader?: boolean;
+  showFooter?: boolean;
+  showSearch?: boolean;
+  headerFixed?: boolean;
+  headerTransparent?: boolean;
+  footerMinimal?: boolean;
+  footerShowSocial?: boolean;
+  footerShowNewsletter?: boolean;
+
+  // Breadcrumb props
+  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbSeparator?: 'slash' | 'chevron' | 'arrow';
+
+  // Content props
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+
+  // Classes
+  class?: string;
+  headerClass?: string;
+  mainClass?: string;
+  footerClass?: string;
+}
+
+const {
+  title,
+  description,
+  keywords,
+  author,
+  ogImage,
+  ogType,
+  canonical,
+  noindex,
+  lang,
+
+  showHeader = true,
+  showFooter = true,
+  showSearch = false,
+  headerFixed = false,
+  headerTransparent = false,
+  footerMinimal = false,
+  footerShowSocial = true,
+  footerShowNewsletter = false,
+
+  breadcrumbs,
+  breadcrumbSeparator = 'chevron',
+
+  maxWidth = 'full',
+  padding = 'md',
+
+  class: className = '',
+  headerClass = '',
+  mainClass = '',
+  footerClass = '',
+} = Astro.props;
+
+// Container classes based on maxWidth
+const containerClasses = {
+  sm: 'max-w-2xl',
+  md: 'max-w-4xl',
+  lg: 'max-w-6xl',
+  xl: 'max-w-7xl',
+  '2xl': 'max-w-screen-2xl',
+  '4xl': 'max-w-screen-4xl',
+  '6xl': 'max-w-screen-6xl',
+  '7xl': 'max-w-screen-7xl',
+  full: 'max-w-full',
+};
+
+// Padding classes
+const paddingClasses = {
+  none: 'p-0',
+  sm: 'p-4',
+  md: 'px-4 py-8 sm:px-6 lg:px-8',
+  lg: 'px-4 py-12 sm:px-6 lg:px-8',
+  xl: 'px-4 py-16 sm:px-6 lg:px-8',
+};
+
+const containerClass = `container mx-auto ${containerClasses[maxWidth]} ${paddingClasses[padding]}`;
+const mainClasses = `flex-1 ${headerFixed ? 'pt-16' : ''} ${mainClass}`;
+
+// Create props object for BaseLayout, filtering out undefined values
+const baseLayoutProps = Object.fromEntries(
+  Object.entries({
+    title,
+    description,
+    keywords,
+    author,
+    ogImage,
+    ogType,
+    canonical,
+    noindex,
+    lang,
+    class: className,
+    bodyClass: 'min-h-screen flex flex-col',
+  }).filter(([, value]) => value !== undefined)
+);
+---
+
+<BaseLayout {...baseLayoutProps}>
+  {
+    showHeader && (
+      <Header
+        currentPath={Astro.url.pathname}
+        showSearch={showSearch}
+        fixed={headerFixed}
+        transparent={headerTransparent}
+        class={headerClass}
+      />
+    )
+  }
+
+  <main id="main-content" class={mainClasses}>
+    {
+      breadcrumbs && breadcrumbs.length > 1 && (
+        <div class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+          <div class={containerClass}>
+            <Breadcrumb items={breadcrumbs} separator={breadcrumbSeparator} class="py-3" />
+          </div>
+        </div>
+      )
+    }
+
+    <div class={containerClass}>
+      <slot />
+    </div>
+  </main>
+
+  {
+    showFooter && (
+      <Footer
+        minimal={footerMinimal}
+        showSocial={footerShowSocial}
+        showNewsletter={footerShowNewsletter}
+        class={footerClass}
+      />
+    )
+  }
+</BaseLayout>
