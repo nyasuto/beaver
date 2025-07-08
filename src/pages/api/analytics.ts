@@ -132,7 +132,9 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
 
       for (const metric of requestedMetrics) {
         if (metric in mockAnalytics) {
-          (responseData as any)[metric] = (mockAnalytics as any)[metric];
+          (responseData as Record<string, unknown>)[metric] = (
+            mockAnalytics as Record<string, unknown>
+          )[metric];
         }
       }
     }
