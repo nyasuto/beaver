@@ -1,0 +1,153 @@
+---
+/**
+ * Button Component
+ *
+ * A versatile button component with multiple variants, sizes, and states.
+ * Supports both button and link functionality with proper accessibility.
+ */
+import { ButtonPropsSchema, type ButtonProps } from '../../lib/schemas/ui';
+
+type Props = ButtonProps;
+
+const {
+  variant = 'primary',
+  size = 'md',
+  disabled = false,
+  loading = false,
+  fullWidth = false,
+  leftIcon,
+  rightIcon,
+  href,
+  target,
+  type = 'button',
+  className = '',
+  id,
+  style,
+  'data-testid': testId,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  role,
+  // onClick,
+  // children,
+  ...rest
+} = Astro.props;
+
+// Validate props with Zod schema
+try {
+  ButtonPropsSchema.parse(Astro.props);
+} catch {
+  // Props validation failed - component will still render with best effort
+}
+
+// Base classes for the button
+const baseClasses = [
+  'inline-flex',
+  'items-center',
+  'justify-center',
+  'font-medium',
+  'transition-all',
+  'duration-200',
+  'border',
+  'rounded-md',
+  'focus:outline-none',
+  'focus:ring-2',
+  'focus:ring-offset-2',
+  'disabled:cursor-not-allowed',
+  'disabled:opacity-50',
+].join(' ');
+
+// Variant-specific classes
+const variantClasses = {
+  primary: 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 focus:ring-blue-500',
+  secondary: 'bg-gray-600 hover:bg-gray-700 text-white border-gray-600 focus:ring-gray-500',
+  outline: 'bg-transparent hover:bg-gray-50 text-gray-700 border-gray-300 focus:ring-blue-500',
+  ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 border-transparent focus:ring-blue-500',
+  link: 'bg-transparent hover:underline text-blue-600 border-transparent p-0 focus:ring-blue-500',
+};
+
+// Size-specific classes
+const sizeClasses = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-6 py-3 text-base',
+  xl: 'px-8 py-4 text-lg',
+};
+
+// Construct final className
+const buttonClasses = [
+  baseClasses,
+  variantClasses[variant],
+  variant !== 'link' ? sizeClasses[size] : '',
+  fullWidth ? 'w-full' : '',
+  loading ? 'pointer-events-none' : '',
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Icon classes
+const iconClasses =
+  size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-6 h-6' : size === 'xl' ? 'w-7 h-7' : 'w-5 h-5';
+
+// Component element (button vs anchor)
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag
+  class={buttonClasses}
+  id={id}
+  style={style}
+  data-testid={testId}
+  aria-label={ariaLabel}
+  aria-describedby={ariaDescribedBy}
+  role={role as any}
+  disabled={disabled || loading}
+  type={!href ? type : undefined}
+  href={href}
+  target={href ? target : undefined}
+  {...rest}
+>
+  {
+    leftIcon && (
+      <span class={`${iconClasses} mr-2`} aria-hidden="true">
+        <Fragment set:html={leftIcon} />
+      </span>
+    )
+  }
+
+  {
+    loading && (
+      <svg
+        class={`${iconClasses} mr-2 animate-spin`}
+        fill="none"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
+      </svg>
+    )
+  }
+
+  <slot />
+
+  {
+    rightIcon && (
+      <span class={`${iconClasses} ml-2`} aria-hidden="true">
+        <Fragment set:html={rightIcon} />
+      </span>
+    )
+  }
+</Tag>
+
+<style>
+  /* Additional custom styles if needed */
+  button[disabled],
+  a[disabled] {
+    pointer-events: none;
+  }
+</style>

@@ -1,0 +1,414 @@
+---
+/**
+ * Modal Component
+ *
+ * A flexible modal dialog component with overlay, focus management, and keyboard navigation.
+ * Supports various sizes and custom header/footer content.
+ */
+import { ModalPropsSchema, type ModalProps } from '../../lib/schemas/ui';
+
+type Props = ModalProps;
+
+const {
+  isOpen = false,
+  // onClose,
+  size = 'md',
+  centered = true,
+  // closeOnOverlayClick = true,
+  // closeOnEsc = true,
+  title,
+  showCloseButton = true,
+  header,
+  footer,
+  className = '',
+  id,
+  style,
+  'data-testid': testId,
+  // 'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  role,
+  // children,
+  ...rest
+} = Astro.props;
+
+// Validate props with Zod schema
+try {
+  ModalPropsSchema.parse(Astro.props);
+} catch {
+  // Props validation failed - component will still render with best effort
+}
+
+// Generate unique ID if not provided
+const modalId = id || `modal-${Math.random().toString(36).substring(2, 11)}`;
+const titleId = title ? `${modalId}-title` : undefined;
+const bodyId = `${modalId}-body`;
+
+// Base overlay classes
+const overlayClasses = [
+  'fixed',
+  'inset-0',
+  'z-50',
+  'flex',
+  'items-center',
+  'justify-center',
+  'bg-black',
+  'bg-opacity-50',
+  'transition-opacity',
+  'duration-300',
+  'backdrop-blur-sm',
+  centered ? 'items-center' : 'items-start pt-16',
+].join(' ');
+
+// Modal container classes
+const containerClasses = [
+  'relative',
+  'w-full',
+  'max-h-full',
+  'overflow-hidden',
+  'mx-4',
+  'my-8',
+].join(' ');
+
+// Size-specific classes
+const sizeClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  full: 'max-w-full mx-4 my-4 h-full',
+};
+
+// Modal content classes
+const contentClasses = [
+  'bg-white',
+  'rounded-lg',
+  'shadow-xl',
+  'transform',
+  'transition-all',
+  'duration-300',
+  'max-h-full',
+  'overflow-hidden',
+  'flex',
+  'flex-col',
+].join(' ');
+
+// Header classes
+const headerClasses = [
+  'flex',
+  'items-center',
+  'justify-between',
+  'px-6',
+  'py-4',
+  'border-b',
+  'border-gray-200',
+  'bg-gray-50',
+].join(' ');
+
+// Body classes
+const bodyClasses = ['flex-1', 'px-6', 'py-4', 'overflow-y-auto'].join(' ');
+
+// Footer classes
+const footerClasses = [
+  'px-6',
+  'py-4',
+  'border-t',
+  'border-gray-200',
+  'bg-gray-50',
+  'flex',
+  'items-center',
+  'justify-end',
+  'space-x-2',
+].join(' ');
+
+// Close button classes
+const closeButtonClasses = [
+  'text-gray-400',
+  'hover:text-gray-600',
+  'focus:outline-none',
+  'focus:ring-2',
+  'focus:ring-blue-500',
+  'rounded-md',
+  'p-1',
+  'transition-colors',
+  'duration-200',
+].join(' ');
+
+// Construct final modal className
+const modalClasses = [containerClasses, sizeClasses[size], className].filter(Boolean).join(' ');
+---
+
+{
+  isOpen && (
+    <div
+      class={overlayClasses}
+      id={modalId}
+      data-testid={testId}
+      aria-labelledby={titleId}
+      aria-describedby={ariaDescribedBy || bodyId}
+      aria-modal="true"
+      role={(role || 'dialog') as any}
+      style={style}
+      {...rest}
+    >
+      <div class={modalClasses}>
+        <div class={contentClasses}>
+          {(title || header || showCloseButton) && (
+            <div class={headerClasses}>
+              <div class="flex-1">
+                {title && (
+                  <h2 id={titleId} class="text-lg font-semibold text-gray-900">
+                    {title}
+                  </h2>
+                )}
+                {header && !title && (
+                  <div class="modal-header">
+                    <Fragment set:html={header} />
+                  </div>
+                )}
+              </div>
+              {showCloseButton && (
+                <button
+                  type="button"
+                  class={closeButtonClasses}
+                  aria-label="Close modal"
+                  data-modal-close
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
+          <div id={bodyId} class={bodyClasses}>
+            <div class="modal-content">
+              <slot />
+            </div>
+          </div>
+
+          {footer && (
+            <div class={footerClasses}>
+              <div class="modal-footer">
+                <Fragment set:html={footer} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  // Modal functionality (client-side)
+  document.addEventListener('DOMContentLoaded', () => {
+    // Handle overlay clicks
+    document.querySelectorAll('[aria-modal="true"]').forEach((modal: Element) => {
+      const closeOnOverlayClick = modal.getAttribute('data-close-on-overlay') !== 'false';
+
+      if (closeOnOverlayClick) {
+        modal.addEventListener('click', (e: Event) => {
+          if (e.target === modal) {
+            closeModal(modal as HTMLElement);
+          }
+        });
+      }
+    });
+
+    // Handle close button clicks
+    document.querySelectorAll('[data-modal-close]').forEach((button: Element) => {
+      button.addEventListener('click', () => {
+        const modal = button.closest('[aria-modal="true"]') as HTMLElement;
+        if (modal) {
+          closeModal(modal);
+        }
+      });
+    });
+
+    // Handle escape key
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const openModal = document.querySelector(
+          '[aria-modal="true"]:not([style*="display: none"])'
+        ) as HTMLElement;
+        if (openModal) {
+          const closeOnEsc = openModal.getAttribute('data-close-on-esc') !== 'false';
+          if (closeOnEsc) {
+            closeModal(openModal);
+          }
+        }
+      }
+    });
+
+    // Focus management
+    function trapFocus(modal: HTMLElement): void {
+      const focusableElements = modal.querySelectorAll(
+        'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      // Focus first element when modal opens
+      (firstElement as HTMLElement)?.focus();
+
+      modal.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              e.preventDefault();
+              (lastElement as HTMLElement)?.focus();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              e.preventDefault();
+              (firstElement as HTMLElement)?.focus();
+            }
+          }
+        }
+      });
+    }
+
+    function closeModal(modal: HTMLElement): void {
+      // Trigger custom close event
+      const closeEvent = new CustomEvent('modalClose', {
+        detail: { modalId: modal.id },
+        bubbles: true,
+      });
+      modal.dispatchEvent(closeEvent);
+
+      // Hide modal with animation
+      modal.style.opacity = '0';
+      setTimeout(() => {
+        modal.style.display = 'none';
+
+        // Return focus to trigger element if available
+        const trigger = document.querySelector(`[data-modal-trigger="${modal.id}"]`) as HTMLElement;
+        if (trigger) {
+          trigger.focus();
+        }
+      }, 300);
+    }
+
+    function openModal(modalId: string): void {
+      const modal = document.getElementById(modalId) as HTMLElement;
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        trapFocus(modal);
+
+        // Trigger custom open event
+        const openEvent = new CustomEvent('modalOpen', {
+          detail: { modalId },
+          bubbles: true,
+        });
+        modal.dispatchEvent(openEvent);
+      }
+    }
+
+    // Expose global functions for external use
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).openModal = openModal;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).closeModal = closeModal;
+  });
+</script>
+
+<style>
+  /* Modal animations */
+  [aria-modal='true'] {
+    animation: modalFadeIn 0.3s ease-out;
+  }
+
+  [aria-modal='true'] > div > div {
+    animation: modalSlideIn 0.3s ease-out;
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* Prevent body scroll when modal is open */
+  body:has([aria-modal='true']:not([style*='display: none'])) {
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar for modal content */
+  .modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .modal-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .modal-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+  }
+
+  /* Focus styles */
+  [data-modal-close]:focus {
+    outline: 2px solid theme('colors.blue.500');
+    outline-offset: 2px;
+  }
+
+  /* Full size modal adjustments */
+  .modal-full {
+    height: calc(100vh - 2rem);
+    margin: 1rem;
+  }
+
+  /* Dark mode support (if needed) */
+  @media (prefers-color-scheme: dark) {
+    [aria-modal='true'] > div > div {
+      background-color: theme('colors.gray.800');
+      color: theme('colors.gray.100');
+    }
+
+    .modal-header,
+    .modal-footer {
+      background-color: theme('colors.gray.700');
+      border-color: theme('colors.gray.600');
+    }
+  }
+</style>
