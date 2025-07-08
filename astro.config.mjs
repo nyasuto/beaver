@@ -29,9 +29,6 @@ export default defineConfig({
       wrap: true,
     },
   },
-  experimental: {
-    contentCollectionCache: true,
-  },
   server: {
     port: 3000,
     host: true,
