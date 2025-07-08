@@ -1,0 +1,67 @@
+{
+  "ui": {
+    "theme": "system",
+    "locale": "en",
+    "dateFormat": "YYYY-MM-DD",
+    "timeFormat": "HH:mm",
+    "timezone": "UTC",
+    "itemsPerPage": 25,
+    "enableAnimations": true,
+    "compactMode": false
+  },
+  "github": {
+    "defaultBranch": "main",
+    "includeClosedIssues": true,
+    "maxIssuesPerRequest": 100,
+    "cacheTimeout": 300,
+    "rateLimitBuffer": 100
+  },
+  "analytics": {
+    "enabled": true,
+    "refreshInterval": 300000,
+    "retentionDays": 90,
+    "enableTrends": true,
+    "enablePredictions": false,
+    "aggregationLevel": "daily"
+  },
+  "classification": {
+    "enabled": true,
+    "autoClassify": true,
+    "minConfidence": 0.7,
+    "maxCategories": 10,
+    "enableLearning": true,
+    "fallbackCategory": "uncategorized"
+  },
+  "notifications": {
+    "enabled": false,
+    "email": {
+      "enabled": false,
+      "frequency": "daily"
+    },
+    "browser": {
+      "enabled": true,
+      "showOnNewIssue": true,
+      "showOnStatusChange": false
+    }
+  },
+  "performance": {
+    "enableCaching": true,
+    "cacheStrategy": "memory",
+    "maxCacheSize": 100,
+    "lazyLoading": true,
+    "enableServiceWorker": false
+  },
+  "security": {
+    "enableCORS": true,
+    "allowedOrigins": ["https://nyasuto.github.io"],
+    "enableCSP": true,
+    "enableRateLimiting": true,
+    "maxRequestsPerMinute": 60
+  },
+  "experimental": {
+    "enableAI": true,
+    "enableAdvancedAnalytics": false,
+    "enableRealTimeUpdates": false,
+    "enableCollaboration": false
+  }
+}
