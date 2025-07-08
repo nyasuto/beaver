@@ -1,0 +1,175 @@
+---
+/**
+ * Card Component
+ *
+ * A flexible container component with various styles and interactive capabilities.
+ * Supports headers, footers, and customizable layouts.
+ */
+import { CardPropsSchema, type CardProps } from '../../lib/schemas/ui';
+
+type Props = CardProps;
+
+const {
+  variant = 'default',
+  padding = 'md',
+  radius = 'md',
+  shadow = 'sm',
+  hoverable = false,
+  clickable = false,
+  header,
+  footer,
+  className = '',
+  id,
+  style,
+  'data-testid': testId,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  role,
+  // children,
+  ...rest
+} = Astro.props;
+
+// Validate props with Zod schema
+try {
+  CardPropsSchema.parse(Astro.props);
+} catch {
+  // Props validation failed - component will still render with best effort
+}
+
+// Base classes for the card
+const baseClasses = ['bg-white', 'border', 'transition-all', 'duration-200'].join(' ');
+
+// Variant-specific classes
+const variantClasses = {
+  default: 'border-gray-200',
+  outlined: 'border-gray-300 border-2',
+  elevated: 'border-gray-200',
+  filled: 'bg-gray-50 border-gray-300',
+};
+
+// Padding classes
+const paddingClasses = {
+  none: '',
+  sm: 'p-3',
+  md: 'p-4',
+  lg: 'p-6',
+  xl: 'p-8',
+};
+
+// Radius classes
+const radiusClasses = {
+  none: 'rounded-none',
+  sm: 'rounded-sm',
+  md: 'rounded-md',
+  lg: 'rounded-lg',
+  xl: 'rounded-xl',
+};
+
+// Shadow classes
+const shadowClasses = {
+  none: '',
+  sm: 'shadow-sm',
+  md: 'shadow-md',
+  lg: 'shadow-lg',
+  xl: 'shadow-xl',
+};
+
+// Interactive classes
+const interactiveClasses = [
+  hoverable ? 'hover:shadow-lg hover:-translate-y-1' : '',
+  clickable
+    ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+    : '',
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Construct final className
+const cardClasses = [
+  baseClasses,
+  variantClasses[variant],
+  radiusClasses[radius],
+  shadowClasses[shadow],
+  interactiveClasses,
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Header and footer padding (slightly different from main content)
+const headerFooterPadding = {
+  none: '',
+  sm: 'px-3 py-2',
+  md: 'px-4 py-3',
+  lg: 'px-6 py-4',
+  xl: 'px-8 py-5',
+};
+
+// Component element
+const Tag = clickable ? 'button' : 'div';
+---
+
+<Tag
+  class={cardClasses}
+  id={id}
+  style={style}
+  data-testid={testId}
+  aria-label={ariaLabel}
+  aria-describedby={ariaDescribedBy}
+  role={(role || (clickable ? 'button' : undefined)) as any}
+  tabindex={clickable ? 0 : undefined}
+  {...rest}
+>
+  {
+    header && (
+      <div class={`border-b border-gray-200 ${headerFooterPadding[padding]}`}>
+        <div class="card-header">
+          <Fragment set:html={header} />
+        </div>
+      </div>
+    )
+  }
+
+  <div class={paddingClasses[padding]}>
+    <div class="card-content">
+      <slot />
+    </div>
+  </div>
+
+  {
+    footer && (
+      <div class={`border-t border-gray-200 ${headerFooterPadding[padding]}`}>
+        <div class="card-footer">
+          <Fragment set:html={footer} />
+        </div>
+      </div>
+    )
+  }
+</Tag>
+
+<style>
+  /* Card hover animations */
+  .card-hover-lift {
+    transition:
+      transform 0.2s ease-in-out,
+      box-shadow 0.2s ease-in-out;
+  }
+
+  /* Focus styles for clickable cards */
+  button.card-clickable:focus {
+    outline: 2px solid theme('colors.blue.500');
+    outline-offset: 2px;
+  }
+
+  /* Custom card content styling */
+  .card-header,
+  .card-footer {
+    display: flex;
+    align-items: center;
+    min-height: 1rem;
+  }
+
+  .card-content {
+    min-height: 1rem;
+  }
+</style>

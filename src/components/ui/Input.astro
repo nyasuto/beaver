@@ -1,0 +1,240 @@
+---
+/**
+ * Input Component
+ *
+ * A comprehensive input component with validation, icons, and various styles.
+ * Supports all common input types with proper accessibility.
+ */
+import { InputPropsSchema, type InputProps } from '../../lib/schemas/ui';
+
+type Props = InputProps;
+
+const {
+  type = 'text',
+  size = 'md',
+  variant = 'default',
+  placeholder,
+  value,
+  defaultValue,
+  disabled = false,
+  readOnly = false,
+  required = false,
+  invalid = false,
+  leftIcon,
+  rightIcon,
+  leftElement,
+  rightElement,
+  label,
+  helperText,
+  errorText,
+  maxLength,
+  minLength,
+  pattern,
+  className = '',
+  id,
+  style,
+  'data-testid': testId,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  role,
+  // onChange,
+  // onBlur,
+  // onFocus,
+  ...rest
+} = Astro.props;
+
+// Validate props with Zod schema
+try {
+  InputPropsSchema.parse(Astro.props);
+} catch {
+  // Props validation failed - component will still render with best effort
+}
+
+// Generate unique ID if not provided
+const inputId = id || `input-${Math.random().toString(36).substring(2, 11)}`;
+const helperId = helperText ? `${inputId}-helper` : undefined;
+const errorId = errorText ? `${inputId}-error` : undefined;
+
+// Base classes for the input container
+const containerBaseClasses = ['relative', 'w-full'].join(' ');
+
+// Base classes for the input
+const inputBaseClasses = [
+  'w-full',
+  'transition-all',
+  'duration-200',
+  'placeholder-gray-400',
+  'focus:outline-none',
+  'disabled:cursor-not-allowed',
+  'disabled:opacity-50',
+  'disabled:bg-gray-50',
+].join(' ');
+
+// Size-specific classes
+const sizeClasses = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-4 py-3 text-base',
+};
+
+// Variant-specific classes
+const variantClasses = {
+  default:
+    'border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+  outlined:
+    'border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+  filled:
+    'border border-gray-300 rounded-md bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+  flushed:
+    'border-0 border-b-2 border-gray-300 rounded-none px-0 focus:ring-0 focus:border-blue-500',
+};
+
+// State-specific classes
+const stateClasses = invalid ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '';
+
+// Icon/element padding adjustments
+const hasLeftElement = leftIcon || leftElement;
+const hasRightElement = rightIcon || rightElement;
+
+const paddingAdjustments = [
+  hasLeftElement ? (size === 'sm' ? 'pl-10' : size === 'lg' ? 'pl-12' : 'pl-11') : '',
+  hasRightElement ? (size === 'sm' ? 'pr-10' : size === 'lg' ? 'pr-12' : 'pr-11') : '',
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Construct final input className
+const inputClasses = [
+  inputBaseClasses,
+  sizeClasses[size],
+  variantClasses[variant],
+  stateClasses,
+  paddingAdjustments,
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Icon positioning classes
+const iconBaseClasses = 'absolute inset-y-0 flex items-center pointer-events-none';
+const iconSizeClasses = size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-6 h-6' : 'w-5 h-5';
+const leftIconClasses = `${iconBaseClasses} left-0 ${size === 'sm' ? 'pl-3' : size === 'lg' ? 'pl-4' : 'pl-3.5'}`;
+const rightIconClasses = `${iconBaseClasses} right-0 ${size === 'sm' ? 'pr-3' : size === 'lg' ? 'pr-4' : 'pr-3.5'}`;
+
+// Label classes
+const labelClasses = [
+  'block',
+  'text-sm',
+  'font-medium',
+  'text-gray-700',
+  'mb-1',
+  required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : '',
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Helper text classes
+const helperClasses = 'mt-1 text-sm text-gray-500';
+const errorClasses = 'mt-1 text-sm text-red-600';
+---
+
+<div class="input-group">
+  {
+    label && (
+      <label for={inputId} class={labelClasses}>
+        {label}
+      </label>
+    )
+  }
+
+  <div class={containerBaseClasses}>
+    {
+      hasLeftElement && (
+        <div class={leftIconClasses}>
+          {leftIcon ? (
+            <span class={iconSizeClasses} aria-hidden="true">
+              <Fragment set:html={leftIcon} />
+            </span>
+          ) : (
+            <div class="left-element">
+              <Fragment set:html={leftElement} />
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    <input
+      class={inputClasses}
+      id={inputId}
+      type={type}
+      placeholder={placeholder}
+      value={value || defaultValue}
+      disabled={disabled}
+      readonly={readOnly}
+      required={required}
+      maxlength={maxLength}
+      minlength={minLength}
+      pattern={pattern}
+      style={style}
+      data-testid={testId}
+      aria-label={ariaLabel}
+      aria-describedby={[ariaDescribedBy, helperId, errorId].filter(Boolean).join(' ') || undefined}
+      aria-invalid={invalid}
+      role={role as any}
+      {...rest}
+    />
+
+    {
+      hasRightElement && (
+        <div class={rightIconClasses}>
+          {rightIcon ? (
+            <span class={iconSizeClasses} aria-hidden="true">
+              <Fragment set:html={rightIcon} />
+            </span>
+          ) : (
+            <div class="right-element">
+              <Fragment set:html={rightElement} />
+            </div>
+          )}
+        </div>
+      )
+    }
+  </div>
+
+  {
+    helperText && !errorText && (
+      <p id={helperId} class={helperClasses}>
+        {helperText}
+      </p>
+    )
+  }
+
+  {
+    errorText && (
+      <p id={errorId} class={errorClasses} role="alert">
+        {errorText}
+      </p>
+    )
+  }
+</div>
+
+<style>
+  /* Custom focus styles for flushed variant */
+  .input-group input[data-variant='flushed']:focus {
+    box-shadow: none;
+  }
+
+  /* Ensure proper z-index for floating elements */
+  .left-element,
+  .right-element {
+    z-index: 10;
+  }
+
+  /* Required field indicator */
+  .input-group label.required::after {
+    content: '*';
+    color: theme('colors.red.500');
+    margin-left: 0.125rem;
+  }
+</style>
