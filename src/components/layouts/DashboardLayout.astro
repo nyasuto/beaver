@@ -167,7 +167,7 @@ const baseLayoutProps = {
   }
 
   <div class={`flex ${topMargin}`}>
-    <!-- Sidebar -->
+    {/* Sidebar */}
     <aside
       class={`${sidebarWidth} ${sidebarFixed ? 'fixed left-0 top-0' : ''} ${headerFixed ? 'mt-16' : ''} h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto transition-all duration-300 ${sidebarClass}`}
       id="sidebar"
@@ -276,7 +276,7 @@ const baseLayoutProps = {
       </button>
     </aside>
 
-    <!-- Main content -->
+    {/* Main content */}
     <main id="main-content" class={`flex-1 ${mainMargin} transition-all duration-300 ${mainClass}`}>
       {
         breadcrumbs && breadcrumbs.length > 1 && (

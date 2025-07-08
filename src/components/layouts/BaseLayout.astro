@@ -50,27 +50,27 @@ import '../../styles/global.css';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Primary Meta Tags -->
+    {/* Primary Meta Tags */}
     <title>{fullTitle}</title>
     <meta name="title" content={fullTitle} />
     <meta name="description" content={description} />
     <meta name="author" content={author} />
     <meta name="keywords" content={keywords} />
 
-    <!-- Canonical URL -->
+    {/* Canonical URL */}
     <link rel="canonical" href={canonicalUrl} />
 
-    <!-- Favicon -->
+    {/* Favicon */}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Robots -->
+    {/* Robots */}
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
-    <!-- Open Graph / Facebook -->
+    {/* Open Graph / Facebook */}
     <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={fullTitle} />
@@ -78,14 +78,14 @@ import '../../styles/global.css';
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:site_name" content="Beaver Astro Edition" />
 
-    <!-- Twitter -->
+    {/* Twitter */}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content={canonicalUrl} />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
-    <!-- Fonts -->
+    {/* Fonts */}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -93,7 +93,7 @@ import '../../styles/global.css';
       rel="stylesheet"
     />
 
-    <!-- Theme Script (runs before body to prevent flash) -->
+    {/* Theme Script (runs before body to prevent flash) */}
     <script>
       // Initialize theme
       const theme = localStorage.getItem('theme') || 'system';
@@ -111,7 +111,7 @@ import '../../styles/global.css';
       }
     </script>
 
-    <!-- Structured Data -->
+    {/* Structured Data */}
     <script type="application/ld+json" is:inline>
       {
         "@context": "https://schema.org",
@@ -132,7 +132,7 @@ import '../../styles/global.css';
     </script>
   </head>
   <body class={`antialiased transition-colors duration-200 ${bodyClass}`}>
-    <!-- Skip to main content for accessibility -->
+    {/* Skip to main content for accessibility */}
     <a
       href="#main-content"
       class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-md z-50 focus-visible"
@@ -140,10 +140,10 @@ import '../../styles/global.css';
       Skip to main content
     </a>
 
-    <!-- Main content slot -->
+    {/* Main content slot */}
     <slot />
 
-    <!-- Back to top button -->
+    {/* Back to top button */}
     <button
       id="back-to-top"
       class="fixed bottom-4 right-4 bg-primary-600 text-white p-3 rounded-full shadow-lg hover:bg-primary-700 transition-all duration-200 opacity-0 invisible focus-visible z-40"
@@ -158,7 +158,7 @@ import '../../styles/global.css';
       </svg>
     </button>
 
-    <!-- Theme toggle and back to top functionality -->
+    {/* Theme toggle and back to top functionality */}
     <script>
       // Back to top button functionality
       const backToTopButton = document.getElementById('back-to-top');
