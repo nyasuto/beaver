@@ -3,94 +3,31 @@
  * Issue Statistics Component
  *
  * Displays comprehensive issue statistics with priority classification
+ * Using unified StatsService for consistent data across components
  */
 
 import StatCard from './StatCard.astro';
+import { getStatsService } from '../../lib/services/StatsService';
 
-// Fetch issue statistics from the API
-const fetchIssueStats = async () => {
-  try {
-    const response = await fetch(
-      `${Astro.site?.origin || 'http://localhost:4321'}/api/github/issues?include_stats=true&state=all&per_page=100`
-    );
+// Get unified statistics using the StatsService
+const statsService = getStatsService();
+const statsResult = await statsService.getUnifiedStats({
+  includeRecentActivity: true,
+  includePriorityBreakdown: true,
+  includeLabels: false,
+  recentDays: 7,
+});
 
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        return {
-          success: true,
-          data: result.data,
-        };
-      }
-    }
-  } catch (error) {
-    console.error('Failed to fetch issue statistics:', error);
-  }
+// Extract data from unified stats
+const stats = statsResult.success ? statsResult.data : null;
 
-  // Fallback data for development/testing
-  return {
-    success: false,
-    data: {
-      issues: [],
-      stats: {
-        total: 12,
-        open: 8,
-        closed: 4,
-        labels: [],
-      },
-    },
-  };
-};
+// Calculate derived metrics
+const urgentIssues = stats ? stats.priority.critical + stats.priority.high : 0;
+const completionRate =
+  stats && stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0;
 
-const statsResult = await fetchIssueStats();
-const { issues, stats } = statsResult.data;
-
-// Calculate priority-based statistics
-const calculatePriorityStats = (issues: any[]) => {
-  const priorities = {
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0,
-  };
-
-  issues.forEach(issue => {
-    const labels = issue.labels || [];
-    const priorityLabel = labels.find(
-      (label: any) => label.name && label.name.startsWith('priority:')
-    );
-
-    if (priorityLabel) {
-      const priority = priorityLabel.name.split(':')[1]?.trim() || 'medium';
-      if (priority in priorities) {
-        priorities[priority as keyof typeof priorities]++;
-      }
-    } else {
-      // Default to medium if no priority label
-      priorities.medium++;
-    }
-  });
-
-  return priorities;
-};
-
-// Calculate recent activity
-const calculateRecentActivity = (issues: any[]) => {
-  const now = new Date();
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  const recentIssues = issues.filter(issue => {
-    const updatedAt = new Date(issue.updated_at);
-    return updatedAt >= sevenDaysAgo;
-  });
-
-  return recentIssues.length;
-};
-
-const priorityStats = calculatePriorityStats(issues);
-const recentActivity = calculateRecentActivity(issues);
-const urgentIssues = priorityStats.critical + priorityStats.high;
-const completionRate = stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0;
+// Recent activity from unified stats
+const recentActivity = stats ? stats.recentActivity.thisWeek : 0;
 
 // Export interface for type checking
 export interface Props {
@@ -104,7 +41,7 @@ const { class: className = '' } = Astro.props;
   <!-- Total Issues -->
   <StatCard
     title="Total Issues"
-    value={stats.total}
+    value={stats?.total || 0}
     icon="📊"
     description="All issues in repository"
     color="blue"
@@ -113,7 +50,7 @@ const { class: className = '' } = Astro.props;
   <!-- Open Issues -->
   <StatCard
     title="Open Issues"
-    value={stats.open}
+    value={stats?.open || 0}
     icon="🔓"
     description="Currently active issues"
     color="green"
@@ -133,7 +70,7 @@ const { class: className = '' } = Astro.props;
     color="red"
     trend={{
       direction: urgentIssues > 3 ? 'up' : urgentIssues === 0 ? 'down' : 'stable',
-      value: `${priorityStats.critical} critical`,
+      value: `${stats?.priority.critical || 0} critical`,
       period: 'right now',
     }}
   />
@@ -147,7 +84,7 @@ const { class: className = '' } = Astro.props;
     color="purple"
     trend={{
       direction: completionRate > 60 ? 'up' : completionRate < 40 ? 'down' : 'stable',
-      value: `${stats.closed}/${stats.total}`,
+      value: `${stats?.closed || 0}/${stats?.total || 0}`,
       period: 'completed',
     }}
   />
@@ -155,10 +92,47 @@ const { class: className = '' } = Astro.props;
 
 <!-- Priority Breakdown -->
 <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-  <StatCard title="Critical" value={priorityStats.critical} icon="🔴" color="red" size="sm" />
-  <StatCard title="High Priority" value={priorityStats.high} icon="🟠" color="yellow" size="sm" />
-  <StatCard title="Medium Priority" value={priorityStats.medium} icon="🟡" color="blue" size="sm" />
-  <StatCard title="Low Priority" value={priorityStats.low} icon="🟢" color="green" size="sm" />
+  <StatCard
+    title="Critical"
+    value={stats?.priority.critical || 0}
+    icon="🔴"
+    color="red"
+    size="sm"
+  />
+  <StatCard
+    title="High Priority"
+    value={stats?.priority.high || 0}
+    icon="🟠"
+    color="yellow"
+    size="sm"
+  />
+  <StatCard
+    title="Medium Priority"
+    value={stats?.priority.medium || 0}
+    icon="🟡"
+    color="blue"
+    size="sm"
+  />
+  <StatCard
+    title="Low Priority"
+    value={stats?.priority.low || 0}
+    icon="🟢"
+    color="green"
+    size="sm"
+  />
+</div>
+
+<!-- Data Source Information -->
+<div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+  <span>
+    Data source: {stats?.meta.source || 'unknown'}
+    {stats?.meta.source === 'cache' && ' (cached)'}
+  </span>
+  <span>
+    Last updated: {
+      stats?.meta.generated_at ? new Date(stats.meta.generated_at).toLocaleString() : 'unknown'
+    }
+  </span>
 </div>
 
 <!-- API Status Warning -->

@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
     const query = RepositoryQuerySchema.parse(searchParams);
 
     // Create GitHub services
-    const servicesResult = createGitHubServicesFromEnv();
+    const servicesResult = await createGitHubServicesFromEnv();
 
     if (!servicesResult.success) {
       return new Response(

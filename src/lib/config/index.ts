@@ -7,12 +7,15 @@
  * @module Configuration
  */
 
-// Configuration modules will be exported here
-// Example exports (to be implemented):
-// export { loadConfig } from './loader';
-// export { validateConfig } from './validator';
-// export { getEnvironmentConfig } from './environment';
-// export { DEFAULT_CONFIG } from './defaults';
+// Configuration modules
+export {
+  EnvValidator,
+  EnvValidationError,
+  getEnvValidator,
+  validateEnv,
+  checkEnvHealth,
+  type ValidatedEnv,
+} from './env-validation';
 
 // Environment configuration
 export const ENV_CONFIG = {
