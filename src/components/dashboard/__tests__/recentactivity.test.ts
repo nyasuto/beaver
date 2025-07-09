@@ -259,7 +259,7 @@ describe('RecentActivity Component', () => {
   describe('Repository Data Fetching', () => {
     it('should fetch repository data successfully', async () => {
       const mockRepository = createMockRepository();
-      (global.fetch as vi.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -280,7 +280,7 @@ describe('RecentActivity Component', () => {
     });
 
     it('should handle repository fetch failure', async () => {
-      (global.fetch as vi.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         status: 404,
       });
@@ -291,7 +291,7 @@ describe('RecentActivity Component', () => {
     });
 
     it('should handle repository fetch error', async () => {
-      (global.fetch as vi.Mock).mockRejectedValue(new Error('Network error'));
+      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
       await expect(fetch('/api/github/repository?include_stats=true')).rejects.toThrow(
         'Network error'
@@ -498,8 +498,8 @@ describe('RecentActivity Component', () => {
     });
 
     it('should handle null stats for weekly activity', () => {
-      const stats: UnifiedStatsWithActivity | null = null;
-      const thisWeek = stats?.recentActivity.thisWeek || 0;
+      const stats = null as UnifiedStatsWithActivity | null;
+      const thisWeek = stats?.recentActivity?.thisWeek || 0;
       expect(thisWeek).toBe(0);
     });
   });
@@ -529,9 +529,9 @@ describe('RecentActivity Component', () => {
     });
 
     it('should handle missing metadata', () => {
-      const stats: UnifiedStatsWithActivity | null = null;
-      const source = stats?.meta.source || 'unknown';
-      const generatedAt = stats?.meta.generated_at || 'unknown';
+      const stats = null as UnifiedStatsWithActivity | null;
+      const source = stats?.meta?.source || 'unknown';
+      const generatedAt = stats?.meta?.generated_at || 'unknown';
 
       expect(source).toBe('unknown');
       expect(generatedAt).toBe('unknown');
@@ -540,8 +540,8 @@ describe('RecentActivity Component', () => {
 
   describe('Error Handling', () => {
     it('should handle null stats gracefully', () => {
-      const stats: UnifiedStatsWithActivity | null = null;
-      const recentIssues = stats?.recentActivity.recentlyUpdated || [];
+      const stats = null as UnifiedStatsWithActivity | null;
+      const recentIssues = stats?.recentActivity?.recentlyUpdated || [];
 
       expect(recentIssues).toHaveLength(0);
     });
@@ -554,7 +554,7 @@ describe('RecentActivity Component', () => {
     });
 
     it('should handle network errors for repository data', async () => {
-      (global.fetch as vi.Mock).mockRejectedValue(new Error('Network error'));
+      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
       try {
         await fetch('/api/github/repository?include_stats=true');

@@ -160,7 +160,7 @@ describe('IssueStats Component', () => {
     });
 
     it('should handle null stats for urgent issues', () => {
-      const stats: UnifiedStats | null = null;
+      const stats = null as UnifiedStats | null;
       const urgentIssues = stats ? stats.priority.critical + stats.priority.high : 0;
       expect(urgentIssues).toBe(0);
     });
@@ -252,7 +252,12 @@ describe('IssueStats Component', () => {
 
     it('should determine urgent issues trend direction', () => {
       const urgentIssues = 5;
-      const trendDirection: string = urgentIssues > 3 ? 'up' : urgentIssues === 0 ? 'down' : 'stable';
+      let trendDirection: string;
+      if (urgentIssues > 3) {
+        trendDirection = 'up';
+      } else {
+        trendDirection = 'stable';
+      }
       expect(trendDirection).toBe('up');
     });
 
@@ -264,7 +269,12 @@ describe('IssueStats Component', () => {
 
     it('should determine stable trend for low urgent issues', () => {
       const urgentIssues = 2;
-      const trendDirection = urgentIssues > 3 ? 'up' : urgentIssues === 0 ? 'down' : 'stable';
+      let trendDirection: string;
+      if (urgentIssues > 3) {
+        trendDirection = 'up';
+      } else {
+        trendDirection = 'stable';
+      }
       expect(trendDirection).toBe('stable');
     });
 
@@ -365,9 +375,9 @@ describe('IssueStats Component', () => {
     });
 
     it('should handle missing metadata gracefully', () => {
-      const stats = null;
-      const source = stats?.meta.source || 'unknown';
-      const generatedAt = stats?.meta.generated_at || 'unknown';
+      const stats = null as UnifiedStats | null;
+      const source = stats?.meta?.source || 'unknown';
+      const generatedAt = stats?.meta?.generated_at || 'unknown';
 
       expect(source).toBe('unknown');
       expect(generatedAt).toBe('unknown');
@@ -376,7 +386,7 @@ describe('IssueStats Component', () => {
 
   describe('Error Handling', () => {
     it('should handle null stats gracefully', () => {
-      const stats = null;
+      const stats = null as UnifiedStats | null;
 
       const totalIssues = stats?.total || 0;
       const openIssues = stats?.open || 0;
