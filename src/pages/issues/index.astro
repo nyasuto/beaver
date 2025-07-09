@@ -7,6 +7,7 @@
  */
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
 import {
   getIssuesWithFallback,
   getStaticMetadata,
@@ -73,39 +74,24 @@ const sortedLabels = Object.entries(labelCounts)
   showSearch={true}
   maxWidth="7xl"
   padding="lg"
+  class="page-background"
 >
-  <div class="mb-8">
-    <div class="flex justify-between items-start">
-      <div>
-        <h1 class="text-3xl font-bold text-heading mb-2">📋 Issues</h1>
-        <p class="text-muted">
-          Browse and analyze GitHub issues with AI-powered classification and insights
-        </p>
-      </div>
-      <div class="text-right">
-        {
-          isDataAvailable && metadata && (
-            <div class="text-sm text-muted">
-              <p>総 Issue 数: {issues.length}</p>
-              <p>
-                オープン: {openIssues.length} / クローズ: {closedIssues.length}
-              </p>
-              <p>最終更新: {lastUpdated?.toLocaleDateString('ja-JP')}</p>
-            </div>
-          )
-        }
-        {
-          !isDataAvailable && (
-            <div class="text-sm text-yellow-600 bg-yellow-50 px-3 py-2 rounded">
-              ⚠️ 静的データが未生成です
-            </div>
-          )
-        }
-      </div>
-    </div>
-  </div>
+  <PageHeader
+    title="Issues"
+    description="Browse and analyze GitHub issues with AI-powered classification and insights"
+    icon="📋"
+    metaInfo={{
+      totalCount: issues.length,
+      openCount: openIssues.length,
+      closedCount: closedIssues.length,
+      lastUpdated: lastUpdated || undefined,
+      repositoryOwner: metadata?.repository?.owner,
+      repositoryName: metadata?.repository?.name,
+      isDataAvailable: isDataAvailable,
+    }}
+  />
 
-  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 space-lg">
     <!-- Filters Sidebar -->
     <aside class="lg:col-span-1">
       <div class="card">

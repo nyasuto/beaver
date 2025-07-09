@@ -408,6 +408,12 @@
   .surface-muted { @apply bg-gray-50 dark:bg-gray-900; }
   .surface-raised { @apply bg-white dark:bg-gray-800 shadow-sm; }
   .surface-overlay { @apply bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm; }
+  
+  /* Page Background Utilities */
+  .page-background { @apply bg-gray-50 dark:bg-gray-900; }
+  .page-surface { @apply bg-white dark:bg-gray-800; }
+  .page-header { @apply bg-white dark:bg-gray-900; }
+  .page-footer { @apply bg-gray-50 dark:bg-gray-900; }
 
   /* Interactive Utilities */
   .interactive { @apply cursor-pointer transition-all duration-200; }

@@ -22,9 +22,10 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
   author="Beaver Team"
   showHeader={true}
   showFooter={true}
-  showSearch={false}
-  maxWidth="full"
+  showSearch={true}
+  maxWidth="7xl"
   padding="none"
+  class="page-background"
 >
   <!-- Enhanced Banner -->
   <BannerWithData showActions={false} />
@@ -37,7 +38,7 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
   </div>
 
   <!-- Main Content -->
-  <main class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen">
     <!-- Hero Section -->
     <section class="py-12 lg:py-16">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -84,14 +85,14 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
     </section>
 
     <!-- Statistics Section -->
-    <section class="py-12">
+    <section class="py-12 space-lg">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <IssueStats />
       </div>
     </section>
 
     <!-- Main Dashboard Content -->
-    <section class="py-12">
+    <section class="py-12 space-lg">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-4xl mx-auto">
           <!-- Recent Activity (Full Width) -->
@@ -99,5 +100,5 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
         </div>
       </div>
     </section>
-  </main>
+  </div>
 </PageLayout>
