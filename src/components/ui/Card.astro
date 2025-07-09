@@ -37,14 +37,20 @@ try {
 }
 
 // Base classes for the card
-const baseClasses = ['bg-white', 'border', 'transition-all', 'duration-200'].join(' ');
+const baseClasses = [
+  'bg-white',
+  'border',
+  'transition-all',
+  'duration-200',
+  'dark:bg-gray-800',
+].join(' ');
 
 // Variant-specific classes
 const variantClasses = {
-  default: 'border-gray-200',
-  outlined: 'border-gray-300 border-2',
-  elevated: 'border-gray-200',
-  filled: 'bg-gray-50 border-gray-300',
+  default: 'border-gray-200 dark:border-gray-700',
+  outlined: 'border-gray-300 border-2 dark:border-gray-600',
+  elevated: 'border-gray-200 dark:border-gray-700',
+  filled: 'bg-gray-50 border-gray-300 dark:bg-gray-700 dark:border-gray-600',
 };
 
 // Padding classes
@@ -78,7 +84,7 @@ const shadowClasses = {
 const interactiveClasses = [
   hoverable ? 'hover:shadow-lg hover:-translate-y-1' : '',
   clickable
-    ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+    ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900'
     : '',
 ]
   .filter(Boolean)

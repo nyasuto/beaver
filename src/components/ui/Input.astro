@@ -64,6 +64,7 @@ const inputBaseClasses = [
   'transition-all',
   'duration-200',
   'placeholder-gray-400',
+  'dark:placeholder-gray-500',
   'focus:outline-none',
   'disabled:cursor-not-allowed',
   'disabled:opacity-50',
@@ -80,17 +81,19 @@ const sizeClasses = {
 // Variant-specific classes
 const variantClasses = {
   default:
-    'border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+    'border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-400',
   outlined:
-    'border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+    'border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-primary-400',
   filled:
-    'border border-gray-300 rounded-md bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+    'border border-gray-300 rounded-md bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:bg-gray-600 dark:focus:border-primary-400',
   flushed:
-    'border-0 border-b-2 border-gray-300 rounded-none px-0 focus:ring-0 focus:border-blue-500',
+    'border-0 border-b-2 border-gray-300 rounded-none px-0 focus:ring-0 focus:border-primary-500 dark:border-gray-600 dark:bg-transparent dark:text-white dark:focus:border-primary-400',
 };
 
 // State-specific classes
-const stateClasses = invalid ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '';
+const stateClasses = invalid
+  ? 'border-error-500 focus:border-error-500 focus:ring-error-500 dark:border-error-400 dark:focus:border-error-400'
+  : '';
 
 // Icon/element padding adjustments
 const hasLeftElement = leftIcon || leftElement;
