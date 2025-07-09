@@ -62,7 +62,13 @@ const trendColors = {
       <div class="min-w-0 flex-1">
         <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</h3>
         <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-        {description && <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">{description}</p>}
+        {
+          description && (
+            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">
+              {description}
+            </p>
+          )
+        }
       </div>
     </div>
 
@@ -71,7 +77,9 @@ const trendColors = {
         <div class="flex items-center space-x-1 ml-2 flex-shrink-0">
           <span class="text-sm">{trendIcons[trend.direction]}</span>
           <span class={`text-sm font-medium ${trendColors[trend.direction]}`}>{trend.value}</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">{trend.period}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
+            {trend.period}
+          </span>
         </div>
       )
     }
