@@ -2,10 +2,12 @@ import eslint from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import astro from 'eslint-plugin-astro';
+import astroParser from 'astro-eslint-parser';
 import globals from 'globals';
 
 export default [
   eslint.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ['**/*.{js,mjs,cjs,ts,tsx}'],
     languageOptions: {
@@ -50,9 +52,9 @@ export default [
       astro,
     },
     languageOptions: {
-      parser: 'astro-eslint-parser',
+      parser: astroParser,
       parserOptions: {
-        parser: '@typescript-eslint/parser',
+        parser: tsparser,
         extraFileExtensions: ['.astro'],
       },
     },
@@ -65,7 +67,15 @@ export default [
     files: ['**/*.{test,spec}.{js,ts,tsx}'],
     languageOptions: {
       globals: {
-        ...globals.jest,
+        ...globals.node,
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        vi: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
       },
     },
     rules: {
