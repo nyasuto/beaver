@@ -1,0 +1,70 @@
+name: Claude PR Assistant
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude-code-action:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # ファイルの読み書き権限
+      pull-requests: write     # PR作成・更新権限
+      issues: write            # Issue作成・更新権限
+      id-token: write          # OIDC認証用
+      actions: read            # Actions情報の読み取り
+      checks: write            # チェック結果の書き込み
+      statuses: write          # ステータスの更新
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # 全履歴を取得してgit操作を可能に
+          token: ${{ secrets.GITHUB_TOKEN }}  # GitHub Token for git operations
+
+      - name: Run Claude PR Action
+        uses: anthropics/claude-code-action@beta
+        with:          
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          timeout_minutes: "60"
+          # GitHub tokenを渡してgit操作を可能に
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Claude に bash コマンドの実行権限を付与
+          allowed_tools: |
+            Bash(*)
+            Edit
+            MultiEdit
+            Write
+            Read
+            Glob
+            Grep
+            LS
+            TodoWrite
+            WebFetch
+            WebSearch
+            Task
+            NotebookRead
+            NotebookEdit
+            mcp__github__create_pull_request
+            mcp__github__merge_pull_request
+            mcp__github__close_pull_request
+            mcp__github__create_issue
+            mcp__github__update_issue
+            mcp__github__close_issue
+        env:
+          # 環境変数でさらなる権限を提供
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
