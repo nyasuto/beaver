@@ -1,7 +1,6 @@
 ---
 import { PageLayout } from '../components/layouts';
-import BannerWithData from '../components/navigation/BannerWithData.astro';
-import Breadcrumb from '../components/navigation/Breadcrumb.astro';
+import PageHeader from '../components/ui/PageHeader.astro';
 import IssueStats from '../components/dashboard/IssueStats.astro';
 import RecentActivity from '../components/dashboard/RecentActivity.astro';
 // resolveUrl is needed for breadcrumb navigation
@@ -24,24 +23,21 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
   showFooter={true}
   showSearch={true}
   maxWidth="7xl"
-  padding="none"
+  padding="lg"
   class="page-background"
+  breadcrumbs={breadcrumbItems}
 >
-  <!-- Enhanced Banner -->
-  <BannerWithData showActions={false} />
-
-  <!-- Breadcrumb Navigation -->
-  <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-    <div class="container mx-auto px-4 py-3">
-      <Breadcrumb items={breadcrumbItems} />
-    </div>
-  </div>
+  <PageHeader
+    title="Beaver Astro Edition"
+    description="AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases"
+    icon="🦫"
+  />
 
   <!-- Main Content -->
   <div class="min-h-screen">
     <!-- Hero Section -->
-    <section class="py-12 lg:py-16">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="py-12 lg:py-16 space-lg">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center">
           <h1 class="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
             Welcome to Your Dashboard
@@ -86,14 +82,14 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
 
     <!-- Statistics Section -->
     <section class="py-12 space-lg">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto">
         <IssueStats />
       </div>
     </section>
 
     <!-- Main Dashboard Content -->
     <section class="py-12 space-lg">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto">
         <div class="max-w-4xl mx-auto">
           <!-- Recent Activity (Full Width) -->
           <RecentActivity />
