@@ -2,8 +2,8 @@
 /**
  * Issue Statistics Component
  *
- * Displays comprehensive issue statistics with priority classification
- * Using unified StatsService for consistent data across components
+ * Displays the most important issue statistics for quick overview
+ * Simplified to show only essential metrics
  */
 
 import StatCard from './StatCard.astro';
@@ -23,10 +23,6 @@ const stats = statsResult.success ? statsResult.data : null;
 
 // Calculate derived metrics
 const urgentIssues = stats ? stats.priority.critical + stats.priority.high : 0;
-const completionRate =
-  stats && stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0;
-
-// Recent activity from unified stats
 const recentActivity = stats ? stats.recentActivity.thisWeek : 0;
 
 // Export interface for type checking
@@ -37,28 +33,14 @@ export interface Props {
 const { class: className = '' } = Astro.props;
 ---
 
-<div class={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${className}`}>
-  <!-- Total Issues -->
-  <StatCard
-    title="Total Issues"
-    value={stats?.total || 0}
-    icon="📊"
-    description="All issues in repository"
-    color="blue"
-  />
-
+<div class={`grid grid-cols-1 md:grid-cols-3 gap-6 ${className}`}>
   <!-- Open Issues -->
   <StatCard
     title="Open Issues"
     value={stats?.open || 0}
     icon="🔓"
-    description="Currently active issues"
+    description="Currently active"
     color="green"
-    trend={{
-      direction: recentActivity > 0 ? 'up' : 'stable',
-      value: `${recentActivity}`,
-      period: 'this week',
-    }}
   />
 
   <!-- Urgent Issues -->
@@ -68,106 +50,14 @@ const { class: className = '' } = Astro.props;
     icon="🚨"
     description="Critical & high priority"
     color="red"
-    trend={{
-      direction: urgentIssues > 3 ? 'up' : urgentIssues === 0 ? 'down' : 'stable',
-      value: `${stats?.priority.critical || 0} critical`,
-      period: 'right now',
-    }}
   />
 
-  <!-- Completion Rate -->
+  <!-- Recent Activity -->
   <StatCard
-    title="Completion Rate"
-    value={`${completionRate}%`}
-    icon="✅"
-    description="Issues resolved"
-    color="purple"
-    trend={{
-      direction: completionRate > 60 ? 'up' : completionRate < 40 ? 'down' : 'stable',
-      value: `${stats?.closed || 0}/${stats?.total || 0}`,
-      period: 'completed',
-    }}
-  />
-</div>
-
-<!-- Priority Breakdown -->
-<div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-  <StatCard
-    title="Critical"
-    value={stats?.priority.critical || 0}
-    icon="🔴"
-    color="red"
-    size="sm"
-  />
-  <StatCard
-    title="High Priority"
-    value={stats?.priority.high || 0}
-    icon="🟠"
-    color="yellow"
-    size="sm"
-  />
-  <StatCard
-    title="Medium Priority"
-    value={stats?.priority.medium || 0}
-    icon="🟡"
+    title="Recent Activity"
+    value={recentActivity}
+    icon="📈"
+    description="Updated this week"
     color="blue"
-    size="sm"
-  />
-  <StatCard
-    title="Low Priority"
-    value={stats?.priority.low || 0}
-    icon="🟢"
-    color="green"
-    size="sm"
   />
 </div>
-
-<!-- Data Source Information -->
-<div class="mt-4 flex items-center justify-between text-sm text-gray-500">
-  <span>
-    Data source: {stats?.meta.source || 'unknown'}
-    {stats?.meta.source === 'cache' && ' (cached)'}
-  </span>
-  <span>
-    Last updated: {
-      stats?.meta.generated_at ? new Date(stats.meta.generated_at).toLocaleString() : 'unknown'
-    }
-  </span>
-</div>
-
-<!-- API Status Warning -->
-{
-  !statsResult.success && (
-    <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg
-            class="h-5 w-5 text-yellow-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm text-yellow-700">
-            Using fallback data. Check
-            <a
-              href="/api/github/issues"
-              class="font-medium underline text-yellow-700 hover:text-yellow-600"
-            >
-              API status
-            </a>
-            for live data.
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
