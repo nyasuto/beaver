@@ -1,6 +1,5 @@
 ---
-import { PageLayout } from '../components/layouts';
-import PageHeader from '../components/ui/PageHeader.astro';
+import PageLayout from '../components/layouts/PageLayout.astro';
 import IssueStats from '../components/dashboard/IssueStats.astro';
 import RecentActivity from '../components/dashboard/RecentActivity.astro';
 // resolveUrl is needed for breadcrumb navigation
@@ -27,12 +26,6 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
   class="page-background"
   breadcrumbs={breadcrumbItems}
 >
-  <PageHeader
-    title="Beaver Astro Edition"
-    description="AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases"
-    icon="🦫"
-  />
-
   <!-- Main Content -->
   <div class="min-h-screen">
     <!-- Hero Section -->
