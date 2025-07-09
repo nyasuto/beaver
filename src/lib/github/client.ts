@@ -8,6 +8,7 @@
 import { Octokit } from '@octokit/rest';
 import { z } from 'zod';
 import type { Result } from '../types';
+import { validateEnv } from '../config/env-validation';
 
 // GitHub configuration schema
 export const GitHubConfigSchema = z.object({
@@ -83,18 +84,34 @@ export class GitHubClient {
   }
 
   /**
-   * Create GitHub client from environment variables
+   * Create GitHub client from environment variables with enhanced validation
    *
    * @returns Result with GitHubClient instance or error
    */
-  static fromEnvironment(): Result<GitHubClient> {
+  static async fromEnvironment(): Promise<Result<GitHubClient>> {
     try {
+      // 環境変数の検証を実行
+      const envResult = await validateEnv();
+
+      if (!envResult.success) {
+        return {
+          success: false,
+          error: new GitHubError(
+            `Environment validation failed: ${envResult.error.message}`,
+            undefined,
+            'ENV_VALIDATION_ERROR'
+          ),
+        };
+      }
+
+      const validatedEnv = envResult.data;
+
       const config: GitHubConfig = {
-        token: process.env['GITHUB_TOKEN'] || '',
-        owner: process.env['GITHUB_OWNER'] || '',
-        repo: process.env['GITHUB_REPO'] || '',
-        baseUrl: process.env['GITHUB_BASE_URL'] || 'https://api.github.com',
-        userAgent: process.env['GITHUB_USER_AGENT'] || 'beaver-astro/1.0.0',
+        token: validatedEnv.GITHUB_TOKEN,
+        owner: validatedEnv.GITHUB_OWNER,
+        repo: validatedEnv.GITHUB_REPO,
+        baseUrl: validatedEnv.GITHUB_BASE_URL,
+        userAgent: validatedEnv.GITHUB_USER_AGENT,
       };
 
       const client = new GitHubClient(config);

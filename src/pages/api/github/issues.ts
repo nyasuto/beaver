@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
     const query = APIQuerySchema.parse(searchParams);
 
     // Create GitHub services
-    const servicesResult = createGitHubServicesFromEnv();
+    const servicesResult = await createGitHubServicesFromEnv();
 
     if (!servicesResult.success) {
       return new Response(
@@ -155,7 +155,7 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
 
     // Create GitHub services
-    const servicesResult = createGitHubServicesFromEnv();
+    const servicesResult = await createGitHubServicesFromEnv();
 
     if (!servicesResult.success) {
       return new Response(

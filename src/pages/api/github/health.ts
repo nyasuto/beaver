@@ -11,7 +11,7 @@ import { createGitHubServicesFromEnv } from '../../../lib/github';
 export const GET: APIRoute = async ({ request: _request }) => {
   try {
     // Create GitHub services
-    const servicesResult = createGitHubServicesFromEnv();
+    const servicesResult = await createGitHubServicesFromEnv();
 
     if (!servicesResult.success) {
       return new Response(

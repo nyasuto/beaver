@@ -102,8 +102,8 @@ export function createGitHubServices(config: GitHubConfig) {
  *
  * @returns Object with all GitHub services or error
  */
-export function createGitHubServicesFromEnv() {
-  const clientResult = GitHubClient.fromEnvironment();
+export async function createGitHubServicesFromEnv() {
+  const clientResult = await GitHubClient.fromEnvironment();
 
   if (!clientResult.success) {
     return clientResult;
