@@ -1,0 +1,199 @@
+---
+/**
+ * Issue Statistics Component
+ *
+ * Displays comprehensive issue statistics with priority classification
+ */
+
+import StatCard from './StatCard.astro';
+
+// Fetch issue statistics from the API
+const fetchIssueStats = async () => {
+  try {
+    const response = await fetch(
+      `${Astro.site?.origin || 'http://localhost:4321'}/api/github/issues?include_stats=true&state=all&per_page=100`
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        return {
+          success: true,
+          data: result.data,
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch issue statistics:', error);
+  }
+
+  // Fallback data for development/testing
+  return {
+    success: false,
+    data: {
+      issues: [],
+      stats: {
+        total: 12,
+        open: 8,
+        closed: 4,
+        labels: [],
+      },
+    },
+  };
+};
+
+const statsResult = await fetchIssueStats();
+const { issues, stats } = statsResult.data;
+
+// Calculate priority-based statistics
+const calculatePriorityStats = (issues: any[]) => {
+  const priorities = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+  };
+
+  issues.forEach(issue => {
+    const labels = issue.labels || [];
+    const priorityLabel = labels.find(
+      (label: any) => label.name && label.name.startsWith('priority:')
+    );
+
+    if (priorityLabel) {
+      const priority = priorityLabel.name.split(':')[1]?.trim() || 'medium';
+      if (priority in priorities) {
+        priorities[priority as keyof typeof priorities]++;
+      }
+    } else {
+      // Default to medium if no priority label
+      priorities.medium++;
+    }
+  });
+
+  return priorities;
+};
+
+// Calculate recent activity
+const calculateRecentActivity = (issues: any[]) => {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const recentIssues = issues.filter(issue => {
+    const updatedAt = new Date(issue.updated_at);
+    return updatedAt >= sevenDaysAgo;
+  });
+
+  return recentIssues.length;
+};
+
+const priorityStats = calculatePriorityStats(issues);
+const recentActivity = calculateRecentActivity(issues);
+const urgentIssues = priorityStats.critical + priorityStats.high;
+const completionRate = stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0;
+
+// Export interface for type checking
+export interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<div class={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${className}`}>
+  <!-- Total Issues -->
+  <StatCard
+    title="Total Issues"
+    value={stats.total}
+    icon="📊"
+    description="All issues in repository"
+    color="blue"
+  />
+
+  <!-- Open Issues -->
+  <StatCard
+    title="Open Issues"
+    value={stats.open}
+    icon="🔓"
+    description="Currently active issues"
+    color="green"
+    trend={{
+      direction: recentActivity > 0 ? 'up' : 'stable',
+      value: `${recentActivity}`,
+      period: 'this week',
+    }}
+  />
+
+  <!-- Urgent Issues -->
+  <StatCard
+    title="Urgent Issues"
+    value={urgentIssues}
+    icon="🚨"
+    description="Critical & high priority"
+    color="red"
+    trend={{
+      direction: urgentIssues > 3 ? 'up' : urgentIssues === 0 ? 'down' : 'stable',
+      value: `${priorityStats.critical} critical`,
+      period: 'right now',
+    }}
+  />
+
+  <!-- Completion Rate -->
+  <StatCard
+    title="Completion Rate"
+    value={`${completionRate}%`}
+    icon="✅"
+    description="Issues resolved"
+    color="purple"
+    trend={{
+      direction: completionRate > 60 ? 'up' : completionRate < 40 ? 'down' : 'stable',
+      value: `${stats.closed}/${stats.total}`,
+      period: 'completed',
+    }}
+  />
+</div>
+
+<!-- Priority Breakdown -->
+<div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+  <StatCard title="Critical" value={priorityStats.critical} icon="🔴" color="red" size="sm" />
+  <StatCard title="High Priority" value={priorityStats.high} icon="🟠" color="yellow" size="sm" />
+  <StatCard title="Medium Priority" value={priorityStats.medium} icon="🟡" color="blue" size="sm" />
+  <StatCard title="Low Priority" value={priorityStats.low} icon="🟢" color="green" size="sm" />
+</div>
+
+<!-- API Status Warning -->
+{
+  !statsResult.success && (
+    <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-5 w-5 text-yellow-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-yellow-700">
+            Using fallback data. Check
+            <a
+              href="/api/github/issues"
+              class="font-medium underline text-yellow-700 hover:text-yellow-600"
+            >
+              API status
+            </a>
+            for live data.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
