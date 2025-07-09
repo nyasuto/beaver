@@ -6,6 +6,8 @@
  * Includes logo, navigation links, theme toggle, and mobile menu.
  */
 
+import { resolveUrl } from '../../lib/utils/url';
+
 export interface Props {
   currentPath?: string;
   showSearch?: boolean;
@@ -24,9 +26,9 @@ const {
 
 // Navigation items
 const navItems = [
-  { name: 'Home', href: '/', icon: 'home' },
-  { name: 'Issues', href: '/issues', icon: 'bug' },
-  { name: 'Analytics', href: '/analytics', icon: 'chart' },
+  { name: 'Home', href: resolveUrl('/'), icon: 'home' },
+  { name: 'Issues', href: resolveUrl('/issues'), icon: 'bug' },
+  { name: 'Analytics', href: resolveUrl('/analytics'), icon: 'chart' },
 ];
 
 // Check if current path matches nav item
@@ -53,7 +55,7 @@ const headerClasses = [
     <div class="flex items-center justify-between h-16">
       <!-- Logo and brand -->
       <div class="flex items-center">
-        <a href="/" class="flex items-center space-x-2 group">
+        <a href={resolveUrl('/')} class="flex items-center space-x-2 group">
           <div
             class="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200"
           >

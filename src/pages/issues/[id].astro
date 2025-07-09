@@ -8,6 +8,7 @@
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import { getIssuesWithFallback, getStaticIssueById, hasStaticData } from '../../lib/data/github';
+import { resolveUrl } from '../../lib/utils/url';
 
 export function getStaticPaths() {
   try {
@@ -35,16 +36,16 @@ const { issue } = Astro.props;
 const currentIssue = issue || getStaticIssueById(parseInt(id || '0'));
 
 if (!currentIssue) {
-  return Astro.redirect('/issues');
+  return Astro.redirect(resolveUrl('/issues'));
 }
 
 const title = `Issue #${currentIssue.number}: ${currentIssue.title}`;
 const description = `Detailed view of GitHub issue #${currentIssue.number} with AI-powered analysis`;
 
 const breadcrumbs = [
-  { name: 'Home', href: '/' },
-  { name: 'Issues', href: '/issues' },
-  { name: `Issue #${currentIssue.number}`, href: `/issues/${currentIssue.number}` },
+  { name: 'Home', href: resolveUrl('/') },
+  { name: 'Issues', href: resolveUrl('/issues') },
+  { name: `Issue #${currentIssue.number}`, href: resolveUrl(`/issues/${currentIssue.number}`) },
 ];
 
 // Issue 本文の markdown 処理（簡易版）
@@ -204,10 +205,10 @@ const processedBody = currentIssue.body
       <div class="card">
         <h3 class="text-lg font-semibold text-heading mb-4">Related Issues</h3>
         <div class="space-y-2">
-          <a href="/issues/123" class="block text-sm text-primary-600 hover:text-primary-700">
+          <a href={resolveUrl('/issues/123')} class="block text-sm text-primary-600 hover:text-primary-700">
             #123 Similar issue
           </a>
-          <a href="/issues/456" class="block text-sm text-primary-600 hover:text-primary-700">
+          <a href={resolveUrl('/issues/456')} class="block text-sm text-primary-600 hover:text-primary-700">
             #456 Related feature request
           </a>
         </div>
