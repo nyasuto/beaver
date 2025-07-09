@@ -15,6 +15,8 @@ export const NAVIGATION_COMPONENTS = {
   header: 'Header',
   footer: 'Footer',
   breadcrumb: 'Breadcrumb',
+  banner: 'Banner',
+  bannerWithData: 'BannerWithData',
 } as const;
 
 export type NavigationComponentName = keyof typeof NAVIGATION_COMPONENTS;
@@ -23,10 +25,13 @@ export type NavigationComponentName = keyof typeof NAVIGATION_COMPONENTS;
 export const Header = 'Header';
 export const Footer = 'Footer';
 export const Breadcrumb = 'Breadcrumb';
+export const Banner = 'Banner';
+export const BannerWithData = 'BannerWithData';
 
 // BreadcrumbItem type definition (commonly used across components)
 export interface BreadcrumbItem {
   name: string;
-  href: string;
+  href?: string;
   current?: boolean;
+  icon?: string;
 }

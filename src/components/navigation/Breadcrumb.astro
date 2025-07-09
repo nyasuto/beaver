@@ -9,6 +9,7 @@ export interface BreadcrumbItem {
   name: string;
   href?: string;
   current?: boolean;
+  icon?: string;
 }
 
 export interface Props {
@@ -58,14 +59,19 @@ const breadcrumbItems = items.map((item, index) => ({
           )}
 
           {item.current ? (
-            <span class="text-gray-500 dark:text-gray-400 text-sm font-medium" aria-current="page">
+            <span
+              class="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center"
+              aria-current="page"
+            >
+              {item.icon && <span class="mr-2">{item.icon}</span>}
               {item.name}
             </span>
           ) : (
             <a
               href={item.href}
-              class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 text-sm font-medium transition-colors duration-200"
+              class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 text-sm font-medium transition-colors duration-200 flex items-center"
             >
+              {item.icon && <span class="mr-2">{item.icon}</span>}
               {item.name}
             </a>
           )}

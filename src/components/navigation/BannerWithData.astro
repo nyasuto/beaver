@@ -1,0 +1,135 @@
+---
+/**
+ * Banner with Dynamic Data
+ *
+ * Banner component that fetches real repository data from the API
+ */
+
+// import Banner from './Banner.astro';
+
+// Fetch repository data from API
+const fetchRepoData = async () => {
+  try {
+    const response = await fetch(
+      `${Astro.site?.origin || 'http://localhost:4321'}/api/github/repository?include_stats=true`
+    );
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        return {
+          success: true,
+          data: {
+            owner: result.data.repository?.owner?.login || 'nyasuto',
+            name: result.data.repository?.name || 'beaver',
+            fullName: result.data.repository?.full_name || 'nyasuto/beaver',
+            healthScore: result.data.metrics?.health_score || 85,
+            lastUpdated: result.data.repository?.updated_at || new Date().toISOString(),
+            private: result.data.repository?.private || false,
+          },
+        };
+      }
+    }
+  } catch {
+    // console.error('Failed to fetch repository data');
+  }
+
+  // Fallback data
+  return {
+    success: false,
+    data: {
+      owner: 'nyasuto',
+      name: 'beaver',
+      fullName: 'nyasuto/beaver',
+      healthScore: 85,
+      lastUpdated: new Date().toISOString(),
+      private: false,
+    },
+  };
+};
+
+const repoResult = await fetchRepoData();
+const repoData = repoResult.data;
+
+// Export props for the Banner component
+export interface Props {
+  showActions?: boolean;
+  class?: string;
+}
+
+const { showActions = true, class: className = '' } = Astro.props;
+---
+
+<!-- Enhanced Banner for Issue 48 -->
+<div class={`banner-gradient ${className}`}>
+  <div class="container mx-auto px-4 py-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <!-- Repository Information -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
+          <div class="banner-logo">
+            <span class="text-2xl">🦫</span>
+          </div>
+          <div class="text-white">
+            <h1 class="text-2xl font-bold">
+              Beaver
+              <span class="banner-badge">Astro Edition</span>
+            </h1>
+            <div class="flex items-center space-x-3 text-sm text-blue-100">
+              <span>{repoData.owner}/{repoData.name}</span>
+              <span>Health: {repoData.healthScore}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      {
+        showActions && (
+          <div class="flex items-center space-x-3">
+            <a href="/issues" class="banner-action-btn">
+              View Issues
+            </a>
+            <a href="/analytics" class="banner-action-btn">
+              Analytics
+            </a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</div>
+
+{
+  !repoResult.success && (
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-5 w-5 text-yellow-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-yellow-700">
+            Unable to fetch live repository data. Showing fallback information.
+            <a
+              href="/api/github/health"
+              class="font-medium underline text-yellow-700 hover:text-yellow-600"
+            >
+              Check GitHub API status
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
