@@ -52,17 +52,23 @@ const baseClasses = [
   'focus:outline-none',
   'focus:ring-2',
   'focus:ring-offset-2',
+  'focus:ring-offset-white',
+  'dark:focus:ring-offset-gray-900',
   'disabled:cursor-not-allowed',
   'disabled:opacity-50',
 ].join(' ');
 
 // Variant-specific classes
 const variantClasses = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 focus:ring-blue-500',
-  secondary: 'bg-gray-600 hover:bg-gray-700 text-white border-gray-600 focus:ring-gray-500',
-  outline: 'bg-transparent hover:bg-gray-50 text-gray-700 border-gray-300 focus:ring-blue-500',
-  ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 border-transparent focus:ring-blue-500',
-  link: 'bg-transparent hover:underline text-blue-600 border-transparent p-0 focus:ring-blue-500',
+  primary:
+    'bg-primary-600 hover:bg-primary-700 text-white border-primary-600 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
+  secondary:
+    'bg-secondary-600 hover:bg-secondary-700 text-white border-secondary-600 focus:ring-secondary-500 dark:bg-secondary-500 dark:hover:bg-secondary-600',
+  outline:
+    'bg-transparent hover:bg-gray-50 text-gray-700 border-gray-300 focus:ring-primary-500 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-800',
+  ghost:
+    'bg-transparent hover:bg-gray-100 text-gray-700 border-transparent focus:ring-primary-500 dark:text-gray-200 dark:hover:bg-gray-800',
+  link: 'bg-transparent hover:underline text-primary-600 border-transparent p-0 focus:ring-primary-500 dark:text-primary-400',
 };
 
 // Size-specific classes
