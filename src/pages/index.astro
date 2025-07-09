@@ -4,16 +4,16 @@ import BannerWithData from '../components/navigation/BannerWithData.astro';
 import Breadcrumb from '../components/navigation/Breadcrumb.astro';
 import IssueStats from '../components/dashboard/IssueStats.astro';
 import RecentActivity from '../components/dashboard/RecentActivity.astro';
+// resolveUrl is needed for breadcrumb navigation
 import { resolveUrl } from '../lib/utils/url';
 
 const title = 'Beaver Astro Edition';
 const description =
   'AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases';
 
-// Breadcrumb items for dashboard
+// Breadcrumb items for home page
 const breadcrumbItems = [
-  { name: 'Home', href: resolveUrl('/'), icon: '🏠' },
-  { name: 'Dashboard', current: true, icon: '📊' },
+  { name: 'Home', href: resolveUrl('/'), current: true, icon: '🏠' },
 ];
 ---
 
@@ -29,7 +29,7 @@ const breadcrumbItems = [
   padding="none"
 >
   <!-- Enhanced Banner -->
-  <BannerWithData />
+  <BannerWithData showActions={false} />
 
   <!-- Breadcrumb Navigation -->
   <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -50,6 +50,28 @@ const breadcrumbItems = [
           <p class="mt-6 text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Track project health and manage issues efficiently.
           </p>
+          
+          <!-- Primary Action Buttons -->
+          <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a 
+              href="/issues" 
+              class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 min-w-[160px] justify-center"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Manage Issues
+            </a>
+            <a 
+              href="/analytics" 
+              class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 min-w-[160px] justify-center"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              View Analytics
+            </a>
+          </div>
         </div>
       </div>
     </section>

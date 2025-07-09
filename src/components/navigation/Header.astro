@@ -24,12 +24,16 @@ const {
   class: className = '',
 } = Astro.props;
 
-// Navigation items
+// Navigation items with priority levels
 const navItems = [
-  { name: 'Home', href: resolveUrl('/'), icon: 'home' },
-  { name: 'Issues', href: resolveUrl('/issues'), icon: 'bug' },
-  { name: 'Analytics', href: resolveUrl('/analytics'), icon: 'chart' },
+  { name: 'Home', href: resolveUrl('/'), icon: 'home', priority: 'primary' },
+  { name: 'Issues', href: resolveUrl('/issues'), icon: 'bug', priority: 'primary' },
+  { name: 'Analytics', href: resolveUrl('/analytics'), icon: 'chart', priority: 'secondary' },
 ];
+
+// Separate primary and secondary navigation
+const primaryNavItems = navItems.filter(item => item.priority === 'primary');
+const secondaryNavItems = navItems.filter(item => item.priority === 'secondary');
 
 // Check if current path matches nav item
 const isActive = (href: string) => {
@@ -69,19 +73,21 @@ const headerClasses = [
         </a>
       </div>
 
-      <!-- Desktop navigation -->
+      <!-- Desktop navigation with hierarchical structure -->
       <nav class="hidden md:flex items-center space-x-1">
-        {
-          navItems.map(item => (
-            <a
-              href={item.href}
-              class={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                isActive(item.href)
-                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800'
-              }`}
-              aria-current={isActive(item.href) ? 'page' : undefined}
-            >
+        <!-- Primary Navigation -->
+        <div class="flex items-center space-x-1 mr-4">
+          {
+            primaryNavItems.map(item => (
+              <a
+                href={item.href}
+                class={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                  isActive(item.href)
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                    : 'text-gray-900 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-100 dark:hover:text-primary-400 dark:hover:bg-gray-800'
+                }`}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
               <span class="flex items-center space-x-2">
                 {item.icon === 'home' && (
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,6 +124,40 @@ const headerClasses = [
             </a>
           ))
         }
+        </div>
+        
+        <!-- Secondary Navigation -->
+        {secondaryNavItems.length > 0 && (
+          <div class="flex items-center space-x-1 border-l border-gray-200 dark:border-gray-700 pl-4">
+            {
+              secondaryNavItems.map(item => (
+                <a
+                  href={item.href}
+                  class={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 ${
+                    isActive(item.href)
+                      ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900 dark:text-secondary-300'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800'
+                  }`}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                >
+                  <span class="flex items-center space-x-2">
+                    {item.icon === 'chart' && (
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
+                      </svg>
+                    )}
+                    <span>{item.name}</span>
+                  </span>
+                </a>
+              ))
+            }
+          </div>
+        )}
       </nav>
 
       <!-- Search bar (if enabled) -->
@@ -240,56 +280,88 @@ const headerClasses = [
       </div>
     </div>
 
-    <!-- Mobile menu -->
+    <!-- Mobile menu with hierarchical structure -->
     <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-700">
       <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-        {
-          navItems.map(item => (
-            <a
-              href={item.href}
-              class={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
-                isActive(item.href)
-                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800'
-              }`}
-              aria-current={isActive(item.href) ? 'page' : undefined}
-            >
-              <span class="flex items-center space-x-2">
-                {item.icon === 'home' && (
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
-                )}
-                {item.icon === 'bug' && (
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                )}
-                {item.icon === 'chart' && (
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                )}
-                <span>{item.name}</span>
-              </span>
-            </a>
-          ))
-        }
+        <!-- Primary Navigation -->
+        <div class="space-y-1 mb-3">
+          <div class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Main Navigation
+          </div>
+          {
+            primaryNavItems.map(item => (
+              <a
+                href={item.href}
+                class={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                  isActive(item.href)
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                    : 'text-gray-900 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-100 dark:hover:text-primary-400 dark:hover:bg-gray-800'
+                }`}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
+                <span class="flex items-center space-x-2">
+                  {item.icon === 'home' && (
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                      />
+                    </svg>
+                  )}
+                  {item.icon === 'bug' && (
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  )}
+                  <span>{item.name}</span>
+                </span>
+              </a>
+            ))
+          }
+        </div>
+        
+        <!-- Secondary Navigation -->
+        {secondaryNavItems.length > 0 && (
+          <div class="space-y-1 border-t border-gray-200 dark:border-gray-700 pt-3">
+            <div class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Additional Features
+            </div>
+            {
+              secondaryNavItems.map(item => (
+                <a
+                  href={item.href}
+                  class={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                    isActive(item.href)
+                      ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900 dark:text-secondary-300'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800'
+                  }`}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                >
+                  <span class="flex items-center space-x-2">
+                    {item.icon === 'chart' && (
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
+                      </svg>
+                    )}
+                    <span>{item.name}</span>
+                  </span>
+                </a>
+              ))
+            }
+          </div>
+        )}
 
         {
           showSearch && (

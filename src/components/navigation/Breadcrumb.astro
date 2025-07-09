@@ -3,6 +3,7 @@
  * Breadcrumb Navigation Component
  *
  * Displays navigation breadcrumbs for better user orientation.
+ * Enhanced with accessibility features and keyboard navigation support.
  */
 
 export interface BreadcrumbItem {
@@ -16,18 +17,23 @@ export interface Props {
   items: BreadcrumbItem[];
   separator?: 'slash' | 'chevron' | 'arrow';
   class?: string;
+  showHome?: boolean;
 }
 
-const { items, separator = 'chevron', class: className = '' } = Astro.props;
+const { items, separator = 'chevron', class: className = '', showHome = true } = Astro.props;
 
-// Ensure the last item is marked as current
-const breadcrumbItems = items.map((item, index) => ({
+// Ensure the last item is marked as current and add home if needed
+const processedItems = showHome && items.length > 0 && items[0]?.name !== 'Home'
+  ? [{ name: 'Home', href: '/', icon: '🏠' }, ...items]
+  : items;
+
+const breadcrumbItems = processedItems.map((item, index) => ({
   ...item,
-  current: index === items.length - 1,
+  current: index === processedItems.length - 1,
 }));
 ---
 
-<nav class={`flex ${className}`} aria-label="Breadcrumb">
+<nav class={`flex ${className}`} aria-label="Breadcrumb navigation">
   <ol class="flex items-center space-x-2">
     {
       breadcrumbItems.map((item, index) => (
@@ -69,9 +75,10 @@ const breadcrumbItems = items.map((item, index) => ({
           ) : (
             <a
               href={item.href}
-              class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 text-sm font-medium transition-colors duration-200 flex items-center"
+              class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 text-sm font-medium transition-colors duration-200 flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-md px-1 py-1"
+              aria-label={`Navigate to ${item.name}`}
             >
-              {item.icon && <span class="mr-2">{item.icon}</span>}
+              {item.icon && <span class="mr-2" aria-hidden="true">{item.icon}</span>}
               {item.name}
             </a>
           )}
