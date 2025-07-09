@@ -25,13 +25,14 @@ import {
   formatTimeAgo,
 } from '../../lib/analytics/data-adapter';
 import type { Issue } from '../../lib/schemas/github';
+import { resolveUrl } from '../../lib/utils/url';
 
 const title = 'Analytics Dashboard';
 const description = 'View analytics and insights about your GitHub repository activity';
 
 const breadcrumbs = [
-  { name: 'Home', href: '/' },
-  { name: 'Analytics', href: '/analytics' },
+  { name: 'Home', href: resolveUrl('/') },
+  { name: 'Analytics', href: resolveUrl('/analytics') },
 ];
 
 // 静的データの読み込み
@@ -244,7 +245,7 @@ try {
                   </div>
                   <div>
                     <p class="text-sm text-heading">
-                      <a href={`/issues/${activity.issue.number}`} class="hover:text-blue-600">
+                      <a href={resolveUrl(`/issues/${activity.issue.number}`)} class="hover:text-blue-600">
                         {activity.description}
                       </a>
                     </p>

@@ -5,6 +5,8 @@
  * Site footer with links, social media, and additional information.
  */
 
+import { resolveUrl } from '../../lib/utils/url';
+
 export interface Props {
   showSocial?: boolean;
   showNewsletter?: boolean;
@@ -25,9 +27,9 @@ const currentYear = new Date().getFullYear();
 const footerLinks = {
   Product: [
     { name: 'Features', href: '#features' },
-    { name: 'Analytics', href: '/analytics' },
-    { name: 'Issues', href: '/issues' },
-    { name: 'API', href: '/api' },
+    { name: 'Analytics', href: resolveUrl('/analytics') },
+    { name: 'Issues', href: resolveUrl('/issues') },
+    { name: 'API', href: resolveUrl('/api') },
   ],
   Resources: [
     { name: 'Documentation', href: '#docs' },

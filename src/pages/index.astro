@@ -4,6 +4,7 @@ import BannerWithData from '../components/navigation/BannerWithData.astro';
 import Breadcrumb from '../components/navigation/Breadcrumb.astro';
 import IssueStats from '../components/dashboard/IssueStats.astro';
 import RecentActivity from '../components/dashboard/RecentActivity.astro';
+import { resolveUrl } from '../lib/utils/url';
 
 const title = 'Beaver Astro Edition';
 const description =
@@ -11,7 +12,7 @@ const description =
 
 // Breadcrumb items for dashboard
 const breadcrumbItems = [
-  { name: 'Home', href: '/', icon: '🏠' },
+  { name: 'Home', href: resolveUrl('/'), icon: '🏠' },
   { name: 'Dashboard', current: true, icon: '📊' },
 ];
 ---
@@ -56,7 +57,7 @@ const breadcrumbItems = [
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="/issues"
+                href={resolveUrl('/issues')}
                 class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +70,7 @@ const breadcrumbItems = [
                 View Issues
               </a>
               <a
-                href="/analytics"
+                href={resolveUrl('/analytics')}
                 class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +107,7 @@ const breadcrumbItems = [
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
             <div class="space-y-3">
               <a
-                href="/issues/new"
+                href={resolveUrl('/issues/new')}
                 class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <span class="text-lg">➕</span>
@@ -115,7 +116,7 @@ const breadcrumbItems = [
                 >
               </a>
               <a
-                href="/analytics"
+                href={resolveUrl('/analytics')}
                 class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <span class="text-lg">📊</span>
@@ -124,7 +125,7 @@ const breadcrumbItems = [
                 >
               </a>
               <a
-                href="/api/github/health"
+                href={resolveUrl('/api/github/health')}
                 class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <span class="text-lg">🔧</span>

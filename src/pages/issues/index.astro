@@ -13,13 +13,14 @@ import {
   hasStaticData,
   getLastUpdated,
 } from '../../lib/data/github';
+import { resolveUrl } from '../../lib/utils/url';
 
 const title = 'Issues';
 const description = 'Browse and analyze GitHub issues with AI-powered insights';
 
 const breadcrumbs = [
-  { name: 'Home', href: '/' },
-  { name: 'Issues', href: '/issues' },
+  { name: 'Home', href: resolveUrl('/') },
+  { name: 'Issues', href: resolveUrl('/issues') },
 ];
 
 // 静的データの読み込み
@@ -187,7 +188,7 @@ const sortedLabels = Object.entries(labelCounts)
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
                     <h3 class="font-medium text-heading">
-                      <a href={`/issues/${issue.number}`} class="hover:text-blue-600">
+                      <a href={resolveUrl(`/issues/${issue.number}`)} class="hover:text-blue-600">
                         {issue.title}
                       </a>
                     </h3>
