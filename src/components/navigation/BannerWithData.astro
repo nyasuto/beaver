@@ -60,7 +60,10 @@ const { showActions = true, class: className = '' } = Astro.props;
 ---
 
 <!-- Enhanced Banner for Issue 48 -->
-<div class={`banner-gradient ${className}`}>
+<div 
+  class={className}
+  style="background: linear-gradient(to right, #2563eb, #9333ea, #4338ca);"
+>
   <div class="container mx-auto px-4 py-6">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <!-- Repository Information -->
