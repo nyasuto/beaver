@@ -1,3 +1,6 @@
+# Codecov Configuration
+comment: false  # Disable PR comments
+
 coverage:
   ignore:
     # Astro component files - レイアウトとUIコンポーネントは無視
