@@ -33,7 +33,7 @@ export interface Props {
 const { class: className = '' } = Astro.props;
 ---
 
-<div class={`grid grid-cols-1 md:grid-cols-3 gap-6 ${className}`}>
+<div class={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 ${className}`}>
   <!-- Open Issues -->
   <StatCard
     title="Open Issues"
@@ -65,7 +65,7 @@ const { class: className = '' } = Astro.props;
 <!-- Data Source Status -->
 {
   stats?.meta.source === 'fallback' && (
-    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+    <div class="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
       <p class="text-sm text-yellow-700 dark:text-yellow-300">
         ⚠️ サンプルデータを表示中 -
         <a href="/api/github/health" class="underline hover:no-underline">
@@ -78,7 +78,7 @@ const { class: className = '' } = Astro.props;
 }
 {
   stats?.meta.source === 'static_data' && (
-    <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+    <div class="mt-4 sm:mt-6 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
       <p class="text-sm text-green-700 dark:text-green-300">
         ✅ 静的データを使用中 - 最新データを取得するには `npm run fetch-data` を実行してください
       </p>
