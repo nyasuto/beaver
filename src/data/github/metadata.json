@@ -1,0 +1,78 @@
+{
+  "lastUpdated": "2025-07-09T10:00:00Z",
+  "repository": {
+    "owner": "nyasuto",
+    "name": "beaver"
+  },
+  "statistics": {
+    "total": 5,
+    "open": 3,
+    "closed": 2,
+    "labels": 8
+  },
+  "labelCounts": {
+    "bug": 2,
+    "feature": 1,
+    "enhancement": 1,
+    "documentation": 1,
+    "priority: high": 1,
+    "priority: medium": 1,
+    "mobile": 1,
+    "ui/ux": 1
+  },
+  "lastIssue": {
+    "id": 1,
+    "node_id": "I_kwDOABCDEF4ABcDE",
+    "number": 123,
+    "title": "Fix navigation bug in mobile view",
+    "body": "Sample issue body for fallback data",
+    "state": "open",
+    "locked": false,
+    "assignee": {
+      "id": 12345,
+      "node_id": "U_kwDOABCDEF4ABcDE",
+      "login": "sample-user",
+      "avatar_url": "https://github.com/sample-user.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sample-user",
+      "html_url": "https://github.com/sample-user",
+      "type": "User",
+      "site_admin": false
+    },
+    "assignees": [],
+    "user": {
+      "id": 12345,
+      "node_id": "U_kwDOABCDEF4ABcDE",
+      "login": "sample-user",
+      "avatar_url": "https://github.com/sample-user.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sample-user",
+      "html_url": "https://github.com/sample-user",
+      "type": "User",
+      "site_admin": false
+    },
+    "labels": [
+      {
+        "id": 1001,
+        "node_id": "L_kwDOABCDEF4ABcDE",
+        "name": "bug",
+        "color": "ee0701",
+        "description": "Something isn't working",
+        "default": false
+      }
+    ],
+    "milestone": null,
+    "comments": 0,
+    "created_at": "2025-07-09T10:00:00Z",
+    "updated_at": "2025-07-09T10:00:00Z",
+    "closed_at": null,
+    "author_association": "OWNER",
+    "active_lock_reason": null,
+    "html_url": "https://github.com/nyasuto/beaver/issues/123",
+    "url": "https://api.github.com/repos/nyasuto/beaver/issues/123",
+    "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+    "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/123/labels{/name}",
+    "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/123/comments",
+    "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/123/events"
+  }
+}
