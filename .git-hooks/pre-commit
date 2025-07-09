@@ -18,7 +18,7 @@ fi
 
 # ブランチ命名規則チェック（mainブランチ以外）
 if [ "$current_branch" != "main" ]; then
-    valid_patterns="^(feat|fix|hotfix|test|docs|ci|cicd|refactor|perf|security|deps)/"
+    valid_patterns="^(feat|fix|hotfix|test|docs|ci|cicd|refactor|perf|security|deps|claude)/"
     if ! echo "$current_branch" | grep -qE "$valid_patterns"; then
         echo "❌ エラー: ブランチ名が命名規則に従っていません: $current_branch"
         echo "   正しい形式:"
@@ -32,6 +32,7 @@ if [ "$current_branch" != "main" ]; then
         echo "   - perf/X-description           (性能改善)"
         echo "   - security/X-description        (セキュリティ)"
         echo "   - deps/X-description           (依存関係)"
+        echo "   - claude/X-description          (Claude Code作業)"
         exit 1
     fi
     
