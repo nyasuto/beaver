@@ -61,3 +61,18 @@ const { class: className = '' } = Astro.props;
     color="blue"
   />
 </div>
+
+<!-- Data Source Status -->
+{
+  stats?.meta.source === 'fallback' && (
+    <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <p class="text-sm text-blue-700 dark:text-blue-300">
+        📊 デモデータを表示中 - 
+        <a href="/api/github/health" class="underline hover:no-underline">
+          GitHub API接続を確認
+        </a>
+        して実際のデータを取得してください
+      </p>
+    </div>
+  )
+}
