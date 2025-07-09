@@ -137,7 +137,7 @@ const baseLayoutProps = Object.fromEntries(
 
   <main id="main-content" class={mainClasses}>
     {
-      breadcrumbs && breadcrumbs.length > 1 && (
+      breadcrumbs && breadcrumbs.length > 0 && (
         <div class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
           <div class={containerClass}>
             <Breadcrumb items={breadcrumbs} separator={breadcrumbSeparator} class="py-3" />
