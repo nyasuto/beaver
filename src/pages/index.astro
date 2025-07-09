@@ -48,40 +48,9 @@ const breadcrumbItems = [
             Welcome to Your Dashboard
           </h1>
           <p class="mt-6 text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Get insights into your project's health, track issue progress, and manage your
-            development workflow efficiently.
+            Track project health and manage issues efficiently.
           </p>
-          
-          <!-- Primary Actions -->
-          <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href={resolveUrl('/issues')}
-              class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 shadow-lg"
-            >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              View Issues
-            </a>
-            <a
-              href={resolveUrl('/analytics')}
-              class="inline-flex items-center px-8 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 shadow-lg"
-            >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 012-2h2a2 2 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 012-2h2a2 2 012 2v14a2 2 01-2 2h-2a2 2 01-2-2z"
-                ></path>
-              </svg>
-              Analytics Dashboard
-            </a>
-          </div>
+
         </div>
       </div>
     </section>
@@ -96,75 +65,9 @@ const breadcrumbItems = [
     <!-- Main Dashboard Content -->
     <section class="py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <!-- Recent Activity (Main Content) -->
-          <div class="lg:col-span-3">
-            <RecentActivity />
-          </div>
-
-          <!-- Sidebar -->
-          <aside class="lg:col-span-1">
-            <div class="space-y-8">
-              <!-- Quick Actions -->
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-                <div class="space-y-3">
-                  <a
-                    href={resolveUrl('/issues/new')}
-                    class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <span class="text-lg">➕</span>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Create New Issue
-                    </span>
-                  </a>
-                  <a
-                    href={resolveUrl('/analytics')}
-                    class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <span class="text-lg">📊</span>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      View Analytics
-                    </span>
-                  </a>
-                  <a
-                    href={resolveUrl('/api/github/health')}
-                    class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <span class="text-lg">🔧</span>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      API Health Check
-                    </span>
-                  </a>
-                </div>
-              </div>
-
-              <!-- System Status -->
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Status</h3>
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">GitHub API</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                      ✅ Online
-                    </span>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Database</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                      ✅ Connected
-                    </span>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Analytics</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                      ✅ Running
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
+        <div class="max-w-4xl mx-auto">
+          <!-- Recent Activity (Full Width) -->
+          <RecentActivity />
         </div>
       </div>
     </section>
