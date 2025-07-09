@@ -14,6 +14,8 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
     "type-check": "astro check && tsc --noEmit",
+    "type-check:charts": "tsc --project tsconfig.charts.json --noEmit",
+    "type-check:all": "npm run type-check && npm run type-check:charts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

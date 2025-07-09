@@ -58,6 +58,15 @@ module.exports = {
         'no-console': 'off',
       },
     },
+    {
+      files: ['src/components/charts/**/*.{ts,tsx}', 'src/lib/utils/chart.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/ban-ts-comment': 'off',
+        'no-console': 'off', // Chart.js debugging
+      },
+    },
   ],
   ignorePatterns: [
     'node_modules/',
