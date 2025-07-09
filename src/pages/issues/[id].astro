@@ -205,10 +205,16 @@ const processedBody = currentIssue.body
       <div class="card">
         <h3 class="text-lg font-semibold text-heading mb-4">Related Issues</h3>
         <div class="space-y-2">
-          <a href={resolveUrl('/issues/123')} class="block text-sm text-primary-600 hover:text-primary-700">
+          <a
+            href={resolveUrl('/issues/123')}
+            class="block text-sm text-primary-600 hover:text-primary-700"
+          >
             #123 Similar issue
           </a>
-          <a href={resolveUrl('/issues/456')} class="block text-sm text-primary-600 hover:text-primary-700">
+          <a
+            href={resolveUrl('/issues/456')}
+            class="block text-sm text-primary-600 hover:text-primary-700"
+          >
             #456 Related feature request
           </a>
         </div>
