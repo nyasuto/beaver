@@ -6,7 +6,8 @@
  * Integrates with Analytics Engine and GitHub data for real-time insights.
  */
 
-import DashboardLayout from '../../components/layouts/DashboardLayout.astro';
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
 import {
   IssueTrendsChart,
   IssueCategoriesChart,
@@ -80,46 +81,36 @@ try {
 }
 ---
 
-<DashboardLayout
+<PageLayout
   title={title}
   description={description}
   breadcrumbs={breadcrumbs}
+  showHeader={true}
+  showFooter={true}
   showSearch={true}
-  contentPadding="lg"
+  maxWidth="7xl"
+  padding="lg"
+  class="page-background"
 >
   <div class="space-y-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="flex justify-between items-start">
-        <div>
-          <h1 class="text-3xl font-bold text-heading mb-2">📊 Analytics Dashboard</h1>
-          <p class="text-muted">Insights and analytics about your GitHub repository activity</p>
-        </div>
-        <div class="text-right">
-          {
-            isDataAvailable && metadata && (
-              <div class="text-sm text-muted">
-                <p>
-                  Repository: {metadata.repository.owner}/{metadata.repository.name}
-                </p>
-                <p>Last updated: {new Date(metadata.lastUpdated).toLocaleDateString('ja-JP')}</p>
-                <p>Data source: {issues.length} issues analyzed</p>
-              </div>
-            )
-          }
-          {
-            !isDataAvailable && (
-              <div class="text-sm text-yellow-600 bg-yellow-50 px-3 py-2 rounded">
-                ⚠️ Using sample data - run npm run fetch-data for real analytics
-              </div>
-            )
-          }
-        </div>
-      </div>
-    </div>
+    <PageHeader
+      title="Analytics Dashboard"
+      description="Insights and analytics about your GitHub repository activity"
+      icon="📊"
+      metaInfo={{
+        repositoryOwner: metadata?.repository?.owner,
+        repositoryName: metadata?.repository?.name,
+        lastUpdated: metadata ? new Date(metadata.lastUpdated) : undefined,
+        dataSource: `${issues.length} issues analyzed`,
+        isDataAvailable: isDataAvailable,
+      }}
+      warningMessage={!isDataAvailable
+        ? 'Using sample data - run npm run fetch-data for real analytics'
+        : undefined}
+    />
 
     <!-- Key Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 space-lg">
       <div class="card">
         <div class="flex items-center justify-between">
           <div>
@@ -170,7 +161,7 @@ try {
     </div>
 
     <!-- Interactive Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 space-lg">
       <!-- Issue Trend Chart -->
       <div class="h-80">
         <IssueTrendsChart
@@ -193,7 +184,7 @@ try {
     </div>
 
     <!-- Performance Metrics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 space-lg">
       <div class="h-80">
         <ResolutionTimeChart
           client:load
@@ -339,4 +330,4 @@ try {
       </div>
     </div>
   </div>
-</DashboardLayout>
+</PageLayout>

@@ -1,0 +1,95 @@
+---
+/**
+ * Page Header Component
+ *
+ * Unified page header component with consistent styling and structure
+ * Used across all pages for consistent appearance
+ */
+
+export interface Props {
+  title: string;
+  description?: string;
+  icon?: string;
+  actions?: boolean;
+  actionSlot?: boolean;
+  metaInfo?: {
+    totalCount?: number;
+    openCount?: number;
+    closedCount?: number;
+    lastUpdated?: Date | undefined;
+    repositoryOwner?: string | undefined;
+    repositoryName?: string | undefined;
+    dataSource?: string;
+    isDataAvailable?: boolean;
+  };
+  warningMessage?: string | undefined;
+  class?: string;
+}
+
+const {
+  title,
+  description,
+  icon,
+  actions = false,
+  actionSlot = false,
+  metaInfo,
+  warningMessage,
+  class: className = '',
+} = Astro.props;
+---
+
+<div class={`mb-8 ${className}`}>
+  <div class="flex justify-between items-start">
+    <div class="flex-1">
+      <h1 class="text-3xl font-bold text-heading mb-2 flex items-center gap-2">
+        {icon && <span class="text-2xl">{icon}</span>}
+        {title}
+      </h1>
+      {description && <p class="text-muted max-w-3xl">{description}</p>}
+    </div>
+
+    {
+      (actions || actionSlot || metaInfo || warningMessage) && (
+        <div class="text-right flex-shrink-0 ml-8">
+          {actionSlot && (
+            <div class="mb-4">
+              <slot name="actions" />
+            </div>
+          )}
+
+          {metaInfo && metaInfo.isDataAvailable && (
+            <div class="text-sm text-muted space-y-1">
+              {metaInfo.totalCount !== undefined && <p>総 Issue 数: {metaInfo.totalCount}</p>}
+              {metaInfo.openCount !== undefined && metaInfo.closedCount !== undefined && (
+                <p>
+                  オープン: {metaInfo.openCount} / クローズ: {metaInfo.closedCount}
+                </p>
+              )}
+              {metaInfo.repositoryOwner && metaInfo.repositoryName && (
+                <p>
+                  Repository: {metaInfo.repositoryOwner}/{metaInfo.repositoryName}
+                </p>
+              )}
+              {metaInfo.lastUpdated && (
+                <p>最終更新: {metaInfo.lastUpdated.toLocaleDateString('ja-JP')}</p>
+              )}
+              {metaInfo.dataSource && <p>Data source: {metaInfo.dataSource}</p>}
+            </div>
+          )}
+
+          {warningMessage && (
+            <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
+              ⚠️ {warningMessage}
+            </div>
+          )}
+
+          {metaInfo && !metaInfo.isDataAvailable && (
+            <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
+              ⚠️ 静的データが未生成です
+            </div>
+          )}
+        </div>
+      )
+    }
+  </div>
+</div>
