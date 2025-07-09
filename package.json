@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
+    "prebuild": "npm run fetch-data",
     "build": "astro build",
+    "build:full": "npm run fetch-data && npm run build",
     "preview": "astro preview",
     "astro": "astro",
+    "fetch-data": "tsx scripts/fetch-github-data.ts",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx,.astro src",
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.astro src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
@@ -72,6 +75,7 @@
     "jsdom": "^26.1.0",
     "prettier": "^3.3.3",
     "prettier-plugin-astro": "^0.14.1",
+    "tsx": "^4.20.3",
     "typescript": "^5.6.2",
     "vitest": "^3.2.4"
   },
