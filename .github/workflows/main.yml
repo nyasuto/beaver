@@ -40,6 +40,37 @@ jobs:
           timeout_minutes: "60"
           # GitHub tokenを渡してgit操作を可能に
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Claude に bash コマンドの実行権限を付与
+          allowed_tools: |
+            Bash
+            Bash(npm install)
+            Bash(npm run *)
+            Bash(npm test)
+            Bash(npm run build)
+            Bash(npm run type-check)
+            Bash(npm run lint)
+            Bash(npm run format)
+            Bash(git *)
+            Bash(gh *)
+            Edit
+            MultiEdit
+            Write
+            Read
+            Glob
+            Grep
+            LS
+            TodoWrite
+            WebFetch
+            WebSearch
+            Task
+            NotebookRead
+            NotebookEdit
+            mcp__github__create_pull_request
+            mcp__github__merge_pull_request
+            mcp__github__close_pull_request
+            mcp__github__create_issue
+            mcp__github__update_issue
+            mcp__github__close_issue
         env:
           # 環境変数でさらなる権限を提供
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
