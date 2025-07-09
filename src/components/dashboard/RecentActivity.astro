@@ -162,16 +162,40 @@ const { class: className = '' } = Astro.props;
   </div>
 </div>
 
-<!-- Simplified Status -->
+<!-- Data Source Status -->
 {
-  (!statsResult.success || !repoResult.success) && (
+  stats?.meta.source === 'fallback' && (
     <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
       <p class="text-sm text-yellow-700 dark:text-yellow-300">
-        Data may be limited.{' '}
+        ⚠️ サンプルデータを表示中 -
         <a href="/api/github/health" class="underline hover:no-underline">
-          Check API status
+          GitHub API接続を確認
         </a>
+        して実際のデータを取得してください
       </p>
     </div>
   )
+}
+{
+  stats?.meta.source === 'static_data' && (
+    <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+      <p class="text-sm text-green-700 dark:text-green-300">
+        ✅ 静的データを使用中 - 最新データを取得するには `npm run fetch-data` を実行してください
+      </p>
+    </div>
+  )
+}
+{
+  (!statsResult.success || !repoResult.success) &&
+    stats?.meta.source !== 'fallback' &&
+    stats?.meta.source !== 'static_data' && (
+      <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <p class="text-sm text-blue-700 dark:text-blue-300">
+          データが制限されている可能性があります。{' '}
+          <a href="/api/github/health" class="underline hover:no-underline">
+            APIステータス確認
+          </a>
+        </p>
+      </div>
+    )
 }

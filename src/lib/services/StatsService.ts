@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import type { Issue } from '../schemas/github';
 import type { Result } from '../types';
+import { getIssuesWithFallback, hasStaticData } from '../data/github';
 
 // 統計データの型定義
 export const UnifiedStatsSchema = z.object({
@@ -41,7 +42,7 @@ export const UnifiedStatsSchema = z.object({
     })
   ),
   meta: z.object({
-    source: z.enum(['github_api', 'fallback', 'cache']),
+    source: z.enum(['github_api', 'static_data', 'fallback', 'cache']),
     generated_at: z.string(),
     cache_expires_at: z.string().optional(),
   }),
@@ -126,25 +127,36 @@ export class StatsService {
    */
   private async fetchFreshStats(options: StatsOptions): Promise<Result<UnifiedStats>> {
     try {
-      // GitHubのissuesデータを取得
-      const response = await fetch('/api/github/issues?include_stats=true&state=all&per_page=100');
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      // まず静的データを試行
+      if (hasStaticData()) {
+        const issues = getIssuesWithFallback();
+        const stats = this.calculateStats(issues, options, 'static_data');
+        return { success: true, data: stats };
       }
 
-      const data = await response.json();
+      // 静的データが利用できない場合のみAPIを試行
+      // Note: ビルド時にはAPIが利用できないため、通常はここは実行されない
+      if (typeof window !== 'undefined' && window.location) {
+        const response = await fetch(
+          '/api/github/issues?include_stats=true&state=all&per_page=100'
+        );
 
-      if (!data.success) {
-        throw new Error(data.error?.message || 'API returned unsuccessful response');
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error?.message || 'API returned unsuccessful response');
+        }
+
+        const issues: Issue[] = data.data?.issues || [];
+        const stats = this.calculateStats(issues, options, 'github_api');
+        return { success: true, data: stats };
       }
 
-      const issues: Issue[] = data.data?.issues || [];
-
-      // 統計を計算
-      const stats = this.calculateStats(issues, options);
-
-      return { success: true, data: stats };
+      throw new Error('No data source available');
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('新しい統計データの取得に失敗:', error);
@@ -158,7 +170,11 @@ export class StatsService {
   /**
    * 統計データを計算
    */
-  private calculateStats(issues: Issue[], options: StatsOptions): UnifiedStats {
+  private calculateStats(
+    issues: Issue[],
+    options: StatsOptions,
+    source: 'github_api' | 'static_data' = 'github_api'
+  ): UnifiedStats {
     const now = new Date();
     const recentCutoff = new Date(now.getTime() - options.recentDays * 24 * 60 * 60 * 1000);
     const monthCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -203,7 +219,7 @@ export class StatsService {
       },
       labels: options.includeLabels ? labels : [],
       meta: {
-        source: 'github_api',
+        source,
         generated_at: now.toISOString(),
         cache_expires_at: new Date(now.getTime() + this.CACHE_TTL).toISOString(),
       },
@@ -273,39 +289,31 @@ export class StatsService {
     const now = new Date();
 
     return {
-      total: 5,
-      open: 3,
-      closed: 2,
+      total: -1,
+      open: -1,
+      closed: -1,
       priority: {
-        critical: 1,
-        high: 2,
-        medium: 1,
-        low: 1,
+        critical: -1,
+        high: -1,
+        medium: -1,
+        low: -1,
       },
       recentActivity: {
-        thisWeek: 2,
-        thisMonth: 4,
+        thisWeek: -1,
+        thisMonth: -1,
         recentlyUpdated: [
           {
-            id: 1,
-            title: 'サンプルIssue 1',
-            number: 1,
+            id: -1,
+            title: '[フォールバック] データ取得に失敗',
+            number: -1,
             updated_at: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
             state: 'open' as const,
-          },
-          {
-            id: 2,
-            title: 'サンプルIssue 2',
-            number: 2,
-            updated_at: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            state: 'closed' as const,
           },
         ],
       },
       labels: [
-        { name: 'bug', color: 'dc143c', count: 2 },
-        { name: 'enhancement', color: '00ff00', count: 1 },
-        { name: 'documentation', color: '0000ff', count: 1 },
+        { name: 'fallback-data', color: 'ff0000', count: -1 },
+        { name: 'no-data', color: '808080', count: -1 },
       ],
       meta: {
         source: 'fallback',

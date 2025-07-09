@@ -61,3 +61,27 @@ const { class: className = '' } = Astro.props;
     color="blue"
   />
 </div>
+
+<!-- Data Source Status -->
+{
+  stats?.meta.source === 'fallback' && (
+    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+      <p class="text-sm text-yellow-700 dark:text-yellow-300">
+        ⚠️ サンプルデータを表示中 -
+        <a href="/api/github/health" class="underline hover:no-underline">
+          GitHub API接続を確認
+        </a>
+        して実際のデータを取得してください
+      </p>
+    </div>
+  )
+}
+{
+  stats?.meta.source === 'static_data' && (
+    <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+      <p class="text-sm text-green-700 dark:text-green-300">
+        ✅ 静的データを使用中 - 最新データを取得するには `npm run fetch-data` を実行してください
+      </p>
+    </div>
+  )
+}
