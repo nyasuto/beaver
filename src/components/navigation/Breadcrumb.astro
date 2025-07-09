@@ -23,9 +23,10 @@ export interface Props {
 const { items, separator = 'chevron', class: className = '', showHome = true } = Astro.props;
 
 // Ensure the last item is marked as current and add home if needed
-const processedItems = showHome && items.length > 0 && items[0]?.name !== 'Home'
-  ? [{ name: 'Home', href: '/', icon: '🏠' }, ...items]
-  : items;
+const processedItems =
+  showHome && items.length > 0 && items[0]?.name !== 'Home'
+    ? [{ name: 'Home', href: '/', icon: '🏠' }, ...items]
+    : items;
 
 const breadcrumbItems = processedItems.map((item, index) => ({
   ...item,
@@ -78,7 +79,11 @@ const breadcrumbItems = processedItems.map((item, index) => ({
               class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 text-sm font-medium transition-colors duration-200 flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-md px-1 py-1"
               aria-label={`Navigate to ${item.name}`}
             >
-              {item.icon && <span class="mr-2" aria-hidden="true">{item.icon}</span>}
+              {item.icon && (
+                <span class="mr-2" aria-hidden="true">
+                  {item.icon}
+                </span>
+              )}
               {item.name}
             </a>
           )}
