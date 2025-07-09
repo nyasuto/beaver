@@ -37,21 +37,32 @@ export interface IssueTrendsChartProps {
   showControls?: boolean;
   /** Chart title */
   title?: string;
+  /** Pre-loaded chart data */
+  data?: any;
 }
 
 export function IssueTrendsChart({
   height = 300,
   timeWindow = 30,
   loading = false,
-  showControls = true,
+  showControls = false,
   title = 'Issue Trends',
+  data: chartData,
 }: IssueTrendsChartProps) {
   const [data, setData] = useState<TimeSeriesPoint[]>([]);
   const [selectedWindow, setSelectedWindow] = useState(timeWindow);
   const [isLoading, setIsLoading] = useState(loading);
 
-  // Fetch data from analytics API
+  // Use provided data or fetch from API
   useEffect(() => {
+    if (chartData) {
+      // Use provided static data
+      setData([]);
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback to API fetch (for dynamic mode)
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -75,7 +86,7 @@ export function IssueTrendsChart({
     };
 
     fetchData();
-  }, [selectedWindow]);
+  }, [selectedWindow, chartData]);
 
   const controlsSection = showControls && (
     <div className="flex items-center space-x-2">
@@ -99,18 +110,33 @@ export function IssueTrendsChart({
       className="h-full"
     >
       <div style={{ height }}>
-        <TimeSeriesChart
-          data={data}
-          loading={isLoading}
-          yAxisLabel="Issues Created"
-          aggregation="day"
-          showTrend={true}
-          smooth={true}
-          showPoints={true}
-          fill={true}
-          lineColor={CHART_COLORS[0] || '#3B82F6'}
-          trendColor={CHART_COLORS[3] || '#EF4444'}
-        />
+        {chartData ? (
+          <TimeSeriesChart
+            data={chartData}
+            loading={isLoading}
+            yAxisLabel="Issues Created"
+            aggregation="day"
+            showTrend={true}
+            smooth={true}
+            showPoints={true}
+            fill={true}
+            lineColor={CHART_COLORS[0] || '#3B82F6'}
+            trendColor={CHART_COLORS[3] || '#EF4444'}
+          />
+        ) : (
+          <TimeSeriesChart
+            data={data}
+            loading={isLoading}
+            yAxisLabel="Issues Created"
+            aggregation="day"
+            showTrend={true}
+            smooth={true}
+            showPoints={true}
+            fill={true}
+            lineColor={CHART_COLORS[0] || '#3B82F6'}
+            trendColor={CHART_COLORS[3] || '#EF4444'}
+          />
+        )}
       </div>
     </ChartContainer>
   );
@@ -130,18 +156,29 @@ export interface IssueCategoriesChartProps {
   title?: string;
   /** Show percentages */
   showPercentages?: boolean;
+  /** Pre-loaded chart data */
+  data?: any;
 }
 
 export function IssueCategoriesChart({
   height = 300,
   loading = false,
   title = 'Issue Categories',
+  data: chartData,
 }: IssueCategoriesChartProps) {
   const [data, setData] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(loading);
 
-  // Fetch data from analytics API
+  // Use provided data or fetch from API
   useEffect(() => {
+    if (chartData) {
+      // Use provided static data
+      setData({});
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback to API fetch (for dynamic mode)
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -168,7 +205,7 @@ export function IssueCategoriesChart({
     };
 
     fetchData();
-  }, []);
+  }, [chartData]);
 
   return (
     <ChartContainer
@@ -178,23 +215,25 @@ export function IssueCategoriesChart({
     >
       <div style={{ height }}>
         <ThemedPieChart
-          type="pie"
+          type="doughnut"
           loading={isLoading}
-          data={{
-            labels: Object.keys(data),
-            datasets: [
-              {
-                data: Object.values(data),
-                backgroundColor: Object.keys(data).map(
-                  (_, i) => (CHART_COLORS[i % CHART_COLORS.length] || '#3B82F6') + '80'
-                ),
-                borderColor: Object.keys(data).map(
-                  (_, i) => CHART_COLORS[i % CHART_COLORS.length] || '#3B82F6'
-                ),
-                borderWidth: 2,
-              },
-            ],
-          }}
+          data={
+            chartData || {
+              labels: Object.keys(data),
+              datasets: [
+                {
+                  data: Object.values(data),
+                  backgroundColor: Object.keys(data).map(
+                    (_, i) => (CHART_COLORS[i % CHART_COLORS.length] || '#3B82F6') + '80'
+                  ),
+                  borderColor: Object.keys(data).map(
+                    (_, i) => CHART_COLORS[i % CHART_COLORS.length] || '#3B82F6'
+                  ),
+                  borderWidth: 2,
+                },
+              ],
+            }
+          }
         />
       </div>
     </ChartContainer>
@@ -215,18 +254,29 @@ export interface ResolutionTimeChartProps {
   title?: string;
   /** Chart orientation */
   orientation?: 'vertical' | 'horizontal';
+  /** Pre-loaded chart data */
+  data?: any;
 }
 
 export function ResolutionTimeChart({
   height = 300,
   loading = false,
   title = 'Average Resolution Time',
+  data: chartData,
 }: ResolutionTimeChartProps) {
   const [data, setData] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(loading);
 
-  // Fetch data from analytics API
+  // Use provided data or fetch from API
   useEffect(() => {
+    if (chartData) {
+      // Use provided static data
+      setData({});
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback to API fetch (for dynamic mode)
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -261,7 +311,7 @@ export function ResolutionTimeChart({
     };
 
     fetchData();
-  }, []);
+  }, [chartData]);
 
   return (
     <ChartContainer
@@ -273,18 +323,20 @@ export function ResolutionTimeChart({
         <ThemedBarChart
           type="bar"
           loading={isLoading}
-          data={{
-            labels: Object.keys(data),
-            datasets: [
-              {
-                label: 'Hours',
-                data: Object.values(data),
-                backgroundColor: (CHART_COLORS[1] || '#10B981') + '80',
-                borderColor: CHART_COLORS[1] || '#10B981',
-                borderWidth: 1,
-              },
-            ],
-          }}
+          data={
+            chartData || {
+              labels: Object.keys(data),
+              datasets: [
+                {
+                  label: 'Days',
+                  data: Object.values(data),
+                  backgroundColor: (CHART_COLORS[1] || '#10B981') + '80',
+                  borderColor: CHART_COLORS[1] || '#10B981',
+                  borderWidth: 1,
+                },
+              ],
+            }
+          }
         />
       </div>
     </ChartContainer>
@@ -386,6 +438,8 @@ export interface ContributorActivityChartProps {
   title?: string;
   /** Maximum contributors to show */
   maxContributors?: number;
+  /** Pre-loaded chart data */
+  data?: any;
 }
 
 export function ContributorActivityChart({
@@ -393,12 +447,21 @@ export function ContributorActivityChart({
   loading = false,
   title = 'Top Contributors',
   maxContributors = 10,
+  data: chartData,
 }: ContributorActivityChartProps) {
   const [data, setData] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(loading);
 
-  // Fetch data from analytics API
+  // Use provided data or fetch from API
   useEffect(() => {
+    if (chartData) {
+      // Use provided static data
+      setData({});
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback to API fetch (for dynamic mode)
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -430,7 +493,7 @@ export function ContributorActivityChart({
     };
 
     fetchData();
-  }, [maxContributors]);
+  }, [maxContributors, chartData]);
 
   return (
     <ChartContainer
@@ -441,18 +504,20 @@ export function ContributorActivityChart({
       <div style={{ height }}>
         <HorizontalBarChart
           loading={isLoading}
-          data={{
-            labels: Object.keys(data),
-            datasets: [
-              {
-                label: 'Issues',
-                data: Object.values(data),
-                backgroundColor: (CHART_COLORS[2] || '#F59E0B') + '80',
-                borderColor: CHART_COLORS[2] || '#F59E0B',
-                borderWidth: 1,
-              },
-            ],
-          }}
+          data={
+            chartData || {
+              labels: Object.keys(data),
+              datasets: [
+                {
+                  label: 'Issues',
+                  data: Object.values(data),
+                  backgroundColor: (CHART_COLORS[2] || '#F59E0B') + '80',
+                  borderColor: CHART_COLORS[2] || '#F59E0B',
+                  borderWidth: 1,
+                },
+              ],
+            }
+          }
         />
       </div>
     </ChartContainer>
