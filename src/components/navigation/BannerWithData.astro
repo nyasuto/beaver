@@ -6,6 +6,7 @@
  */
 
 // import Banner from './Banner.astro';
+import { resolveUrl } from '../../lib/utils/url';
 
 // Fetch repository data from API
 const fetchRepoData = async () => {
@@ -86,10 +87,10 @@ const { showActions = true, class: className = '' } = Astro.props;
       {
         showActions && (
           <div class="flex items-center space-x-3">
-            <a href="/issues" class="banner-action-btn">
+            <a href={resolveUrl('/issues')} class="banner-action-btn">
               View Issues
             </a>
-            <a href="/analytics" class="banner-action-btn">
+            <a href={resolveUrl('/analytics')} class="banner-action-btn">
               Analytics
             </a>
           </div>

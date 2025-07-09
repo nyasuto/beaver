@@ -8,6 +8,7 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { getStatsService } from '../../lib/services/StatsService';
+import { resolveUrl } from '../../lib/utils/url';
 
 // Get unified statistics using the StatsService
 const statsService = getStatsService();
@@ -113,7 +114,7 @@ const { class: className = '' } = Astro.props;
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Issues</h3>
       <a
-        href="/issues"
+        href={resolveUrl('/issues')}
         class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
       >
         View all →

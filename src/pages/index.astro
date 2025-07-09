@@ -52,7 +52,7 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
           <!-- Primary Action Buttons -->
           <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a
-              href="/issues"
+              href={resolveUrl('/issues')}
               class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 min-w-[160px] justify-center"
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
               Manage Issues
             </a>
             <a
-              href="/analytics"
+              href={resolveUrl('/analytics')}
               class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 min-w-[160px] justify-center"
             >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
