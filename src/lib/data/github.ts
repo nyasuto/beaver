@@ -215,8 +215,10 @@ export function getFallbackIssues(): GitHubIssue[] {
   try {
     const fallbackPath = join(process.cwd(), 'src/data/fixtures/sample-issues.json');
     return readJsonFile(fallbackPath, IssuesArraySchema);
-  } catch {
-    // フォールバックデータも読み込めない場合は空配列を返す
+  } catch (error) {
+    // フォールバックデータが GitHub API schema と合わない場合は空配列を返す
+    // eslint-disable-next-line no-console
+    console.warn('サンプルデータの読み込みに失敗しました。空のデータを使用します。', error);
     return [];
   }
 }

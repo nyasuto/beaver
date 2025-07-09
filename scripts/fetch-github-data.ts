@@ -2,7 +2,8 @@
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { fetchGitHubIssues } from '../src/lib/github/issues.js';
+import { createGitHubClient } from '../src/lib/github/client.js';
+import { GitHubIssuesService } from '../src/lib/github/issues.js';
 import { GitHubConfigSchema } from '../src/lib/schemas/config.js';
 import { z } from 'zod';
 
@@ -38,17 +39,18 @@ function validateEnvironment() {
   try {
     return EnvSchema.parse(env);
   } catch (error) {
-    console.error('❌ 環境変数の設定が不正です:');
+    console.warn('⚠️ 環境変数が設定されていません:');
     if (error instanceof z.ZodError) {
       error.errors.forEach((err) => {
-        console.error(`  - ${err.path.join('.')}: ${err.message}`);
+        console.warn(`  - ${err.path.join('.')}: ${err.message}`);
       });
     }
-    console.error('\n以下の環境変数を設定してください:');
-    console.error('  - GITHUB_TOKEN: GitHub Personal Access Token');
-    console.error('  - GITHUB_OWNER: リポジトリのオーナー名');
-    console.error('  - GITHUB_REPO: リポジトリ名');
-    process.exit(1);
+    console.warn('\nGitHub データの取得をスキップします。');
+    console.warn('実際のデータを取得するには以下の環境変数を設定してください:');
+    console.warn('  - GITHUB_TOKEN: GitHub Personal Access Token');
+    console.warn('  - GITHUB_OWNER: リポジトリのオーナー名');
+    console.warn('  - GITHUB_REPO: リポジトリ名');
+    return null;
   }
 }
 
@@ -84,6 +86,12 @@ async function fetchAndSaveGitHubData() {
   // 環境変数の検証
   const env = validateEnvironment();
   
+  // 環境変数が設定されていない場合はスキップ
+  if (!env) {
+    console.log('📋 サンプルデータを使用してビルドを継続します。');
+    return;
+  }
+  
   // GitHub 設定の作成
   const config = GitHubConfigSchema.parse({
     token: env.GITHUB_TOKEN,
@@ -99,7 +107,16 @@ async function fetchAndSaveGitHubData() {
 
     // GitHub Issues の取得
     console.log('📥 GitHub Issues を取得中...');
-    const issuesResult = await fetchGitHubIssues(config);
+    
+    // GitHub クライアントの作成
+    const clientResult = createGitHubClient(config);
+    if (!clientResult.success) {
+      throw new Error(`GitHub クライアントの作成に失敗: ${clientResult.error.message}`);
+    }
+    
+    // Issues サービスの作成と実行
+    const issuesService = new GitHubIssuesService(clientResult.data);
+    const issuesResult = await issuesService.getIssues({ state: 'all', per_page: 100 });
     
     if (!issuesResult.success) {
       throw new Error(`GitHub API エラー: ${issuesResult.error.message}`);
