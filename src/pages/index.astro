@@ -50,7 +50,7 @@ const breadcrumbItems = [
           <p class="mt-6 text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Track project health and manage issues efficiently.
           </p>
-          
+
           <!-- Primary Actions -->
           <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -64,7 +64,7 @@ const breadcrumbItems = [
                   stroke-width="2"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-Issues
+              Issues
             </a>
             <a
               href={resolveUrl('/analytics')}
@@ -78,7 +78,7 @@ Issues
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 012-2h2a2 2 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 012-2h2a2 2 012 2v14a2 2 01-2 2h-2a2 2 01-2-2z"
                 ></path>
               </svg>
-Analytics
+              Analytics
             </a>
           </div>
         </div>
@@ -105,8 +105,12 @@ Analytics
           <aside class="lg:col-span-1">
             <div class="space-y-6">
               <!-- Essential Actions -->
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Links</h3>
+              <div
+                class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Quick Links
+                </h3>
                 <div class="space-y-3">
                   <a
                     href={resolveUrl('/issues')}

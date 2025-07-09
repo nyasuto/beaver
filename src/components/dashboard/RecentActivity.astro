@@ -159,7 +159,6 @@ const { class: className = '' } = Astro.props;
       }
     </div>
   </div>
-
 </div>
 
 <!-- Simplified Status -->
@@ -167,7 +166,10 @@ const { class: className = '' } = Astro.props;
   (!statsResult.success || !repoResult.success) && (
     <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
       <p class="text-sm text-yellow-700 dark:text-yellow-300">
-        Data may be limited. <a href="/api/github/health" class="underline hover:no-underline">Check API status</a>
+        Data may be limited.{' '}
+        <a href="/api/github/health" class="underline hover:no-underline">
+          Check API status
+        </a>
       </p>
     </div>
   )
