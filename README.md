@@ -95,6 +95,11 @@ npm run dev
 GITHUB_TOKEN=ghp_your_github_token_here
 PUBLIC_SITE_URL=https://your-org.github.io/beaver
 PUBLIC_REPOSITORY=your-org/your-repo
+
+# 品質分析ダッシュボード (オプション)
+CODECOV_TOKEN=your_codecov_token_here  # Codecov API token (Secret)
+CODECOV_OWNER=your_github_username      # GitHub username
+CODECOV_REPO=your_repository_name       # Repository name
 ```
 
 ## 🏗️ プロジェクト構造
@@ -111,12 +116,14 @@ beaver-astro/
 │   │   ├── index.astro     # Homepage
 │   │   ├── issues/         # Issues pages
 │   │   ├── analytics/      # Analytics dashboard
+│   │   ├── quality/        # Code quality dashboard
 │   │   └── api/            # API endpoints
 │   ├── lib/                # Core libraries
 │   │   ├── github/         # GitHub API integration
 │   │   ├── types/          # TypeScript type definitions
 │   │   ├── schemas/        # Zod validation schemas
 │   │   ├── analytics/      # Data analysis logic
+│   │   ├── quality/        # Code quality integration
 │   │   └── utils/          # Utility functions
 │   ├── styles/             # Global styles
 │   └── data/               # Static data files
@@ -237,6 +244,7 @@ Beaver は以下の分析機能を提供します:
 - **Category Distribution**: Issue カテゴリの分布
 - **Contributor Analysis**: 貢献者の活動パターン
 - **Resolution Patterns**: 問題解決の傾向分析
+- **Code Quality**: Codecov APIによるカバレッジ分析とモジュール品質
 
 ## 🤖 AI Agent Integration
 
@@ -273,9 +281,44 @@ npm run deploy:manual
 ## 🔐 セキュリティ
 
 - GitHub Token は環境変数で管理
+- Codecov Token は Secrets で管理 (API認証用)
 - Zod による入力値検証
 - セキュアなデフォルト設定
 - 定期的な依存関係更新
+
+### GitHub Actions での環境変数設定
+
+```yaml
+# .github/workflows/deploy.yml
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Repository Secrets で設定
+  CODECOV_OWNER: ${{ vars.CODECOV_OWNER }}     # Repository Variables で設定
+  CODECOV_REPO: ${{ vars.CODECOV_REPO }}       # Repository Variables で設定
+```
+
+### 設定手順
+
+1. **GitHub Repository Settings**
+   - Settings → Secrets and variables → Actions
+   - **Secrets** (機密情報):
+     - `CODECOV_TOKEN`: Codecov API token
+   - **Variables** (非機密情報):
+     - `CODECOV_OWNER`: GitHub ユーザー名
+     - `CODECOV_REPO`: リポジトリ名
+
+2. **Codecov Token 取得**
+   - [Codecov](https://codecov.io) にログイン
+   - Settings → Access → Generate Token
+   - 取得したトークンを GitHub Secrets に設定
+
+3. **ローカル開発**
+   ```bash
+   # .env ファイルに設定
+   CODECOV_TOKEN=your_codecov_token_here
+   CODECOV_OWNER=your_github_username
+   CODECOV_REPO=your_repository_name
+   ```
 
 ## 📈 パフォーマンス
 
