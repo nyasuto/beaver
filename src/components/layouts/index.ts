@@ -12,12 +12,10 @@
 
 // Layout component references for programmatic use
 export const LAYOUT_COMPONENTS = {
-  base: 'BaseLayout',
   page: 'PageLayout',
 } as const;
 
 export type LayoutComponentName = keyof typeof LAYOUT_COMPONENTS;
 
 // Component name exports for consistency
-export const BaseLayout = 'BaseLayout';
 export const PageLayout = 'PageLayout';
