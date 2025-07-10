@@ -15,9 +15,7 @@ describe('Layout Components', () => {
     });
 
     it('should contain expected layout components', () => {
-      expect(LAYOUT_COMPONENTS.base).toBe('BaseLayout');
       expect(LAYOUT_COMPONENTS.page).toBe('PageLayout');
-      expect(LAYOUT_COMPONENTS.dashboard).toBe('DashboardLayout');
     });
 
     it('should have consistent naming convention', () => {
@@ -31,13 +29,9 @@ describe('Layout Components', () => {
 
   describe('Layout Component Types', () => {
     it('should provide proper component name types', () => {
-      const baseComponent: keyof typeof LAYOUT_COMPONENTS = 'base';
       const pageComponent: keyof typeof LAYOUT_COMPONENTS = 'page';
-      const dashboardComponent: keyof typeof LAYOUT_COMPONENTS = 'dashboard';
 
-      expect(LAYOUT_COMPONENTS[baseComponent]).toBe('BaseLayout');
       expect(LAYOUT_COMPONENTS[pageComponent]).toBe('PageLayout');
-      expect(LAYOUT_COMPONENTS[dashboardComponent]).toBe('DashboardLayout');
     });
   });
 
@@ -45,18 +39,12 @@ describe('Layout Components', () => {
     it('should maintain consistent layout hierarchy', () => {
       const components = Object.keys(LAYOUT_COMPONENTS);
 
-      // BaseLayout should be the foundation
-      expect(components).toContain('base');
-
-      // PageLayout should extend BaseLayout functionality
+      // PageLayout should be the unified layout solution
       expect(components).toContain('page');
-
-      // DashboardLayout should provide specialized functionality
-      expect(components).toContain('dashboard');
     });
 
     it('should provide complete layout ecosystem', () => {
-      const requiredComponents = ['base', 'page', 'dashboard'];
+      const requiredComponents = ['page'];
       const availableComponents = Object.keys(LAYOUT_COMPONENTS);
 
       requiredComponents.forEach(component => {
@@ -69,9 +57,7 @@ describe('Layout Components', () => {
     it('should follow semantic HTML structure expectations', () => {
       // These are structural expectations for layout components
       const expectedStructure = {
-        base: 'HTML document foundation',
-        page: 'Standard page layout with header/footer',
-        dashboard: 'Sidebar navigation with main content area',
+        page: 'Complete page layout with HTML structure, SEO, header, and footer',
       };
 
       Object.keys(expectedStructure).forEach(layoutType => {
@@ -86,7 +72,7 @@ describe('Layout Components', () => {
 
       // Should not have excessive number of layout components
       expect(componentCount).toBeLessThanOrEqual(5);
-      expect(componentCount).toBeGreaterThanOrEqual(3);
+      expect(componentCount).toBeGreaterThanOrEqual(1);
     });
   });
 });
@@ -94,12 +80,8 @@ describe('Layout Components', () => {
 describe('Layout Component Integration', () => {
   describe('Component Dependencies', () => {
     it('should maintain proper component hierarchy', () => {
-      // BaseLayout is the foundation
-      expect(LAYOUT_COMPONENTS.base).toBe('BaseLayout');
-
-      // Other layouts should build upon BaseLayout
+      // PageLayout is the unified layout solution
       expect(LAYOUT_COMPONENTS.page).toBe('PageLayout');
-      expect(LAYOUT_COMPONENTS.dashboard).toBe('DashboardLayout');
     });
   });
 

@@ -2,24 +2,27 @@
 /**
  * Page Layout Component
  *
- * Standard page layout with header, main content, and footer.
- * Includes navigation and responsive design.
+ * Complete page layout with HTML structure, SEO optimization, header, main content, and footer.
+ * Includes navigation, responsive design, theme system, and accessibility features.
  */
 
-import BaseLayout from './BaseLayout.astro';
 import Header from '../navigation/Header.astro';
 import Footer from '../navigation/Footer.astro';
 
+// Import global styles
+import '../../styles/global.css';
+
 export interface Props {
-  title?: string;
-  description?: string;
-  keywords?: string;
-  author?: string;
-  ogImage?: string;
-  ogType?: 'website' | 'article' | 'profile';
-  canonical?: string;
-  noindex?: boolean;
-  lang?: string;
+  // SEO and meta props
+  title?: string | undefined;
+  description?: string | undefined;
+  keywords?: string | undefined;
+  author?: string | undefined;
+  ogImage?: string | undefined;
+  ogType?: 'website' | 'article' | 'profile' | undefined;
+  canonical?: string | undefined;
+  noindex?: boolean | undefined;
+  lang?: string | undefined;
 
   // Layout specific props
   showHeader?: boolean;
@@ -36,22 +39,23 @@ export interface Props {
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 
   // Classes
-  class?: string;
+  class?: string | undefined;
+  bodyClass?: string | undefined;
   headerClass?: string;
   mainClass?: string;
   footerClass?: string;
 }
 
 const {
-  title,
-  description,
-  keywords,
-  author,
+  title = 'Beaver Astro Edition',
+  description = 'AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases',
+  keywords = 'astro, typescript, github, knowledge-management, ai-agents, analytics',
+  author = 'Beaver Team',
   ogImage,
-  ogType,
+  ogType = 'website',
   canonical,
-  noindex,
-  lang,
+  noindex = false,
+  lang = 'en',
 
   showHeader = true,
   showFooter = true,
@@ -66,6 +70,7 @@ const {
   padding = 'md',
 
   class: className = '',
+  bodyClass = '',
   headerClass = '',
   mainClass = '',
   footerClass = '',
@@ -93,54 +98,223 @@ const paddingClasses = {
   xl: 'px-4 py-16 sm:px-6 lg:px-8',
 };
 
+// SEO and meta configuration
+const siteUrl = 'https://nyasuto.github.io/beaver';
+const fullTitle = title.includes('Beaver') ? title : `${title} | Beaver Astro Edition`;
+const canonicalUrl = canonical || new URL(Astro.url.pathname, Astro.site).href;
+const ogImageUrl = ogImage || `${siteUrl}/og-image.png`;
+
+// Layout classes
 const containerClass = `container mx-auto ${containerClasses[maxWidth]} ${paddingClasses[padding]}`;
 const mainClasses = `flex-1 ${headerFixed ? 'pt-16' : ''} ${mainClass}`;
-
-// Create props object for BaseLayout, filtering out undefined values
-const baseLayoutProps = Object.fromEntries(
-  Object.entries({
-    title,
-    description,
-    keywords,
-    author,
-    ogImage,
-    ogType,
-    canonical,
-    noindex,
-    lang,
-    class: className,
-    bodyClass: 'min-h-screen flex flex-col',
-  }).filter(([, value]) => value !== undefined)
-);
+const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors duration-200 ${bodyClass}`;
 ---
 
-<BaseLayout {...baseLayoutProps}>
-  {
-    showHeader && (
-      <Header
-        currentPath={Astro.url.pathname}
-        showSearch={showSearch}
-        fixed={headerFixed}
-        transparent={headerTransparent}
-        class={headerClass}
-      />
-    )
-  }
+<!doctype html>
+<html lang={lang} class={className}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
 
-  <main id="main-content" class={mainClasses}>
-    <div class={containerClass}>
-      <slot />
-    </div>
-  </main>
+    {/* Primary Meta Tags */}
+    <title>{fullTitle}</title>
+    <meta name="title" content={fullTitle} />
+    <meta name="description" content={description} />
+    <meta name="author" content={author} />
+    <meta name="keywords" content={keywords} />
 
-  {
-    showFooter && (
-      <Footer
-        minimal={footerMinimal}
-        showSocial={footerShowSocial}
-        showNewsletter={footerShowNewsletter}
-        class={footerClass}
-      />
-    )
-  }
-</BaseLayout>
+    {/* Canonical URL */}
+    <link rel="canonical" href={canonicalUrl} />
+
+    {/* Favicon */}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    {/* Robots */}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    {/* Open Graph / Facebook */}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:site_name" content="Beaver Astro Edition" />
+
+    {/* Twitter */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalUrl} />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    {/* Fonts */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    {/* Theme Script (runs before body to prevent flash) */}
+    <script>
+      // Initialize theme
+      const theme = localStorage.getItem('theme') || 'system';
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+      const activeTheme = theme === 'system' ? systemTheme : theme;
+
+      if (activeTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    </script>
+
+    {/* Structured Data */}
+    <script type="application/ld+json" is:inline>
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Beaver Astro Edition",
+        "description": "AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases",
+        "url": "https://nyasuto.github.io/beaver",
+        "author": {
+          "@type": "Organization",
+          "name": "Beaver Team"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://nyasuto.github.io/beaver/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+  </head>
+  <body class={bodyClasses}>
+    {/* Skip to main content for accessibility */}
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-md z-50 focus-visible"
+    >
+      Skip to main content
+    </a>
+
+    {/* Header */}
+    {
+      showHeader && (
+        <Header
+          currentPath={Astro.url.pathname}
+          showSearch={showSearch}
+          fixed={headerFixed}
+          transparent={headerTransparent}
+          class={headerClass}
+        />
+      )
+    }
+
+    {/* Main Content */}
+    <main id="main-content" class={mainClasses}>
+      <div class={containerClass}>
+        <slot />
+      </div>
+    </main>
+
+    {/* Footer */}
+    {
+      showFooter && (
+        <Footer
+          minimal={footerMinimal}
+          showSocial={footerShowSocial}
+          showNewsletter={footerShowNewsletter}
+          class={footerClass}
+        />
+      )
+    }
+
+    {/* Back to top button */}
+    <button
+      id="back-to-top"
+      class="fixed bottom-4 right-4 bg-primary-600 text-white p-3 rounded-full shadow-lg hover:bg-primary-700 transition-all duration-200 opacity-0 invisible focus-visible z-40"
+      aria-label="Back to top"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+      </svg>
+    </button>
+
+    {/* Theme toggle and back to top functionality */}
+    <script>
+      // Back to top button functionality
+      const backToTopButton = document.getElementById('back-to-top');
+
+      if (backToTopButton) {
+        // Show/hide back to top button based on scroll position
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 300) {
+            backToTopButton.classList.remove('opacity-0', 'invisible');
+            backToTopButton.classList.add('opacity-100', 'visible');
+          } else {
+            backToTopButton.classList.add('opacity-0', 'invisible');
+            backToTopButton.classList.remove('opacity-100', 'visible');
+          }
+        });
+
+        // Scroll to top when clicked
+        backToTopButton.addEventListener('click', () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+
+      // Theme toggle functionality
+      (window as typeof window & { toggleTheme: () => void }).toggleTheme = function () {
+        const currentTheme = localStorage.getItem('theme') || 'system';
+        const newTheme =
+          currentTheme === 'light' ? 'dark' : currentTheme === 'dark' ? 'system' : 'light';
+
+        localStorage.setItem('theme', newTheme);
+
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+        const activeTheme = newTheme === 'system' ? systemTheme : newTheme;
+
+        if (activeTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+
+        // Dispatch custom event for theme change
+        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+      };
+
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        const currentTheme = localStorage.getItem('theme') || 'system';
+        if (currentTheme === 'system') {
+          if (e.matches) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
