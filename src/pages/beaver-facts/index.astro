@@ -6,12 +6,16 @@
  */
 
 import BaseLayout from '../../components/layouts/BaseLayout.astro';
+import BannerWithData from '../../components/navigation/BannerWithData.astro';
 ---
 
 <BaseLayout
-  title="🦫 ビーバーの事実 | Beaver AI知識ダム"
-  description="ビーバーの自然な特性とBeaver AIの知識管理機能の類似性を探る興味深い事実集"
+  title="🦫 ビーバーの事実 | Beaver知識ダム"
+  description="ビーバーの自然な特性とBeaverの知識管理機能の類似性を探る興味深い事実集"
 >
+  <!-- Header Banner -->
+  <BannerWithData showActions={true} />
+  
   <main class="container mx-auto px-4 py-8">
     <!-- ヒーロセクション -->
     <div class="text-center mb-12">
@@ -19,7 +23,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
       <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">ビーバーの事実</h1>
       <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
         自然界の優秀なエンジニア「ビーバー」の驚くべき特性と、
-        <strong>Beaver AI知識ダム</strong>の機能には多くの共通点があります。
+        <strong>Beaver知識ダム</strong>の機能には多くの共通点があります。
         自然の知恵がいかにして現代の知識管理に活かされているかを探ってみましょう。
       </p>
     </div>
@@ -43,7 +47,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   GitHub Issuesという散在する情報の流れを制御し、
                   構造化された知識ベースという「ダム」を構築します。
@@ -71,7 +75,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   開発情報の流れを制御し、重要な知識が失われることを防ぎ、
                   チーム全体で効率的に情報を共有・活用できるシステムを提供します。
@@ -99,7 +103,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   知識ベースも継続的に更新・改善されます。新しいIssueやコミットから
                   自動的に学習し、より良い分類と構造化を実現します。
@@ -127,7 +131,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   構造化された知識ベースは開発チームのコミュニケーション拠点となり、
                   新しいメンバーの学習と既存メンバーの知識共有を促進します。
@@ -155,7 +159,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   開発の知識と経験を永続的に保存し、プロジェクトが終了しても
                   チームメンバーが変わっても価値ある情報を失うことがありません。
@@ -183,7 +187,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   既存のGitHub Issues、PRコメント、コミットログを無駄なく活用し、
                   追加工数を最小限に抑えて価値ある知識ベースを構築します。
@@ -211,7 +215,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   情報の散逸や知識の属人化から組織を守る防御システムとして機能し、
                   プロジェクトの混乱や人員変更のリスクを軽減します。
@@ -239,7 +243,7 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
                 </p>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-green-600 mb-2">🤖 Beaver AI</h3>
+                <h3 class="text-lg font-semibold text-green-600 mb-2">🦫 Beaver</h3>
                 <p class="text-gray-700">
                   開発パターンを分析し、チームの特性を理解して
                   最も効果的な知識構造化戦略を自動的に立案・実行します。
@@ -258,15 +262,15 @@ import BaseLayout from '../../components/layouts/BaseLayout.astro';
         <h2 class="text-2xl font-bold text-gray-900 mb-4">自然の知恵を現代の知識管理に</h2>
         <p class="text-lg text-gray-700 leading-relaxed">
           ビーバーが数百万年をかけて完成させたエンジニアリングの知恵を、
-          現代のAI技術と組み合わせることで、より良い知識管理システムが実現できます。
-          <strong>Beaver AI知識ダム</strong>で、あなたのチームの知識を永続的な財産に変えませんか？
+          現代の技術と組み合わせることで、より良い知識管理システムが実現できます。
+          <strong>Beaver知識ダム</strong>で、あなたのチームの知識を永続的な財産に変えませんか？
         </p>
         <div class="mt-6">
           <a
             href="/"
             class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
           >
-            🦫 Beaver AIを始める
+            🦫 Beaverを始める
           </a>
         </div>
       </div>
