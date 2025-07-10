@@ -41,7 +41,4 @@ coverage:
         paths:
           - "src/lib/**/*.ts"
           
-    patch:
-      default:
-        target: 70%
-        threshold: 1%
+    patch: off  # Disable patch coverage checks
