@@ -6,6 +6,11 @@ on:
     # 毎日午前6時（JST）に実行
     - cron: '0 21 * * *'  # UTC 21:00 = JST 06:00
   workflow_dispatch:  # 手動実行も可能
+  # Issues関連のイベントで自動デプロイ
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled, assigned, unassigned]
+  issue_comment:
+    types: [created, edited, deleted]
 
 jobs:
   build-and-deploy:
@@ -21,7 +26,23 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     
+    # レート制限対策: 同時実行を制限
+    concurrency:
+      group: github-pages-deploy
+      cancel-in-progress: true
+    
     steps:
+      - name: Log workflow trigger
+        run: |
+          echo "Workflow triggered by: ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            echo "Issue action: ${{ github.event.action }}"
+            echo "Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}"
+          elif [ "${{ github.event_name }}" == "issue_comment" ]; then
+            echo "Comment action: ${{ github.event.action }}"
+            echo "Comment on issue #${{ github.event.issue.number }}"
+          fi
+      
       - name: Checkout repository
         uses: actions/checkout@v4
       
@@ -40,6 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.event.repository.name }}
+        continue-on-error: false
       
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -52,3 +74,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      
+      - name: Log deployment success
+        if: success()
+        run: echo "🎉 Successfully deployed to GitHub Pages at ${{ steps.deployment.outputs.page_url }}"
+      
+      - name: Log deployment failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed"
+          echo "Please check the workflow logs for detailed error information"
