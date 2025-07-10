@@ -1,0 +1,323 @@
+---
+/**
+ * Code Quality Analysis Dashboard Page
+ *
+ * This page displays code quality metrics from Codecov API including:
+ * - Overall coverage metrics
+ * - Module-level coverage analysis
+ * - Top 5 modules requiring attention
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import {
+  CoverageMetricsChart,
+  ModuleCoverageChart,
+  CoverageHistoryChart,
+} from '../../components/charts/QualityCharts.tsx';
+import { getQualityMetrics } from '../../lib/quality/codecov';
+import { resolveUrl } from '../../lib/utils/url';
+
+const title = '品質分析ダッシュボード';
+const description = 'Codecov APIを使用してコードカバレッジの品質分析を表示';
+
+const breadcrumbs = [
+  { name: 'ホーム', href: resolveUrl('/') },
+  { name: '品質分析', href: resolveUrl('/quality') },
+];
+
+// Codecovからの品質メトリクスを取得
+let qualityData = null;
+let isDataAvailable = false;
+let errorMessage = null;
+
+try {
+  qualityData = await getQualityMetrics();
+  isDataAvailable = true;
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.error('品質データの取得に失敗しました:', error);
+  errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+
+  // フォールバック用のサンプルデータ
+  qualityData = {
+    overallCoverage: 75.5,
+    totalLines: 12456,
+    coveredLines: 9404,
+    missedLines: 3052,
+    branchCoverage: 68.3,
+    lineCoverage: 75.5,
+    complexity: 'Medium',
+    lastUpdated: new Date().toISOString(),
+    modules: [
+      { name: 'src/lib/github', coverage: 45.2, lines: 892, missedLines: 489 },
+      { name: 'src/components/ui', coverage: 32.8, lines: 1245, missedLines: 836 },
+      { name: 'src/lib/analytics', coverage: 58.9, lines: 678, missedLines: 278 },
+      { name: 'src/pages/api', coverage: 42.1, lines: 534, missedLines: 309 },
+      { name: 'src/lib/utils', coverage: 89.4, lines: 423, missedLines: 45 },
+      { name: 'src/components/charts', coverage: 67.2, lines: 789, missedLines: 259 },
+      { name: 'src/lib/data', coverage: 78.6, lines: 345, missedLines: 74 },
+    ],
+    history: [
+      { date: '2025-01-03', coverage: 73.2 },
+      { date: '2025-01-04', coverage: 74.1 },
+      { date: '2025-01-05', coverage: 73.8 },
+      { date: '2025-01-06', coverage: 75.2 },
+      { date: '2025-01-07', coverage: 74.9 },
+      { date: '2025-01-08', coverage: 75.1 },
+      { date: '2025-01-09', coverage: 75.5 },
+    ],
+  };
+}
+
+// 対処が必要な上位5モジュールを特定
+const modulesNeedingAttention = qualityData.modules
+  .sort((a, b) => a.coverage - b.coverage)
+  .slice(0, 5);
+
+// チャート用データの準備
+const coverageMetricsData = {
+  overall: qualityData.overallCoverage,
+  branch: qualityData.branchCoverage,
+  line: qualityData.lineCoverage,
+  totalLines: qualityData.totalLines,
+  coveredLines: qualityData.coveredLines,
+  missedLines: qualityData.missedLines,
+};
+
+const moduleCoverageData = qualityData.modules.map(module => ({
+  name: module.name,
+  coverage: module.coverage,
+  lines: module.lines,
+  missedLines: module.missedLines,
+}));
+
+const coverageHistoryData = qualityData.history.map(entry => ({
+  date: entry.date,
+  coverage: entry.coverage,
+}));
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  breadcrumbs={breadcrumbs}
+  showHeader={true}
+  showFooter={true}
+  showSearch={false}
+  maxWidth="7xl"
+  padding="lg"
+  class="page-background"
+>
+  <div class="space-y-8">
+    <PageHeader
+      title="品質分析ダッシュボード"
+      description="Codecov APIを使用したコードカバレッジとモジュール品質の分析"
+      icon="🔍"
+      metaInfo={{
+        dataSource: `${qualityData.modules.length} modules analyzed`,
+        lastUpdated: new Date(qualityData.lastUpdated),
+        isDataAvailable: isDataAvailable,
+      }}
+      warningMessage={errorMessage
+        ? `データ取得エラー: ${errorMessage} - サンプルデータを表示中`
+        : !isDataAvailable
+          ? 'サンプルデータを使用中 - 実際の分析にはCodecov APIの設定が必要です'
+          : undefined}
+    />
+
+    <!-- Key Quality Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 space-lg">
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-muted">総合カバレッジ</p>
+            <p class="text-2xl font-bold text-heading">{qualityData.overallCoverage.toFixed(1)}%</p>
+          </div>
+          <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span class="text-blue-600 text-xl">📊</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-muted">総行数</p>
+            <p class="text-2xl font-bold text-heading">{qualityData.totalLines.toLocaleString()}</p>
+          </div>
+          <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+            <span class="text-green-600 text-xl">📝</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-muted">カバー済み行数</p>
+            <p class="text-2xl font-bold text-heading">
+              {qualityData.coveredLines.toLocaleString()}
+            </p>
+          </div>
+          <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+            <span class="text-purple-600 text-xl">✅</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-muted">未カバー行数</p>
+            <p class="text-2xl font-bold text-heading">
+              {qualityData.missedLines.toLocaleString()}
+            </p>
+          </div>
+          <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+            <span class="text-red-600 text-xl">❌</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 space-lg">
+      <!-- Coverage Metrics Chart -->
+      <div class="h-80">
+        <CoverageMetricsChart
+          client:load
+          height={300}
+          data={coverageMetricsData}
+          title="カバレッジメトリクス"
+        />
+      </div>
+
+      <!-- Coverage History Chart -->
+      <div class="h-80">
+        <CoverageHistoryChart
+          client:load
+          height={300}
+          data={coverageHistoryData}
+          title="カバレッジ履歴"
+        />
+      </div>
+    </div>
+
+    <!-- Module Coverage Analysis -->
+    <div class="space-lg">
+      <div class="h-96">
+        <ModuleCoverageChart
+          client:load
+          height={350}
+          data={moduleCoverageData}
+          title="モジュール別カバレッジ"
+        />
+      </div>
+    </div>
+
+    <!-- Modules Needing Attention -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card">
+        <h2 class="text-lg font-semibold text-heading mb-4">対処が必要な上位5モジュール</h2>
+        <div class="space-y-4">
+          {
+            modulesNeedingAttention.map((module, index) => (
+              <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <h3 class="font-medium text-red-900">{module.name}</h3>
+                    <p class="text-sm text-red-700 mt-1">
+                      カバレッジ: {module.coverage.toFixed(1)}% • 未カバー: {module.missedLines}行 /{' '}
+                      {module.lines}行
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      {index + 1}位
+                    </span>
+                    <span class="text-2xl">⚠️</span>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="w-full bg-red-200 rounded-full h-2">
+                    <div class="bg-red-600 h-2 rounded-full" style={`width: ${module.coverage}%`} />
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Quality Summary -->
+      <div class="card">
+        <h2 class="text-lg font-semibold text-heading mb-4">品質サマリー</h2>
+        <div class="space-y-4">
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-medium text-gray-900 mb-2">カバレッジ分析</h3>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li>• 総合カバレッジ: {qualityData.overallCoverage.toFixed(1)}%</li>
+              <li>• ブランチカバレッジ: {qualityData.branchCoverage.toFixed(1)}%</li>
+              <li>• ライン数: {qualityData.totalLines.toLocaleString()}行</li>
+              <li>• 分析済みモジュール: {qualityData.modules.length}個</li>
+            </ul>
+          </div>
+
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <h3 class="font-medium text-blue-900 mb-2">推奨事項</h3>
+            <ul class="text-sm text-blue-800 space-y-1">
+              <li>• 低カバレッジモジュールにテストを追加</li>
+              <li>• 50%未満のモジュールを優先的に改善</li>
+              <li>• 定期的なカバレッジ監視を実施</li>
+              <li>• CI/CDパイプラインにカバレッジ閾値を設定</li>
+            </ul>
+          </div>
+
+          <div class="p-4 bg-green-50 rounded-lg">
+            <h3 class="font-medium text-green-900 mb-2">高カバレッジモジュール</h3>
+            <ul class="text-sm text-green-800 space-y-1">
+              {
+                qualityData.modules
+                  .filter(m => m.coverage >= 80)
+                  .slice(0, 3)
+                  .map(module => (
+                    <li>
+                      • {module.name}: {module.coverage.toFixed(1)}%
+                    </li>
+                  ))
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Status -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-heading mb-4">🔗 API接続状況</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h3 class="font-medium text-heading mb-2">データソース</h3>
+          <p class="text-sm text-muted">
+            {isDataAvailable ? 'Codecov API (実際のデータ)' : 'サンプルデータ'}
+          </p>
+          <p class="text-xs text-muted mt-1">
+            最終更新: {new Date(qualityData.lastUpdated).toLocaleString('ja-JP')}
+          </p>
+        </div>
+        <div>
+          <h3 class="font-medium text-heading mb-2">API設定</h3>
+          <p class="text-sm text-muted">
+            {isDataAvailable ? '✅ 接続正常' : '⚠️ 設定が必要'}
+          </p>
+          {
+            !isDataAvailable && (
+              <p class="text-xs text-muted mt-1">環境変数 CODECOV_TOKEN の設定が必要です</p>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</PageLayout>
