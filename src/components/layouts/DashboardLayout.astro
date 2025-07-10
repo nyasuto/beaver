@@ -92,31 +92,31 @@ const {
 // Default sidebar items for analytics dashboard
 const defaultSidebarItems: SidebarItem[] = [
   {
-    name: 'Overview',
+    name: '概要',
     href: '/analytics',
     icon: 'dashboard',
     current: Astro.url.pathname === '/analytics',
   },
   {
-    name: 'Issues',
+    name: 'Issue',
     href: '/analytics/issues',
     icon: 'bug',
     current: Astro.url.pathname.startsWith('/analytics/issues'),
   },
   {
-    name: 'Performance',
+    name: 'パフォーマンス',
     href: '/analytics/performance',
     icon: 'chart',
     current: Astro.url.pathname.startsWith('/analytics/performance'),
   },
   {
-    name: 'Reports',
+    name: 'レポート',
     href: '/analytics/reports',
     icon: 'document',
     current: Astro.url.pathname.startsWith('/analytics/reports'),
   },
   {
-    name: 'Settings',
+    name: '設定',
     href: '/analytics/settings',
     icon: 'cog',
     current: Astro.url.pathname.startsWith('/analytics/settings'),

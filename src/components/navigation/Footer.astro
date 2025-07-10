@@ -25,23 +25,23 @@ const currentYear = new Date().getFullYear();
 
 // Footer links
 const footerLinks = {
-  Product: [
-    { name: 'Features', href: '#features' },
-    { name: 'Analytics', href: resolveUrl('/analytics') },
-    { name: 'Issues', href: resolveUrl('/issues') },
+  製品: [
+    { name: '機能', href: '#features' },
+    { name: 'アナリティクス', href: resolveUrl('/analytics') },
+    { name: 'Issue', href: resolveUrl('/issues') },
     { name: 'API', href: resolveUrl('/api') },
   ],
-  Resources: [
-    { name: 'Documentation', href: '#docs' },
+  リソース: [
+    { name: 'ドキュメント', href: '#docs' },
     { name: 'GitHub', href: 'https://github.com/nyasuto/beaver' },
-    { name: 'Support', href: '#support' },
-    { name: 'Status', href: '#status' },
+    { name: 'サポート', href: '#support' },
+    { name: 'ステータス', href: '#status' },
   ],
-  Company: [
-    { name: 'About', href: '#about' },
-    { name: 'Blog', href: '#blog' },
-    { name: 'Privacy', href: '#privacy' },
-    { name: 'Terms', href: '#terms' },
+  会社: [
+    { name: '概要', href: '#about' },
+    { name: 'ブログ', href: '#blog' },
+    { name: 'プライバシー', href: '#privacy' },
+    { name: '利用規約', href: '#terms' },
   ],
 };
 
@@ -80,8 +80,7 @@ const socialLinks = [
               <span class="text-xl font-bold text-heading">Beaver</span>
             </div>
             <p class="text-muted text-sm mb-4">
-              AI-first knowledge management system that transforms GitHub development activities
-              into structured, persistent knowledge bases.
+              GitHub開発活動を構造化された永続的な知識ベースに変換するAI-first知識管理システム。
             </p>
             {showSocial && (
               <div class="flex space-x-4">
@@ -141,20 +140,20 @@ const socialLinks = [
           {showNewsletter && (
             <div>
               <h3 class="text-sm font-semibold text-heading uppercase tracking-wider mb-4">
-                Stay Updated
+                最新情報を受け取る
               </h3>
               <p class="text-muted text-sm mb-4">
-                Get the latest updates and features delivered to your inbox.
+                最新のアップデートと機能をメールで受け取りましょう。
               </p>
               <form class="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="メールアドレスを入力"
                   class="input flex-1 text-sm"
                   required
                 />
                 <button type="submit" class="btn btn-primary text-sm px-4 py-2">
-                  Subscribe
+                  購読
                 </button>
               </form>
             </div>
@@ -170,10 +169,10 @@ const socialLinks = [
       <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
         <div class="flex items-center space-x-4">
           <p class="text-muted text-sm">
-            © {currentYear} Beaver Team. All rights reserved.
+            © {currentYear} Beaver Team. 全著作権所有.
           </p>
           <div class="flex items-center space-x-1 text-muted text-sm">
-            <span>Built with</span>
+            <span>技術スタック</span>
             <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
               <path
                 d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
@@ -192,9 +191,9 @@ const socialLinks = [
         </div>
 
         <div class="flex items-center space-x-4 text-muted text-sm">
-          <a href="#privacy" class="hover:text-heading transition-colors">Privacy</a>
-          <a href="#terms" class="hover:text-heading transition-colors">Terms</a>
-          <a href="#cookies" class="hover:text-heading transition-colors">Cookies</a>
+          <a href="#privacy" class="hover:text-heading transition-colors">プライバシー</a>
+          <a href="#terms" class="hover:text-heading transition-colors">利用規約</a>
+          <a href="#cookies" class="hover:text-heading transition-colors">Cookie</a>
         </div>
       </div>
     </div>

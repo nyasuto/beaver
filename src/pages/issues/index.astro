@@ -16,12 +16,12 @@ import {
 } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
 
-const title = 'Issues';
-const description = 'Browse and analyze GitHub issues with AI-powered insights';
+const title = 'Issue';
+const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
 
 const breadcrumbs = [
-  { name: 'Home', href: resolveUrl('/') },
-  { name: 'Issues', href: resolveUrl('/issues') },
+  { name: 'ホーム', href: resolveUrl('/') },
+  { name: 'Issue', href: resolveUrl('/issues') },
 ];
 
 // 静的データの読み込み
@@ -77,8 +77,8 @@ const sortedLabels = Object.entries(labelCounts)
   class="page-background"
 >
   <PageHeader
-    title="Issues"
-    description="Browse and analyze GitHub issues with AI-powered classification and insights"
+    title="Issue"
+    description="AI搭載の分類と洞察でGitHubのIssueを閲覧・分析"
     icon="📋"
     metaInfo={{
       totalCount: issues.length,
@@ -95,19 +95,19 @@ const sortedLabels = Object.entries(labelCounts)
     <!-- Filters Sidebar -->
     <aside class="lg:col-span-1">
       <div class="card">
-        <h2 class="text-lg font-semibold text-heading mb-4">Filters</h2>
+        <h2 class="text-lg font-semibold text-heading mb-4">フィルター</h2>
         <div class="space-y-4">
           <div>
-            <label class="label">Status</label>
+            <label class="label">ステータス</label>
             <select class="input" id="status-filter">
-              <option value="all">All ({issues.length})</option>
-              <option value="open">Open ({openIssues.length})</option>
-              <option value="closed">Closed ({closedIssues.length})</option>
+              <option value="all">すべて ({issues.length})</option>
+              <option value="open">オープン ({openIssues.length})</option>
+              <option value="closed">クローズ ({closedIssues.length})</option>
             </select>
           </div>
 
           <div>
-            <label class="label">Labels</label>
+            <label class="label">ラベル</label>
             <div class="space-y-2 max-h-48 overflow-y-auto">
               {
                 sortedLabels.map(([labelName, count]) => (
@@ -124,7 +124,7 @@ const sortedLabels = Object.entries(labelCounts)
           {
             isDataAvailable && metadata && (
               <div class="pt-4 border-t">
-                <h3 class="text-sm font-medium text-heading mb-2">Repository</h3>
+                <h3 class="text-sm font-medium text-heading mb-2">リポジトリ</h3>
                 <p class="text-sm text-muted">
                   {metadata.repository.owner}/{metadata.repository.name}
                 </p>
@@ -139,15 +139,15 @@ const sortedLabels = Object.entries(labelCounts)
     <div class="lg:col-span-3">
       <div class="card">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h2 class="text-lg font-semibold text-heading">Issues List</h2>
+          <h2 class="text-lg font-semibold text-heading">Issue一覧</h2>
           <div class="flex gap-2 mt-2 sm:mt-0">
             <input
               type="search"
-              placeholder="Search issues..."
+              placeholder="Issueを検索..."
               class="input w-64"
               id="search-input"
             />
-            <button class="btn btn-primary" id="search-button">Search</button>
+            <button class="btn btn-primary" id="search-button">検索</button>
           </div>
         </div>
 
@@ -179,7 +179,8 @@ const sortedLabels = Object.entries(labelCounts)
                       </a>
                     </h3>
                     <p class="text-sm text-muted">
-                      #{issue.number} • {issue.state === 'open' ? '🟢' : '🔴'} {issue.state} •
+                      #{issue.number} • {issue.state === 'open' ? '🟢' : '🔴'}{' '}
+                      {issue.state === 'open' ? 'オープン' : 'クローズ'} •
                       {issue.user?.login || 'Unknown'} •
                       {new Date(issue.created_at).toLocaleDateString('ja-JP')}
                     </p>
@@ -192,7 +193,7 @@ const sortedLabels = Object.entries(labelCounts)
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {issue.state}
+                      {issue.state === 'open' ? 'オープン' : 'クローズ'}
                     </span>
                   </div>
                 </div>

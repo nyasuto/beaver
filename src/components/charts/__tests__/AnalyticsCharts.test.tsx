@@ -132,7 +132,7 @@ describe('AnalyticsCharts Components', () => {
 
       expect(screen.getByTestId('chart-title')).toHaveTextContent('Test Issue Trends');
       expect(screen.getByTestId('chart-description')).toHaveTextContent(
-        'Issues created over the last 30 days'
+        '過去30日間に作成されたIssue'
       );
     });
 
@@ -158,7 +158,7 @@ describe('AnalyticsCharts Components', () => {
 
       render(<IssueTrendsChart showControls={true} />);
 
-      const select = screen.getByDisplayValue('Last 30 days');
+      const select = screen.getByDisplayValue('過去30日間');
       fireEvent.change(select, { target: { value: '7' } });
 
       await waitFor(() => {
@@ -206,7 +206,7 @@ describe('AnalyticsCharts Components', () => {
       const chart = screen.getByTestId('time-series-chart');
       const props = JSON.parse(chart.getAttribute('data-props') || '{}');
 
-      expect(props.yAxisLabel).toBe('Issues Created');
+      expect(props.yAxisLabel).toBe('作成されたIssue数');
       expect(props.aggregation).toBe('day');
       expect(props.showTrend).toBe(true);
       expect(props.smooth).toBe(true);
@@ -237,9 +237,7 @@ describe('AnalyticsCharts Components', () => {
       render(<IssueCategoriesChart {...defaultProps} />);
 
       expect(screen.getByTestId('chart-title')).toHaveTextContent('Test Categories');
-      expect(screen.getByTestId('chart-description')).toHaveTextContent(
-        'Distribution of issues by category'
-      );
+      expect(screen.getByTestId('chart-description')).toHaveTextContent('カテゴリ別Issue分布');
     });
 
     it('should fetch and display category data', async () => {
@@ -321,9 +319,7 @@ describe('AnalyticsCharts Components', () => {
       render(<ResolutionTimeChart {...defaultProps} />);
 
       expect(screen.getByTestId('chart-title')).toHaveTextContent('Test Resolution Time');
-      expect(screen.getByTestId('chart-description')).toHaveTextContent(
-        'Average time to resolve issues by category'
-      );
+      expect(screen.getByTestId('chart-description')).toHaveTextContent('カテゴリ別平均解決時間');
     });
 
     it('should fetch and transform resolution data', async () => {
@@ -406,7 +402,7 @@ describe('AnalyticsCharts Components', () => {
 
       expect(screen.getByTestId('chart-title')).toHaveTextContent('Test Performance');
       expect(screen.getByTestId('chart-description')).toHaveTextContent(
-        'Repository performance over time'
+        'リポジトリパフォーマンス推移'
       );
     });
 
@@ -483,8 +479,8 @@ describe('AnalyticsCharts Components', () => {
 
         expect(props.data.labels).toEqual(['Week 1', 'Week 2']);
         expect(props.data.datasets).toHaveLength(2);
-        expect(props.data.datasets[0].label).toBe('Resolution Rate (%)');
-        expect(props.data.datasets[1].label).toBe('Throughput (issues/day)');
+        expect(props.data.datasets[0].label).toBe('解決率 (%)');
+        expect(props.data.datasets[1].label).toBe('スループット (issue/日)');
       });
     });
   });
@@ -513,7 +509,7 @@ describe('AnalyticsCharts Components', () => {
 
       expect(screen.getByTestId('chart-title')).toHaveTextContent('Test Contributors');
       expect(screen.getByTestId('chart-description')).toHaveTextContent(
-        'Most active contributors by issue count'
+        'Issue数による最も活発なコントリビューター'
       );
     });
 
@@ -718,7 +714,7 @@ describe('AnalyticsCharts Components', () => {
       expect(timeSeriesChart).toBeInTheDocument();
 
       // Check for select control in the first chart (IssueTrendsChart)
-      const selectElement = screen.getByDisplayValue('Last 30 days');
+      const selectElement = screen.getByDisplayValue('過去30日間');
       expect(selectElement).toBeInTheDocument();
 
       // IssueCategoriesChart should have showPercentages=true (implicit in rendering)
@@ -786,7 +782,7 @@ describe('AnalyticsCharts Components', () => {
       });
 
       // Change the time window via the select control
-      const select = screen.getByDisplayValue('Last 30 days');
+      const select = screen.getByDisplayValue('過去30日間');
       fireEvent.change(select, { target: { value: '7' } });
 
       await waitFor(() => {

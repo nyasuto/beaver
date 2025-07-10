@@ -28,12 +28,12 @@ import {
 import type { Issue } from '../../lib/schemas/github';
 import { resolveUrl } from '../../lib/utils/url';
 
-const title = 'Analytics Dashboard';
-const description = 'View analytics and insights about your GitHub repository activity';
+const title = 'アナリティクスダッシュボード';
+const description = 'GitHubリポジトリ活動の分析と洞察を表示';
 
 const breadcrumbs = [
-  { name: 'Home', href: resolveUrl('/') },
-  { name: 'Analytics', href: resolveUrl('/analytics') },
+  { name: 'ホーム', href: resolveUrl('/') },
+  { name: 'アナリティクス', href: resolveUrl('/analytics') },
 ];
 
 // 静的データの読み込み
@@ -94,8 +94,8 @@ try {
 >
   <div class="space-y-8">
     <PageHeader
-      title="Analytics Dashboard"
-      description="Insights and analytics about your GitHub repository activity"
+      title="アナリティクスダッシュボード"
+      description="GitHubリポジトリ活動に関する洞察と分析"
       icon="📊"
       metaInfo={{
         repositoryOwner: metadata?.repository?.owner,
@@ -105,7 +105,7 @@ try {
         isDataAvailable: isDataAvailable,
       }}
       warningMessage={!isDataAvailable
-        ? 'Using sample data - run npm run fetch-data for real analytics'
+        ? 'サンプルデータを使用中 - 実際の分析には npm run fetch-data を実行してください'
         : undefined}
     />
 
@@ -114,7 +114,7 @@ try {
       <div class="card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted">Total Issues</p>
+            <p class="text-sm text-muted">総Issue数</p>
             <p class="text-2xl font-bold text-heading">{metrics.totalIssues}</p>
           </div>
           <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -126,7 +126,7 @@ try {
       <div class="card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted">Open Issues</p>
+            <p class="text-sm text-muted">オープンなIssue</p>
             <p class="text-2xl font-bold text-heading">{metrics.openIssues}</p>
           </div>
           <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -138,7 +138,7 @@ try {
       <div class="card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted">Closed Issues</p>
+            <p class="text-sm text-muted">クローズしたIssue</p>
             <p class="text-2xl font-bold text-heading">{metrics.closedIssues}</p>
           </div>
           <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -150,7 +150,7 @@ try {
       <div class="card">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-muted">Avg. Resolution Time</p>
+            <p class="text-sm text-muted">平均解決時間</p>
             <p class="text-2xl font-bold text-heading">{metrics.averageResolutionTime}</p>
           </div>
           <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -168,7 +168,7 @@ try {
           client:load
           height={300}
           data={issuesTrendData}
-          title="Issue Creation Trend"
+          title="Issue作成トレンド"
         />
       </div>
 
@@ -178,7 +178,7 @@ try {
           client:load
           height={300}
           data={categoriesData}
-          title="Issue Categories"
+          title="Issueカテゴリ"
         />
       </div>
     </div>
@@ -190,7 +190,7 @@ try {
           client:load
           height={300}
           data={resolutionTimeData}
-          title="Resolution Time Trends"
+          title="解決時間トレンド"
         />
       </div>
 
@@ -199,7 +199,7 @@ try {
           client:load
           height={300}
           data={contributorData}
-          title="Top Contributors"
+          title="トップコントリビューター"
         />
       </div>
     </div>
@@ -208,7 +208,7 @@ try {
       <!-- Recent Activity -->
       <div class="lg:col-span-2">
         <div class="card">
-          <h2 class="text-lg font-semibold text-heading mb-4">Recent Activity</h2>
+          <h2 class="text-lg font-semibold text-heading mb-4">最近の活動</h2>
           <div class="space-y-4">
             {
               recentActivity.slice(0, 8).map(activity => (
@@ -250,7 +250,7 @@ try {
             }
             {
               recentActivity.length === 0 && (
-                <p class="text-sm text-muted text-center py-4">No recent activity available</p>
+                <p class="text-sm text-muted text-center py-4">最近の活動が見つかりません</p>
               )
             }
           </div>
@@ -260,7 +260,7 @@ try {
       <!-- Top Contributors -->
       <div class="lg:col-span-1">
         <div class="card">
-          <h2 class="text-lg font-semibold text-heading mb-4">Top Contributors</h2>
+          <h2 class="text-lg font-semibold text-heading mb-4">トップコントリビューター</h2>
           <div class="space-y-3">
             {
               metrics.topContributors.map((contributor, index) => (
@@ -277,7 +277,9 @@ try {
             }
             {
               metrics.topContributors.length === 0 && (
-                <p class="text-sm text-muted text-center py-4">No contributor data available</p>
+                <p class="text-sm text-muted text-center py-4">
+                  コントリビューターデータが見つかりません
+                </p>
               )
             }
           </div>
@@ -288,42 +290,40 @@ try {
     <!-- AI Insights -->
     <div class="mt-8">
       <div class="card">
-        <h2 class="text-lg font-semibold text-heading mb-4">🤖 AI Insights</h2>
+        <h2 class="text-lg font-semibold text-heading mb-4">🤖 AI洞察</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 class="font-medium text-heading mb-2">Key Findings</h3>
+            <h3 class="font-medium text-heading mb-2">主要な発見</h3>
             <ul class="space-y-2 text-sm text-muted">
-              <li>• Total of {metrics.totalIssues} issues tracked</li>
+              <li>• 追跡中のIssue総数: {metrics.totalIssues}件</li>
               <li>
-                • {metrics.openIssues} issues currently open ({
+                • 現在オープンなIssue: {metrics.openIssues}件 ({
                   Math.round((metrics.openIssues / metrics.totalIssues) * 100)
                 }%)
               </li>
               <li>
-                • Top label: {metrics.topLabels[0]?.name || 'None'} ({
+                • 最頻出ラベル: {metrics.topLabels[0]?.name || 'なし'} ({
                   metrics.topLabels[0]?.count || 0
-                } issues)
+                } 件)
               </li>
-              <li>• Average resolution time: {metrics.averageResolutionTime}</li>
+              <li>• 平均解決時間: {metrics.averageResolutionTime}</li>
             </ul>
           </div>
           <div>
-            <h3 class="font-medium text-heading mb-2">Recommendations</h3>
+            <h3 class="font-medium text-heading mb-2">推奨事項</h3>
             <ul class="space-y-2 text-sm text-muted">
               {
                 metrics.openIssues > metrics.closedIssues && (
-                  <li>• Focus on closing open issues to improve resolution rate</li>
+                  <li>• オープンなIssueのクローズに注力して解決率を向上させる</li>
                 )
               }
               {
                 metrics.topLabels.length > 0 && metrics.topLabels[0] && (
-                  <li>
-                    • Consider organizing {metrics.topLabels[0].name} issues for better tracking
-                  </li>
+                  <li>• {metrics.topLabels[0].name}のIssueを整理してより良い追跡を検討する</li>
                 )
               }
-              <li>• Review contributor activity and encourage participation</li>
-              <li>• Consider setting up automated issue classification</li>
+              <li>• コントリビューターの活動を確認し参加を促進する</li>
+              <li>• 自動Issue分類の設定を検討する</li>
             </ul>
           </div>
         </div>
