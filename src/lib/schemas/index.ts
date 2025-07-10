@@ -55,21 +55,6 @@ export type {
   Environment,
 } from './config';
 
-// Analytics schemas
-export * from './analytics';
-export type {
-  TimeSeriesData,
-  IssueMetrics,
-  RepositoryMetrics,
-  ClassificationResult,
-  ProcessedIssue,
-  TrendAnalysis,
-  InsightData,
-  AnalyticsDashboard,
-  DataExport,
-  AnalyticsQuery,
-} from './analytics';
-
 // Classification schemas
 export * from './classification';
 export type {
@@ -229,7 +214,6 @@ export type ApiResponse<T> = z.infer<
 // Common validation helpers
 export { validateData, validateDataOrThrow } from './validation';
 export { validateConfig, createDefaultConfig, parseEnvironment } from './config';
-export { validateAnalyticsData, createDefaultDashboard } from './analytics';
 export { validateUIProps, createDefaultTheme, generateUIId } from './ui';
 export { validateAPIResponse, createSuccessResponse, createErrorResponse } from './api';
 export { validateProcessingData, applyFilters, createDefaultProcessingOptions } from './processing';
@@ -240,13 +224,6 @@ export const ConfigSchemas = {
   BeaverConfig: () => import('./config').then(m => m.BeaverConfigSchema),
   GitHubConfig: () => import('./config').then(m => m.GitHubConfigSchema),
   Environment: () => import('./config').then(m => m.EnvironmentSchema),
-} as const;
-
-export const AnalyticsSchemas = {
-  TimeSeriesData: () => import('./analytics').then(m => m.TimeSeriesDataSchema),
-  IssueMetrics: () => import('./analytics').then(m => m.IssueMetricsSchema),
-  RepositoryMetrics: () => import('./analytics').then(m => m.RepositoryMetricsSchema),
-  AnalyticsDashboard: () => import('./analytics').then(m => m.AnalyticsDashboardSchema),
 } as const;
 
 export const UISchemas = {

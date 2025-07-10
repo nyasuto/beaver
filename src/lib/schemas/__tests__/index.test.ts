@@ -17,7 +17,6 @@ import {
   ErrorSchema,
   ApiResponseSchema,
   ConfigSchemas,
-  AnalyticsSchemas,
   UISchemas,
   APISchemas,
   ProcessingSchemas,
@@ -28,8 +27,6 @@ import {
   validateConfig,
   createDefaultConfig,
   parseEnvironment,
-  validateAnalyticsData,
-  createDefaultDashboard,
   validateUIProps,
   createDefaultTheme,
   generateUIId,
@@ -232,16 +229,6 @@ describe('Schema Collections', () => {
     });
   });
 
-  describe('AnalyticsSchemas', () => {
-    it('should have correct schema factories', () => {
-      expect(AnalyticsSchemas.TimeSeriesData).toBeDefined();
-      expect(AnalyticsSchemas.IssueMetrics).toBeDefined();
-      expect(AnalyticsSchemas.RepositoryMetrics).toBeDefined();
-      expect(AnalyticsSchemas.AnalyticsDashboard).toBeDefined();
-      expect(typeof AnalyticsSchemas.TimeSeriesData).toBe('function');
-    });
-  });
-
   describe('UISchemas', () => {
     it('should have correct schema factories', () => {
       expect(UISchemas.ThemeConfig).toBeDefined();
@@ -313,15 +300,6 @@ describe('Validation Helper Functions', () => {
     EnvironmentSchema: vi.fn(),
   }));
 
-  vi.mock('../analytics', () => ({
-    validateAnalyticsData: vi.fn(),
-    createDefaultDashboard: vi.fn(),
-    TimeSeriesDataSchema: vi.fn(),
-    IssueMetricsSchema: vi.fn(),
-    RepositoryMetricsSchema: vi.fn(),
-    AnalyticsDashboardSchema: vi.fn(),
-  }));
-
   vi.mock('../ui', () => ({
     validateUIProps: vi.fn(),
     createDefaultTheme: vi.fn(),
@@ -378,13 +356,6 @@ describe('Validation Helper Functions', () => {
       expect(typeof validateConfig).toBe('function');
       expect(typeof createDefaultConfig).toBe('function');
       expect(typeof parseEnvironment).toBe('function');
-    });
-
-    it('should export analytics functions', () => {
-      expect(validateAnalyticsData).toBeDefined();
-      expect(createDefaultDashboard).toBeDefined();
-      expect(typeof validateAnalyticsData).toBe('function');
-      expect(typeof createDefaultDashboard).toBe('function');
     });
 
     it('should export UI functions', () => {
@@ -464,14 +435,12 @@ describe('Module Integration', () => {
   it('should handle schema factory functions', async () => {
     // Test that schema factories return promises
     const configSchemaPromise = ConfigSchemas.BeaverConfig();
-    const analyticsSchemaPromise = AnalyticsSchemas.TimeSeriesData();
     const uiSchemaPromise = UISchemas.ThemeConfig();
     const apiSchemaPromise = APISchemas.SuccessResponse();
     const processingSchemaPromise = ProcessingSchemas.FilterGroup();
     const githubSchemaPromise = GitHubSchemas.Issue();
 
     expect(configSchemaPromise).toBeInstanceOf(Promise);
-    expect(analyticsSchemaPromise).toBeInstanceOf(Promise);
     expect(uiSchemaPromise).toBeInstanceOf(Promise);
     expect(apiSchemaPromise).toBeInstanceOf(Promise);
     expect(processingSchemaPromise).toBeInstanceOf(Promise);

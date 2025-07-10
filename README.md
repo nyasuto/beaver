@@ -60,7 +60,6 @@ Issues + Commits + AIログ → 🦫 Beaver → 各ステークホルダーに�
 
 ### 🔧 Core Features
 - **Knowledge Base Generation**: Issues → 構造化 Wiki
-- **Development Analytics**: パターン分析とメトリクス
 - **Code Quality Dashboard**: Codecov API統合による品質分析
 - **Interactive Visualization**: Chart.js による動的グラフ
 - **GitHub Pages Deployment**: 自動デプロイメント
@@ -122,7 +121,6 @@ beaver-astro/
 │   │   ├── issues/         # Issues pages
 │   │   │   ├── index.astro # Issues list with filters
 │   │   │   └── [id].astro  # Individual issue details
-│   │   ├── analytics/      # Analytics dashboard
 │   │   ├── quality/        # Code quality dashboard (Codecov統合)
 │   │   └── api/            # API endpoints
 │   │       ├── github/     # GitHub API endpoints
@@ -130,7 +128,6 @@ beaver-astro/
 │   ├── lib/                # Core libraries
 │   │   ├── github/         # GitHub API integration
 │   │   ├── schemas/        # Zod validation schemas
-│   │   ├── analytics/      # Data analysis logic
 │   │   ├── quality/        # Code quality integration (Codecov)
 │   │   ├── data/           # Static data management
 │   │   ├── config/         # Environment configuration
@@ -251,17 +248,9 @@ urgency_scoring:
   label_weight: 0.7
 ```
 
-## 📊 Analytics & Insights
+## 📊 機能と洞察
 
-Beaver は以下の分析機能を提供します:
-
-### 📈 開発アナリティクス (`/analytics`)
-- **Issue Trends**: 作成・解決パターンの可視化
-- **Development Velocity**: チームの開発速度メトリクス
-- **Category Distribution**: Issue カテゴリの分布
-- **Contributor Analysis**: 貢献者の活動パターン
-- **Resolution Patterns**: 問題解決の傾向分析
-- **Recent Activity**: 最新の開発活動タイムライン
+Beaver は以下の機能を提供します:
 
 ### 🔍 品質分析ダッシュボード (`/quality`)
 - **Overall Coverage**: 全体的なコードカバレッジメトリクス
@@ -400,16 +389,16 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 - [x] 基本的な知識ベース生成
 - [x] Astro + TypeScript セットアップ
 - [x] 日本語ローカライゼーション
-- [x] インタラクティブ分析ダッシュボード
+- [x] インタラクティブ品質ダッシュボード
 - [x] Codecov API統合による品質分析
 - [x] 包括的テストフレームワーク
 
-### Phase 2: Advanced Analytics ⚡ (進行中)
-- [x] リアルタイム分析ダッシュボード
+### Phase 2: Advanced Quality Features ⚡ (進行中)
+- [x] コード品質分析ダッシュボード
 - [x] インタラクティブ可視化 (Chart.js)
 - [ ] 高度な分類アルゴリズム
-- [ ] 予測分析機能
 - [ ] パフォーマンス最適化
+- [ ] セキュリティ分析
 
 ### Phase 3: Team Collaboration 🚀 (計画中)
 - [ ] マルチリポジトリ対応
