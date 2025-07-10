@@ -35,30 +35,30 @@ const { class: className = '' } = Astro.props;
 ---
 
 <div class={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 ${className}`}>
-  <!-- Open Issues -->
+  <!-- オープンなIssue -->
   <StatCard
-    title="Open Issues"
+    title="オープンなIssue"
     value={stats?.open ?? -1}
     icon="🔓"
-    description="Currently active"
+    description="現在アクティブ"
     color="green"
   />
 
-  <!-- Urgent Issues -->
+  <!-- 緊急Issue -->
   <StatCard
-    title="Urgent Issues"
+    title="緊急Issue"
     value={urgentIssues}
     icon="🚨"
-    description="Critical & high priority"
+    description="クリティカル・高優先度"
     color="red"
   />
 
-  <!-- Recent Activity -->
+  <!-- 最近の活動 -->
   <StatCard
-    title="Recent Activity"
+    title="最近の活動"
     value={recentActivity}
     icon="📈"
-    description="Updated this week"
+    description="今週更新された"
     color="blue"
   />
 </div>

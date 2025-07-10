@@ -77,7 +77,7 @@ const { showActions = true, class: className = '' } = Astro.props;
             </h1>
             <div class="flex items-center space-x-3 text-sm text-blue-100">
               <span>{repoData.owner}/{repoData.name}</span>
-              <span>Health: {repoData.healthScore}%</span>
+              <span>ヘルス: {repoData.healthScore}%</span>
             </div>
           </div>
         </div>
@@ -88,10 +88,10 @@ const { showActions = true, class: className = '' } = Astro.props;
         showActions && (
           <div class="flex items-center space-x-3">
             <a href={resolveUrl('/issues')} class="banner-action-btn">
-              View Issues
+              Issueを見る
             </a>
             <a href={resolveUrl('/analytics')} class="banner-action-btn">
-              Analytics
+              アナリティクス
             </a>
           </div>
         )
@@ -121,12 +121,12 @@ const { showActions = true, class: className = '' } = Astro.props;
         </div>
         <div class="ml-3">
           <p class="text-sm text-yellow-700">
-            Unable to fetch live repository data. Showing fallback information.
+            リアルタイムリポジトリデータの取得に失敗しました。フォールバック情報を表示しています。
             <a
               href="/api/github/health"
               class="font-medium underline text-yellow-700 hover:text-yellow-600"
             >
-              Check GitHub API status
+              GitHub APIステータスを確認
             </a>
           </p>
         </div>

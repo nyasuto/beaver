@@ -95,9 +95,9 @@ export function IssueTrendsChart({
         onChange={e => setSelectedWindow(Number(e.target.value))}
         className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white dark:bg-gray-800 dark:border-gray-600"
       >
-        <option value={7}>Last 7 days</option>
-        <option value={30}>Last 30 days</option>
-        <option value={90}>Last 90 days</option>
+        <option value={7}>過去7日間</option>
+        <option value={30}>過去30日間</option>
+        <option value={90}>過去90日間</option>
       </select>
     </div>
   );
@@ -105,7 +105,7 @@ export function IssueTrendsChart({
   return (
     <ChartContainer
       title={title}
-      description={`Issues created over the last ${selectedWindow} days`}
+      description={`過去${selectedWindow}日間に作成されたIssue`}
       actions={controlsSection}
       className="h-full"
     >
@@ -114,7 +114,7 @@ export function IssueTrendsChart({
           <TimeSeriesChart
             data={chartData}
             loading={isLoading}
-            yAxisLabel="Issues Created"
+            yAxisLabel="作成されたIssue数"
             aggregation="day"
             showTrend={true}
             smooth={true}
@@ -127,7 +127,7 @@ export function IssueTrendsChart({
           <TimeSeriesChart
             data={data}
             loading={isLoading}
-            yAxisLabel="Issues Created"
+            yAxisLabel="作成されたIssue数"
             aggregation="day"
             showTrend={true}
             smooth={true}
@@ -208,11 +208,7 @@ export function IssueCategoriesChart({
   }, [chartData]);
 
   return (
-    <ChartContainer
-      title={title}
-      description="Distribution of issues by category"
-      className="h-full"
-    >
+    <ChartContainer title={title} description="カテゴリ別Issue分布" className="h-full">
       <div style={{ height }}>
         <ThemedPieChart
           type="doughnut"
@@ -314,11 +310,7 @@ export function ResolutionTimeChart({
   }, [chartData]);
 
   return (
-    <ChartContainer
-      title={title}
-      description="Average time to resolve issues by category"
-      className="h-full"
-    >
+    <ChartContainer title={title} description="カテゴリ別平均解決時間" className="h-full">
       <div style={{ height }}>
         <ThemedBarChart
           type="bar"
@@ -328,7 +320,7 @@ export function ResolutionTimeChart({
               labels: Object.keys(data),
               datasets: [
                 {
-                  label: 'Days',
+                  label: '日数',
                   data: Object.values(data),
                   backgroundColor: (CHART_COLORS[1] || '#10B981') + '80',
                   borderColor: CHART_COLORS[1] || '#10B981',
@@ -398,14 +390,14 @@ export function PerformanceMetricsChart({
       labels,
       datasets: [
         {
-          label: 'Resolution Rate (%)',
+          label: '解決率 (%)',
           data: data.map(d => d.resolutionRate),
           backgroundColor: CHART_COLORS[0] + '40',
           borderColor: CHART_COLORS[0],
           fill: true,
         },
         {
-          label: 'Throughput (issues/day)',
+          label: 'スループット (issue/日)',
           data: data.map(d => d.throughput),
           backgroundColor: CHART_COLORS[1] + '40',
           borderColor: CHART_COLORS[1],
@@ -416,7 +408,7 @@ export function PerformanceMetricsChart({
   }, [data]);
 
   return (
-    <ChartContainer title={title} description="Repository performance over time" className="h-full">
+    <ChartContainer title={title} description="リポジトリパフォーマンス推移" className="h-full">
       <div style={{ height }}>
         <ThemedAreaChart type="line" data={chartData} loading={isLoading} />
       </div>
@@ -498,7 +490,7 @@ export function ContributorActivityChart({
   return (
     <ChartContainer
       title={title}
-      description="Most active contributors by issue count"
+      description="Issue数による最も活発なコントリビューター"
       className="h-full"
     >
       <div style={{ height }}>
@@ -509,7 +501,7 @@ export function ContributorActivityChart({
               labels: Object.keys(data),
               datasets: [
                 {
-                  label: 'Issues',
+                  label: 'Issue数',
                   data: Object.values(data),
                   backgroundColor: (CHART_COLORS[2] || '#F59E0B') + '80',
                   borderColor: CHART_COLORS[2] || '#F59E0B',
@@ -555,7 +547,7 @@ export function SparklineChart({
           labels: data.map(point => point.timestamp.toLocaleDateString()),
           datasets: [
             {
-              label: 'Data',
+              label: 'データ',
               data: data.map(point => point.value),
               backgroundColor: (color || '#3B82F6') + '40',
               borderColor: color || '#3B82F6',
