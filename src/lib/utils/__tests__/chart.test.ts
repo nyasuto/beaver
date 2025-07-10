@@ -255,7 +255,9 @@ describe('Chart Utilities', () => {
         issueId: 1,
         issueNumber: 1,
         primaryCategory: 'bug',
-        classifications: [{ category: 'bug', confidence: 0.9, reasons: ['Test reason'], keywords: ['bug'] }],
+        classifications: [
+          { category: 'bug', confidence: 0.9, reasons: ['Test reason'], keywords: ['bug'] },
+        ],
         primaryConfidence: 0.9,
         estimatedPriority: 'high',
         priorityConfidence: 0.9,
@@ -275,7 +277,9 @@ describe('Chart Utilities', () => {
         issueId: 2,
         issueNumber: 2,
         primaryCategory: 'feature',
-        classifications: [{ category: 'feature', confidence: 0.6, reasons: ['Test reason'], keywords: ['feature'] }],
+        classifications: [
+          { category: 'feature', confidence: 0.6, reasons: ['Test reason'], keywords: ['feature'] },
+        ],
         primaryConfidence: 0.6,
         estimatedPriority: 'medium',
         priorityConfidence: 0.6,
@@ -295,7 +299,9 @@ describe('Chart Utilities', () => {
         issueId: 3,
         issueNumber: 3,
         primaryCategory: 'bug',
-        classifications: [{ category: 'bug', confidence: 0.2, reasons: ['Test reason'], keywords: ['bug'] }],
+        classifications: [
+          { category: 'bug', confidence: 0.2, reasons: ['Test reason'], keywords: ['bug'] },
+        ],
         primaryConfidence: 0.2,
         estimatedPriority: 'low',
         priorityConfidence: 0.2,
@@ -382,7 +388,9 @@ describe('Chart Utilities', () => {
           issueId: 1,
           issueNumber: 1,
           primaryCategory: 'test',
-          classifications: [{ category: 'test', confidence: 0.3, reasons: ['Test reason'], keywords: ['test'] }],
+          classifications: [
+            { category: 'test', confidence: 0.3, reasons: ['Test reason'], keywords: ['test'] },
+          ],
           primaryConfidence: 0.3,
           estimatedPriority: 'medium',
           priorityConfidence: 0.3,
@@ -402,7 +410,9 @@ describe('Chart Utilities', () => {
           issueId: 2,
           issueNumber: 2,
           primaryCategory: 'test',
-          classifications: [{ category: 'test', confidence: 0.7, reasons: ['Test reason'], keywords: ['test'] }],
+          classifications: [
+            { category: 'test', confidence: 0.7, reasons: ['Test reason'], keywords: ['test'] },
+          ],
           primaryConfidence: 0.7,
           estimatedPriority: 'high',
           priorityConfidence: 0.7,
@@ -645,7 +655,9 @@ describe('Chart Utilities', () => {
         parsed: { x: 10, y: 20 },
       };
 
-      expect(tooltipCallback.call({} as any, objectContext as any)).toBe('Complex Dataset: {"x":10,"y":20}');
+      expect(tooltipCallback.call({} as any, objectContext as any)).toBe(
+        'Complex Dataset: {"x":10,"y":20}'
+      );
     });
 
     it('ラベルなしデータセットでツールチップが動作すること', () => {
