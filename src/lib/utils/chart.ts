@@ -283,7 +283,7 @@ export function generateChartOptions<T extends ChartType>(
   theme: ChartTheme,
   customOptions?: Partial<ChartOptions<T>>
 ): ChartOptions<T> {
-  const baseOptions: ChartOptions<T> = {
+  const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {

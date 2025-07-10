@@ -86,10 +86,10 @@ describe('Chart Utilities', () => {
       expect(result.labels).toHaveLength(3);
       expect(result.datasets).toHaveLength(1);
 
-      const dataset = result.datasets[0];
+      const dataset = result.datasets[0]!;
       expect(dataset.label).toBe('Data');
       expect(dataset.data).toEqual([10, 15, 12]);
-      expect(dataset.borderColor).toBe(CHART_COLORS[0]);
+      expect(dataset.borderColor).toBe(CHART_COLORS[0]!);
       expect(dataset.fill).toBe(false);
       expect(dataset.tension).toBe(0.1);
     });
@@ -100,9 +100,9 @@ describe('Chart Utilities', () => {
 
       const result = convertTimeSeriesData(mockTimeSeriesData, customLabel, customColor);
 
-      expect(result.datasets[0].label).toBe(customLabel);
-      expect(result.datasets[0].borderColor).toBe(customColor);
-      expect(result.datasets[0].backgroundColor).toBe(customColor + '20');
+      expect(result.datasets[0]!.label).toBe(customLabel);
+      expect(result.datasets[0]!.borderColor).toBe(customColor);
+      expect(result.datasets[0]!.backgroundColor).toBe(customColor + '20');
     });
 
     it('空のデータ配列を処理できること', () => {
@@ -110,14 +110,14 @@ describe('Chart Utilities', () => {
 
       expect(result.labels).toHaveLength(0);
       expect(result.datasets).toHaveLength(1);
-      expect(result.datasets[0].data).toHaveLength(0);
+      expect(result.datasets[0]!.data).toHaveLength(0);
     });
 
     it('デフォルト値が正しく適用されること', () => {
       const result = convertTimeSeriesData(mockTimeSeriesData);
 
-      expect(result.datasets[0].label).toBe('Data');
-      expect(result.datasets[0].borderColor).toBe(CHART_COLORS[0]);
+      expect(result.datasets[0]!.label).toBe('Data');
+      expect(result.datasets[0]!.borderColor).toBe(CHART_COLORS[0]!);
     });
 
     it('CHART_COLORS配列が空の場合にフォールバック色を使用すること', () => {
@@ -127,7 +127,7 @@ describe('Chart Utilities', () => {
 
       const result = convertTimeSeriesData(mockTimeSeriesData);
 
-      expect(result.datasets[0].borderColor).toBe('#3B82F6');
+      expect(result.datasets[0]!.borderColor).toBe('#3B82F6');
 
       // Restore original array
       CHART_COLORS.push(...originalColors);
@@ -155,7 +155,7 @@ describe('Chart Utilities', () => {
       expect(result.labels).toEqual(['Bug', 'Feature', 'Enhancement', 'Documentation']);
       expect(result.datasets).toHaveLength(1);
 
-      const dataset = result.datasets[0];
+      const dataset = result.datasets[0]!;
       expect(dataset.label).toBe('Count');
       expect(dataset.data).toEqual([25, 15, 10, 5]);
       expect(dataset.borderWidth).toBe(1);
@@ -167,16 +167,16 @@ describe('Chart Utilities', () => {
 
       const result = convertCategoryData(mockCategoryData, customLabel, customColors);
 
-      expect(result.datasets[0].label).toBe(customLabel);
-      expect(result.datasets[0].backgroundColor[0]).toBe(customColors[0] + '80');
-      expect(result.datasets[0].borderColor[0]).toBe(customColors[0]);
+      expect(result.datasets[0]!.label).toBe(customLabel);
+      expect((result.datasets[0]!.backgroundColor as string[])[0]).toBe(customColors[0] + '80');
+      expect((result.datasets[0]!.borderColor as string[])[0]).toBe(customColors[0]);
     });
 
     it('空のデータオブジェクトを処理できること', () => {
       const result = convertCategoryData({});
 
       expect(result.labels).toHaveLength(0);
-      expect(result.datasets[0].data).toHaveLength(0);
+      expect(result.datasets[0]!.data).toHaveLength(0);
     });
 
     it('色のループが正しく動作すること', () => {
@@ -186,19 +186,19 @@ describe('Chart Utilities', () => {
       }
 
       const result = convertCategoryData(manyCategories);
-      const dataset = result.datasets[0];
+      const dataset = result.datasets[0]!;
 
       // 色は CHART_COLORS の長さでループする
-      expect(dataset.backgroundColor.length).toBe(15);
-      expect(dataset.backgroundColor[0]).toContain(CHART_COLORS[0]);
-      expect(dataset.backgroundColor[10]).toContain(CHART_COLORS[0]); // ループして最初の色
+      expect((dataset.backgroundColor as string[]).length).toBe(15);
+      expect((dataset.backgroundColor as string[])[0]).toContain(CHART_COLORS[0]!);
+      expect((dataset.backgroundColor as string[])[10]).toContain(CHART_COLORS[0]!); // ループして最初の色
     });
 
     it('透明度が正しく適用されること', () => {
       const result = convertCategoryData(mockCategoryData);
-      const dataset = result.datasets[0];
+      const dataset = result.datasets[0]!;
 
-      dataset.backgroundColor.forEach(color => {
+      (dataset.backgroundColor as string[]).forEach(color => {
         expect(color).toMatch(/80$/); // 透明度80が末尾に付与
       });
     });
@@ -218,7 +218,7 @@ describe('Chart Utilities', () => {
       expect(result.labels).toEqual(['Open', 'Closed', 'In Progress']);
       expect(result.datasets).toHaveLength(1);
 
-      const dataset = result.datasets[0];
+      const dataset = result.datasets[0]!;
       expect(dataset.data).toEqual([60, 35, 5]);
       expect(dataset.borderWidth).toBe(2);
     });
@@ -227,17 +227,17 @@ describe('Chart Utilities', () => {
       const customColors = ['#FF0000', '#00FF00', '#0000FF'];
 
       const result = convertPieData(mockPieData, customColors);
-      const dataset = result.datasets[0];
+      const dataset = result.datasets[0]!;
 
-      expect(dataset.backgroundColor[0]).toBe(customColors[0] + '80');
-      expect(dataset.borderColor[0]).toBe(customColors[0]);
+      expect((dataset.backgroundColor as string[])[0]).toBe(customColors[0] + '80');
+      expect((dataset.borderColor as string[])[0]).toBe(customColors[0]);
     });
 
     it('空のデータオブジェクトを処理できること', () => {
       const result = convertPieData({});
 
       expect(result.labels).toHaveLength(0);
-      expect(result.datasets[0].data).toHaveLength(0);
+      expect(result.datasets[0]!.data).toHaveLength(0);
     });
 
     it('単一データ項目を処理できること', () => {
@@ -245,38 +245,71 @@ describe('Chart Utilities', () => {
       const result = convertPieData(singleData);
 
       expect(result.labels).toEqual(['Only Item']);
-      expect(result.datasets[0].data).toEqual([100]);
+      expect(result.datasets[0]!.data).toEqual([100]);
     });
   });
 
   describe('convertClassificationData', () => {
     const mockClassifications: IssueClassification[] = [
       {
+        issueId: 1,
         issueNumber: 1,
         primaryCategory: 'bug',
-        categories: [{ category: 'bug', confidence: 0.9 }],
+        classifications: [{ category: 'bug', confidence: 0.9, reasons: ['Test reason'], keywords: ['bug'] }],
         primaryConfidence: 0.9,
         estimatedPriority: 'high',
-        reasoning: 'Test',
-        processedAt: new Date(),
+        priorityConfidence: 0.9,
+        processingTimeMs: 100,
+        version: '1.0.0',
+        metadata: {
+          titleLength: 20,
+          bodyLength: 100,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 0,
+          existingLabels: [],
+        },
       },
       {
+        issueId: 2,
         issueNumber: 2,
         primaryCategory: 'feature',
-        categories: [{ category: 'feature', confidence: 0.6 }],
+        classifications: [{ category: 'feature', confidence: 0.6, reasons: ['Test reason'], keywords: ['feature'] }],
         primaryConfidence: 0.6,
         estimatedPriority: 'medium',
-        reasoning: 'Test',
-        processedAt: new Date(),
+        priorityConfidence: 0.6,
+        processingTimeMs: 100,
+        version: '1.0.0',
+        metadata: {
+          titleLength: 15,
+          bodyLength: 50,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 0,
+          existingLabels: [],
+        },
       },
       {
+        issueId: 3,
         issueNumber: 3,
         primaryCategory: 'bug',
-        categories: [{ category: 'bug', confidence: 0.2 }],
+        classifications: [{ category: 'bug', confidence: 0.2, reasons: ['Test reason'], keywords: ['bug'] }],
         primaryConfidence: 0.2,
         estimatedPriority: 'low',
-        reasoning: 'Test',
-        processedAt: new Date(),
+        priorityConfidence: 0.2,
+        processingTimeMs: 100,
+        version: '1.0.0',
+        metadata: {
+          titleLength: 10,
+          bodyLength: 25,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 0,
+          existingLabels: [],
+        },
       },
     ];
 
@@ -299,8 +332,8 @@ describe('Chart Utilities', () => {
       // bugが2つ、featureが1つ
       const bugIndex = categoryData.labels!.indexOf('bug');
       const featureIndex = categoryData.labels!.indexOf('feature');
-      expect(categoryData.datasets[0].data[bugIndex]).toBe(2);
-      expect(categoryData.datasets[0].data[featureIndex]).toBe(1);
+      expect(categoryData.datasets[0]!.data[bugIndex]).toBe(2);
+      expect(categoryData.datasets[0]!.data[featureIndex]).toBe(1);
     });
 
     it('優先度分布が正しく計算されること', () => {
@@ -325,9 +358,9 @@ describe('Chart Utilities', () => {
       const mediumIndex = confidenceData.labels!.indexOf('Medium (0.3-0.7)');
       const highIndex = confidenceData.labels!.indexOf('High (0.7-1.0)');
 
-      expect(confidenceData.datasets[0].data[lowIndex]).toBe(1);
-      expect(confidenceData.datasets[0].data[mediumIndex]).toBe(1);
-      expect(confidenceData.datasets[0].data[highIndex]).toBe(1);
+      expect(confidenceData.datasets[0]!.data[lowIndex]).toBe(1);
+      expect(confidenceData.datasets[0]!.data[mediumIndex]).toBe(1);
+      expect(confidenceData.datasets[0]!.data[highIndex]).toBe(1);
     });
 
     it('空の分類配列を処理できること', () => {
@@ -340,28 +373,50 @@ describe('Chart Utilities', () => {
         'Medium (0.3-0.7)',
         'High (0.7-1.0)',
       ]);
-      expect(result.confidenceDistribution.datasets[0].data).toEqual([0, 0, 0]);
+      expect(result.confidenceDistribution.datasets[0]!.data).toEqual([0, 0, 0]);
     });
 
     it('信頼度境界値が正しく処理されること', () => {
       const boundaryClassifications: IssueClassification[] = [
         {
+          issueId: 1,
           issueNumber: 1,
           primaryCategory: 'test',
-          categories: [{ category: 'test', confidence: 0.3 }],
+          classifications: [{ category: 'test', confidence: 0.3, reasons: ['Test reason'], keywords: ['test'] }],
           primaryConfidence: 0.3,
           estimatedPriority: 'medium',
-          reasoning: 'Test',
-          processedAt: new Date(),
+          priorityConfidence: 0.3,
+          processingTimeMs: 100,
+          version: '1.0.0',
+          metadata: {
+            titleLength: 10,
+            bodyLength: 30,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 0,
+            existingLabels: [],
+          },
         },
         {
+          issueId: 2,
           issueNumber: 2,
           primaryCategory: 'test',
-          categories: [{ category: 'test', confidence: 0.7 }],
+          classifications: [{ category: 'test', confidence: 0.7, reasons: ['Test reason'], keywords: ['test'] }],
           primaryConfidence: 0.7,
           estimatedPriority: 'high',
-          reasoning: 'Test',
-          processedAt: new Date(),
+          priorityConfidence: 0.7,
+          processingTimeMs: 100,
+          version: '1.0.0',
+          metadata: {
+            titleLength: 15,
+            bodyLength: 50,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 0,
+            existingLabels: [],
+          },
         },
       ];
 
@@ -371,8 +426,8 @@ describe('Chart Utilities', () => {
       const mediumIndex = confidenceData.labels!.indexOf('Medium (0.3-0.7)');
       const highIndex = confidenceData.labels!.indexOf('High (0.7-1.0)');
 
-      expect(confidenceData.datasets[0].data[mediumIndex]).toBe(1); // 0.3 -> Medium
-      expect(confidenceData.datasets[0].data[highIndex]).toBe(1); // 0.7 -> High
+      expect(confidenceData.datasets[0]!.data[mediumIndex]).toBe(1); // 0.3 -> Medium
+      expect(confidenceData.datasets[0]!.data[highIndex]).toBe(1); // 0.7 -> High
     });
   });
 
@@ -381,14 +436,20 @@ describe('Chart Utilities', () => {
       {
         averageResolutionTime: 24,
         medianResolutionTime: 18,
+        resolutionRate: 80,
+        responseTime: 2,
         throughput: 5,
         backlogSize: 50,
+        burndownRate: 5,
       },
       {
         averageResolutionTime: 36,
         medianResolutionTime: 30,
+        resolutionRate: 70,
+        responseTime: 3,
         throughput: 3,
         backlogSize: 60,
+        burndownRate: 3,
       },
     ];
 
@@ -408,8 +469,8 @@ describe('Chart Utilities', () => {
       expect(resolutionChart.labels).toEqual(['Period 1', 'Period 2']);
       expect(resolutionChart.datasets).toHaveLength(2);
 
-      const avgDataset = resolutionChart.datasets[0];
-      const medianDataset = resolutionChart.datasets[1];
+      const avgDataset = resolutionChart.datasets[0]!;
+      const medianDataset = resolutionChart.datasets[1]!;
 
       expect(avgDataset.label).toBe('Average Resolution Time (hours)');
       expect(avgDataset.data).toEqual([24, 36]);
@@ -425,7 +486,7 @@ describe('Chart Utilities', () => {
       expect(throughputChart.labels).toEqual(['Period 1', 'Period 2']);
       expect(throughputChart.datasets).toHaveLength(1);
 
-      const dataset = throughputChart.datasets[0];
+      const dataset = throughputChart.datasets[0]!;
       expect(dataset.label).toBe('Issues Resolved Per Day');
       expect(dataset.data).toEqual([5, 3]);
     });
@@ -437,7 +498,7 @@ describe('Chart Utilities', () => {
       expect(backlogChart.labels).toEqual(['Period 1', 'Period 2']);
       expect(backlogChart.datasets).toHaveLength(1);
 
-      const dataset = backlogChart.datasets[0];
+      const dataset = backlogChart.datasets[0]!;
       expect(dataset.label).toBe('Backlog Size');
       expect(dataset.data).toEqual([50, 60]);
       expect(dataset.fill).toBe(true);
@@ -456,16 +517,19 @@ describe('Chart Utilities', () => {
         {
           averageResolutionTime: 12,
           medianResolutionTime: 10,
+          resolutionRate: 90,
+          responseTime: 1,
           throughput: 8,
           backlogSize: 25,
+          burndownRate: 8,
         },
       ];
 
       const result = convertPerformanceData(singleMetric);
 
       expect(result.resolutionTimeChart.labels).toEqual(['Period 1']);
-      expect(result.resolutionTimeChart.datasets[0].data).toEqual([12]);
-      expect(result.resolutionTimeChart.datasets[1].data).toEqual([10]);
+      expect(result.resolutionTimeChart.datasets[0]!.data).toEqual([12]);
+      expect(result.resolutionTimeChart.datasets[1]!.data).toEqual([10]);
     });
   });
 
@@ -571,17 +635,17 @@ describe('Chart Utilities', () => {
       const numberContext = {
         dataset: { label: 'Test Dataset' },
         parsed: 1234,
-      } as any;
+      };
 
-      expect(tooltipCallback(numberContext)).toBe('Test Dataset: 1,234');
+      expect(tooltipCallback.call({} as any, numberContext as any)).toBe('Test Dataset: 1,234');
 
       // オブジェクトの場合
       const objectContext = {
         dataset: { label: 'Complex Dataset' },
         parsed: { x: 10, y: 20 },
-      } as any;
+      };
 
-      expect(tooltipCallback(objectContext)).toBe('Complex Dataset: {"x":10,"y":20}');
+      expect(tooltipCallback.call({} as any, objectContext as any)).toBe('Complex Dataset: {"x":10,"y":20}');
     });
 
     it('ラベルなしデータセットでツールチップが動作すること', () => {
@@ -591,9 +655,9 @@ describe('Chart Utilities', () => {
       const context = {
         dataset: {},
         parsed: 100,
-      } as any;
+      };
 
-      expect(tooltipCallback(context)).toBe(': 100');
+      expect(tooltipCallback.call({} as any, context as any)).toBe(': 100');
     });
 
     it('フォント設定が正しく適用されること', () => {
