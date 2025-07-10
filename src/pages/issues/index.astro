@@ -19,11 +19,6 @@ import { resolveUrl } from '../../lib/utils/url';
 const title = 'Issue';
 const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
 
-const breadcrumbs = [
-  { name: 'ホーム', href: resolveUrl('/') },
-  { name: 'Issue', href: resolveUrl('/issues') },
-];
-
 // 静的データの読み込み
 let issues = getIssuesWithFallback();
 let metadata = null;
@@ -68,7 +63,6 @@ const sortedLabels = Object.entries(labelCounts)
 <PageLayout
   title={title}
   description={description}
-  breadcrumbs={breadcrumbs}
   showHeader={true}
   showFooter={true}
   showSearch={true}

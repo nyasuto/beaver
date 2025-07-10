@@ -181,34 +181,6 @@ npm run preview
 
 ## 🔧 設定
 
-### メイン設定ファイル
-
-**`config/beaver.config.ts`**
-```typescript
-import { defineConfig } from './lib/config';
-
-export default defineConfig({
-  github: {
-    owner: 'your-org',
-    repo: 'your-repo',
-    token: process.env.GITHUB_TOKEN,
-  },
-  site: {
-    title: 'Your Project Knowledge Base',
-    description: 'AI-generated knowledge base',
-    baseUrl: 'https://your-org.github.io/beaver',
-  },
-  analytics: {
-    enabled: true,
-    metricsCollection: ['issues', 'commits', 'contributors'],
-  },
-  ai: {
-    classificationRules: './config/classification-rules.yaml',
-    categoryMapping: './config/category-mapping.json',
-  },
-});
-```
-
 ### GitHub Issues 分類設定
 
 **`config/classification-rules.yaml`**

@@ -9,7 +9,6 @@
 import BaseLayout from './BaseLayout.astro';
 import Header from '../navigation/Header.astro';
 import Footer from '../navigation/Footer.astro';
-import Breadcrumb, { type BreadcrumbItem } from '../navigation/Breadcrumb.astro';
 
 export interface Props {
   title?: string;
@@ -31,10 +30,6 @@ export interface Props {
   footerMinimal?: boolean;
   footerShowSocial?: boolean;
   footerShowNewsletter?: boolean;
-
-  // Breadcrumb props
-  breadcrumbs?: BreadcrumbItem[];
-  breadcrumbSeparator?: 'slash' | 'chevron' | 'arrow';
 
   // Content props
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
@@ -66,9 +61,6 @@ const {
   footerMinimal = false,
   footerShowSocial = true,
   footerShowNewsletter = false,
-
-  breadcrumbs,
-  breadcrumbSeparator = 'chevron',
 
   maxWidth = 'full',
   padding = 'md',
@@ -136,16 +128,6 @@ const baseLayoutProps = Object.fromEntries(
   }
 
   <main id="main-content" class={mainClasses}>
-    {
-      breadcrumbs && breadcrumbs.length > 0 && (
-        <div class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-          <div class="container mx-auto max-w-full px-4 sm:px-6 lg:px-8">
-            <Breadcrumb items={breadcrumbs} separator={breadcrumbSeparator} class="py-2 px-2" />
-          </div>
-        </div>
-      )
-    }
-
     <div class={containerClass}>
       <slot />
     </div>

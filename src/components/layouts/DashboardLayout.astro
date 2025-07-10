@@ -9,7 +9,6 @@
 import BaseLayout from './BaseLayout.astro';
 import Header from '../navigation/Header.astro';
 import Footer from '../navigation/Footer.astro';
-import Breadcrumb, { type BreadcrumbItem } from '../navigation/Breadcrumb.astro';
 
 export interface SidebarItem {
   name: string;
@@ -42,10 +41,6 @@ export interface Props {
   sidebarCollapsed?: boolean;
   sidebarFixed?: boolean;
 
-  // Breadcrumb props
-  breadcrumbs?: BreadcrumbItem[];
-  breadcrumbSeparator?: 'slash' | 'chevron' | 'arrow';
-
   // Content props
   contentPadding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -76,9 +71,6 @@ const {
   sidebarItems = [],
   sidebarCollapsed = false,
   sidebarFixed = true,
-
-  breadcrumbs,
-  breadcrumbSeparator = 'chevron',
 
   contentPadding = 'lg',
 
@@ -278,16 +270,6 @@ const baseLayoutProps = {
 
     {/* Main content */}
     <main id="main-content" class={`flex-1 ${mainMargin} transition-all duration-300 ${mainClass}`}>
-      {
-        breadcrumbs && breadcrumbs.length > 1 && (
-          <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div class="px-8 py-4">
-              <Breadcrumb items={breadcrumbs} separator={breadcrumbSeparator} />
-            </div>
-          </div>
-        )
-      }
-
       <div class={paddingClasses[contentPadding]}>
         <slot />
       </div>

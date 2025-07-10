@@ -16,15 +16,9 @@ import {
   CoverageHistoryChart,
 } from '../../components/charts/QualityCharts.tsx';
 import { getQualityMetrics } from '../../lib/quality/codecov';
-import { resolveUrl } from '../../lib/utils/url';
 
 const title = '品質分析ダッシュボード';
 const description = 'Codecov APIを使用してコードカバレッジの品質分析を表示';
-
-const breadcrumbs = [
-  { name: 'ホーム', href: resolveUrl('/') },
-  { name: '品質分析', href: resolveUrl('/quality') },
-];
 
 // Codecovからの品質メトリクスを取得
 let qualityData = null;
@@ -101,7 +95,6 @@ const coverageHistoryData = qualityData.history.map(entry => ({
 <PageLayout
   title={title}
   description={description}
-  breadcrumbs={breadcrumbs}
   showHeader={true}
   showFooter={true}
   showSearch={false}
