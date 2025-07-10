@@ -35,12 +35,10 @@ describe('Environment Validation Module', () => {
 
   describe('EnvValidationError', () => {
     it('エラーオブジェクトを正しく作成できること', () => {
-      const error = new EnvValidationError(
-        'Test error message',
-        'TEST_VAR',
-        'TEST_CODE',
-        ['suggestion1', 'suggestion2']
-      );
+      const error = new EnvValidationError('Test error message', 'TEST_VAR', 'TEST_CODE', [
+        'suggestion1',
+        'suggestion2',
+      ]);
 
       expect(error.message).toBe('Test error message');
       expect(error.variable).toBe('TEST_VAR');
@@ -87,7 +85,7 @@ describe('Environment Validation Module', () => {
       describe('GITHUB_TOKEN validation', () => {
         it('有効なトークンプリフィックスを受け入れること', () => {
           const validPrefixes = ['ghp_', 'gho_', 'ghu_', 'ghs_'];
-          
+
           for (const prefix of validPrefixes) {
             const token = `${prefix}1234567890abcdef1234567890abcdef12345678`;
             const env = {
@@ -136,7 +134,7 @@ describe('Environment Validation Module', () => {
       describe('GITHUB_OWNER validation', () => {
         it('有効な所有者名を受け入れること', () => {
           const validOwners = ['octocat', 'github', 'microsoft', 'google-team', 'user123'];
-          
+
           for (const owner of validOwners) {
             const env = {
               GITHUB_TOKEN: 'ghp_1234567890abcdef1234567890abcdef12345678',
@@ -151,7 +149,7 @@ describe('Environment Validation Module', () => {
 
         it('無効な所有者名を拒否すること', () => {
           const invalidOwners = ['', '-invalid', 'invalid-', 'invalid..name', ' space'];
-          
+
           for (const owner of invalidOwners) {
             const env = {
               GITHUB_TOKEN: 'ghp_1234567890abcdef1234567890abcdef12345678',
@@ -167,7 +165,7 @@ describe('Environment Validation Module', () => {
       describe('GITHUB_REPO validation', () => {
         it('有効なリポジトリ名を受け入れること', () => {
           const validRepos = ['repo', 'my-repo', 'repo_name', 'repo.name', 'repo-123'];
-          
+
           for (const repo of validRepos) {
             const env = {
               GITHUB_TOKEN: 'ghp_1234567890abcdef1234567890abcdef12345678',
@@ -181,7 +179,7 @@ describe('Environment Validation Module', () => {
 
         it('無効なリポジトリ名を拒否すること', () => {
           const invalidRepos = ['', 'repo space', 'repo@name', 'repo#name'];
-          
+
           for (const repo of invalidRepos) {
             const env = {
               GITHUB_TOKEN: 'ghp_1234567890abcdef1234567890abcdef12345678',
@@ -201,7 +199,7 @@ describe('Environment Validation Module', () => {
             'https://github.enterprise.com/api/v3',
             'http://localhost:3000/api',
           ];
-          
+
           for (const url of validUrls) {
             const env = {
               GITHUB_TOKEN: 'ghp_1234567890abcdef1234567890abcdef12345678',
@@ -216,7 +214,7 @@ describe('Environment Validation Module', () => {
 
         it('無効なURLを拒否すること', () => {
           const invalidUrls = ['not-a-url', '', 'just-text', 'http://', '://invalid'];
-          
+
           for (const url of invalidUrls) {
             const env = {
               GITHUB_TOKEN: 'ghp_1234567890abcdef1234567890abcdef12345678',
@@ -251,7 +249,7 @@ describe('Environment Validation Module', () => {
 
       it('有効なNODE_ENV値を受け入れること', () => {
         const validEnvs = ['development', 'production', 'test'];
-        
+
         for (const nodeEnv of validEnvs) {
           const env = { NODE_ENV: nodeEnv };
           expect(() => AstroEnvSchema.parse(env)).not.toThrow();
@@ -260,7 +258,7 @@ describe('Environment Validation Module', () => {
 
       it('無効なNODE_ENV値を拒否すること', () => {
         const invalidEnvs = ['staging', 'invalid', ''];
-        
+
         for (const nodeEnv of invalidEnvs) {
           const env = { NODE_ENV: nodeEnv };
           expect(() => AstroEnvSchema.parse(env)).toThrow();
@@ -270,7 +268,7 @@ describe('Environment Validation Module', () => {
       it('オプションフィールドを正しく処理すること', () => {
         const envWithOptional = { NODE_ENV: 'development' as const };
         const result = AstroEnvSchema.parse(envWithOptional);
-        
+
         expect(result.SITE).toBeUndefined();
         expect(result.PUBLIC_BASE_URL).toBeUndefined();
       });
@@ -299,14 +297,14 @@ describe('Environment Validation Module', () => {
       it('同じインスタンスを返すこと', () => {
         const instance1 = EnvValidator.getInstance();
         const instance2 = EnvValidator.getInstance();
-        
+
         expect(instance1).toBe(instance2);
       });
 
       it('getEnvValidator関数でも同じインスタンスを取得できること', () => {
         const instance1 = EnvValidator.getInstance();
         const instance2 = getEnvValidator();
-        
+
         expect(instance1).toBe(instance2);
       });
     });
@@ -351,10 +349,11 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('MISSING_REQUIRED_VARS');
-          expect(result.error.message).toContain('GITHUB_OWNER');
-          expect(result.error.message).toContain('GITHUB_REPO');
-          expect(result.error.suggestions).toHaveLength(3);
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('MISSING_REQUIRED_VARS');
+          expect(error.message).toContain('GITHUB_OWNER');
+          expect(error.message).toContain('GITHUB_REPO');
+          expect(error.suggestions).toHaveLength(3);
         }
       });
 
@@ -370,9 +369,10 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('VALIDATION_ERROR');
-          expect(result.error.variable).toBe('GITHUB_TOKEN');
-          expect(result.error.suggestions.length).toBeGreaterThan(0);
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('VALIDATION_ERROR');
+          expect(error.variable).toBe('GITHUB_TOKEN');
+          expect(error.suggestions.length).toBeGreaterThan(0);
         }
       });
 
@@ -388,8 +388,9 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('MISSING_REQUIRED_VARS');
-          expect(result.error.variable).toBe('GITHUB_OWNER');
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('MISSING_REQUIRED_VARS');
+          expect(error.variable).toBe('GITHUB_OWNER');
         }
       });
 
@@ -425,8 +426,9 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('UNKNOWN_ERROR');
-          expect(result.error.message).toContain('Unexpected validation error');
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('UNKNOWN_ERROR');
+          expect(error.message).toContain('Unexpected validation error');
         }
 
         // Restore original method
@@ -472,12 +474,16 @@ describe('Environment Validation Module', () => {
             'User-Agent': 'beaver-astro/1.0.0',
           },
         });
-        expect(mockFetch).toHaveBeenNthCalledWith(2, 'https://api.github.com/repos/test-owner/test-repo', {
-          headers: {
-            Authorization: 'token ghp_1234567890abcdef1234567890abcdef12345678',
-            'User-Agent': 'beaver-astro/1.0.0',
-          },
-        });
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          2,
+          'https://api.github.com/repos/test-owner/test-repo',
+          {
+            headers: {
+              Authorization: 'token ghp_1234567890abcdef1234567890abcdef12345678',
+              'User-Agent': 'beaver-astro/1.0.0',
+            },
+          }
+        );
       });
 
       it('無効なトークンで認証エラーを処理すること', async () => {
@@ -492,10 +498,11 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('INVALID_TOKEN');
-          expect(result.error.variable).toBe('GITHUB_TOKEN');
-          expect(result.error.message).toContain('invalid or expired');
-          expect(result.error.suggestions).toContain('Generate a new personal access token on GitHub');
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('INVALID_TOKEN');
+          expect(error.variable).toBe('GITHUB_TOKEN');
+          expect(error.message).toContain('invalid or expired');
+          expect(error.suggestions).toContain('Generate a new personal access token on GitHub');
         }
       });
 
@@ -511,10 +518,11 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('INSUFFICIENT_PERMISSIONS');
-          expect(result.error.variable).toBe('GITHUB_TOKEN');
-          expect(result.error.message).toContain('insufficient permissions');
-          expect(result.error.suggestions).toContain('Ensure the token has repo permissions');
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('INSUFFICIENT_PERMISSIONS');
+          expect(error.variable).toBe('GITHUB_TOKEN');
+          expect(error.message).toContain('insufficient permissions');
+          expect(error.suggestions).toContain('Ensure the token has repo permissions');
         }
       });
 
@@ -536,10 +544,11 @@ describe('Environment Validation Module', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error).toBeInstanceOf(EnvValidationError);
-          expect(result.error.code).toBe('REPO_NOT_FOUND');
-          expect(result.error.variable).toBe('GITHUB_REPO');
-          expect(result.error.message).toContain('not found or inaccessible');
-          expect(result.error.suggestions).toContain('Check that the repository name is correct');
+          const error = result.error as EnvValidationError;
+          expect(error.code).toBe('REPO_NOT_FOUND');
+          expect(error.variable).toBe('GITHUB_REPO');
+          expect(error.message).toContain('not found or inaccessible');
+          expect(error.suggestions).toContain('Check that the repository name is correct');
         }
       });
 
@@ -550,8 +559,11 @@ describe('Environment Validation Module', () => {
         const result = await (validator as any).performAdditionalValidation(validEnv);
 
         expect(result.success).toBe(true);
-        expect(consoleSpy).toHaveBeenCalledWith('GitHub API connection test failed:', expect.any(Error));
-        
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'GitHub API connection test failed:',
+          expect.any(Error)
+        );
+
         consoleSpy.mockRestore();
       });
     });
@@ -565,7 +577,7 @@ describe('Environment Validation Module', () => {
 
       it('GITHUB_TOKEN用の提案を返すこと', () => {
         const suggestions = (validator as any).getSuggestions('GITHUB_TOKEN', 'error');
-        
+
         expect(suggestions).toContain('Generate a personal access token on GitHub');
         expect(suggestions).toContain('Ensure the token has repo and read:user permissions');
         expect(suggestions).toContain('Check that the token is not expired');
@@ -573,7 +585,7 @@ describe('Environment Validation Module', () => {
 
       it('GITHUB_OWNER用の提案を返すこと', () => {
         const suggestions = (validator as any).getSuggestions('GITHUB_OWNER', 'error');
-        
+
         expect(suggestions).toContain('Use the GitHub username or organization name');
         expect(suggestions).toContain('Check that the owner exists on GitHub');
         expect(suggestions).toContain('Ensure the name uses only valid characters');
@@ -581,7 +593,7 @@ describe('Environment Validation Module', () => {
 
       it('GITHUB_REPO用の提案を返すこと', () => {
         const suggestions = (validator as any).getSuggestions('GITHUB_REPO', 'error');
-        
+
         expect(suggestions).toContain('Use the exact repository name from GitHub');
         expect(suggestions).toContain('Check that the repository exists');
         expect(suggestions).toContain('Ensure the name uses only valid characters');
@@ -589,7 +601,7 @@ describe('Environment Validation Module', () => {
 
       it('GITHUB_BASE_URL用の提案を返すこと', () => {
         const suggestions = (validator as any).getSuggestions('GITHUB_BASE_URL', 'error');
-        
+
         expect(suggestions).toContain('Use https://api.github.com for GitHub.com');
         expect(suggestions).toContain('Use https://your-domain.com/api/v3 for GitHub Enterprise');
         expect(suggestions).toContain('Ensure the URL is valid and accessible');
@@ -597,7 +609,7 @@ describe('Environment Validation Module', () => {
 
       it('SITE用の提案を返すこと', () => {
         const suggestions = (validator as any).getSuggestions('SITE', 'error');
-        
+
         expect(suggestions).toContain('Use the full URL including protocol (https://)');
         expect(suggestions).toContain('Ensure the URL is valid and accessible');
         expect(suggestions).toContain('Check that the URL matches your deployment domain');
@@ -605,7 +617,7 @@ describe('Environment Validation Module', () => {
 
       it('未知の変数に対してデフォルトの提案を返すこと', () => {
         const suggestions = (validator as any).getSuggestions('UNKNOWN_VAR', 'error');
-        
+
         expect(suggestions).toContain('Check the documentation for this variable');
         expect(suggestions).toContain('Verify the value format and requirements');
         expect(suggestions).toContain('Ensure the variable is properly set');
@@ -779,11 +791,11 @@ describe('Environment Validation Module', () => {
       if (result.success) {
         expect(result.data.status).toBe('healthy');
         expect(result.data.checks).toHaveLength(2);
-        
+
         const envCheck = result.data.checks.find(c => c.name === 'Environment Variables');
         expect(envCheck?.status).toBe('pass');
         expect(envCheck?.message).toBe('All required environment variables are valid');
-        
+
         const apiCheck = result.data.checks.find(c => c.name === 'GitHub API Connection');
         expect(apiCheck?.status).toBe('pass');
         expect(apiCheck?.message).toBe('GitHub API is accessible');
@@ -809,7 +821,7 @@ describe('Environment Validation Module', () => {
       if (result.success) {
         expect(result.data.status).toBe('unhealthy');
         expect(result.data.checks).toHaveLength(1);
-        
+
         const envCheck = result.data.checks.find(c => c.name === 'Environment Variables');
         expect(envCheck?.status).toBe('fail');
         expect(envCheck?.message).toContain('Missing required environment variables');
@@ -852,7 +864,7 @@ describe('Environment Validation Module', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.status).toBe('unhealthy');
-        
+
         const apiCheck = result.data.checks.find(c => c.name === 'GitHub API Connection');
         expect(apiCheck?.status).toBe('fail');
         expect(apiCheck?.message).toContain('GitHub API returned 401');
@@ -891,7 +903,7 @@ describe('Environment Validation Module', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.status).toBe('degraded');
-        
+
         const apiCheck = result.data.checks.find(c => c.name === 'GitHub API Connection');
         expect(apiCheck?.status).toBe('warn');
         expect(apiCheck?.message).toContain('GitHub API connection test failed');
@@ -918,7 +930,7 @@ describe('Environment Validation Module', () => {
       if (result.success) {
         expect(result.data.status).toBe('unhealthy');
         expect(result.data.checks).toHaveLength(1); // Only env check due to validation failure
-        
+
         const envCheck = result.data.checks.find(c => c.name === 'Environment Variables');
         expect(envCheck?.status).toBe('fail');
       }
@@ -939,7 +951,9 @@ describe('Environment Validation Module', () => {
       const guide = validator.getSetupGuide();
 
       expect(guide.title).toBe('Environment Variables Setup Guide');
-      expect(guide.description).toContain('Follow these steps to configure your environment variables');
+      expect(guide.description).toContain(
+        'Follow these steps to configure your environment variables'
+      );
       expect(guide.steps).toBeInstanceOf(Array);
       expect(guide.steps.length).toBe(5);
     });
@@ -951,11 +965,11 @@ describe('Environment Validation Module', () => {
         expect(step.title).toBeDefined();
         expect(typeof step.title).toBe('string');
         expect(step.title.length).toBeGreaterThan(0);
-        
+
         expect(step.description).toBeDefined();
         expect(typeof step.description).toBe('string');
         expect(step.description.length).toBeGreaterThan(0);
-        
+
         // Example is optional but if present should be a string
         if (step.example) {
           expect(typeof step.example).toBe('string');
@@ -965,11 +979,9 @@ describe('Environment Validation Module', () => {
 
     it('.envファイル作成ステップを含むこと', () => {
       const guide = validator.getSetupGuide();
-      
-      const envFileStep = guide.steps.find(step => 
-        step.title.toLowerCase().includes('.env')
-      );
-      
+
+      const envFileStep = guide.steps.find(step => step.title.toLowerCase().includes('.env'));
+
       expect(envFileStep).toBeDefined();
       expect(envFileStep?.description).toContain('.env file');
       expect(envFileStep?.example).toBe('touch .env');
@@ -977,12 +989,12 @@ describe('Environment Validation Module', () => {
 
     it('GitHubトークン生成ステップを含むこと', () => {
       const guide = validator.getSetupGuide();
-      
-      const tokenStep = guide.steps.find(step => 
-        step.title.toLowerCase().includes('github') && 
-        step.title.toLowerCase().includes('token')
+
+      const tokenStep = guide.steps.find(
+        step =>
+          step.title.toLowerCase().includes('github') && step.title.toLowerCase().includes('token')
       );
-      
+
       expect(tokenStep).toBeDefined();
       expect(tokenStep?.description).toContain('GitHub Settings');
       expect(tokenStep?.description).toContain('Personal access tokens');
@@ -991,12 +1003,13 @@ describe('Environment Validation Module', () => {
 
     it('GitHub設定ステップを含むこと', () => {
       const guide = validator.getSetupGuide();
-      
-      const configStep = guide.steps.find(step => 
-        step.title.toLowerCase().includes('github') && 
-        step.title.toLowerCase().includes('configuration')
+
+      const configStep = guide.steps.find(
+        step =>
+          step.title.toLowerCase().includes('github') &&
+          step.title.toLowerCase().includes('configuration')
       );
-      
+
       expect(configStep).toBeDefined();
       expect(configStep?.description).toContain('.env file');
       expect(configStep?.example).toContain('GITHUB_TOKEN=');
@@ -1006,12 +1019,12 @@ describe('Environment Validation Module', () => {
 
     it('サイト設定（オプション）ステップを含むこと', () => {
       const guide = validator.getSetupGuide();
-      
-      const siteStep = guide.steps.find(step => 
-        step.title.toLowerCase().includes('site') && 
-        step.title.toLowerCase().includes('optional')
+
+      const siteStep = guide.steps.find(
+        step =>
+          step.title.toLowerCase().includes('site') && step.title.toLowerCase().includes('optional')
       );
-      
+
       expect(siteStep).toBeDefined();
       expect(siteStep?.description).toContain('deployment');
       expect(siteStep?.example).toContain('SITE=');
@@ -1020,11 +1033,9 @@ describe('Environment Validation Module', () => {
 
     it('設定検証ステップを含むこと', () => {
       const guide = validator.getSetupGuide();
-      
-      const verifyStep = guide.steps.find(step => 
-        step.title.toLowerCase().includes('verify')
-      );
-      
+
+      const verifyStep = guide.steps.find(step => step.title.toLowerCase().includes('verify'));
+
       expect(verifyStep).toBeDefined();
       expect(verifyStep?.description).toContain('Test your configuration');
       expect(verifyStep?.description).toContain('health check');
@@ -1036,15 +1047,15 @@ describe('Environment Validation Module', () => {
 
       // ガイドの論理的な順序をテスト
       const stepTitles = guide.steps.map(step => step.title.toLowerCase());
-      
+
       // .envファイル作成が最初に来ること
       expect(stepTitles[0]).toContain('.env');
-      
+
       // トークン生成が設定より前に来ること
       const tokenIndex = stepTitles.findIndex(title => title.includes('token'));
       const configIndex = stepTitles.findIndex(title => title.includes('configuration'));
       expect(tokenIndex).toBeLessThan(configIndex);
-      
+
       // 検証が最後に来ること
       expect(stepTitles[stepTitles.length - 1]).toContain('verify');
     });

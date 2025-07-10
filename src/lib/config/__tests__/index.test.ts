@@ -15,7 +15,6 @@ import {
   getEnvValidator,
   validateEnv,
   checkEnvHealth,
-  type ValidatedEnv,
 } from '../index';
 
 // Mock import.meta.env for testing
@@ -211,14 +210,14 @@ describe('Configuration Module Index', () => {
         expect(DEFAULT_CONFIG.github.baseUrl).toBe('https://api.github.com');
         expect(DEFAULT_CONFIG.github.timeout).toBe(10000);
         expect(DEFAULT_CONFIG.github.retries).toBe(3);
-        
+
         // Validate baseUrl is a proper GitHub API URL
         expect(DEFAULT_CONFIG.github.baseUrl).toMatch(/^https:\/\/api\.github\.com$/);
-        
+
         // Validate timeout is reasonable (10 seconds)
         expect(DEFAULT_CONFIG.github.timeout).toBeGreaterThan(5000);
         expect(DEFAULT_CONFIG.github.timeout).toBeLessThanOrEqual(30000);
-        
+
         // Validate retries is reasonable
         expect(DEFAULT_CONFIG.github.retries).toBeGreaterThanOrEqual(1);
         expect(DEFAULT_CONFIG.github.retries).toBeLessThanOrEqual(10);
@@ -242,14 +241,14 @@ describe('Configuration Module Index', () => {
         expect(DEFAULT_CONFIG.site.title).toBe('Beaver Astro Edition');
         expect(DEFAULT_CONFIG.site.description).toBe('AI-first knowledge management system');
         expect(DEFAULT_CONFIG.site.baseUrl).toBe('https://nyasuto.github.io/beaver');
-        
+
         // Validate title is meaningful
         expect(DEFAULT_CONFIG.site.title.length).toBeGreaterThan(0);
         expect(DEFAULT_CONFIG.site.title).toContain('Beaver');
-        
+
         // Validate description is meaningful
         expect(DEFAULT_CONFIG.site.description.length).toBeGreaterThan(10);
-        
+
         // Validate baseUrl is a proper URL
         expect(DEFAULT_CONFIG.site.baseUrl).toMatch(/^https?:\/\/.+/);
       });
@@ -272,11 +271,11 @@ describe('Configuration Module Index', () => {
         expect(DEFAULT_CONFIG.analytics.enabled).toBe(true);
         expect(DEFAULT_CONFIG.analytics.batchSize).toBe(100);
         expect(DEFAULT_CONFIG.analytics.flushInterval).toBe(5000);
-        
+
         // Validate batch size is reasonable
         expect(DEFAULT_CONFIG.analytics.batchSize).toBeGreaterThan(10);
         expect(DEFAULT_CONFIG.analytics.batchSize).toBeLessThanOrEqual(1000);
-        
+
         // Validate flush interval is reasonable (5 seconds)
         expect(DEFAULT_CONFIG.analytics.flushInterval).toBeGreaterThan(1000);
         expect(DEFAULT_CONFIG.analytics.flushInterval).toBeLessThanOrEqual(60000);
@@ -300,13 +299,13 @@ describe('Configuration Module Index', () => {
         expect(DEFAULT_CONFIG.ui.theme).toBe('system');
         expect(DEFAULT_CONFIG.ui.locale).toBe('en');
         expect(DEFAULT_CONFIG.ui.dateFormat).toBe('YYYY-MM-DD');
-        
+
         // Validate theme is one of expected values
         expect(['light', 'dark', 'system']).toContain(DEFAULT_CONFIG.ui.theme);
-        
+
         // Validate locale is a proper locale code
         expect(DEFAULT_CONFIG.ui.locale).toMatch(/^[a-z]{2}(-[A-Z]{2})?$/);
-        
+
         // Validate date format is meaningful
         expect(DEFAULT_CONFIG.ui.dateFormat).toContain('YYYY');
         expect(DEFAULT_CONFIG.ui.dateFormat).toContain('MM');
@@ -346,26 +345,26 @@ describe('Configuration Module Index', () => {
       expect(CONFIG_PATHS.classificationRules).toBe('config/classification-rules.yaml');
       expect(CONFIG_PATHS.categoryMapping).toBe('config/category-mapping.json');
       expect(CONFIG_PATHS.userSettings).toBe('.beaver/settings.json');
-      
+
       // Validate paths have proper extensions
       expect(CONFIG_PATHS.classificationRules).toMatch(/\.ya?ml$/);
       expect(CONFIG_PATHS.categoryMapping).toMatch(/\.json$/);
       expect(CONFIG_PATHS.userSettings).toMatch(/\.json$/);
-      
+
       // Validate paths are relative (not absolute)
-      expect(CONFIG_PATHS.classificationRules).not.toMatch(/^[\/\\]/);
-      expect(CONFIG_PATHS.categoryMapping).not.toMatch(/^[\/\\]/);
-      expect(CONFIG_PATHS.userSettings).not.toMatch(/^[\/\\]/);
+      expect(CONFIG_PATHS.classificationRules).not.toMatch(/^[/\\]/);
+      expect(CONFIG_PATHS.categoryMapping).not.toMatch(/^[/\\]/);
+      expect(CONFIG_PATHS.userSettings).not.toMatch(/^[/\\]/);
     });
 
     it('設定パスが論理的な構造を持つこと', () => {
       // Configuration files should be in config/ directory
       expect(CONFIG_PATHS.classificationRules.startsWith('config/')).toBe(true);
       expect(CONFIG_PATHS.categoryMapping.startsWith('config/')).toBe(true);
-      
+
       // User settings should be in a hidden directory
       expect(CONFIG_PATHS.userSettings.startsWith('.beaver/')).toBe(true);
-      
+
       // File names should be descriptive
       expect(CONFIG_PATHS.classificationRules).toContain('classification');
       expect(CONFIG_PATHS.categoryMapping).toContain('category');
@@ -382,12 +381,7 @@ describe('Configuration Module Index', () => {
 
   describe('Module Integration', () => {
     it('env-validation モジュールとの統合が正しく動作すること', () => {
-      // Verify that the re-exported functions are actually from the env-validation module
-      const { getEnvValidator: mockGetEnvValidator } = vi.mocked(
-        vi.importActual('../env-validation') as any
-      );
-      
-      // The imported getEnvValidator should be the mocked version
+      // Verify that the re-exported functions are properly exported
       expect(getEnvValidator).toBeDefined();
       expect(typeof getEnvValidator).toBe('function');
     });
@@ -404,7 +398,7 @@ describe('Configuration Module Index', () => {
     it('DEFAULT_CONFIGとENV_CONFIGの値が一貫していること', () => {
       // GitHub base URL should be consistent
       expect(DEFAULT_CONFIG.github.baseUrl).toBe('https://api.github.com');
-      
+
       // Environment detection should be consistent with common environments
       const validNodeEnvs = ['development', 'production', 'test'];
       expect(validNodeEnvs).toContain(ENV_CONFIG.nodeEnv);
@@ -415,8 +409,8 @@ describe('Configuration Module Index', () => {
       Object.values(CONFIG_PATHS).forEach(path => {
         expect(typeof path).toBe('string');
         expect(path.length).toBeGreaterThan(0);
-        expect(path).not.toContain('..');  // No parent directory access
-        expect(path).not.toContain('//');  // No double slashes
+        expect(path).not.toContain('..'); // No parent directory access
+        expect(path).not.toContain('//'); // No double slashes
       });
     });
 
@@ -424,11 +418,11 @@ describe('Configuration Module Index', () => {
       // Timeout values should be reasonable for web requests
       expect(DEFAULT_CONFIG.github.timeout).toBeGreaterThanOrEqual(5000);
       expect(DEFAULT_CONFIG.github.timeout).toBeLessThanOrEqual(30000);
-      
+
       // Retry counts should be reasonable
       expect(DEFAULT_CONFIG.github.retries).toBeGreaterThanOrEqual(0);
       expect(DEFAULT_CONFIG.github.retries).toBeLessThanOrEqual(10);
-      
+
       // Analytics batch size should be reasonable
       expect(DEFAULT_CONFIG.analytics.batchSize).toBeGreaterThan(1);
       expect(DEFAULT_CONFIG.analytics.batchSize).toBeLessThanOrEqual(1000);
@@ -437,13 +431,8 @@ describe('Configuration Module Index', () => {
 
   describe('Error Handling', () => {
     it('EnvValidationErrorが正しくエクスポートされること', () => {
-      const error = new EnvValidationError(
-        'Test error',
-        'TEST_VAR',
-        'TEST_CODE',
-        ['suggestion']
-      );
-      
+      const error = new EnvValidationError('Test error', 'TEST_VAR', 'TEST_CODE', ['suggestion']);
+
       expect(error).toBeInstanceOf(Error);
       expect(error.name).toBe('EnvValidationError');
       expect(error.message).toBe('Test error');
