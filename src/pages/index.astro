@@ -2,6 +2,7 @@
 import PageLayout from '../components/layouts/PageLayout.astro';
 import IssueStats from '../components/dashboard/IssueStats.astro';
 import RecentActivity from '../components/dashboard/RecentActivity.astro';
+import TopTasks from '../components/dashboard/TopTasks.astro';
 
 const title = '🦫 Beaver AI知識ダム';
 const description = 'GitHub Issuesを永続的な知識ベースに変換';
@@ -51,9 +52,16 @@ const description = 'GitHub Issuesを永続的な知識ベースに変換';
     <!-- Main Dashboard Content -->
     <section class="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-6xl mx-auto">
-        <div class="max-w-4xl mx-auto">
-          <!-- Recent Activity (Full Width) -->
-          <RecentActivity />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Top Tasks Recommendations -->
+          <div>
+            <TopTasks />
+          </div>
+
+          <!-- Recent Activity -->
+          <div>
+            <RecentActivity />
+          </div>
         </div>
       </div>
     </section>
