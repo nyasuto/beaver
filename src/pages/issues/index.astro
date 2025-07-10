@@ -60,7 +60,7 @@ const labelCounts = issues.reduce(
 const labelCategories = {
   priority: [] as [string, number][],
   type: [] as [string, number][],
-  other: [] as [string, number][]
+  other: [] as [string, number][],
 };
 
 Object.entries(labelCounts).forEach(([labelName, count]) => {
@@ -125,54 +125,84 @@ const filterOptions = getFilterOptions(issues);
           <div>
             <label class="label">ラベル</label>
             <div class="space-y-3 max-h-64 overflow-y-auto" id="label-filters">
-              
               <!-- 優先度フィルター -->
-              {labelCategories.priority.length > 0 && (
-                <div>
-                  <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">優先度</h4>
-                  <div class="space-y-1 pl-2">
-                    {labelCategories.priority.map(([labelName, count]) => (
-                      <label class="flex items-center">
-                        <input type="checkbox" class="mr-2 label-filter" value={labelName} data-category="priority" />
-                        <span class="text-sm flex-1">{labelName.replace('priority:', '').trim()}</span>
-                        <span class="text-xs text-muted">({count})</span>
-                      </label>
-                    ))}
+              {
+                labelCategories.priority.length > 0 && (
+                  <div>
+                    <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                      優先度
+                    </h4>
+                    <div class="space-y-1 pl-2">
+                      {labelCategories.priority.map(([labelName, count]) => (
+                        <label class="flex items-center">
+                          <input
+                            type="checkbox"
+                            class="mr-2 label-filter"
+                            value={labelName}
+                            data-category="priority"
+                          />
+                          <span class="text-sm flex-1">
+                            {labelName.replace('priority:', '').trim()}
+                          </span>
+                          <span class="text-xs text-muted">({count})</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              }
 
               <!-- タイプフィルター -->
-              {labelCategories.type.length > 0 && (
-                <div>
-                  <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">タイプ</h4>
-                  <div class="space-y-1 pl-2">
-                    {labelCategories.type.map(([labelName, count]) => (
-                      <label class="flex items-center">
-                        <input type="checkbox" class="mr-2 label-filter" value={labelName} data-category="type" />
-                        <span class="text-sm flex-1">{labelName.replace('type:', '').trim()}</span>
-                        <span class="text-xs text-muted">({count})</span>
-                      </label>
-                    ))}
+              {
+                labelCategories.type.length > 0 && (
+                  <div>
+                    <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                      タイプ
+                    </h4>
+                    <div class="space-y-1 pl-2">
+                      {labelCategories.type.map(([labelName, count]) => (
+                        <label class="flex items-center">
+                          <input
+                            type="checkbox"
+                            class="mr-2 label-filter"
+                            value={labelName}
+                            data-category="type"
+                          />
+                          <span class="text-sm flex-1">
+                            {labelName.replace('type:', '').trim()}
+                          </span>
+                          <span class="text-xs text-muted">({count})</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              }
 
               <!-- その他ラベル -->
-              {labelCategories.other.length > 0 && (
-                <div>
-                  <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">その他</h4>
-                  <div class="space-y-1 pl-2">
-                    {labelCategories.other.slice(0, 8).map(([labelName, count]) => (
-                      <label class="flex items-center">
-                        <input type="checkbox" class="mr-2 label-filter" value={labelName} data-category="other" />
-                        <span class="text-sm flex-1">{labelName}</span>
-                        <span class="text-xs text-muted">({count})</span>
-                      </label>
-                    ))}
+              {
+                labelCategories.other.length > 0 && (
+                  <div>
+                    <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                      その他
+                    </h4>
+                    <div class="space-y-1 pl-2">
+                      {labelCategories.other.slice(0, 8).map(([labelName, count]) => (
+                        <label class="flex items-center">
+                          <input
+                            type="checkbox"
+                            class="mr-2 label-filter"
+                            value={labelName}
+                            data-category="other"
+                          />
+                          <span class="text-sm flex-1">{labelName}</span>
+                          <span class="text-xs text-muted">({count})</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              }
             </div>
           </div>
 
@@ -432,9 +462,9 @@ const filterOptions = getFilterOptions(issues);
 
   class IssueSearchManager {
     private allIssues: HTMLElement[];
-    private currentFilters: SearchFilters = { 
-      state: 'all', 
-      labelCategories: { priority: [], type: [], other: [] }
+    private currentFilters: SearchFilters = {
+      state: 'all',
+      labelCategories: { priority: [], type: [], other: [] },
     };
     private currentQuery = '';
     private currentSort = { by: 'created', order: 'desc' };
@@ -488,11 +518,11 @@ const filterOptions = getFilterOptions(issues);
           const priorityLabels = Array.from(
             document.querySelectorAll('.label-filter[data-category="priority"]:checked')
           ).map(checkbox => (checkbox as HTMLInputElement).value);
-          
+
           const typeLabels = Array.from(
             document.querySelectorAll('.label-filter[data-category="type"]:checked')
           ).map(checkbox => (checkbox as HTMLInputElement).value);
-          
+
           const otherLabels = Array.from(
             document.querySelectorAll('.label-filter[data-category="other"]:checked')
           ).map(checkbox => (checkbox as HTMLInputElement).value);
@@ -500,7 +530,7 @@ const filterOptions = getFilterOptions(issues);
           this.currentFilters.labelCategories = {
             priority: priorityLabels,
             type: typeLabels,
-            other: otherLabels
+            other: otherLabels,
           };
           this.performSearch();
         });
@@ -571,15 +601,16 @@ const filterOptions = getFilterOptions(issues);
       // Label filter - 階層的フィルタリング（カテゴリ間はAND、カテゴリ内はOR）
       if (this.currentFilters.labelCategories) {
         const { priority, type, other } = this.currentFilters.labelCategories;
-        
+
         filteredIssues = filteredIssues.filter(issue => {
           const issueLabels = (issue.getAttribute('data-labels') || '').split(',');
-          
+
           // 各カテゴリの条件をチェック
-          const priorityMatch = priority.length === 0 || priority.some(label => issueLabels.includes(label));
+          const priorityMatch =
+            priority.length === 0 || priority.some(label => issueLabels.includes(label));
           const typeMatch = type.length === 0 || type.some(label => issueLabels.includes(label));
           const otherMatch = other.length === 0 || other.some(label => issueLabels.includes(label));
-          
+
           // すべてのカテゴリの条件を満たす必要がある（AND条件）
           return priorityMatch && typeMatch && otherMatch;
         });
@@ -738,12 +769,12 @@ const filterOptions = getFilterOptions(issues);
     }
 
     private hasActiveFilters(): boolean {
-      const hasLabelFilters = this.currentFilters.labelCategories && (
-        this.currentFilters.labelCategories.priority.length > 0 ||
-        this.currentFilters.labelCategories.type.length > 0 ||
-        this.currentFilters.labelCategories.other.length > 0
-      );
-      
+      const hasLabelFilters =
+        this.currentFilters.labelCategories &&
+        (this.currentFilters.labelCategories.priority.length > 0 ||
+          this.currentFilters.labelCategories.type.length > 0 ||
+          this.currentFilters.labelCategories.other.length > 0);
+
       return (
         (this.currentFilters.state && this.currentFilters.state !== 'all') ||
         Boolean(hasLabelFilters) ||
