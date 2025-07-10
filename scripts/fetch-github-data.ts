@@ -1,11 +1,15 @@
 #!/usr/bin/env tsx
 
+import { config } from 'dotenv';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { createGitHubClient } from '../src/lib/github/client.js';
 import { GitHubIssuesService } from '../src/lib/github/issues.js';
 import { GitHubConfigSchema } from '../src/lib/schemas/config.js';
 import { z } from 'zod';
+
+// Load environment variables from .env file
+config();
 
 /**
  * GitHub API からデータを取得し、静的ファイルとして保存するスクリプト

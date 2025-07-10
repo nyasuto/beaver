@@ -21,9 +21,10 @@ const statsResult = await statsService.getUnifiedStats({
 // Extract data from unified stats
 const stats = statsResult.success ? statsResult.data : null;
 
-// Calculate derived metrics
-const urgentIssues = stats ? stats.priority.critical + stats.priority.high : 0;
-const recentActivity = stats ? stats.recentActivity.thisWeek : 0;
+// Calculate derived metrics (preserve -1 for fallback data)
+const urgentIssues =
+  stats && stats.meta.source !== 'fallback' ? stats.priority.critical + stats.priority.high : -1;
+const recentActivity = stats?.recentActivity.thisWeek ?? -1;
 
 // Export interface for type checking
 export interface Props {
@@ -37,7 +38,7 @@ const { class: className = '' } = Astro.props;
   <!-- Open Issues -->
   <StatCard
     title="Open Issues"
-    value={stats?.open || 0}
+    value={stats?.open ?? -1}
     icon="🔓"
     description="Currently active"
     color="green"

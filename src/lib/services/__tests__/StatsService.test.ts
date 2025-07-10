@@ -163,7 +163,7 @@ describe('StatsService', () => {
           priority: {
             critical: 1,
             high: 1,
-            medium: 1,
+            medium: 0, // closed issue は除外
             low: 1,
           },
           recentActivity: {
@@ -371,7 +371,7 @@ describe('StatsService', () => {
       expect(stats.priority).toEqual({
         critical: 1,
         high: 1,
-        medium: 1,
+        medium: 0, // closed issue は除外
         low: 1,
       });
       expect(stats.recentActivity.thisWeek).toBe(3);
@@ -428,7 +428,7 @@ describe('StatsService', () => {
       expect(priority).toEqual({
         critical: 1,
         high: 1,
-        medium: 1,
+        medium: 0, // closed issue は除外
         low: 1,
       });
     });
@@ -441,7 +441,7 @@ describe('StatsService', () => {
         critical: 0,
         high: 0,
         medium: 0,
-        low: 4, // すべてlowに分類される
+        low: 3, // open issues のみ（3個）がlowに分類される
       });
     });
   });

@@ -136,3 +136,7 @@ gh-pages/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# Generated GitHub data files
+src/data/github/
+!src/data/github/README.md
