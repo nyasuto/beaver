@@ -708,12 +708,10 @@ describe('Configuration Settings API Endpoint', () => {
       it('予期しない例外を適切に処理すること', async () => {
         // Force an error by mocking Date constructor to throw
         const originalDate = global.Date;
-        global.Date = class extends Date {
-          constructor(...args: any[]) {
-            if (args.length === 0) {
-              throw new Error('Date construction error');
-            }
-            super(...args);
+        global.Date = class MockDate extends Date {
+          constructor() {
+            super();
+            throw new Error('Date construction error');
           }
 
           static override now() {

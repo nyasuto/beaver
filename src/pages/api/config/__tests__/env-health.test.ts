@@ -142,7 +142,14 @@ describe('Environment Health API Endpoint', () => {
             steps: ['Step 1', 'Step 2'],
             documentation: 'https://docs.example.com',
           }),
-        };
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -175,7 +182,14 @@ describe('Environment Health API Endpoint', () => {
             },
           }),
           getSetupGuide: vi.fn().mockReturnValue({}),
-        };
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -206,7 +220,14 @@ describe('Environment Health API Endpoint', () => {
             },
           }),
           getSetupGuide: vi.fn().mockReturnValue({}),
-        };
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -249,7 +270,14 @@ describe('Environment Health API Endpoint', () => {
             },
           }),
           getSetupGuide: vi.fn().mockReturnValue(mockSetupGuide),
-        };
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -285,7 +313,14 @@ describe('Environment Health API Endpoint', () => {
             },
           }),
           getSetupGuide: vi.fn().mockReturnValue({}),
-        };
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -312,7 +347,15 @@ describe('Environment Health API Endpoint', () => {
             success: false,
             error: { message: 'Health check failed' },
           }),
-        };
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -351,7 +394,15 @@ describe('Environment Health API Endpoint', () => {
             success: false,
             error: null, // No error details
           }),
-        };
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -392,7 +443,14 @@ describe('Environment Health API Endpoint', () => {
             },
           }),
           getSetupGuide: vi.fn().mockReturnValue({}),
-        };
+          validate: vi.fn().mockResolvedValue({ success: true, data: {} }),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -442,7 +500,17 @@ describe('Environment Health API Endpoint', () => {
             success: true,
             data: {},
           }),
-        };
+          healthCheck: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: { status: 'healthy', checks: [] } }),
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -471,7 +539,17 @@ describe('Environment Health API Endpoint', () => {
             success: true,
             data: {},
           }),
-        };
+          healthCheck: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: { status: 'healthy', checks: [] } }),
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -511,7 +589,17 @@ describe('Environment Health API Endpoint', () => {
               ['Use a personal access token', 'Check token permissions']
             ),
           }),
-        };
+          healthCheck: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: { status: 'healthy', checks: [] } }),
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -545,7 +633,17 @@ describe('Environment Health API Endpoint', () => {
             success: false,
             error: new Error('General validation error'),
           }),
-        };
+          healthCheck: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: { status: 'healthy', checks: [] } }),
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -696,7 +794,17 @@ describe('Environment Health API Endpoint', () => {
             success: true,
             data: {},
           }),
-        };
+          healthCheck: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: { status: 'healthy', checks: [] } }),
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 
@@ -715,7 +823,17 @@ describe('Environment Health API Endpoint', () => {
             success: false,
             error: new Error('Validation error'),
           }),
-        };
+          healthCheck: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: { status: 'healthy', checks: [] } }),
+          getSetupGuide: vi.fn().mockReturnValue({}),
+          performAdditionalValidation: vi
+            .fn()
+            .mockResolvedValue({ success: true, data: undefined }),
+          getSuggestions: vi.fn().mockReturnValue(['suggestion1', 'suggestion2']),
+          getValidatedEnv: vi.fn().mockReturnValue(null),
+          validatedEnv: null,
+        } as any;
 
         vi.mocked(getEnvValidator).mockReturnValue(mockValidator);
 

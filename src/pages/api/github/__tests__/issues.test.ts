@@ -148,15 +148,39 @@ describe('GitHub Issues API Endpoint', () => {
     avg_time_to_close: 5.2,
   };
 
-  const setupMockSchema = (queryReturn: Record<string, any>) => {
+  const setupMockSchema = async (queryReturn: Record<string, any>) => {
     // Access the already mocked IssuesQuerySchema from the mock at the top of the file
     const mockParse = vi.fn().mockReturnValue(queryReturn);
-    const mockExtendedSchema = { parse: mockParse };
+    const mockExtendedSchema = {
+      parse: mockParse,
+      // Add minimal Zod schema properties to satisfy TypeScript
+      _cached: null,
+      _getCached: vi.fn(),
+      _parse: vi.fn(),
+      shape: {},
+      _def: { typeName: 'ZodObject' },
+      safeParse: vi.fn(),
+      parseAsync: vi.fn(),
+      safeParseAsync: vi.fn(),
+      refine: vi.fn(),
+      superRefine: vi.fn(),
+      optional: vi.fn(),
+      nullable: vi.fn(),
+      nullish: vi.fn(),
+      array: vi.fn(),
+      promise: vi.fn(),
+      or: vi.fn(),
+      and: vi.fn(),
+      transform: vi.fn(),
+      default: vi.fn(),
+      describe: vi.fn(),
+      pipe: vi.fn(),
+      brand: vi.fn(),
+    } as any;
 
     // Use dynamic import to access the mocked module
-    return import('../../../../lib/github').then(({ IssuesQuerySchema }) => {
-      vi.mocked(IssuesQuerySchema.extend).mockReturnValue(mockExtendedSchema);
-    });
+    const { IssuesQuerySchema } = await import('../../../../lib/github');
+    vi.mocked(IssuesQuerySchema.extend).mockReturnValue(mockExtendedSchema);
   };
 
   describe('GET: Issue取得のテスト', () => {
@@ -164,7 +188,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('基本的なIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -198,7 +222,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('統計情報を含むIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -234,7 +258,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('プルリクエストを含むIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -266,7 +290,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('プルリクエストを除外したIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -299,7 +323,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('ページネーション情報が正しく設定されること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 2,
           per_page: 1,
@@ -335,7 +359,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('GitHub設定エラーを適切に処理すること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({});
+        await setupMockSchema({});
 
         vi.mocked(createGitHubServicesFromEnv).mockResolvedValue({
           success: false,
@@ -355,7 +379,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('Issue取得エラーを適切に処理すること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -391,7 +415,32 @@ describe('GitHub Issues API Endpoint', () => {
         const mockParse = vi.fn().mockImplementation(() => {
           throw new Error('Invalid query parameters');
         });
-        const mockExtendedSchema = { parse: mockParse };
+        const mockExtendedSchema = {
+          parse: mockParse,
+          // Add minimal Zod schema properties to satisfy TypeScript
+          _cached: null,
+          _getCached: vi.fn(),
+          _parse: vi.fn(),
+          shape: {},
+          _def: { typeName: 'ZodObject' },
+          safeParse: vi.fn(),
+          parseAsync: vi.fn(),
+          safeParseAsync: vi.fn(),
+          refine: vi.fn(),
+          superRefine: vi.fn(),
+          optional: vi.fn(),
+          nullable: vi.fn(),
+          nullish: vi.fn(),
+          array: vi.fn(),
+          promise: vi.fn(),
+          or: vi.fn(),
+          and: vi.fn(),
+          transform: vi.fn(),
+          default: vi.fn(),
+          describe: vi.fn(),
+          pipe: vi.fn(),
+          brand: vi.fn(),
+        } as any;
         vi.mocked(IssuesQuerySchema.extend).mockReturnValue(mockExtendedSchema);
 
         const apiContext = createMockAPIContext({ per_page: 'invalid' });
@@ -406,7 +455,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('予期しない例外を適切に処理すること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({});
+        await setupMockSchema({});
 
         vi.mocked(createGitHubServicesFromEnv).mockRejectedValue(new Error('Unexpected error'));
 
@@ -423,7 +472,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('統計取得失敗時も基本データは返すこと', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -462,7 +511,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('正しいレスポンスヘッダーが設定されること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           page: 1,
           per_page: 30,
@@ -492,7 +541,7 @@ describe('GitHub Issues API Endpoint', () => {
       it('メタ情報が正しく設定されること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
-        setupMockSchema({
+        await setupMockSchema({
           state: 'open',
           labels: ['bug'],
           sort: 'created',
