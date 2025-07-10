@@ -5,19 +5,18 @@ import RecentActivity from '../components/dashboard/RecentActivity.astro';
 // resolveUrl is needed for breadcrumb navigation
 import { resolveUrl } from '../lib/utils/url';
 
-const title = 'Beaver Astro Edition';
-const description =
-  'AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases';
+const title = '🦫 Beaver Astro Edition';
+const description = 'GitHub Issuesを知識ベースに変換するAI-first知識管理システム';
 
 // Breadcrumb items for home page
-const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, icon: '🏠' }];
+const breadcrumbItems = [{ name: 'ホーム', href: resolveUrl('/'), current: true, icon: '🏠' }];
 ---
 
 <PageLayout
   title={title}
   description={description}
-  keywords="astro, typescript, github, knowledge-management, ai-agents, analytics"
-  author="Beaver Team"
+  keywords="astro, typescript, github, knowledge-management, ai-agents, analytics, 知識管理, 課題管理"
+  author="🦫 Beaver Team"
   showHeader={true}
   showFooter={true}
   showSearch={true}
@@ -36,12 +35,13 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
             <h1
               class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl lg:text-5xl leading-tight"
             >
-              Welcome to Your Dashboard
+              🦫 GitHub Issues から知識ベースを生成
             </h1>
             <p
               class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed"
             >
-              Track project health and manage issues efficiently.
+              プロジェクトの健康状態を追跡し、課題を効率的に管理します。🔍
+              進捗・品質・アクション情報を整理して表示。
             </p>
           </div>
 
@@ -65,7 +65,7 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
                   stroke-width="2"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              Manage Issues
+              📝 課題管理
             </a>
             <a
               href={resolveUrl('/analytics')}
@@ -84,7 +84,7 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 ></path>
               </svg>
-              View Analytics
+              📊 分析データ
             </a>
           </div>
         </div>
