@@ -2,8 +2,7 @@
 
 **あなたのAI学習を永続的な知識に変換 - 流れ去る学びを堰き止めよう**
 
-BeaverはAIエージェント開発の軌跡を自動的に整理された永続的な知識に変換します。散在するGitHub Issues、コミットログ、AI実験記録を構造化されたGitHub Pagesドキュメントに変換します。
-散在する開発情報を永続的な知識ベースとして蓄積し、チームの学習を加速します。
+BeaverはAIエージェント開発の軌跡を自動的に整理された永続的な知識に変換します。散在するGitHub Issues、コミットログ、AI実験記録を構造化されたGitHub Pagesドキュメントに変換し、コード品質分析とチーム協働を支援します。
 
 ## 🎯 解決する課題
 
@@ -50,15 +49,20 @@ Issues + Commits + AIログ → 🦫 Beaver → 各ステークホルダーに�
 - **インテリジェント分析**: 開発パターンとトレンドの自動検出
 
 ### 🎯 Modern Tech Stack
-- **Astro**: 静的サイト生成 + Island Architecture
-- **TypeScript**: 型安全なコード品質
+- **Astro 5.11**: 静的サイト生成 + Island Architecture
+- **TypeScript 5.6**: 型安全なコード品質
+- **React 19.1**: インタラクティブコンポーネント
 - **Octokit**: GitHub API 統合
 - **Zod**: ランタイム型検証
 - **Tailwind CSS**: ユーティリティファーストスタイリング
+- **Chart.js**: データ可視化
+- **Vitest**: 包括的テストフレームワーク
 
 ### 🔧 Core Features
 - **Knowledge Base Generation**: Issues → 構造化 Wiki
 - **Development Analytics**: パターン分析とメトリクス
+- **Code Quality Dashboard**: Codecov API統合による品質分析
+- **Interactive Visualization**: Chart.js による動的グラフ
 - **GitHub Pages Deployment**: 自動デプロイメント
 - **Real-time Updates**: インクリメンタル更新
 - **Team Collaboration**: 共有知識ベース
@@ -108,28 +112,38 @@ CODECOV_REPO=your_repository_name       # Repository name
 beaver-astro/
 ├── src/
 │   ├── components/          # Astro/React components
-│   │   ├── ui/             # Base UI components
-│   │   ├── charts/         # Data visualization
-│   │   ├── navigation/     # Navigation components
-│   │   └── layouts/        # Page layouts
+│   │   ├── ui/             # Base UI components (Button, Card, Modal, etc.)
+│   │   ├── charts/         # Data visualization (Chart.js wrappers)
+│   │   ├── navigation/     # Navigation components (Header, Footer)
+│   │   ├── layouts/        # Page layouts (Base, Page, Dashboard)
+│   │   └── dashboard/      # Dashboard-specific components
 │   ├── pages/              # Astro pages (routes)
-│   │   ├── index.astro     # Homepage
+│   │   ├── index.astro     # Homepage (日本語ローカライズ済み)
 │   │   ├── issues/         # Issues pages
+│   │   │   ├── index.astro # Issues list with filters
+│   │   │   └── [id].astro  # Individual issue details
 │   │   ├── analytics/      # Analytics dashboard
-│   │   ├── quality/        # Code quality dashboard
+│   │   ├── quality/        # Code quality dashboard (Codecov統合)
 │   │   └── api/            # API endpoints
+│   │       ├── github/     # GitHub API endpoints
+│   │       └── config/     # Configuration endpoints
 │   ├── lib/                # Core libraries
 │   │   ├── github/         # GitHub API integration
-│   │   ├── types/          # TypeScript type definitions
 │   │   ├── schemas/        # Zod validation schemas
 │   │   ├── analytics/      # Data analysis logic
-│   │   ├── quality/        # Code quality integration
+│   │   ├── quality/        # Code quality integration (Codecov)
+│   │   ├── data/           # Static data management
+│   │   ├── config/         # Environment configuration
+│   │   ├── services/       # Business logic services
 │   │   └── utils/          # Utility functions
 │   ├── styles/             # Global styles
 │   └── data/               # Static data files
+│       ├── github/         # GitHub data cache
+│       ├── config/         # Configuration files
+│       └── fixtures/       # Sample data
 ├── public/                 # Static assets
-├── config/                 # Configuration files
 ├── scripts/                # Build and deployment scripts
+├── Makefile               # Development workflow automation
 └── docs/                   # Documentation
 ```
 
@@ -139,21 +153,29 @@ beaver-astro/
 
 1. **初期設定**
 ```bash
-npm run setup
+npm install
+cp .env.example .env
+# .env を編集してGitHub tokenを設定
 ```
 
 2. **GitHub Issues 取得**
 ```bash
-npm run fetch:issues
+npm run fetch-data
 ```
 
-3. **知識ベース生成**
+3. **開発サーバー起動**
+```bash
+npm run dev
+```
+
+4. **品質チェック**
+```bash
+make quality  # または npm run lint && npm run type-check && npm run test
+```
+
+5. **本番ビルド & デプロイ**
 ```bash
 npm run build
-```
-
-4. **デプロイ**
-```bash
 npm run deploy
 ```
 
@@ -163,13 +185,13 @@ npm run deploy
 # 開発サーバー (ホットリロード)
 npm run dev
 
-# 型チェック
-npm run type-check
+# データ取得
+npm run fetch-data
 
-# リント
+# 品質チェック
 npm run lint
-
-# テスト
+npm run format
+npm run type-check
 npm run test
 
 # ビルド (本番用)
@@ -177,6 +199,28 @@ npm run build
 
 # プレビュー (ビルド後)
 npm run preview
+
+# デプロイ
+npm run deploy
+```
+
+### Makefile コマンド (推奨)
+
+```bash
+# 開発環境セットアップ
+make setup
+
+# 品質チェック (lint + format + type-check + test)
+make quality
+
+# 品質チェック + 自動修正
+make quality-fix
+
+# 開発サーバー
+make dev
+
+# すべてのチェック
+make all
 ```
 
 ## 🔧 設定
@@ -211,12 +255,32 @@ urgency_scoring:
 
 Beaver は以下の分析機能を提供します:
 
+### 📈 開発アナリティクス (`/analytics`)
 - **Issue Trends**: 作成・解決パターンの可視化
 - **Development Velocity**: チームの開発速度メトリクス
 - **Category Distribution**: Issue カテゴリの分布
 - **Contributor Analysis**: 貢献者の活動パターン
 - **Resolution Patterns**: 問題解決の傾向分析
-- **Code Quality**: Codecov APIによるカバレッジ分析とモジュール品質
+- **Recent Activity**: 最新の開発活動タイムライン
+
+### 🔍 品質分析ダッシュボード (`/quality`)
+- **Overall Coverage**: 全体的なコードカバレッジメトリクス
+- **Module Analysis**: モジュール単位のカバレッジ詳細
+- **Top 5 Modules**: 対処が必要な上位5モジュール
+- **Coverage History**: カバレッジ履歴とトレンド
+- **Quality Recommendations**: AI搭載の改善提案
+
+### 📋 Issue管理 (`/issues`)
+- **Issue Listing**: フィルタリング・検索機能付き一覧
+- **Label Management**: ラベル別の分類と統計
+- **Status Tracking**: オープン/クローズ状態の追跡
+- **Detail View**: 個別Issue詳細とメタデータ
+
+### 🤖 AI分析機能
+- **Smart Classification**: 自動カテゴライゼーション
+- **Sentiment Analysis**: Issue感情分析
+- **Effort Estimation**: 作業見積もり
+- **Pattern Recognition**: 開発パターン認識
 
 ## 🤖 AI Agent Integration
 
@@ -292,12 +356,20 @@ env:
    CODECOV_REPO=your_repository_name
    ```
 
-## 📈 パフォーマンス
+## 📈 パフォーマンス & 品質
 
+### ⚡ パフォーマンス最適化
 - **静的サイト生成**: 高速な初期ロード
 - **Island Architecture**: 必要最小限の JavaScript
 - **画像最適化**: 自動リサイズ・フォーマット変換
 - **CDN 配信**: GitHub Pages / Vercel Edge
+
+### 🧪 品質保証
+- **包括的テスト**: 1843テスト (50テストファイル)
+- **コードカバレッジ**: 57.85% (継続的改善中)
+- **型安全性**: TypeScript 5.6 strict mode
+- **コード品質**: ESLint + Prettier + Zod validation
+- **CI/CD**: GitHub Actions自動化
 
 ## 🤝 コントリビューション
 
@@ -323,25 +395,33 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 
 ## 🎯 ロードマップ
 
-### Phase 1: Core Features (Current)
+### Phase 1: Core Features ✅ (完了)
 - [x] GitHub Issues 取得・分類
 - [x] 基本的な知識ベース生成
 - [x] Astro + TypeScript セットアップ
+- [x] 日本語ローカライゼーション
+- [x] インタラクティブ分析ダッシュボード
+- [x] Codecov API統合による品質分析
+- [x] 包括的テストフレームワーク
 
-### Phase 2: Advanced Analytics
-- [ ] リアルタイム分析ダッシュボード
+### Phase 2: Advanced Analytics ⚡ (進行中)
+- [x] リアルタイム分析ダッシュボード
+- [x] インタラクティブ可視化 (Chart.js)
 - [ ] 高度な分類アルゴリズム
-- [ ] インタラクティブ可視化
+- [ ] 予測分析機能
+- [ ] パフォーマンス最適化
 
-### Phase 3: Team Collaboration
+### Phase 3: Team Collaboration 🚀 (計画中)
 - [ ] マルチリポジトリ対応
 - [ ] チーム分析機能
 - [ ] コラボレーション機能
+- [ ] 通知システム
 
-### Phase 4: Enterprise Features
+### Phase 4: Enterprise Features 🌟 (将来)
 - [ ] API 提供
 - [ ] プラグインシステム
 - [ ] エンタープライズ認証
+- [ ] 大規模データ対応
 
 ---
 
