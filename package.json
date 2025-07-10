@@ -12,7 +12,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "fetch-data": "tsx scripts/fetch-github-data.ts",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx,.astro src --max-warnings 200",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx,.astro src",
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.astro src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
