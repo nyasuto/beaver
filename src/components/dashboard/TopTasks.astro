@@ -118,8 +118,11 @@ function formatEffort(effort: string): string {
                     {task.title}
                   </a>
                 </h3>
-                {task.description && (
-                  <p class="text-sm text-muted mb-3 line-clamp-2">{task.description}</p>
+                {task.descriptionHtml && (
+                  <div
+                    class="text-sm text-muted mb-3 line-clamp-2 prose prose-sm max-w-none prose-headings:text-sm prose-headings:font-medium prose-p:my-1 prose-strong:font-semibold prose-code:text-xs prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded dark:prose-code:bg-gray-800"
+                    set:html={task.descriptionHtml}
+                  />
                 )}
               </div>
             </div>

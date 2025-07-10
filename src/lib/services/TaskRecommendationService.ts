@@ -8,11 +8,13 @@
 import type { Issue } from '../schemas/github';
 import type { TaskScore } from '../classification/engine';
 import { getClassificationEngine } from '../classification/config-loader';
+import { markdownToHtml, extractFirstParagraph, truncateMarkdown } from '../utils/markdown';
 
 export interface TaskRecommendation {
   taskId: string;
   title: string;
   description: string;
+  descriptionHtml: string;
   score: number;
   priority: string;
   category: string;
@@ -54,7 +56,9 @@ export class TaskRecommendationService {
       const result = engine.getTopTasks(issues, limit);
 
       // Convert to dashboard format
-      const topTasks = result.tasks.map(this.convertToTaskRecommendation);
+      const topTasks = await Promise.all(
+        result.tasks.map(task => this.convertToTaskRecommendation(task))
+      );
 
       // Calculate additional metrics
       const categoriesFound = [...new Set(result.tasks.map(task => task.category))];
@@ -78,18 +82,22 @@ export class TaskRecommendationService {
       console.error('Failed to get task recommendations:', error);
 
       // Return fallback recommendations
-      return this.getFallbackRecommendations(issues, limit);
+      return await this.getFallbackRecommendations(issues, limit);
     }
   }
 
   /**
    * Convert TaskScore to TaskRecommendation format
    */
-  private static convertToTaskRecommendation(task: TaskScore): TaskRecommendation {
+  private static async convertToTaskRecommendation(task: TaskScore): Promise<TaskRecommendation> {
+    const description = this.generateTaskDescription(task);
+    const descriptionHtml = await markdownToHtml(description);
+
     return {
       taskId: `issue-${task.issueNumber}`,
       title: task.title,
-      description: this.generateTaskDescription(task),
+      description,
+      descriptionHtml,
       score: task.score,
       priority: this.formatPriority(task.priority),
       category: this.formatCategory(task.category),
@@ -108,14 +116,11 @@ export class TaskRecommendationService {
   private static generateTaskDescription(task: TaskScore): string {
     const body = task.body || '';
 
-    // Extract first sentence or first 120 characters
-    const firstSentence = body.split('.')[0];
-    const description =
-      firstSentence && firstSentence.length > 0 && firstSentence.length < 120
-        ? firstSentence
-        : body.substring(0, 120);
+    // Extract first paragraph and truncate if needed
+    const firstParagraph = extractFirstParagraph(body);
+    const truncated = truncateMarkdown(firstParagraph, 150);
 
-    return description ? description.trim() + (body.length > 120 ? '...' : '') : '';
+    return truncated || 'No description available';
   }
 
   /**
@@ -243,7 +248,10 @@ export class TaskRecommendationService {
   /**
    * Provide fallback recommendations when classification fails
    */
-  private static getFallbackRecommendations(issues: Issue[], limit: number): DashboardTasksResult {
+  private static async getFallbackRecommendations(
+    issues: Issue[],
+    limit: number
+  ): Promise<DashboardTasksResult> {
     const openIssues = issues.filter(issue => issue.state === 'open');
 
     // Sort by creation date (newest first) and take top N
@@ -251,20 +259,28 @@ export class TaskRecommendationService {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, limit);
 
-    const fallbackTasks: TaskRecommendation[] = recentIssues.map((issue, index) => ({
-      taskId: `issue-${issue.number}`,
-      title: issue.title,
-      description: issue.body?.substring(0, 120) + '...' || 'No description available',
-      score: 50 - index * 5, // Decreasing score
-      priority: '🟡 中',
-      category: '📋 その他',
-      confidence: 50,
-      estimatedEffort: 'medium' as const,
-      tags: ['最新'],
-      url: issue.html_url || `/issues/${issue.number}`,
-      createdAt: issue.created_at,
-      reasons: ['最新のオープンIssueです'],
-    }));
+    const fallbackTasks: TaskRecommendation[] = await Promise.all(
+      recentIssues.map(async (issue, index) => {
+        const description = truncateMarkdown(issue.body || '', 150);
+        const descriptionHtml = await markdownToHtml(description);
+
+        return {
+          taskId: `issue-${issue.number}`,
+          title: issue.title,
+          description: description || 'No description available',
+          descriptionHtml,
+          score: 50 - index * 5, // Decreasing score
+          priority: '🟡 中',
+          category: '📋 その他',
+          confidence: 50,
+          estimatedEffort: 'medium' as const,
+          tags: ['最新'],
+          url: issue.html_url || `/issues/${issue.number}`,
+          createdAt: issue.created_at,
+          reasons: ['最新のオープンIssueです'],
+        };
+      })
+    );
 
     return {
       topTasks: fallbackTasks,
