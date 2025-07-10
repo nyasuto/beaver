@@ -5,19 +5,18 @@ import RecentActivity from '../components/dashboard/RecentActivity.astro';
 // resolveUrl is needed for breadcrumb navigation
 import { resolveUrl } from '../lib/utils/url';
 
-const title = 'Beaver Astro Edition';
-const description =
-  'AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases';
+const title = '🦫 Beaver AI知識ダム';
+const description = 'GitHub Issuesを永続的な知識ベースに変換';
 
 // Breadcrumb items for home page
-const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, icon: '🏠' }];
+const breadcrumbItems = [{ name: 'ホーム', href: resolveUrl('/'), current: true, icon: '🏠' }];
 ---
 
 <PageLayout
   title={title}
   description={description}
-  keywords="astro, typescript, github, knowledge-management, ai-agents, analytics"
-  author="Beaver Team"
+  keywords="astro, typescript, github, knowledge-management, ai-agents, analytics, 知識管理, 課題管理"
+  author="🦫 Beaver Team"
   showHeader={true}
   showFooter={true}
   showSearch={true}
@@ -34,59 +33,17 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
         <div class="text-center space-y-6 sm:space-y-8">
           <div class="space-y-4">
             <h1
-              class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl lg:text-5xl leading-tight"
+              class="text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight"
             >
-              Welcome to Your Dashboard
+              <span class="beaver-icon">🦫</span> Beaver AI知識ダム
             </h1>
             <p
               class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed"
             >
-              Track project health and manage issues efficiently.
+              GitHub Issuesを永続的な知識ベースに変換
             </p>
           </div>
 
-          <!-- Primary Action Buttons -->
-          <div
-            class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md mx-auto"
-          >
-            <a
-              href={resolveUrl('/issues')}
-              class="w-full sm:w-auto btn btn-primary px-6 py-3 text-base font-medium rounded-lg shadow-sm min-h-[48px] min-w-[160px] justify-center"
-            >
-              <svg
-                class="w-5 h-5 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Manage Issues
-            </a>
-            <a
-              href={resolveUrl('/analytics')}
-              class="w-full sm:w-auto btn btn-outline px-6 py-3 text-base font-medium rounded-lg shadow-sm min-h-[48px] min-w-[160px] justify-center"
-            >
-              <svg
-                class="w-5 h-5 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                ></path>
-              </svg>
-              View Analytics
-            </a>
-          </div>
         </div>
       </div>
     </section>
@@ -109,3 +66,10 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
     </section>
   </div>
 </PageLayout>
+
+<style>
+  .beaver-icon {
+    color: transparent;
+    text-shadow: 0 0 0 #3b82f6;
+  }
+</style>
