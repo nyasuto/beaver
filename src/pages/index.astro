@@ -2,14 +2,9 @@
 import PageLayout from '../components/layouts/PageLayout.astro';
 import IssueStats from '../components/dashboard/IssueStats.astro';
 import RecentActivity from '../components/dashboard/RecentActivity.astro';
-// resolveUrl is needed for breadcrumb navigation
-import { resolveUrl } from '../lib/utils/url';
 
 const title = '🦫 Beaver AI知識ダム';
 const description = 'GitHub Issuesを永続的な知識ベースに変換';
-
-// Breadcrumb items for home page
-const breadcrumbItems = [{ name: 'ホーム', href: resolveUrl('/'), current: true, icon: '🏠' }];
 ---
 
 <PageLayout
@@ -23,7 +18,6 @@ const breadcrumbItems = [{ name: 'ホーム', href: resolveUrl('/'), current: tr
   maxWidth="7xl"
   padding="lg"
   class="page-background"
-  breadcrumbs={breadcrumbItems}
 >
   <!-- Main Content -->
   <div class="min-h-screen">
