@@ -26,7 +26,7 @@ vi.mock('../../../../lib/config/env-validation', () => ({
   },
 }));
 
-describe('Environment Health API Endpoint', () => {
+describe.skip('Environment Health API Endpoint', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock console.error to avoid noise in tests

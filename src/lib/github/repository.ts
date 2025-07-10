@@ -320,7 +320,7 @@ export class GitHubRepositoryService {
     } catch (error: unknown) {
       return {
         success: false,
-        error: this.handleError(error, `Failed to fetch commit ${ref}`),
+        error: this.handleError(error, 'Failed to fetch commit information'),
       };
     }
   }
