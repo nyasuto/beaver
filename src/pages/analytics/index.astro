@@ -31,11 +31,6 @@ import { resolveUrl } from '../../lib/utils/url';
 const title = 'アナリティクスダッシュボード';
 const description = 'GitHubリポジトリ活動の分析と洞察を表示';
 
-const breadcrumbs = [
-  { name: 'ホーム', href: resolveUrl('/') },
-  { name: 'アナリティクス', href: resolveUrl('/analytics') },
-];
-
 // 静的データの読み込み
 const issues = getIssuesWithFallback();
 const isDataAvailable = hasStaticData();
@@ -84,7 +79,6 @@ try {
 <PageLayout
   title={title}
   description={description}
-  breadcrumbs={breadcrumbs}
   showHeader={true}
   showFooter={true}
   showSearch={true}
