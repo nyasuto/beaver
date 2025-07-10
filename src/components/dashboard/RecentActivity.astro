@@ -76,9 +76,7 @@ const getIssueIcon = (issue: RecentIssue) => {
 
   // Check for priority labels
   const labels = issue.labels || [];
-  const priorityLabel = labels.find(
-    (label) => label.name && label.name.startsWith('priority:')
-  );
+  const priorityLabel = labels.find(label => label.name && label.name.startsWith('priority:'));
 
   if (priorityLabel) {
     const priority = priorityLabel.name.split(':')[1]?.trim();
@@ -149,7 +147,7 @@ const { class: className = '' } = Astro.props;
                     </p>
                   </div>
                   <div class="flex items-center space-x-1 ml-2">
-                    {issue.labels?.slice(0, 1).map((label) => (
+                    {issue.labels?.slice(0, 1).map(label => (
                       <span
                         class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                         style={`background-color: #${label.color}20; color: #${label.color};`}
