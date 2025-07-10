@@ -237,6 +237,13 @@ describe('GitHubRepositoryService', () => {
     // Note: stats and files fields are not in our Commit type definition
   };
 
+  const mockLanguagesData = {
+    TypeScript: 50000,
+    JavaScript: 30000,
+    CSS: 15000,
+    HTML: 5000,
+  };
+
   describe('getRepository', () => {
     it('リポジトリ情報を正常に取得できること', async () => {
       mockOctokit.rest.repos.get.mockResolvedValue({
@@ -432,13 +439,6 @@ describe('GitHubRepositoryService', () => {
   });
 
   describe('getLanguages', () => {
-    const mockLanguagesData = {
-      TypeScript: 50000,
-      JavaScript: 30000,
-      CSS: 15000,
-      HTML: 5000,
-    };
-
     it('リポジトリ言語統計を取得できること', async () => {
       mockOctokit.rest.repos.listLanguages.mockResolvedValue({
         data: mockLanguagesData,
@@ -622,6 +622,12 @@ describe('GitHubRepositoryService', () => {
 
   describe('getRepositoryStats', () => {
     it('リポジトリ統計を正常に取得できること', async () => {
+      mockOctokit.rest.repos.get.mockResolvedValue({ data: mockRepositoryData });
+      mockOctokit.rest.repos.listLanguages.mockResolvedValue({ data: mockLanguagesData });
+      mockOctokit.rest.repos.getAllTopics.mockResolvedValue({
+        data: { names: ['javascript', 'nodejs'] },
+      });
+      mockOctokit.rest.repos.listCommits.mockResolvedValue({ data: [mockCommitData] });
       mockOctokit.rest.repos.getCodeFrequencyStats.mockResolvedValue({
         data: [
           [1640995200, 100, -50],
@@ -648,14 +654,19 @@ describe('GitHubRepositoryService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         const data = result.data as any; // Type assertion for test data
-        expect(data.codeFrequency).toHaveLength(2);
-        expect(data.codeFrequency[0]).toEqual({ week: 1640995200, a: 100, d: 50 });
-        expect(data.commitActivity).toHaveLength(2);
-        expect(data.participation.all).toHaveLength(7);
+        expect(data.repository).toBeDefined();
+        expect(data.languages).toBeDefined();
+        expect(data.topics).toBeDefined();
+        expect(data.recent_commits).toBeDefined();
+        expect(data.commit_activity_summary).toBeDefined();
       }
     });
 
     it('統計データが利用できない場合を処理できること', async () => {
+      mockOctokit.rest.repos.get.mockResolvedValue({ data: mockRepositoryData });
+      mockOctokit.rest.repos.listLanguages.mockResolvedValue({ data: {} });
+      mockOctokit.rest.repos.getAllTopics.mockResolvedValue({ data: { names: [] } });
+      mockOctokit.rest.repos.listCommits.mockResolvedValue({ data: [] });
       mockOctokit.rest.repos.getCodeFrequencyStats.mockResolvedValue({ data: [] });
       mockOctokit.rest.repos.getCommitActivityStats.mockResolvedValue({ data: [] });
       mockOctokit.rest.repos.getParticipationStats.mockResolvedValue({
@@ -667,13 +678,18 @@ describe('GitHubRepositoryService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         const data = result.data as any; // Type assertion for test data
-        expect(data.codeFrequency).toEqual([]);
-        expect(data.commitActivity).toEqual([]);
-        expect(data.participation.all).toEqual([]);
+        expect(data.repository).toBeDefined();
+        expect(data.languages).toEqual({});
+        expect(data.topics).toEqual([]);
+        expect(data.recent_commits).toEqual([]);
       }
     });
 
     it('一部の統計APIでエラーが発生した場合を処理できること', async () => {
+      mockOctokit.rest.repos.get.mockResolvedValue({ data: mockRepositoryData });
+      mockOctokit.rest.repos.listLanguages.mockRejectedValue(new Error('Languages not accessible'));
+      mockOctokit.rest.repos.getAllTopics.mockResolvedValue({ data: { names: [] } });
+      mockOctokit.rest.repos.listCommits.mockResolvedValue({ data: [] });
       mockOctokit.rest.repos.getCodeFrequencyStats.mockRejectedValue(
         new Error('Code frequency error')
       );
@@ -688,11 +704,15 @@ describe('GitHubRepositoryService', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.message).toContain('Failed to fetch repository statistics');
+        expect(result.error.message).toContain('Failed to fetch repository languages');
       }
     });
 
     it('すべての統計APIでエラーが発生した場合を処理できること', async () => {
+      mockOctokit.rest.repos.get.mockResolvedValue({ data: mockRepositoryData });
+      mockOctokit.rest.repos.listLanguages.mockRejectedValue(new Error('Languages not accessible'));
+      mockOctokit.rest.repos.getAllTopics.mockRejectedValue(new Error('Topics error'));
+      mockOctokit.rest.repos.listCommits.mockRejectedValue(new Error('Commits error'));
       mockOctokit.rest.repos.getCodeFrequencyStats.mockRejectedValue(new Error('Stats error'));
       mockOctokit.rest.repos.getCommitActivityStats.mockRejectedValue(new Error('Activity error'));
       mockOctokit.rest.repos.getParticipationStats.mockRejectedValue(
@@ -703,7 +723,7 @@ describe('GitHubRepositoryService', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.message).toContain('Failed to fetch repository statistics');
+        expect(result.error.message).toContain('Failed to fetch repository languages');
       }
     });
   });

@@ -98,7 +98,7 @@ quality: ## Run all quality checks (lint + format + type-check + test)
 	@echo "$(BLUE)3/4 Type checking...$(NC)"
 	@npm run type-check
 	@echo "$(BLUE)4/4 Testing...$(NC)"
-	@npm run test || echo "$(YELLOW)⚠️  Tests failed or no tests found$(NC)"
+	@npm run test
 	@echo "$(GREEN)✅ Quality checks completed$(NC)"
 
 quality-fix: ## Run quality checks with auto-fix
