@@ -22,88 +22,307 @@ const breadcrumbItems = [{ name: 'Home', href: resolveUrl('/'), current: true, i
   showFooter={true}
   showSearch={true}
   maxWidth="7xl"
-  padding="lg"
+  padding="none"
   class="page-background"
   breadcrumbs={breadcrumbItems}
 >
   <!-- Main Content -->
   <div class="min-h-screen">
-    <!-- Hero Section -->
-    <section class="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center space-y-6 sm:space-y-8">
-          <div class="space-y-4">
-            <h1
-              class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl lg:text-5xl leading-tight"
-            >
-              Welcome to Your Dashboard
-            </h1>
-            <p
-              class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed"
-            >
-              Track project health and manage issues efficiently.
-            </p>
-          </div>
+    <!-- Hero Section with Modern Design -->
+    <section
+      class="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+    >
+      <!-- Background Pattern -->
+      <div
+        class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5Q0EzQUYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSI2MCIgcj0iMzAiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjMwIiByPSIzMCIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMCIgcj0iMzAiLz48Y2lyY2xlIGN4PSIwIiBjeT0iMzAiIHI9IjMwIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"
+      >
+      </div>
 
-          <!-- Primary Action Buttons -->
-          <div
-            class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md mx-auto"
-          >
-            <a
-              href={resolveUrl('/issues')}
-              class="w-full sm:w-auto btn btn-primary px-6 py-3 text-base font-medium rounded-lg shadow-sm min-h-[48px] min-w-[160px] justify-center"
-            >
-              <svg
-                class="w-5 h-5 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      <!-- Content -->
+      <div class="relative px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-32">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center space-y-8 lg:space-y-12">
+            <!-- Main Heading -->
+            <div class="space-y-6">
+              <div
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Manage Issues
-            </a>
-            <a
-              href={resolveUrl('/analytics')}
-              class="w-full sm:w-auto btn btn-outline px-6 py-3 text-base font-medium rounded-lg shadow-sm min-h-[48px] min-w-[160px] justify-center"
-            >
-              <svg
-                class="w-5 h-5 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                <span class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
+                AI-Powered Knowledge Management
+              </div>
+
+              <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
+                <span
+                  class="bg-gradient-to-r from-gray-900 via-primary-800 to-secondary-800 dark:from-white dark:via-primary-200 dark:to-secondary-200 bg-clip-text text-transparent"
+                >
+                  Transform GitHub
+                </span>
+                <br />
+                <span class="text-gray-900 dark:text-white">into Knowledge</span>
+              </h1>
+
+              <p
+                class="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                ></path>
-              </svg>
-              View Analytics
-            </a>
+                Intelligent dashboard that converts your development activities into
+                <span class="font-semibold text-primary-600 dark:text-primary-400"
+                  >structured insights</span
+                >, powered by AI agents for seamless knowledge management.
+              </p>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div
+              class="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto"
+            >
+              <a
+                href={resolveUrl('/issues')}
+                class="group w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 min-w-[180px]"
+              >
+                <svg
+                  class="w-6 h-6 mr-3 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Get Started
+                <svg
+                  class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+              </a>
+
+              <a
+                href={resolveUrl('/analytics')}
+                class="group w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white hover:border-primary-300 dark:hover:border-primary-500 shadow-md hover:shadow-lg transition-all duration-200 min-w-[180px]"
+              >
+                <svg
+                  class="w-6 h-6 mr-3 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  ></path>
+                </svg>
+                View Analytics
+              </a>
+            </div>
+
+            <!-- Feature Highlights -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto pt-16">
+              <div class="text-center space-y-4">
+                <div
+                  class="w-16 h-16 mx-auto bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center"
+                >
+                  <svg
+                    class="w-8 h-8 text-primary-600 dark:text-primary-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9.663 17h4.673M12 3v1m6.364-.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  AI-Powered Insights
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                  Intelligent analysis transforms raw data into actionable knowledge automatically.
+                </p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div
+                  class="w-16 h-16 mx-auto bg-secondary-100 dark:bg-secondary-900/30 rounded-2xl flex items-center justify-center"
+                >
+                  <svg
+                    class="w-8 h-8 text-secondary-600 dark:text-secondary-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  Real-time Analytics
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                  Live dashboard with comprehensive metrics and performance tracking.
+                </p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div
+                  class="w-16 h-16 mx-auto bg-accent-100 dark:bg-accent-900/30 rounded-2xl flex items-center justify-center"
+                >
+                  <svg
+                    class="w-8 h-8 text-accent-600 dark:text-accent-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  Smart Automation
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                  Automated workflows streamline your development process efficiently.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Statistics Section -->
-    <section class="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-6xl mx-auto">
-        <IssueStats />
+    <section
+      class="py-16 sm:py-20 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Section Header -->
+        <div class="text-center mb-12">
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Project Overview
+          </h2>
+          <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Real-time insights into your repository's health and performance metrics
+          </p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="relative">
+          <!-- Decorative background -->
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div
+              class="w-96 h-96 bg-gradient-to-br from-primary-100/20 to-secondary-100/20 dark:from-primary-900/10 dark:to-secondary-900/10 rounded-full blur-3xl"
+            >
+            </div>
+          </div>
+
+          <!-- Stats Content -->
+          <div class="relative">
+            <IssueStats />
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Main Dashboard Content -->
-    <section class="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-6xl mx-auto">
-        <div class="max-w-4xl mx-auto">
-          <!-- Recent Activity (Full Width) -->
-          <RecentActivity />
+    <!-- Recent Activity Section -->
+    <section class="py-16 sm:py-20 bg-gray-50 dark:bg-gray-800/50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Section Header -->
+        <div class="text-center mb-12">
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Recent Activity
+          </h2>
+          <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Stay updated with the latest changes and developments in your projects
+          </p>
+        </div>
+
+        <!-- Activity Content -->
+        <div class="max-w-5xl mx-auto">
+          <div
+            class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+          >
+            <div class="p-6 sm:p-8">
+              <RecentActivity />
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-12 text-center">
+          <div
+            class="inline-flex items-center gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6"
+          >
+            <span class="text-gray-700 dark:text-gray-300 font-medium">Quick Actions:</span>
+            <div class="flex items-center gap-3">
+              <a
+                href={resolveUrl('/issues/new')}
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                New Issue
+              </a>
+              <a
+                href={resolveUrl('/analytics/reports')}
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-50 dark:bg-secondary-900/30 rounded-lg hover:bg-secondary-100 dark:hover:bg-secondary-900/50 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  ></path>
+                </svg>
+                Generate Report
+              </a>
+              <a
+                href={resolveUrl('/settings')}
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Settings
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
