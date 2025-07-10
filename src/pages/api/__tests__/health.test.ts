@@ -8,9 +8,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET } from '../health';
 
-describe.skip('Health Check API Endpoint', () => {
+describe('Health Check API Endpoint', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Restore all mocks to clean state
+    vi.restoreAllMocks();
+
     // Mock process methods
     vi.spyOn(process, 'uptime').mockReturnValue(123.456);
     vi.spyOn(process, 'memoryUsage').mockReturnValue({
@@ -182,13 +185,12 @@ describe.skip('Health Check API Endpoint', () => {
     });
 
     it('予期しないエラーを適切に処理すること', async () => {
-      // Force an error by mocking import.meta.env to throw
-      const originalEnv = import.meta.env;
-      Object.defineProperty(import.meta, 'env', {
-        get() {
-          throw new Error('Environment access error');
-        },
-        configurable: true,
+      // Force an error by making memoryUsage return invalid data that breaks JSON.stringify
+      vi.spyOn(process, 'memoryUsage').mockImplementation(() => {
+        const obj: any = {};
+        // Create a circular reference that will cause JSON.stringify to throw
+        obj.circular = obj;
+        return obj;
       });
 
       const apiContext = createMockAPIContext();
@@ -197,14 +199,8 @@ describe.skip('Health Check API Endpoint', () => {
 
       expect(response.status).toBe(500);
       expect(result.status).toBe('unhealthy');
-      expect(result.error).toBe('Environment access error');
+      expect(result.error).toContain('circular'); // JSON.stringify error mentions circular structure
       expect(result.response_time_ms).toBeDefined();
-
-      // Restore original environment
-      Object.defineProperty(import.meta, 'env', {
-        value: originalEnv,
-        configurable: true,
-      });
     });
 
     it('非Errorオブジェクトがthrowされた場合の処理', async () => {

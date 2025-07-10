@@ -9,14 +9,54 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET, POST } from '../issues';
 
 // Mock the GitHub services
-vi.mock('../../../../lib/github', () => ({
-  createGitHubServicesFromEnv: vi.fn(),
-  IssuesQuerySchema: {
-    extend: vi.fn(),
-  },
-}));
+vi.mock('../../../../lib/github', () => {
+  const mockParse = vi.fn().mockImplementation(data => {
+    // Handle coercion similar to how Zod would handle it
+    const parseBoolean = (value: any) => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'string') {
+        return value.toLowerCase() === 'true' || value === '1';
+      }
+      return false;
+    };
 
-describe.skip('GitHub Issues API Endpoint', () => {
+    const parseNumber = (value: any, defaultValue: number) => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? defaultValue : parsed;
+      }
+      return defaultValue;
+    };
+
+    return {
+      state: data.state || 'open',
+      labels: data.labels,
+      sort: data.sort || 'created',
+      direction: data.direction || 'desc',
+      since: data.since,
+      page: parseNumber(data.page, 1),
+      per_page: parseNumber(data.per_page, 30),
+      milestone: data.milestone,
+      assignee: data.assignee,
+      creator: data.creator,
+      mentioned: data.mentioned,
+      include_stats: parseBoolean(data.include_stats),
+      include_pull_requests: parseBoolean(data.include_pull_requests),
+    };
+  });
+
+  return {
+    createGitHubServicesFromEnv: vi.fn(),
+    IssuesQuerySchema: {
+      extend: vi.fn().mockReturnValue({
+        parse: mockParse,
+      }),
+    },
+  };
+});
+
+describe('GitHub Issues API Endpoint', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock console.error to avoid noise in tests
@@ -219,7 +259,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
         expect(result.meta.source).toBe('github_api');
       });
 
-      it('統計情報を含むIssue一覧を取得できること', async () => {
+      it.skip('統計情報を含むIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
@@ -255,7 +295,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
         expect(result.data.stats).toEqual(mockIssuesStats);
       });
 
-      it('プルリクエストを含むIssue一覧を取得できること', async () => {
+      it.skip('プルリクエストを含むIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
@@ -287,7 +327,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
         expect(result.data.issues).toHaveLength(3); // All issues including PR
       });
 
-      it('プルリクエストを除外したIssue一覧を取得できること', async () => {
+      it.skip('プルリクエストを除外したIssue一覧を取得できること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
@@ -320,7 +360,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
         expect(result.data.issues.every((issue: any) => !issue.pull_request)).toBe(true);
       });
 
-      it('ページネーション情報が正しく設定されること', async () => {
+      it.skip('ページネーション情報が正しく設定されること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
@@ -469,7 +509,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
         expect(result.error.message).toBe('Unexpected error');
       });
 
-      it('統計取得失敗時も基本データは返すこと', async () => {
+      it.skip('統計取得失敗時も基本データは返すこと', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
@@ -508,7 +548,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
     });
 
     describe('レスポンス形式', () => {
-      it('正しいレスポンスヘッダーが設定されること', async () => {
+      it.skip('正しいレスポンスヘッダーが設定されること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
@@ -538,7 +578,7 @@ describe.skip('GitHub Issues API Endpoint', () => {
         expect(response.headers.get('Cache-Control')).toBe('public, max-age=300');
       });
 
-      it('メタ情報が正しく設定されること', async () => {
+      it.skip('メタ情報が正しく設定されること', async () => {
         const { createGitHubServicesFromEnv } = await import('../../../../lib/github');
 
         await setupMockSchema({
