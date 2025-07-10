@@ -611,18 +611,24 @@ describe('StatsService', () => {
         meta: { source: 'static_data', generated_at: new Date().toISOString() },
       };
 
+      // 元のTTLを保存
+      const originalTTL = (statsService as any).CACHE_TTL;
+
+      // TTLを非常に短く設定してすぐに期限切れにする
+      (statsService as any).CACHE_TTL = 1; // 1ms
+
       // キャッシュを設定
       (statsService as any).setCachedStats('test-key', mockStats);
 
-      // TTLを0に設定してすぐに期限切れにする
-      (statsService as any).CACHE_TTL = 0;
-
-      // 少し待つ
-      await new Promise(resolve => setTimeout(resolve, 1));
+      // TTLを超える時間待つ
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       const cached = (statsService as any).getCachedStats('test-key');
 
       expect(cached).toBeNull();
+
+      // TTLを元に戻す
+      (statsService as any).CACHE_TTL = originalTTL;
     });
 
     it('should clear all cache', () => {
