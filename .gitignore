@@ -136,3 +136,8 @@ gh-pages/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# Generated GitHub data files
+src/data/github/issues.json
+src/data/github/metadata.json
+src/data/github/issues/

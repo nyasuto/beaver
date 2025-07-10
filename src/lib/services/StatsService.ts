@@ -248,14 +248,17 @@ export class StatsService {
   ): keyof UnifiedStats['priority'] {
     const labelNames = labels.map(label => label.name.toLowerCase());
 
-    if (labelNames.some(name => name.includes('critical') || name.includes('urgent'))) {
+    if (labelNames.some(name => name.includes('priority: critical') || name.includes('critical') || name.includes('urgent'))) {
       return 'critical';
     }
-    if (labelNames.some(name => name.includes('high') || name.includes('important'))) {
+    if (labelNames.some(name => name.includes('priority: high') || name.includes('high') || name.includes('important'))) {
       return 'high';
     }
-    if (labelNames.some(name => name.includes('medium') || name.includes('normal'))) {
+    if (labelNames.some(name => name.includes('priority: medium') || name.includes('medium') || name.includes('normal'))) {
       return 'medium';
+    }
+    if (labelNames.some(name => name.includes('priority: low') || name.includes('low'))) {
+      return 'low';
     }
     return 'low';
   }
