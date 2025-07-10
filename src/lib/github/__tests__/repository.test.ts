@@ -79,15 +79,7 @@ describe('GitHubRepositoryService', () => {
       gravatar_id: '',
       url: 'https://api.github.com/users/test-owner',
       html_url: 'https://github.com/test-owner',
-      followers_url: 'https://api.github.com/users/test-owner/followers',
-      following_url: 'https://api.github.com/users/test-owner/following{/other_user}',
-      gists_url: 'https://api.github.com/users/test-owner/gists{/gist_id}',
-      starred_url: 'https://api.github.com/users/test-owner/starred{/owner}{/repo}',
-      subscriptions_url: 'https://api.github.com/users/test-owner/subscriptions',
-      organizations_url: 'https://api.github.com/users/test-owner/orgs',
-      repos_url: 'https://api.github.com/users/test-owner/repos',
-      events_url: 'https://api.github.com/users/test-owner/events{/privacy}',
-      received_events_url: 'https://api.github.com/users/test-owner/received_events',
+      // Note: These URLs are part of the GitHub API response but not in our type definition
       type: 'User',
       site_admin: false,
     },
@@ -147,6 +139,10 @@ describe('GitHubRepositoryService', () => {
     size: 1024,
     default_branch: 'main',
     open_issues_count: 3,
+    // Add missing required properties
+    open_issues: 3,
+    forks: 5,
+    watchers: 42,
     is_template: false,
     topics: ['javascript', 'typescript', 'testing'],
     has_issues: true,
@@ -173,15 +169,7 @@ describe('GitHubRepositoryService', () => {
     allow_squash_merge: true,
     allow_auto_merge: false,
     delete_branch_on_merge: true,
-    allow_update_branch: true,
-    use_squash_pr_title_as_default: false,
-    squash_merge_commit_message: 'COMMIT_MESSAGES',
-    squash_merge_commit_title: 'COMMIT_OR_PR_TITLE',
-    merge_commit_message: 'PR_TITLE',
-    merge_commit_title: 'MERGE_MESSAGE',
-    security_and_analysis: null,
-    network_count: 5,
-    subscribers_count: 10,
+    // Note: Some GitHub API fields are not included in our type definitions
   };
 
   const mockCommitData: Commit = {
@@ -223,15 +211,7 @@ describe('GitHubRepositoryService', () => {
       gravatar_id: '',
       url: 'https://api.github.com/users/test-author',
       html_url: 'https://github.com/test-author',
-      followers_url: 'https://api.github.com/users/test-author/followers',
-      following_url: 'https://api.github.com/users/test-author/following{/other_user}',
-      gists_url: 'https://api.github.com/users/test-author/gists{/gist_id}',
-      starred_url: 'https://api.github.com/users/test-author/starred{/owner}{/repo}',
-      subscriptions_url: 'https://api.github.com/users/test-author/subscriptions',
-      organizations_url: 'https://api.github.com/users/test-author/orgs',
-      repos_url: 'https://api.github.com/users/test-author/repos',
-      events_url: 'https://api.github.com/users/test-author/events{/privacy}',
-      received_events_url: 'https://api.github.com/users/test-author/received_events',
+      // Note: These URLs are part of the GitHub API response but not in our type definition
       type: 'User',
       site_admin: false,
     },
@@ -243,15 +223,7 @@ describe('GitHubRepositoryService', () => {
       gravatar_id: '',
       url: 'https://api.github.com/users/test-committer',
       html_url: 'https://github.com/test-committer',
-      followers_url: 'https://api.github.com/users/test-committer/followers',
-      following_url: 'https://api.github.com/users/test-committer/following{/other_user}',
-      gists_url: 'https://api.github.com/users/test-committer/gists{/gist_id}',
-      starred_url: 'https://api.github.com/users/test-committer/starred{/owner}{/repo}',
-      subscriptions_url: 'https://api.github.com/users/test-committer/subscriptions',
-      organizations_url: 'https://api.github.com/users/test-committer/orgs',
-      repos_url: 'https://api.github.com/users/test-committer/repos',
-      events_url: 'https://api.github.com/users/test-committer/events{/privacy}',
-      received_events_url: 'https://api.github.com/users/test-committer/received_events',
+      // Note: These URLs are part of the GitHub API response but not in our type definition
       type: 'User',
       site_admin: false,
     },
@@ -262,26 +234,7 @@ describe('GitHubRepositoryService', () => {
         html_url: 'https://github.com/test-owner/test-repo/commit/parent123abc',
       },
     ],
-    stats: {
-      total: 10,
-      additions: 8,
-      deletions: 2,
-    },
-    files: [
-      {
-        sha: 'file123abc',
-        filename: 'src/test.ts',
-        status: 'modified',
-        additions: 8,
-        deletions: 2,
-        changes: 10,
-        blob_url: 'https://github.com/test-owner/test-repo/blob/abc123def456/src/test.ts',
-        raw_url: 'https://github.com/test-owner/test-repo/raw/abc123def456/src/test.ts',
-        contents_url:
-          'https://api.github.com/repos/test-owner/test-repo/contents/src/test.ts?ref=abc123def456',
-        patch: '@@ -1,3 +1,8 @@\n test content',
-      },
-    ],
+    // Note: stats and files fields are not in our Commit type definition
   };
 
   describe('getRepository', () => {
@@ -496,8 +449,8 @@ describe('GitHubRepositoryService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toEqual(mockLanguagesData);
-        expect(result.data.TypeScript).toBe(50000);
-        expect(result.data.JavaScript).toBe(30000);
+        expect(result.data['TypeScript']).toBe(50000);
+        expect(result.data['JavaScript']).toBe(30000);
       }
 
       expect(mockOctokit.rest.repos.listLanguages).toHaveBeenCalledWith({
@@ -694,10 +647,11 @@ describe('GitHubRepositoryService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.codeFrequency).toHaveLength(2);
-        expect(result.data.codeFrequency[0]).toEqual({ week: 1640995200, a: 100, d: 50 });
-        expect(result.data.commitActivity).toHaveLength(2);
-        expect(result.data.participation.all).toHaveLength(7);
+        const data = result.data as any; // Type assertion for test data
+        expect(data.codeFrequency).toHaveLength(2);
+        expect(data.codeFrequency[0]).toEqual({ week: 1640995200, a: 100, d: 50 });
+        expect(data.commitActivity).toHaveLength(2);
+        expect(data.participation.all).toHaveLength(7);
       }
     });
 
@@ -712,9 +666,10 @@ describe('GitHubRepositoryService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.codeFrequency).toEqual([]);
-        expect(result.data.commitActivity).toEqual([]);
-        expect(result.data.participation.all).toEqual([]);
+        const data = result.data as any; // Type assertion for test data
+        expect(data.codeFrequency).toEqual([]);
+        expect(data.commitActivity).toEqual([]);
+        expect(data.participation.all).toEqual([]);
       }
     });
 

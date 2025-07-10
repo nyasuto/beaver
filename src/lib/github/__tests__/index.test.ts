@@ -53,6 +53,8 @@ describe('GitHub Integration Index Module', () => {
         owner: '',
         repo: '',
         token: '',
+        baseUrl: 'https://api.github.com',
+        userAgent: 'beaver-astro/1.0.0',
       };
 
       const result = createGitHubServices(invalidConfig);
