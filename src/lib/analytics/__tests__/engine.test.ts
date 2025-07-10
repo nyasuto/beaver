@@ -306,8 +306,13 @@ describe('AnalyticsEngine', () => {
     });
 
     it('should calculate resolution times correctly', () => {
+      const firstMockIssue = mockIssues[0];
+      if (!firstMockIssue) {
+        throw new Error('Mock issue not properly initialized');
+      }
+
       const closedIssue: Issue = {
-        ...mockIssues[0]!,
+        ...firstMockIssue,
         state: 'closed' as const,
         created_at: '2023-01-01T00:00:00Z',
         closed_at: '2023-01-02T00:00:00Z', // 24 hours later
@@ -370,15 +375,22 @@ describe('AnalyticsEngine', () => {
 
     it('should identify resolution rate issues', () => {
       // Create mostly open issues
+      const firstMockIssue = mockIssues[1];
+      const secondMockIssue = mockIssues[0];
+
+      if (!firstMockIssue || !secondMockIssue) {
+        throw new Error('Mock issues not properly initialized');
+      }
+
       const mostlyOpenIssues: Issue[] = Array(10)
         .fill(null)
         .map((_, i) => ({
-          ...mockIssues[1]!,
+          ...firstMockIssue,
           id: i + 1,
           number: i + 1,
           state: 'open' as const,
         }));
-      mostlyOpenIssues.push({ ...mockIssues[0]!, state: 'closed' as const }); // One closed issue
+      mostlyOpenIssues.push({ ...secondMockIssue, state: 'closed' as const }); // One closed issue
 
       const insights = engine.generateInsights(mostlyOpenIssues, []);
 
@@ -392,9 +404,14 @@ describe('AnalyticsEngine', () => {
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 100);
 
+      const secondMockIssue = mockIssues[1];
+      if (!secondMockIssue) {
+        throw new Error('Mock issue not properly initialized');
+      }
+
       const oldIssues = [
         {
-          ...mockIssues[1]!,
+          ...secondMockIssue,
           created_at: oldDate.toISOString(),
         },
       ];
@@ -405,10 +422,15 @@ describe('AnalyticsEngine', () => {
     });
 
     it('should provide category-specific insights', () => {
+      const firstMockClassification = mockClassifications[0];
+      if (!firstMockClassification) {
+        throw new Error('Mock classification not properly initialized');
+      }
+
       const bugHeavyClassifications = Array(5)
         .fill(null)
         .map((_, i) => ({
-          ...mockClassifications[0]!,
+          ...firstMockClassification,
           issueId: i + 1,
           issueNumber: i + 1,
         }));
@@ -449,8 +471,13 @@ describe('AnalyticsEngine', () => {
 
   describe('Edge Cases', () => {
     it('should handle issues without dates', () => {
+      const firstMockIssue = mockIssues[0];
+      if (!firstMockIssue) {
+        throw new Error('Mock issue not properly initialized');
+      }
+
       const invalidIssue = {
-        ...mockIssues[0]!,
+        ...firstMockIssue,
         created_at: '',
         updated_at: '',
         closed_at: null,
@@ -465,8 +492,13 @@ describe('AnalyticsEngine', () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 10);
 
+      const firstMockIssue = mockIssues[0];
+      if (!firstMockIssue) {
+        throw new Error('Mock issue not properly initialized');
+      }
+
       const futureIssue = {
-        ...mockIssues[0]!,
+        ...firstMockIssue,
         created_at: futureDate.toISOString(),
       };
 

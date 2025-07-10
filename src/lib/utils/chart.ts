@@ -114,7 +114,12 @@ export function convertTimeSeriesData(
   color: string = CHART_COLORS[0] || '#3B82F6'
 ): ChartData<'line'> {
   return {
-    labels: data.map(point => point.timestamp.toLocaleDateString()),
+    labels: data.map(point => {
+      const year = point.timestamp.getFullYear();
+      const month = point.timestamp.getMonth() + 1;
+      const day = point.timestamp.getDate();
+      return `${year}/${month}/${day}`;
+    }),
     datasets: [
       {
         label,

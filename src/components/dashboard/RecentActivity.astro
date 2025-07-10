@@ -10,6 +10,17 @@ import { formatDistanceToNow } from 'date-fns';
 import { getStatsService } from '../../lib/services/StatsService';
 import { resolveUrl } from '../../lib/utils/url';
 
+// Type for recent issue data from StatsService
+type RecentIssue = {
+  id: number;
+  title: string;
+  number: number;
+  updated_at: string;
+  state: 'open' | 'closed';
+  labels?: Array<{ name: string; color: string }>;
+  pull_request?: any;
+};
+
 // Get unified statistics using the StatsService
 const statsService = getStatsService();
 const statsResult = await statsService.getUnifiedStats({
@@ -59,14 +70,14 @@ const fetchRepositoryData = async () => {
 const repoResult = await fetchRepositoryData();
 
 // Helper function to get issue icon based on state and labels
-const getIssueIcon = (issue: any) => {
+const getIssueIcon = (issue: RecentIssue) => {
   if (issue.state === 'closed') return '✅';
   if (issue.pull_request) return '🔄';
 
   // Check for priority labels
   const labels = issue.labels || [];
   const priorityLabel = labels.find(
-    (label: any) => label.name && label.name.startsWith('priority:')
+    (label) => label.name && label.name.startsWith('priority:')
   );
 
   if (priorityLabel) {
@@ -124,7 +135,7 @@ const { class: className = '' } = Astro.props;
     <div class="space-y-3">
       {
         recentIssues.length > 0 ? (
-          recentIssues.map((issue: any) => (
+          recentIssues.map((issue: RecentIssue) => (
             <div class="flex items-start space-x-3 p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
               <span class="text-lg mt-0.5">{getIssueIcon(issue)}</span>
               <div class="flex-1 min-w-0">
@@ -138,7 +149,7 @@ const { class: className = '' } = Astro.props;
                     </p>
                   </div>
                   <div class="flex items-center space-x-1 ml-2">
-                    {issue.labels?.slice(0, 1).map((label: any) => (
+                    {issue.labels?.slice(0, 1).map((label) => (
                       <span
                         class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                         style={`background-color: #${label.color}20; color: #${label.color};`}
