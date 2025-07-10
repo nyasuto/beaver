@@ -17,7 +17,7 @@ describe('Navigation Components', () => {
     it('should contain expected navigation components', () => {
       expect(NAVIGATION_COMPONENTS.header).toBe('Header');
       expect(NAVIGATION_COMPONENTS.footer).toBe('Footer');
-      expect(NAVIGATION_COMPONENTS.breadcrumb).toBe('Breadcrumb');
+      expect(NAVIGATION_COMPONENTS.banner).toBe('Banner');
     });
 
     it('should have consistent naming convention', () => {
@@ -33,11 +33,11 @@ describe('Navigation Components', () => {
     it('should provide proper component name types', () => {
       const headerComponent: keyof typeof NAVIGATION_COMPONENTS = 'header';
       const footerComponent: keyof typeof NAVIGATION_COMPONENTS = 'footer';
-      const breadcrumbComponent: keyof typeof NAVIGATION_COMPONENTS = 'breadcrumb';
+      const bannerComponent: keyof typeof NAVIGATION_COMPONENTS = 'banner';
 
       expect(NAVIGATION_COMPONENTS[headerComponent]).toBe('Header');
       expect(NAVIGATION_COMPONENTS[footerComponent]).toBe('Footer');
-      expect(NAVIGATION_COMPONENTS[breadcrumbComponent]).toBe('Breadcrumb');
+      expect(NAVIGATION_COMPONENTS[bannerComponent]).toBe('Banner');
     });
   });
 
@@ -51,12 +51,12 @@ describe('Navigation Components', () => {
       // Footer should be secondary navigation
       expect(components).toContain('footer');
 
-      // Breadcrumb should provide contextual navigation
-      expect(components).toContain('breadcrumb');
+      // Banner should provide promotional navigation
+      expect(components).toContain('banner');
     });
 
     it('should provide complete navigation ecosystem', () => {
-      const requiredComponents = ['header', 'footer', 'breadcrumb'];
+      const requiredComponents = ['header', 'footer', 'banner'];
       const availableComponents = Object.keys(NAVIGATION_COMPONENTS);
 
       requiredComponents.forEach(component => {
@@ -71,7 +71,7 @@ describe('Navigation Components', () => {
       const expectedStructure = {
         header: 'Primary site navigation',
         footer: 'Secondary site navigation and info',
-        breadcrumb: 'Contextual navigation path',
+        banner: 'Promotional navigation and announcements',
       };
 
       Object.keys(expectedStructure).forEach(navType => {
@@ -100,8 +100,8 @@ describe('Navigation Component Integration', () => {
       // Footer is secondary navigation
       expect(NAVIGATION_COMPONENTS.footer).toBe('Footer');
 
-      // Breadcrumb provides contextual navigation
-      expect(NAVIGATION_COMPONENTS.breadcrumb).toBe('Breadcrumb');
+      // Banner provides promotional navigation
+      expect(NAVIGATION_COMPONENTS.banner).toBe('Banner');
     });
   });
 
@@ -146,41 +146,26 @@ describe('Navigation Component Extensibility', () => {
   });
 });
 
-describe('Breadcrumb Component Logic', () => {
-  describe('Breadcrumb Item Structure', () => {
-    it('should support proper breadcrumb item structure', () => {
-      // BreadcrumbItem should have required properties
-      const mockBreadcrumbItem = {
-        name: 'Home',
-        href: '/',
-        current: false,
+describe('Banner Component Logic', () => {
+  describe('Banner Content Structure', () => {
+    it('should support banner content structure', () => {
+      // Banner should have title and description
+      const mockBannerContent = {
+        title: 'Welcome to Beaver',
+        description: 'AI-powered knowledge management',
+        showActions: true,
       };
 
-      expect(mockBreadcrumbItem.name).toBeDefined();
-      expect(mockBreadcrumbItem.href).toBeDefined();
-      expect(typeof mockBreadcrumbItem.current).toBe('boolean');
+      expect(mockBannerContent.title).toBeDefined();
+      expect(mockBannerContent.description).toBeDefined();
+      expect(typeof mockBannerContent.showActions).toBe('boolean');
     });
 
-    it('should handle breadcrumb navigation paths', () => {
-      // Test breadcrumb path logic
-      const breadcrumbPath = [
-        { name: 'Home', href: '/' },
-        { name: 'Issues', href: '/issues' },
-        { name: 'Issue #123', href: '/issues/123' },
-      ];
+    it('should handle banner display modes', () => {
+      const displayModes = ['full', 'compact', 'minimal'];
 
-      expect(breadcrumbPath.length).toBe(3);
-      expect(breadcrumbPath[0]?.name).toBe('Home');
-      expect(breadcrumbPath[breadcrumbPath.length - 1]?.name).toBe('Issue #123');
-    });
-  });
-
-  describe('Breadcrumb Separator Logic', () => {
-    it('should support different separator types', () => {
-      const separatorTypes = ['slash', 'chevron', 'arrow'];
-
-      separatorTypes.forEach(separator => {
-        expect(['slash', 'chevron', 'arrow']).toContain(separator);
+      displayModes.forEach(mode => {
+        expect(['full', 'compact', 'minimal']).toContain(mode);
       });
     });
   });

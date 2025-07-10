@@ -2,20 +2,28 @@
 /**
  * ビーバーの事実ページ
  *
- * ビーバーの自然な特性とBeaver AIツールの機能を創造的に関連付けて紹介
+ * ビーバーの自然な特性とBeaverツールの機能を創造的に関連付けて紹介
  */
 
-import BaseLayout from '../../components/layouts/BaseLayout.astro';
-import BannerWithData from '../../components/navigation/BannerWithData.astro';
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+
+const title = 'ビーバーの事実';
+const description = 'ビーバーの自然な特性とBeaverの知識管理機能の類似性を探る興味深い事実集';
 ---
 
-<BaseLayout
-  title="🦫 ビーバーの事実 | Beaver知識ダム"
-  description="ビーバーの自然な特性とBeaverの知識管理機能の類似性を探る興味深い事実集"
+<PageLayout
+  title={title}
+  description={description}
+  keywords="beaver, knowledge-management, natural-engineering, ビーバー, 知識管理, 自然工学"
+  author="🦫 Beaver Team"
+  showHeader={true}
+  showFooter={true}
+  maxWidth="7xl"
+  padding="lg"
 >
-  <!-- Header Banner -->
-  <BannerWithData showActions={true} />
-  
+  <PageHeader title={title} description={description} />
+
   <main class="container mx-auto px-4 py-8">
     <!-- ヒーロセクション -->
     <div class="text-center mb-12">
@@ -276,4 +284,4 @@ import BannerWithData from '../../components/navigation/BannerWithData.astro';
       </div>
     </div>
   </main>
-</BaseLayout>
+</PageLayout>
