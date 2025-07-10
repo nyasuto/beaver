@@ -7,7 +7,23 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { ChartType } from 'chart.js';
-import type { TimeSeriesPoint, PerformanceMetrics } from '../../analytics/engine';
+// import type { TimeSeriesPoint, PerformanceMetrics } from '../../analytics/engine';
+
+// Temporary type definitions for tests
+type TimeSeriesPoint = {
+  timestamp: Date;
+  value: number;
+};
+
+type PerformanceMetrics = {
+  resolutionRate: number;
+  throughput: number;
+  averageResolutionTime: number;
+  medianResolutionTime: number;
+  responseTime: number;
+  backlogSize: number;
+  burndownRate: number;
+};
 import type { IssueClassification } from '../../schemas/classification';
 import {
   convertTimeSeriesData,

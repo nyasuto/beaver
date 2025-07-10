@@ -8,7 +8,21 @@
  */
 
 import type { ChartData, ChartOptions, ChartConfiguration, TooltipItem, ChartType } from 'chart.js';
-import type { TimeSeriesPoint, PerformanceMetrics } from '../analytics/engine';
+// Local type definitions (formerly from analytics engine)
+type TimeSeriesPoint = {
+  timestamp: Date;
+  value: number;
+};
+
+type PerformanceMetrics = {
+  resolutionRate: number;
+  throughput: number;
+  averageResolutionTime: number;
+  medianResolutionTime: number;
+  responseTime: number;
+  backlogSize: number;
+  burndownRate: number;
+};
 import type { IssueClassification } from '../schemas/classification';
 
 /**
