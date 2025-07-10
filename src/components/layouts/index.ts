@@ -14,7 +14,6 @@
 export const LAYOUT_COMPONENTS = {
   base: 'BaseLayout',
   page: 'PageLayout',
-  dashboard: 'DashboardLayout',
 } as const;
 
 export type LayoutComponentName = keyof typeof LAYOUT_COMPONENTS;
@@ -22,4 +21,3 @@ export type LayoutComponentName = keyof typeof LAYOUT_COMPONENTS;
 // Component name exports for consistency
 export const BaseLayout = 'BaseLayout';
 export const PageLayout = 'PageLayout';
-export const DashboardLayout = 'DashboardLayout';
