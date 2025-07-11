@@ -94,7 +94,7 @@ export class TaskRecommendationService {
 
     return {
       taskId: `issue-${task.issueNumber}`,
-      title: task.title,
+      title: this.cleanTitle(task.title),
       description,
       descriptionHtml,
       score: task.score,
@@ -119,6 +119,48 @@ export class TaskRecommendationService {
     const truncated = truncateMarkdown(firstParagraph, 150);
 
     return truncated || 'No description available';
+  }
+
+  /**
+   * Clean title by removing priority prefixes to avoid duplication
+   */
+  private static cleanTitle(title: string): string {
+    // Handle empty or whitespace-only titles
+    if (!title || !title.trim()) {
+      return '';
+    }
+
+    // Remove priority prefixes in various formats
+    const priorityPrefixes = [
+      // Japanese emoji + text formats
+      /^🔴\s*(?:緊急|CRITICAL|HIGH)\s*:?\s*/i,
+      /^🟠\s*(?:高|HIGH)\s*:?\s*/i,
+      /^🟡\s*(?:中|MEDIUM)\s*:?\s*/i,
+      /^🟢\s*(?:低|LOW)\s*:?\s*/i,
+      /^⚪\s*(?:バックログ|BACKLOG)\s*:?\s*/i,
+
+      // English text formats
+      /^(?:CRITICAL|HIGH|MEDIUM|LOW|BACKLOG)\s*:?\s*/i,
+
+      // Priority label formats
+      /^(?:priority:\s*)?(?:critical|high|medium|low|backlog)\s*:?\s*/i,
+
+      // Mixed formats with emojis
+      /^[🔴🟠🟡🟢⚪]\s*[A-Za-z]+\s*:?\s*/iu,
+    ];
+
+    let cleanedTitle = title;
+
+    // Apply all priority prefix removal patterns
+    for (const pattern of priorityPrefixes) {
+      cleanedTitle = cleanedTitle.replace(pattern, '');
+    }
+
+    // Trim any extra whitespace
+    cleanedTitle = cleanedTitle.trim();
+
+    // Return original title if cleaning resulted in empty string
+    return cleanedTitle || title;
   }
 
   /**
@@ -220,7 +262,7 @@ export class TaskRecommendationService {
 
         return {
           taskId: `issue-${issue.number}`,
-          title: issue.title,
+          title: this.cleanTitle(issue.title),
           description: description || 'No description available',
           descriptionHtml,
           score: 50 - index * 5, // Decreasing score
