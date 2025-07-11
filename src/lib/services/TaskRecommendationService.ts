@@ -41,6 +41,7 @@ export interface TaskScore {
 
 export interface TaskRecommendation {
   taskId: string;
+  issueNumber: number; // Added for test compatibility and debugging
   title: string;
   description: string;
   descriptionHtml: string;
@@ -77,7 +78,14 @@ export class TaskRecommendationService {
   ): Promise<DashboardTasksResult> {
     // Use enhanced classification if enabled
     if (config?.useEnhancedClassification) {
-      return this.getEnhancedTopTasksForDashboard(issues, limit, config);
+      const enhancedResult = await this.getEnhancedTopTasksForDashboard(issues, limit, config);
+      // Convert enhanced result to regular result for backward compatibility
+      return {
+        topTasks: enhancedResult.topTasks,
+        totalOpenIssues: enhancedResult.totalOpenIssues,
+        analysisMetrics: enhancedResult.analysisMetrics,
+        lastUpdated: enhancedResult.lastUpdated,
+      } as DashboardTasksResult;
     }
 
     // Fallback to legacy implementation
@@ -103,7 +111,7 @@ export class TaskRecommendationService {
         ...task,
         scoreBreakdown: {
           category: Math.ceil(task.score * 0.5),
-          priority: task.score - Math.ceil(task.score * 0.5),  // Ensure total equals task.score
+          priority: task.score - Math.ceil(task.score * 0.5), // Ensure total equals task.score
           custom: 0,
         },
         metadata: {
@@ -242,6 +250,7 @@ export class TaskRecommendationService {
 
     return {
       taskId: `issue-${task.issueNumber}`,
+      issueNumber: task.issueNumber,
       title: this.cleanTitle(task.title),
       description,
       descriptionHtml,
@@ -370,6 +379,7 @@ export class TaskRecommendationService {
 
     return {
       taskId: `issue-${task.issueNumber}`,
+      issueNumber: task.issueNumber,
       title: this.cleanTitle(task.title),
       description,
       descriptionHtml,
@@ -539,6 +549,7 @@ export class TaskRecommendationService {
 
         return {
           taskId: `issue-${issue.number}`,
+          issueNumber: issue.number,
           title: this.cleanTitle(issue.title),
           description: description || 'No description available',
           descriptionHtml,
@@ -619,9 +630,41 @@ export class TaskRecommendationService {
   }
 
   private static getSimplePriority(labels: string[]): PriorityLevel {
-    if (labels.some(l => ['critical', 'urgent', 'p0'].includes(l.toLowerCase()))) return 'critical';
-    if (labels.some(l => ['high', 'important', 'p1'].includes(l.toLowerCase()))) return 'high';
-    if (labels.some(l => ['low', 'minor', 'p3'].includes(l.toLowerCase()))) return 'low';
+    const labelText = labels.join(' ').toLowerCase();
+
+    // Check for GitHub-style priority labels and common priority indicators
+    if (
+      labelText.includes('priority: critical') ||
+      labelText.includes('critical') ||
+      labelText.includes('urgent') ||
+      labelText.includes('p0')
+    ) {
+      return 'critical';
+    }
+    if (
+      labelText.includes('priority: high') ||
+      labelText.includes('high') ||
+      labelText.includes('important') ||
+      labelText.includes('p1')
+    ) {
+      return 'high';
+    }
+    if (
+      labelText.includes('priority: low') ||
+      labelText.includes('low') ||
+      labelText.includes('minor') ||
+      labelText.includes('p3')
+    ) {
+      return 'low';
+    }
+    if (
+      labelText.includes('priority: medium') ||
+      labelText.includes('medium') ||
+      labelText.includes('p2')
+    ) {
+      return 'medium';
+    }
+
     return 'medium';
   }
 

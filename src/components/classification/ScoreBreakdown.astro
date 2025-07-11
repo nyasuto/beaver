@@ -39,9 +39,7 @@ const getPercentage = (value: number, total: number) => {
 const categoryPercent = getPercentage(scoreBreakdown.category, score);
 const priorityPercent = getPercentage(scoreBreakdown.priority, score);
 // const confidencePercent = getPercentage(scoreBreakdown.confidence, totalScore); // Removed
-const recencyPercent = scoreBreakdown.recency
-  ? getPercentage(scoreBreakdown.recency, score)
-  : 0;
+const recencyPercent = scoreBreakdown.recency ? getPercentage(scoreBreakdown.recency, score) : 0;
 const customPercent = scoreBreakdown.custom ? getPercentage(scoreBreakdown.custom, score) : 0;
 
 // Score breakdown items with metadata
