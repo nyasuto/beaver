@@ -118,16 +118,23 @@ async function fetchAndSaveGitHubData() {
       throw new Error(`GitHub クライアントの作成に失敗: ${clientResult.error.message}`);
     }
     
-    // Issues サービスの作成と実行
+    // Issues サービスの作成と実行（オープンIssueのみ）
     const issuesService = new GitHubIssuesService(clientResult.data);
-    const issuesResult = await issuesService.getIssues({ state: 'all', per_page: 100 });
     
-    if (!issuesResult.success) {
-      throw new Error(`GitHub API エラー: ${issuesResult.error.message}`);
+    // オープンなIssueのみを取得
+    const openIssuesResult = await issuesService.getIssues({ 
+      state: 'open', 
+      per_page: 100,
+      sort: 'updated',
+      direction: 'desc'
+    });
+    
+    if (!openIssuesResult.success) {
+      throw new Error(`GitHub API エラー (open issues): ${openIssuesResult.error.message}`);
     }
-
-    const issues = issuesResult.data;
-    console.log(`✅ ${issues.length} 件の Issue を取得しました`);
+    
+    const issues = openIssuesResult.data;
+    console.log(`✅ ${issues.length} 件のオープン Issue を取得しました`);
 
     // Issues データの保存
     saveJsonFile(
@@ -148,9 +155,9 @@ async function fetchAndSaveGitHubData() {
       );
     }
 
-    // 統計情報の計算
-    const openIssues = issues.filter(i => i.state === 'open');
-    const closedIssues = issues.filter(i => i.state === 'closed');
+    // 統計情報の計算（オープンIssueのみなので閉じたIssueは0）
+    const openIssues = issues; // すべてオープンIssue
+    const closedIssues: typeof issues = []; // 閉じたIssueは取得していない
     const labelCounts = issues.reduce((acc, issue) => {
       issue.labels.forEach(label => {
         acc[label.name] = (acc[label.name] || 0) + 1;

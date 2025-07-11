@@ -255,8 +255,10 @@ describe('fetch-github-data スクリプト', () => {
       await fetchAndSaveGitHubData();
 
       expect(mockIssuesService.getIssues).toHaveBeenCalledWith({
-        state: 'all',
+        state: 'open',
         per_page: 100,
+        sort: 'updated',
+        direction: 'desc'
       });
     });
   });
@@ -350,8 +352,8 @@ describe('fetch-github-data スクリプト', () => {
           },
           statistics: {
             total: 2,
-            open: 1,
-            closed: 1,
+            open: 2,
+            closed: 0,
             labels: 3, // bug, high-priority, feature
           },
           labelCounts: {
@@ -368,7 +370,7 @@ describe('fetch-github-data スクリプト', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledWith('🚀 GitHub データの取得を開始します...');
       expect(consoleLogSpy).toHaveBeenCalledWith('📥 GitHub Issues を取得中...');
-      expect(consoleLogSpy).toHaveBeenCalledWith('✅ 2 件の Issue を取得しました');
+      expect(consoleLogSpy).toHaveBeenCalledWith('✅ 2 件のオープン Issue を取得しました');
       expect(consoleLogSpy).toHaveBeenCalledWith('\n🎉 GitHub データの取得と保存が完了しました!');
     });
 
@@ -377,8 +379,8 @@ describe('fetch-github-data スクリプト', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledWith('📊 統計情報:');
       expect(consoleLogSpy).toHaveBeenCalledWith('   - 総 Issue 数: 2');
-      expect(consoleLogSpy).toHaveBeenCalledWith('   - オープン: 1');
-      expect(consoleLogSpy).toHaveBeenCalledWith('   - クローズ: 1');
+      expect(consoleLogSpy).toHaveBeenCalledWith('   - オープン: 2');
+      expect(consoleLogSpy).toHaveBeenCalledWith('   - クローズ: 0');
       expect(consoleLogSpy).toHaveBeenCalledWith('   - ラベル数: 3');
     });
   });
