@@ -1,0 +1,43 @@
+{
+  "id": 3216345044,
+  "node_id": "PR_kwDOPJEskc6eJbM5",
+  "number": 90,
+  "title": "feat: トップページ統計情報の表示を改善",
+  "body": "## 概要\n\nトップページの統計情報をより現実的で実用的な表示に改善します。ダミーデータ感を削減し、実際のプロジェクトの進捗を反映した内容に変更しました。\n\n## 変更内容\n\n### 1. フォールバックデータの改善\n\n**StatsService.ts (lines 272-334)**\n- **Total Issues**: 5 → 88 (実際のプロジェクト規模を反映)\n- **Open Issues**: 3 → 15, **Closed Issues**: 2 → 73\n- **Recent Activity**: より現実的な週間/月間アクティビティ数\n\n### 2. Recent Activity の実際化\n\n**最近の活動履歴を実際のプロジェクトに関連する内容に変更**:\n- `feat: ホームページのヘッダーナビゲーション統一を修正` (#88)\n- `feat: Issue #75 デザインシステム統一の実装` (#87)\n- `feat: AnalyticsページレイアウトをPageLayoutに統一` (#86)\n- `fix: TypeScript型エラーの修正` (#85)\n\n### 3. データソース表示の改善\n\n**IssueStats.astro & RecentActivity.astro**\n- フォールバックデータ使用時の明確な通知を追加\n- 「📊 デモデータを表示中 - GitHub API接続を確認して実際のデータを取得してください」\n- GitHub API接続確認リンクの提供\n\n### 4. 統計情報の詳細改善\n\n**より適切な分散とリアルな値**:\n- **優先度分布**: Critical: 2, High: 5, Medium: 6, Low: 2\n- **ラベル構成**: feat, fix, enhancement, bug, documentation など実際のプロジェクトを反映\n- **Recent Activity**: 週間4件、月間12件の更新\n\n## 技術的詳細\n\n### データ構造の改善\n- 実際のIssue番号とタイムスタンプの使用\n- 適切なstate設定（open/closed）\n- 実際のラベル色とカウント\n\n### UI/UX の改善\n- フォールバックデータであることの明確な表示\n- API接続確認への導線提供\n- 一貫した情報アーキテクチャ\n\n## テスト\n\n- ✅ ローカルビルド確認\n- ✅ 統計情報の表示確認\n- ✅ データソース表示の確認\n- ✅ 全品質チェック通過\n\n## 影響\n\n### Before\n- 明らかにダミーデータ（「サンプルIssue 1」など）\n- 非現実的な統計値（Total: 5, Open: 3など）\n- データソースの不透明性\n\n### After\n- 実際のプロジェクト進捗を反映した内容\n- 現実的な統計値とアクティビティ\n- フォールバックデータの明確な表示\n\nこれにより、ユーザーは実際のプロジェクトの状況をより良く理解でき、デモ環境であることも明確に認識できるようになります。\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 1,
+  "created_at": "2025-07-09T15:31:08Z",
+  "updated_at": "2025-07-09T15:37:53Z",
+  "closed_at": "2025-07-09T15:37:53Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/90",
+    "html_url": "https://github.com/nyasuto/beaver/pull/90",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/90.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/90.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/90",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/90",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/90/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/90/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/90/events"
+}

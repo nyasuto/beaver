@@ -1,0 +1,43 @@
+{
+  "id": 3216192144,
+  "node_id": "PR_kwDOPJEskc6eI50_",
+  "number": 86,
+  "title": "fix: GitHub Pages リンク修正 - resolveUrl関数使用",
+  "body": "## 概要\n\nGitHub Pagesでのリンク問題を修正しました。issuesとanalyticsページへのリンクが正しく動作するようになります。\n\n## 問題\n\nhttps://nyasuto.github.io/beaver/ サイトで以下のリンクが動作しませんでした：\n- \"Manage Issues\" → `/issues` (404エラー)\n- \"View Analytics\" → `/analytics` (404エラー)\n\n## 解決策\n\nハードコードされたリンクパスを `resolveUrl()` 関数使用に変更：\n- `/issues` → `/beaver/issues`\n- `/analytics` → `/beaver/analytics`\n\n## 修正ファイル\n\n- ✅ `src/pages/index.astro` - メインページのアクションボタン\n- ✅ `src/components/dashboard/RecentActivity.astro` - \"View all →\" リンク\n- ✅ `src/components/navigation/BannerWithData.astro` - バナーアクションボタン\n\n## テスト\n\n- ✅ Build成功確認\n- ✅ 生成されたHTMLでリンクパス確認: `/beaver/issues`, `/beaver/analytics`\n- ✅ Type checking パス\n- ✅ All tests passing\n\n## 追加情報\n\n既存の `resolveUrl()` ユーティリティ関数を活用し、GitHub Pagesの base path (`/beaver`) を自動的に適用します。\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T14:41:55Z",
+  "updated_at": "2025-07-09T14:44:32Z",
+  "closed_at": "2025-07-09T14:44:31Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/86",
+    "html_url": "https://github.com/nyasuto/beaver/pull/86",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/86.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/86.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/86",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/86",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/86/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/86/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/86/events"
+}

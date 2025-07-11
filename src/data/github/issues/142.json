@@ -1,0 +1,43 @@
+{
+  "id": 3219846880,
+  "node_id": "PR_kwDOPJEskc6eVXHP",
+  "number": 142,
+  "title": "fix: チェックボックスデザイン改善とラベル階層フィルタリング",
+  "body": "## 概要\n\n検索機能デプロイ後にフィードバックいただいた2つの問題を修正しました。\n\n## 🔧 修正内容\n\n### 1. チェックボックスデザイン改善\n**問題**: チェックボックス周囲に妙なブラウザデフォルトスタイルが表示される\n\n**解決策**:\n- `appearance: none` でブラウザデフォルトスタイルを無効化\n- カスタムCSSでクリーンなチェックボックスデザインを実装\n- チェック状態で青色背景 + 白いチェックマーク\n- ホバー・フォーカス状態のインタラクション改善\n- ダークモード対応\n\n### 2. ラベルフィルタリングを階層的に改善\n**問題**: 全ラベルがAND条件で、実用的でない\n\n**解決策**:\n- ラベルを3つのカテゴリにグループ化:\n  - **優先度** (priority: high, medium, low, critical)\n  - **タイプ** (type: feature, bug, enhancement, test, etc.)\n  - **その他** (dependencies, javascript, etc.)\n- **カテゴリ間はAND条件**: 「high優先度 AND feature」\n- **カテゴリ内はOR条件**: 「high OR medium優先度」\n- より直感的で実用的なフィルタリング体験\n\n## 🎨 UI改善\n\n- ラベルフィルターをカテゴリ別にグループ化\n- 各カテゴリにヘッダーを追加（優先度、タイプ、その他）\n- インデントで視覚的階層を表現\n- ラベル表示から接頭辞を除去（`priority:` → 単に `high`）\n- 最大高さを256pxに拡張してより多くのラベルを表示\n\n## 🧪 技術的改善\n\n- TypeScript型定義を階層構造に更新\n- イベントリスナーでカテゴリ別にラベル収集\n- フィルタリングロジックを階層的に再実装\n- 既存機能への影響なし\n\n## ✅ テスト\n\n- 全1666テストがパス\n- TypeScript型チェック完了\n- ESLint品質チェック完了\n\nフィルタリングがより使いやすくなり、ユーザーが期待する動作に近づきました！",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T15:41:58Z",
+  "updated_at": "2025-07-10T15:44:03Z",
+  "closed_at": "2025-07-10T15:44:02Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/142",
+    "html_url": "https://github.com/nyasuto/beaver/pull/142",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/142.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/142.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/142",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/142",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/142/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/142/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/142/events"
+}

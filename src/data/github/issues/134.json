@@ -1,0 +1,43 @@
+{
+  "id": 3219434404,
+  "node_id": "PR_kwDOPJEskc6eT7r5",
+  "number": 134,
+  "title": "feat: README.mdを現在のコードベースに基づいて大幅更新",
+  "body": "## 概要\n\n現在のコードベースの実装状況に基づいてREADME.mdを包括的に更新\n\n## 変更内容\n\n### 📊 実装状況の正確な反映\n- Phase 1完了、Phase 2進行中の状況を明確化\n- 新機能の追加（品質分析ダッシュボード、Codecov統合、包括的テスト）\n- 日本語ローカライゼーション完了の記載\n\n### 🏗️ 技術スタックの更新\n- Astro 5.11 + TypeScript 5.6 + React 19.1 の最新バージョン情報\n- Chart.js、Vitest等の追加技術スタック記載\n\n### 📁 プロジェクト構造の詳細化\n- 実際のディレクトリ構成に基づく構造図更新\n- 各ディレクトリの詳細説明を追加\n- API エンドポイントの完全なリスト\n\n### ⚡ 開発ワークフローの充実\n- Makefileコマンドの追加\n- 品質チェック自動化の説明\n- 実際のnpmスクリプトとの整合性確保\n\n### 📈 Analytics & Insightsの機能別詳細化\n- 開発アナリティクス（`/analytics`）\n- 品質分析ダッシュボード（`/quality`）\n- Issue管理（`/issues`）\n- AI分析機能の詳細説明\n\n### 🧪 品質保証セクションの追加\n- 1843テスト（50テストファイル）\n- 57.85%コードカバレッジ\n- TypeScript 5.6 strict mode\n- CI/CD自動化の説明\n\n## テスト\n\n- 全1843テストが正常に通過\n- 品質チェック（lint、format、type-check）が正常に完了\n- 96の既存warningは継続（主にnon-null assertionとany型）\n\n## 影響\n\nこの更新により、READMEが実際のプロジェクトの状況を正確に反映し、新規開発者やコントリビューターにとってより有用なドキュメントとなります。",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T13:46:14Z",
+  "updated_at": "2025-07-10T13:47:45Z",
+  "closed_at": "2025-07-10T13:47:44Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/134",
+    "html_url": "https://github.com/nyasuto/beaver/pull/134",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/134.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/134.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/134",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/134",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/134/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/134/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/134/events"
+}

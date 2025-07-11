@@ -1,0 +1,53 @@
+{
+  "id": 3221064321,
+  "node_id": "I_kwDOPJEskc6__YqB",
+  "number": 152,
+  "title": "🐛 fix: Issues ページのラベル数がクローズされたIssueも含んでいる問題",
+  "body": "## 🎯 バグ: Issues ページのラベル数がクローズされたIssueも含んでいる問題\n\n### **Priority: HIGH**\n\n**Impact:** ユーザビリティとデータ整合性の問題\n\n**Component:** Issues ページ、ラベル集計機能\n\n**Files:** \n- `src/pages/issues/index.astro`\n- `src/lib/services/StatsService.ts`\n\n### 問題の説明\n\n現在、Issues ページ (https://nyasuto.github.io/beaver/issues/) でラベルの横に表示される数字が、クローズされたIssueも含んでカウントされています。\n\n**現在の状況:**\n- 総Issue数: 29件 (オープン: 5件 / クローズ: 24件)\n- ページではデフォルトでオープンなIssueのみ表示 (5件)\n- しかしラベル数は: \"high (14)\", \"medium (10)\", \"test (11)\" など\n- これらの数字は明らかに5件を超えており、クローズされたIssueも含んでいることを示している\n\n### 原因分析\n\n**主要原因:** `src/pages/issues/index.astro` の 53-61行目\n\n```typescript\n// 現在（問題のあるコード）\nconst labelCounts = issues.reduce(\n  (acc, issue) => {\n    issue.labels.forEach(label => {\n      acc[label.name] = (acc[label.name] || 0) + 1;\n    });\n    return acc;\n  },\n  {} as Record<string, number>\n);\n```\n\n- `issues`（全てのIssue）を使用している\n- `openIssues`（オープンなIssueのみ）を使用すべき\n\n**副次的問題:** `src/lib/services/StatsService.ts` の `calculateLabelStats` メソッド（289-306行目）も同様にstate filtering をしていない\n\n### 推奨解決策\n\n#### 1. メインの修正（必須）\n`src/pages/issues/index.astro` の 53行目を修正:\n\n```typescript\n// 修正前\nconst labelCounts = issues.reduce(\n\n// 修正後  \nconst labelCounts = openIssues.reduce(\n```\n\n#### 2. 一貫性のための修正（推奨）\n`src/lib/services/StatsService.ts` の `calculateLabelStats` メソッドに state filtering を追加:\n\n```typescript\n// issues の代わりに filtered issues を使用\nissues\n  .filter(issue => issue.state === 'open')  // この行を追加\n  .forEach(issue => {\n    // 既存のロジック\n  });\n```\n\n### 受け入れ条件\n\n- [ ] Issues ページのラベル数がオープンなIssueのみをカウントする\n- [ ] デフォルト表示のIssue数とラベル数が一致する\n- [ ] 「すべて」フィルターを選択した場合のみ全Issue数が表示される\n- [ ] StatsService の一貫性も確保される\n- [ ] 既存のテストが通る\n\n**プロジェクトへの価値:** ユーザーの混乱を防ぎ、正確な情報表示によりIssue管理の使いやすさが向上します。",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603282,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0EEg",
+      "name": "priority: high",
+      "description": "High priority tasks",
+      "color": "f85149",
+      "default": false
+    },
+    {
+      "id": 8910603467,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Eyw",
+      "name": "type: bug",
+      "description": "Bug fix",
+      "color": "d73a4a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-11T00:25:49Z",
+  "updated_at": "2025-07-11T00:53:32Z",
+  "closed_at": "2025-07-11T00:53:32Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/152",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/152",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/152/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/152/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/152/events"
+}

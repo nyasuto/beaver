@@ -1,0 +1,43 @@
+{
+  "id": 3215619077,
+  "node_id": "PR_kwDOPJEskc6eG8jv",
+  "number": 68,
+  "title": "Create main.yml",
+  "body": null,
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T11:36:57Z",
+  "updated_at": "2025-07-09T11:43:17Z",
+  "closed_at": "2025-07-09T11:43:15Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/68",
+    "html_url": "https://github.com/nyasuto/beaver/pull/68",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/68.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/68.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/68",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/68",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/68/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/68/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/68/events"
+}

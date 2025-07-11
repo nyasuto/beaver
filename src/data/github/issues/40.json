@@ -1,0 +1,53 @@
+{
+  "id": 3214089481,
+  "node_id": "I_kwDOPJEskc6_kx0J",
+  "number": 40,
+  "title": "feat: フロントエンドとGitHub API統合の実装",
+  "body": "## 🎯 feature: 静的サイト生成でのGitHub データ統合の実装\n\n### **Priority: HIGH**\n\n**Impact:** GitHub Pages デプロイメント対応、静的データ生成\n\n**Component:** ビルド時データ取得、静的ファイル生成、Astro SSG\n\n**Files:** \n- `src/pages/issues/index.astro`\n- `src/pages/issues/[id].astro`\n- `src/data/github/` (新規作成)\n- `scripts/fetch-github-data.ts` (新規作成)\n- `src/lib/github/client.ts`\n- `src/lib/github/issues.ts`\n- `.env.example`\n- `package.json`\n\n### Problem Description\n\nGitHub Pages へのデプロイメントを前提とした静的サイト生成では、動的なAPI呼び出しができません。現在の実装では以下の問題があります：\n\n1. **ビルド時データ取得の未実装**: GitHub API からのデータ取得がビルド時に行われていない\n2. **静的データファイルの不存在**: 取得したデータを JSON ファイルとして保存する仕組みがない\n3. **データ更新の仕組み不足**: GitHub Actions での定期的なデータ更新が未実装\n4. **フォールバック機能の不足**: データ取得失敗時の代替データが未準備\n\n### Recommended Solution\n\n**Phase 1: ビルド時データ取得システム**\n1. GitHub API からデータを取得するスクリプト作成\n2. 取得したデータを JSON ファイルとして `src/data/github/` に保存\n3. ビルドプロセスでのデータ取得を自動化\n\n**Phase 2: 静的ファイル統合**\n1. Astro ページで JSON データを読み込み\n2. 静的サイト生成時のデータ埋め込み\n3. 型安全なデータ読み込み機能\n\n**Phase 3: 自動更新システム**\n1. GitHub Actions での定期的なデータ更新\n2. データ変更時の自動ビルド・デプロイ\n3. エラーハンドリングとフォールバック\n\n### Implementation Details\n\n**データ取得スクリプト:**\n```typescript\n// scripts/fetch-github-data.ts\nimport { writeFileSync, mkdirSync } from 'fs';\nimport { join } from 'path';\nimport { fetchGitHubIssues } from '../src/lib/github/issues';\nimport { getConfig } from '../src/lib/config';\n\nasync function fetchAndSaveData() {\n  try {\n    const config = getConfig();\n    const issuesResult = await fetchGitHubIssues(config.github);\n    \n    if (\\!issuesResult.success) {\n      throw new Error(`GitHub API エラー: ${issuesResult.error.message}`);\n    }\n    \n    // データディレクトリの作成\n    const dataDir = join(process.cwd(), 'src/data/github');\n    mkdirSync(dataDir, { recursive: true });\n    \n    // Issues データの保存\n    writeFileSync(\n      join(dataDir, 'issues.json'),\n      JSON.stringify(issuesResult.data, null, 2)\n    );\n    \n    // メタデータの保存\n    writeFileSync(\n      join(dataDir, 'metadata.json'),\n      JSON.stringify({\n        lastUpdated: new Date().toISOString(),\n        totalIssues: issuesResult.data.length,\n        openIssues: issuesResult.data.filter(i => i.state === 'open').length,\n        closedIssues: issuesResult.data.filter(i => i.state === 'closed').length\n      }, null, 2)\n    );\n    \n    console.log('✅ GitHub データの取得と保存が完了しました');\n  } catch (error) {\n    console.error('❌ データ取得エラー:', error);\n    process.exit(1);\n  }\n}\n\nfetchAndSaveData();\n```\n\n**静的データ読み込み:**\n```typescript\n// src/lib/data/github.ts\nimport issuesData from '@/data/github/issues.json';\nimport metadata from '@/data/github/metadata.json';\nimport { IssueSchema } from '@/lib/schemas/github';\nimport { z } from 'zod';\n\nconst IssuesArraySchema = z.array(IssueSchema);\n\nexport const getStaticIssues = () => {\n  const validatedIssues = IssuesArraySchema.parse(issuesData);\n  return validatedIssues;\n};\n\nexport const getStaticMetadata = () => {\n  return metadata;\n};\n\nexport const getStaticIssueById = (id: number) => {\n  const issues = getStaticIssues();\n  return issues.find(issue => issue.number === id);\n};\n```\n\n**Astro ページでの使用:**\n```astro\n---\n// src/pages/issues/index.astro\nimport { getStaticIssues, getStaticMetadata } from '@/lib/data/github';\nimport { IssueCard } from '@/components/ui/IssueCard';\nimport { BaseLayout } from '@/components/layouts/BaseLayout.astro';\n\nconst issues = getStaticIssues();\nconst metadata = getStaticMetadata();\n---\n\n<BaseLayout title=\"Issues\">\n  <div class=\"container mx-auto px-4 py-8\">\n    <div class=\"flex justify-between items-center mb-6\">\n      <h1 class=\"text-3xl font-bold\">Issues</h1>\n      <div class=\"text-sm text-gray-600\">\n        最終更新: {new Date(metadata.lastUpdated).toLocaleDateString('ja-JP')}\n      </div>\n    </div>\n    \n    <div class=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6\">\n      {issues.map((issue) => (\n        <IssueCard key={issue.id} issue={issue} />\n      ))}\n    </div>\n  </div>\n</BaseLayout>\n```\n\n**ビルドプロセス統合:**\n```json\n// package.json\n{\n  \"scripts\": {\n    \"prebuild\": \"npm run fetch-data\",\n    \"fetch-data\": \"tsx scripts/fetch-github-data.ts\",\n    \"build\": \"astro build\",\n    \"build:full\": \"npm run fetch-data && npm run build\"\n  }\n}\n```\n\n**GitHub Actions での自動更新:**\n```yaml\n# .github/workflows/update-data.yml\nname: Update GitHub Data\n\non:\n  schedule:\n    - cron: '0 6 * * *'  # 毎日午前6時に実行\n  workflow_dispatch:  # 手動実行も可能\n\njobs:\n  update-data:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      \n      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'npm'\n      \n      - name: Install dependencies\n        run: npm ci\n      \n      - name: Fetch GitHub data\n        run: npm run fetch-data\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n      \n      - name: Commit and push if changed\n        run: |\n          git config --local user.email \"action@github.com\"\n          git config --local user.name \"GitHub Action\"\n          git add src/data/github/\n          git diff --staged --quiet || git commit -m \"chore: update GitHub data\"\n          git push\n      \n      - name: Build and deploy\n        run: |\n          npm run build\n          npm run deploy\n```\n\n### Acceptance Criteria\n\n- [ ] GitHub API データ取得スクリプトの作成\n- [ ] `src/data/github/` ディレクトリでのJSONデータ保存\n- [ ] ビルド時の自動データ取得プロセス\n- [ ] Astro ページでの静的データ読み込み\n- [ ] 型安全なデータ読み込み機能\n- [ ] Issues 一覧ページでの静的データ表示\n- [ ] 個別 Issue 詳細ページでの静的データ表示\n- [ ] メタデータ（更新日時、件数）の表示\n- [ ] GitHub Actions での定期的なデータ更新\n- [ ] エラーハンドリングとフォールバック機能\n- [ ] 環境変数設定ドキュメント\n\n**GitHub Pages デプロイメントに対応した静的サイト生成の実現**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603282,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0EEg",
+      "name": "priority: high",
+      "description": "High priority tasks",
+      "color": "f85149",
+      "default": false
+    },
+    {
+      "id": 8910603442,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Esg",
+      "name": "type: feature",
+      "description": "New feature implementation",
+      "color": "a2eeef",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 1,
+  "created_at": "2025-07-09T00:29:55Z",
+  "updated_at": "2025-07-09T01:22:40Z",
+  "closed_at": "2025-07-09T01:22:40Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/40",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/40",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/40/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/40/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/40/events"
+}

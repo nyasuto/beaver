@@ -1,0 +1,43 @@
+{
+  "id": 3221095351,
+  "node_id": "PR_kwDOPJEskc6eZnCc",
+  "number": 155,
+  "title": "fix: Issue #152 ラベル数表示をオープンIssueのみに修正",
+  "body": "## 概要\n\nIssue #152で報告されたラベル数表示の問題を修正しました。\nIssuesページでラベルカウントがクローズされたIssueを含んでいた問題を解決し、デフォルトでオープンIssueのみをカウントするように変更しました。\n\n## 変更内容\n\n### 主要な修正\n- **Issues ページ**: ラベルカウントをオープンIssueのみでカウントするように修正\n- **動的更新**: フィルター状態に応じてラベル数を動的に更新する機能を追加\n- **StatsService**: 統計サービスでも同様にオープンIssueのみカウントするよう修正\n\n### 技術的詳細\n- `src/pages/issues/index.astro`: \n  - `issues`の代わりに`openIssues`を使用してラベルカウントを計算\n  - 動的ラベルカウント機能を追加\n  - 不要な`allLabelCounts`変数を削除\n- `src/lib/services/StatsService.ts`:\n  - `calculateLabelStats`メソッドでオープンIssueのみをフィルタリング\n  - `calculatePriorityStats`メソッドでも同様の修正\n- テストケース更新: 新しい動作に対応するようテストを更新\n\n## テスト\n\n- 全てのテストが通過することを確認\n- 動的ラベルカウントの動作をテスト\n- 品質チェック（lint、format、type-check）も全て通過\n\n## 影響範囲\n\n- **破壊的変更**: なし\n- **ユーザーエクスペリエンス**: 改善（正確なラベル数表示）\n- **パフォーマンス**: 軽微な向上（不要な処理削減）\n\nCloses #152\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-11T00:42:43Z",
+  "updated_at": "2025-07-11T00:53:33Z",
+  "closed_at": "2025-07-11T00:53:31Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/155",
+    "html_url": "https://github.com/nyasuto/beaver/pull/155",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/155.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/155.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/155",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/155",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/155/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/155/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/155/events"
+}

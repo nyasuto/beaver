@@ -1,0 +1,53 @@
+{
+  "id": 3221101569,
+  "node_id": "I_kwDOPJEskc6__hwB",
+  "number": 156,
+  "title": "🐛 Issue一覧とIssue詳細ページでMarkdownが正しくパースされない問題",
+  "body": "## 🎯 Bug: Issue一覧とIssue詳細ページでMarkdownが正しくパースされない問題\n\n### **Priority: MEDIUM**\n\n**Impact:** UI/UX・可読性・ユーザビリティ\n\n**Component:** Issues一覧ページ・Issue詳細ページ・Markdown処理\n\n**Files:** `src/pages/issues/index.astro`, `src/pages/issues/[id].astro`, `src/lib/utils/markdown.ts`\n\n### Problem Description\n\nIssue一覧ページとIssue詳細ページでMarkdownが正しくパースされず、生のMarkdown記法が表示される問題があります。\n\n**現在の表示例:**\n```\n## 🎯 Bug: タスクカードでタイトルの優先度情報が重複表示される問題\n### **Priority: MEDIUM**\n**Impact:** UI/UX・視覚的な冗長性\n```\n\n**期待される表示:**\n```\n🎯 Bug: タスクカードでタイトルの優先度情報が重複表示される問題\nPriority: MEDIUM\nImpact: UI/UX・視覚的な冗長性\n```\n\n### Technical Analysis\n\n**現在の実装状況:**\n1. **Markdown Utilities**: `src/lib/utils/markdown.ts` に完全なMarkdown処理機能が実装済み\n   - `markdownToHtml()` - Markdown → HTML変換\n   - `markdownToPlainText()` - Markdown → プレーンテキスト\n   - `truncateMarkdown()` - Markdown切り詰め\n   - `extractFirstParagraph()` - 最初の段落抽出\n\n2. **Issue一覧ページ**: Markdownが未処理\n   ```astro\n   {issue.body && (\n     <p class=\"text-sm text-muted mt-2 line-clamp-3 issue-body\">\n       {issue.body.substring(0, 200)}\n       {issue.body.length > 200 && '...'}\n     </p>\n   )}\n   ```\n\n3. **Issue詳細ページ**: 基本的な正規表現のみ\n   ```astro\n   const processedBody = currentIssue.body\n     ? currentIssue.body\n         .replace(/\\n/g, '<br>')\n         .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')\n         .replace(/\\*(.*?)\\*/g, '<em>$1</em>')\n     : '';\n   ```\n\n### Root Cause\n\n**問題の根本原因:**\n1. 既存のMarkdownユーティリティが使用されていない\n2. Issue一覧で生のMarkdownテキストを表示\n3. Issue詳細で不完全な正規表現処理を使用\n4. Markdownユーティリティが`src/lib/utils/index.ts`でエクスポートされていない\n\n### Recommended Solution\n\n**Phase 1: Issue一覧ページの修正**\n```astro\n---\nimport { markdownToPlainText, truncateMarkdown } from '../lib/utils/markdown';\n\n// Issue body の処理\nconst processedBody = issue.body \n  ? truncateMarkdown(markdownToPlainText(issue.body), 200)\n  : '';\n---\n\n{issue.body && (\n  <p class=\"text-sm text-muted mt-2 line-clamp-3 issue-body\">\n    {processedBody}\n  </p>\n)}\n```\n\n**Phase 2: Issue詳細ページの修正**\n```astro\n---\nimport { markdownToHtml } from '../../lib/utils/markdown';\n\n// 既存の正規表現処理を削除し、markdownToHtmlを使用\nconst processedBody = currentIssue.body \n  ? await markdownToHtml(currentIssue.body)\n  : '';\n---\n\n<div class=\"prose prose-sm max-w-none\" set:html={processedBody}></div>\n```\n\n**Phase 3: ユーティリティのエクスポート**\n```typescript\n// src/lib/utils/index.ts\nexport { markdownToHtml, markdownToPlainText, truncateMarkdown } from './markdown';\n```\n\n### Affected Features\n\n**現在影響を受けている機能:**\n- Issue一覧カードでのMarkdown表示\n- Issue詳細ページでのMarkdown表示\n- 検索結果でのMarkdown表示\n- Markdownリンクのクリック機能\n- コードブロックの構文ハイライト\n\n### Acceptance Criteria\n\n**Issue一覧ページ:**\n- [ ] Issue本文のMarkdown記法が正しく処理される\n- [ ] 太字、斜体、リンクが適切に表示される\n- [ ] コードブロックがプレーンテキストとして表示される\n- [ ] 200文字切り詰めが正しく動作する\n\n**Issue詳細ページ:**\n- [ ] 見出し、太字、斜体、リンクが正しく表示される\n- [ ] コードブロックが適切にフォーマットされる\n- [ ] リストが正しく表示される\n- [ ] XSS攻撃に対する適切なサニタイゼーション\n\n**技術的要件:**\n- [ ] `markdownToHtml()` をIssue詳細ページで使用\n- [ ] `markdownToPlainText()` と `truncateMarkdown()` をIssue一覧で使用\n- [ ] 既存のMarkdownユーティリティをエクスポート\n- [ ] パフォーマンスの劣化がない\n\n### Test Cases\n\n**テストケース:**\n1. `## Header` → `<h2>Header</h2>`\n2. `**Bold text**` → `<strong>Bold text</strong>`\n3. `*Italic text*` → `<em>Italic text</em>`\n4. `[Link](url)` → `<a href=\"url\">Link</a>`\n5. `` `code` `` → `<code>code</code>`\n6. コードブロック、リスト、引用の適切な表示\n\n**既存のMarkdownユーティリティを活用することで、Issue表示の可読性とUXが大幅に向上します。**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603467,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Eyw",
+      "name": "type: bug",
+      "description": "Bug fix",
+      "color": "d73a4a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-11T00:45:36Z",
+  "updated_at": "2025-07-11T01:22:40Z",
+  "closed_at": "2025-07-11T01:22:40Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/156",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/156",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/156/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/156/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/156/events"
+}

@@ -1,0 +1,43 @@
+{
+  "id": 3221063445,
+  "node_id": "PR_kwDOPJEskc6eZgT_",
+  "number": 151,
+  "title": "fix: 分類エンジンで既存のpriority labelsを優先的に認識",
+  "body": "## 概要\n\nIssue分類エンジンでGitHubの既存priority labelsを優先的に認識するよう修正。これにより、`priority: high`などのラベルが付いたIssueが正しく優先度高として分類され、おすすめタスクに表示されるようになります。\n\n## 変更内容\n\n- `estimatePriority`メソッドを完全に書き直し、既存のGitHubラベルを最優先で認識\n- `priority: critical`, `priority: high`, `priority: medium`, `priority: low`ラベルの検出を実装\n- 分類結果に優先度ラベル使用の理由を追加\n- 包括的なテストケースを追加（既存ラベル優先度認識テスト）\n- TypeScriptの型安全性を向上\n\n## テスト\n\n- 全48テストが成功\n- 優先度ラベル認識の新しいテストケースを追加\n- 既存の分類ルールとの組み合わせテストも実施\n\nCloses #141",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-11T00:24:59Z",
+  "updated_at": "2025-07-11T00:29:35Z",
+  "closed_at": "2025-07-11T00:29:33Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/151",
+    "html_url": "https://github.com/nyasuto/beaver/pull/151",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/151.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/151.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/151",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/151",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/151/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/151/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/151/events"
+}

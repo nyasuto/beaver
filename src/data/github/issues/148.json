@@ -1,0 +1,43 @@
+{
+  "id": 3220993050,
+  "node_id": "PR_kwDOPJEskc6eZRUU",
+  "number": 148,
+  "title": "fix: Markdown Parser Improvement for Task Card Display",
+  "body": "## 概要\n\nIssue #144 への対応として、ホームページの「おすすめタスク」セクションでマークダウン記法を適切にHTMLとしてレンダリングするよう改善しました。\n\n## 変更内容\n\n### 新規ファイル\n- `src/lib/utils/markdown.ts`: マークダウン処理ユーティリティ\n- `src/lib/utils/__tests__/markdown.test.ts`: 包括的なテストカバレッジ\n\n### 依存関係追加\n- `dompurify`: XSS攻撃防止のHTMLサニタイゼーション\n- `@types/dompurify`: TypeScript型定義\n- `jsdom`: サーバーサイドDOM操作\n- `@types/jsdom`: TypeScript型定義\n\n### 機能改善\n- **TaskRecommendationService**: マークダウンからHTMLへの変換処理を追加\n- **TopTasks コンポーネント**: サニタイズされたHTMLの安全なレンダリング\n- **マークダウン処理**: remark/rehypeを使用した高品質な変換\n\n## 実装された機能\n\n- ✅ マークダウンヘッダー (`#`, `##`, `###`) → HTMLヘッダー\n- ✅ 太字 (`**bold**`) と斜体 (`*italic*`) の適切な変換\n- ✅ インラインコード (`` `code` ``) の適切なスタイリング\n- ✅ リンク (`[text](url)`) のHTMLレンダリング\n- ✅ XSS攻撃防止のためのHTMLサニタイゼーション\n- ✅ 既存のタスクカードレイアウトの維持\n- ✅ リスト (`-`, `*`, `1.`) のHTMLレンダリング\n- ✅ 引用 (`>`) のHTMLレンダリング\n\n## セキュリティ対策\n\n- DOMPurifyによるXSSサニタイゼーション\n- 許可されたHTMLタグのみ使用\n- 危険な属性の除去\n- サーバーサイドでの安全な処理\n\n## テスト\n\n- 22個のテストケースで包括的なカバレッジ\n- マークダウン → HTML変換のテスト\n- XSSサニタイゼーションのテスト\n- エラーハンドリングのテスト\n- `make quality` 実行: 全品質チェック通過\n\n## 期待される効果\n\n- タスクの詳細情報がより読みやすく表示される\n- 開発者がIssueに書いたマークダウンが適切にレンダリングされる\n- ユーザーがタスクの内容を素早く理解できる\n\nCloses #144\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T23:38:12Z",
+  "updated_at": "2025-07-10T23:41:31Z",
+  "closed_at": "2025-07-10T23:41:29Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/148",
+    "html_url": "https://github.com/nyasuto/beaver/pull/148",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/148.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/148.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/148",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/148",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/148/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/148/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/148/events"
+}

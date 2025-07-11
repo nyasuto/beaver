@@ -1,0 +1,43 @@
+{
+  "id": 3217432747,
+  "node_id": "PR_kwDOPJEskc6eNInA",
+  "number": 93,
+  "title": "feat: Issue #76 情報密度とレスポンシブデザインの最適化",
+  "body": "## Summary\nIssue #76の解決: 情報密度とレスポンシブデザインの調整\n\nホームページの情報密度問題を解決し、モバイルデバイスでの使いやすさを大幅に向上させました。\n\n## 主な変更内容\n\n### 📱 モバイルファーストのレスポンシブデザイン\n- Hero セクションの文字サイズを最適化（text-3xl → text-5xl）\n- 統計カードのグリッドレイアウトを改善（sm:grid-cols-2 lg:grid-cols-3）\n- ボタンを48px最小サイズでタッチフレンドリーに調整\n\n### 🎨 視覚的階層とスペーシングの改善\n- 適切なスペーシング（py-8 sm:py-12 lg:py-16）を実装\n- コンテナ幅の最適化（max-w-4xl → max-w-6xl）\n- 明確な視覚的階層を構築\n\n### 🔧 新しいユーティリティクラス\n- `touch-target` - タッチフレンドリーなターゲットサイズ\n- `text-responsive-*` - レスポンシブテキストサイズ\n- `container-mobile`, `container-narrow`, `container-content` - 最適化されたコンテナ\n\n### 🚀 パフォーマンス\n- ビルド時間とバンドルサイズを維持\n- 全テストが通過（469 passed, 2 skipped）\n- TypeScript型チェック完了\n\n## Test plan\n- [x] ビルドが正常に完了することを確認\n- [x] 全テストが通過することを確認\n- [x] TypeScript型チェックが通過することを確認\n- [x] Lintingが通過することを確認\n- [x] モバイルデバイスでの表示を確認\n- [x] タッチインタラクションの動作を確認\n- [x] 各画面サイズでの適切なレイアウトを確認\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T23:42:00Z",
+  "updated_at": "2025-07-09T23:43:35Z",
+  "closed_at": "2025-07-09T23:43:33Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/93",
+    "html_url": "https://github.com/nyasuto/beaver/pull/93",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/93.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/93.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/93",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/93",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/93/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/93/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/93/events"
+}

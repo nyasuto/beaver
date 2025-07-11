@@ -1,0 +1,53 @@
+{
+  "id": 3221075978,
+  "node_id": "I_kwDOPJEskc6__bgK",
+  "number": 153,
+  "title": "🎯 カスタマイズ可能な分類ルールとスコアリングシステムの実装",
+  "body": "## 🎯 Feature: カスタマイズ可能な分類ルールとスコアリングシステムの実装\n\n### **Priority: HIGH**\n\n**Impact:** 分類精度向上・リポジトリ固有の最適化・パフォーマンス向上\n\n**Component:** 分類エンジン・スコアリングシステム・静的生成\n\n**Files:** `src/lib/classification/`, `src/data/config/classification-rules.json`, `scripts/fetch-github-data.ts`\n\n### Problem Description\n\n現在の分類システムはハードコードされた重みやルールを使用しており、リポジトリごとの特性に適応できません。また、実行時にスコアリングを行うためパフォーマンスの問題があります。\n\n**現在の問題点:**\n1. カテゴリ重み (`categoryWeights`) とプライオリティ重み (`priorityWeights`) がハードコード\n2. 分類ルールの閾値がリポジトリごとに異なるが対応できない\n3. 実行時スコアリングによるパフォーマンスオーバーヘッド\n4. リポジトリ固有のラベル体系やプロジェクト特性に適応できない\n\n### Recommended Solution\n\n**Phase 1: 設定ファイルベースの分類システム**\n- `classification-rules.json` の完全活用\n- リポジトリ固有の設定ファイルサポート\n- 動的な重み・閾値の調整機能\n\n**Phase 2: 静的HTML生成時のスコアリング**\n- `scripts/fetch-github-data.ts` でのスコア事前計算\n- 分類結果の静的ファイル出力\n- パフォーマンス最適化\n\n**Phase 3: 高度なカスタマイズ機能**\n- 機械学習ベースの重み調整\n- A/Bテストによる最適化\n- リポジトリ固有のベンチマーク機能\n\n### Technical Architecture\n\n```\n静的生成時フロー:\n1. fetch-github-data.ts\n   ↓\n2. classification-rules.json 読み込み\n   ↓\n3. 全Issue分類・スコアリング\n   ↓\n4. 分類結果をJSONファイル出力\n   ↓\n5. 静的HTMLで高速表示\n```\n\n### Acceptance Criteria\n\n#### Phase 1: 設定ファイルベースシステム\n- [ ] `classification-rules.json` の完全な型定義とvalidation\n- [ ] リポジトリ固有の設定ファイルサポート (`classification-rules.local.json`)\n- [ ] 動的な重み・閾値の調整機能\n- [ ] 設定ファイルの Hot Reload 機能\n\n#### Phase 2: 静的スコアリング\n- [ ] `scripts/fetch-github-data.ts` でのスコア事前計算\n- [ ] 分類結果の静的ファイル出力 (`src/data/github/classifications.json`)\n- [ ] ホームページの推奨タスク表示の高速化\n- [ ] Issue一覧ページでの事前計算済みスコア表示\n\n#### Phase 3: 高度な機能\n- [ ] 分類精度のベンチマーク機能\n- [ ] リポジトリ固有のメトリクス収集\n- [ ] 設定最適化の自動化サポート\n- [ ] 分類結果の可視化・分析機能\n\n### Implementation Details\n\n**設定ファイル構造の拡張:**\n```json\n{\n  \"version\": \"2.0.0\",\n  \"repository\": {\n    \"owner\": \"nyasuto\",\n    \"name\": \"beaver\",\n    \"customizations\": {\n      \"labelPrefixes\": [\"priority:\", \"type:\", \"area:\"],\n      \"priorityMapping\": {\n        \"priority: urgent\": \"critical\",\n        \"priority: high\": \"high\"\n      }\n    }\n  },\n  \"scoring\": {\n    \"categoryWeights\": { ... },\n    \"priorityWeights\": { ... },\n    \"dynamicWeights\": {\n      \"recencyBonus\": 0.1,\n      \"engagementBonus\": 0.05,\n      \"complexityPenalty\": 0.02\n    }\n  }\n}\n```\n\n**静的生成の拡張:**\n```typescript\n// scripts/fetch-github-data.ts\ninterface EnhancedFetchOptions {\n  preComputeClassifications: boolean;\n  generateTaskRecommendations: boolean;\n  optimizeForStaticGeneration: boolean;\n}\n```\n\n### Performance Benefits\n\n**期待される改善:**\n- 分類処理時間: 90% 削減 (事前計算により)\n- ホームページ表示速度: 80% 向上\n- メモリ使用量: 70% 削減\n- 分類精度: 25% 向上 (リポジトリ固有最適化により)\n\n**リポジトリ固有の分類システムにより、各プロジェクトの特性に最適化された高精度な Issue 分類とタスク推奨が可能になります。**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603282,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0EEg",
+      "name": "priority: high",
+      "description": "High priority tasks",
+      "color": "f85149",
+      "default": false
+    },
+    {
+      "id": 8910603442,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Esg",
+      "name": "type: feature",
+      "description": "New feature implementation",
+      "color": "a2eeef",
+      "default": false
+    }
+  ],
+  "state": "open",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-11T00:32:34Z",
+  "updated_at": "2025-07-11T00:37:47Z",
+  "closed_at": null,
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/153",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/153",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/153/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/153/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/153/events"
+}

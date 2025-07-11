@@ -1,0 +1,114 @@
+{
+  "id": "development",
+  "name": "Development Profile",
+  "description": "Optimized configuration for development environments with faster processing and looser thresholds",
+  "type": "development",
+  "isDefault": false,
+  "tags": ["development", "fast", "loose-thresholds"],
+  "createdAt": "2025-01-11T12:00:00Z",
+  "updatedAt": "2025-01-11T12:00:00Z",
+  "config": {
+    "version": "2.0.0",
+    "minConfidence": 0.6,
+    "maxCategories": 5,
+    "enableAutoClassification": true,
+    "enablePriorityEstimation": true,
+
+    "scoringAlgorithm": {
+      "id": "development-optimized",
+      "name": "Development Optimized Scoring",
+      "description": "Fast scoring algorithm optimized for development",
+      "version": "2.0.0",
+      "weights": {
+        "category": 40,
+        "priority": 25,
+        "confidence": 20,
+        "recency": 15,
+        "custom": 0
+      },
+      "enabled": true
+    },
+
+    "confidenceThresholds": [
+      {
+        "category": "security",
+        "minConfidence": 0.8,
+        "maxConfidence": 1.0,
+        "adjustmentFactor": 1.0
+      },
+      {
+        "category": "bug",
+        "minConfidence": 0.6,
+        "maxConfidence": 1.0,
+        "adjustmentFactor": 1.0
+      },
+      {
+        "category": "feature",
+        "minConfidence": 0.5,
+        "maxConfidence": 1.0,
+        "adjustmentFactor": 1.0
+      }
+    ],
+
+    "priorityEstimation": {
+      "algorithm": "rule-based",
+      "fallbackPriority": "medium",
+      "confidenceBonus": 0.05
+    },
+
+    "performance": {
+      "caching": {
+        "enabled": true,
+        "ttl": 1800,
+        "maxSize": 500,
+        "strategy": "lru"
+      },
+      "batchProcessing": {
+        "enabled": true,
+        "batchSize": 100,
+        "parallelism": 2
+      },
+      "precomputation": {
+        "enabled": false
+      }
+    },
+
+    "rules": [],
+    "customRules": [],
+    "repositories": [],
+
+    "categoryWeights": {
+      "bug": 1.0,
+      "security": 1.0,
+      "feature": 0.8,
+      "enhancement": 0.7,
+      "performance": 0.8,
+      "documentation": 0.6,
+      "question": 0.5,
+      "duplicate": 0.3,
+      "invalid": 0.3,
+      "wontfix": 0.3,
+      "help-wanted": 0.6,
+      "good-first-issue": 0.5,
+      "refactor": 0.6,
+      "test": 0.6,
+      "ci-cd": 0.6,
+      "dependencies": 0.5
+    },
+
+    "priorityWeights": {
+      "critical": 1.0,
+      "high": 0.8,
+      "medium": 0.6,
+      "low": 0.4,
+      "backlog": 0.2
+    },
+
+    "metadata": {
+      "createdAt": "2025-01-11T12:00:00Z",
+      "updatedAt": "2025-01-11T12:00:00Z",
+      "configSource": "file",
+      "tags": ["development", "fast"]
+    }
+  }
+}

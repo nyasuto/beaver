@@ -1,0 +1,53 @@
+{
+  "id": 3220953462,
+  "node_id": "I_kwDOPJEskc6_-9l2",
+  "number": 145,
+  "title": "🔧 ci: GitHub IssuesイベントでBuild and Deploy workflowを自動実行",
+  "body": "## 🎯 CI/CD: GitHub IssuesイベントでBuild and Deploy workflowを自動実行\n\n### **Priority: MEDIUM**\n\n**Impact:** DevOps - 開発効率とデプロイメント自動化\n\n**Component:** CI/CD Pipeline, GitHub Actions\n\n**Files:** \n- `.github/workflows/build-deploy.yml`\n- `.github/workflows/` (関連するワークフローファイル)\n\n### Problem Description\n\n現在、GitHub Issuesの作成・更新・クローズなどのイベントが発生した際に、Build and Deploy workflowが自動実行されないため、Issue データの更新がサイトに反映されるまでに手動でのデプロイが必要です。\n\n**現在の状況:**\n- Issueの作成・更新・ラベル変更などが発生してもサイトが自動更新されない\n- 手動でワークフローを実行するか、コードプッシュを待つ必要がある\n- リアルタイムでIssueデータを反映できていない\n\n### Expected Behavior\n\nGitHub Issuesに関連するイベントが発生した際に、自動的にBuild and Deploy workflowが実行され、最新のIssueデータがサイトに反映されるべきです。\n\n### Recommended Solution\n\nGitHub Actions workflowに `issues` イベントトリガーを追加して、Issue関連のイベントで自動デプロイを実行します。\n\n### Technical Implementation\n\n```yaml\n# .github/workflows/build-deploy.yml\nname: Build and Deploy\n\non:\n  push:\n    branches: [ main ]\n  pull_request:\n    branches: [ main ]\n  # Issues関連のイベントトリガーを追加\n  issues:\n    types: [opened, edited, closed, reopened, labeled, unlabeled, assigned, unassigned]\n  issue_comment:\n    types: [created, edited, deleted]\n  # スケジュール実行も考慮（オプション）\n  schedule:\n    - cron: '0 */6 * * *' # 6時間ごと\n  # 手動実行オプション\n  workflow_dispatch:\n\njobs:\n  build-and-deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      \n      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'npm'\n      \n      - name: Install dependencies\n        run: npm ci\n      \n      - name: Fetch GitHub data\n        run: npm run fetch-github-data\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n      \n      - name: Build\n        run: npm run build\n      \n      - name: Deploy to GitHub Pages\n        uses: peaceiris/actions-gh-pages@v3\n        if: github.ref == 'refs/heads/main'\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          publish_dir: ./dist\n```\n\n### Additional Considerations\n\n1. **レート制限対策**\n   - 短時間での連続実行を防ぐため、debounce機能の実装検討\n   - GitHub APIのレート制限を考慮した実装\n\n2. **パフォーマンス最適化**\n   - 変更されたIssueのみを対象とした部分更新の検討\n   - キャッシュ機能の活用\n\n3. **エラーハンドリング**\n   - ビルドエラー時の通知機能\n   - 失敗時の自動リトライ機能\n\n### Alternative Solutions\n\n**Option 1: Webhook利用**\n```yaml\n# より細かい制御が必要な場合\non:\n  repository_dispatch:\n    types: [issue-updated]\n```\n\n**Option 2: 条件付き実行**\n```yaml\n# 特定のラベルが付いた場合のみ実行\njobs:\n  deploy:\n    if: contains(github.event.issue.labels.*.name, 'deploy-trigger')\n```\n\n### Acceptance Criteria\n\n- [ ] Issue作成時に自動でBuild and Deploy workflowが実行される\n- [ ] Issue更新（編集、ラベル変更）時に自動でワークフローが実行される\n- [ ] Issueクローズ時に自動でワークフローが実行される\n- [ ] Issue comment追加時に自動でワークフローが実行される\n- [ ] ワークフローの実行ログで適切なトリガーイベントが確認できる\n- [ ] GitHub APIのレート制限に配慮した実装になっている\n- [ ] 手動実行オプション（workflow_dispatch）が利用可能\n- [ ] エラー時の適切なログとアラートが設定されている\n\n**Issue データのリアルタイム反映により、AI分析システムの情報が常に最新の状態に保たれ、ユーザーエクスペリエンスが向上します。**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603512,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0E-A",
+      "name": "type: enhancement",
+      "description": "Enhancement to existing feature",
+      "color": "84d09a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T23:14:36Z",
+  "updated_at": "2025-07-10T23:20:08Z",
+  "closed_at": "2025-07-10T23:20:08Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/145",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/145",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/145/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/145/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/145/events"
+}

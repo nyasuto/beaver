@@ -1,0 +1,43 @@
+{
+  "id": 3217940661,
+  "node_id": "PR_kwDOPJEskc6eO0K0",
+  "number": 114,
+  "title": "feat: chartsコンポーネントの包括的テスト実装",
+  "body": "## 概要\n\nchartsコンポーネントの包括的テストを実装し、テストカバレッジを大幅に向上させました。\n\n## 変更内容\n\n### テスト実装\n- **React Testing Library**を使用したコンポーネントテストを追加\n- BaseChart、ChartContainer、Chart factory関数の33テストケースを実装\n- Chart.jsの完全なモック設定でブラウザ環境のテストを可能に\n- チャートユーティリティ関数のテストを含む包括的なテストスイート\n\n### テストカバレッジの向上\n- 元の8テストから33テストに拡張（**312%増加**）\n- React Testing Libraryによるコンポーネントレンダリングテスト\n- Chart.jsの統合とモック化\n- エラーハンドリングとエッジケースのテスト\n- ファクトリー関数とプリセット設定のテスト\n\n### 技術的改善\n- `@testing-library/react`依存関係の追加\n- Chart.jsのregister関数を含む完全なモック設定\n- Canvas APIとResizeObserverのモック\n- Vitestのホイスティング問題の解決\n\n## テスト\n\n- 全テスト（972テスト）が成功\n- qualityチェック（lint、format、type-check、test）すべて通過\n- 既存機能への影響なし\n\nCloses #6\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T05:21:51Z",
+  "updated_at": "2025-07-10T05:32:17Z",
+  "closed_at": "2025-07-10T05:32:15Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/114",
+    "html_url": "https://github.com/nyasuto/beaver/pull/114",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/114.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/114.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/114",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/114",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/114/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/114/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/114/events"
+}

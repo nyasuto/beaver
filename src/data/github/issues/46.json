@@ -1,0 +1,43 @@
+{
+  "id": 3214167797,
+  "node_id": "PR_kwDOPJEskc6eCGnR",
+  "number": 46,
+  "title": "fix: Unify GitHub Pages deployment workflow",
+  "body": "## 概要\n\nGitHub Pages デプロイメントワークフローの統合により、権限エラーとアーキテクチャの問題を解決します。\n\n## 問題の分析\n\n### 現在の問題\n1. **権限エラー**: GitHub Actions bot が repository への push 権限を持たない (403 エラー)\n2. **非効率な設計**: データ取得とビルド/デプロイを分離し、ジョブ間でのデータ受け渡しに git commit が必要\n\n### 根本原因\n- 複数ジョブ間でのデータ共有のために repository への書き込みが必要\n- `GITHUB_TOKEN` では repository への push 権限が制限されている\n\n## 解決策\n\n### アーキテクチャの統合\n- データ取得とビルド/デプロイを単一ジョブに統合\n- インメモリでのデータ処理（git commit 不要）\n- シンプルで確実なCI/CDパイプライン\n\n### 変更内容\n- ✅ `update-data.yml` を削除（問題のある分離アプローチ）\n- ✅ `deploy.yml` を新規作成（統合アプローチ）\n- ✅ 単一ジョブで fetch → build → deploy の完全な流れ\n- ✅ 権限問題の根本的解決\n\n### 技術的改善\n- **権限の最適化**: Pages デプロイに最小限必要な権限のみ\n- **効率性向上**: 1つのジョブで完結、実行時間短縮\n- **信頼性向上**: git commit/push の失敗リスク排除\n- **保守性向上**: シンプルで理解しやすいワークフロー\n\n## テスト計画\n\nこのPRがマージされると、新しいワークフローが自動実行され：\n1. GitHub データ取得\n2. 静的サイトビルド \n3. GitHub Pages デプロイ\n\nが単一ジョブで完了することを確認できます。\n\nCloses: GitHub Pages deployment permission errors\nResolves: Workflow architecture inefficiency\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T01:29:25Z",
+  "updated_at": "2025-07-09T01:32:18Z",
+  "closed_at": "2025-07-09T01:32:17Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/46",
+    "html_url": "https://github.com/nyasuto/beaver/pull/46",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/46.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/46.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/46",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/46",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/46/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/46/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/46/events"
+}

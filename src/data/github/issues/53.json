@@ -1,0 +1,53 @@
+{
+  "id": 3214191666,
+  "node_id": "I_kwDOPJEskc6_lKwy",
+  "number": 53,
+  "title": "feat: リアルタイム更新とパフォーマンス最適化",
+  "body": "## 🎯 目的\n\nIssue #47の一部として、ダッシュボードのリアルタイム更新機能とパフォーマンス最適化を実装し、開発者が常に最新の情報を効率的に確認できるようにします。\n\n## 📋 要件\n\n### 1. リアルタイム更新\n- [ ] Issue統計の自動更新（30秒間隔）\n- [ ] 新しいIssueの通知\n- [ ] 活動タイムラインの更新\n- [ ] GitHub Webhookとの連携\n\n### 2. パフォーマンス最適化\n- [ ] データキャッシュ機能\n- [ ] 増分更新（差分のみ）\n- [ ] 遅延読み込み\n- [ ] バックグラウンド更新\n\n### 3. 更新制御\n- [ ] 手動更新ボタン\n- [ ] 自動更新ON/OFF切り替え\n- [ ] 更新間隔設定\n- [ ] オフライン対応\n\n### 4. 通知機能\n- [ ] 重要な変更の通知\n- [ ] ブラウザ通知\n- [ ] 音声通知設定\n- [ ] 通知履歴\n\n## 🎨 デザイン仕様\n\n### 更新インジケーター\n```\n+----------------------------------+\n| 📊 Dashboard    [🔄] Last: 2m ago |\n| [●] Auto-refresh ON  [⚙️] Settings |\n+----------------------------------+\n```\n\n### 通知デザイン\n- **New Issue**: `🆕` + blue badge\n- **Critical**: `🔥` + red badge\n- **Closed**: `✅` + green badge\n\n## 🔧 技術実装\n\n### 実装ファイル\n- `src/components/dashboard/RealTimeUpdater.tsx` - 更新機能\n- `src/components/dashboard/NotificationCenter.tsx` - 通知\n- `src/lib/utils/realtime.ts` - リアルタイム処理\n- `src/lib/utils/cache.ts` - キャッシュ管理\n\n### 使用技術\n- **Updates**: Server-Sent Events (SSE)\n- **Cache**: Web Storage API\n- **Notifications**: Notification API\n- **Background**: Web Workers\n\n## 📊 受け入れ基準\n\n- [ ] 自動更新が正常に動作する\n- [ ] 通知機能が適切に動作する\n- [ ] パフォーマンスが向上する\n- [ ] キャッシュが効果的に動作する\n- [ ] オフライン時も基本機能が動作する\n\n## 🔗 関連Issue\n\n**Parent**: #47 (ダッシュボード機能付きトップページの実装)\n**Depends on**: #48, #49, #50, #51\n\n**Priority**: Low\n**Component**: Performance\n**Estimated**: 2-3 days",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603406,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Ejg",
+      "name": "priority: low",
+      "description": "Low priority tasks",
+      "color": "0969da",
+      "default": false
+    },
+    {
+      "id": 8910603512,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0E-A",
+      "name": "type: enhancement",
+      "description": "Enhancement to existing feature",
+      "color": "84d09a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T01:41:50Z",
+  "updated_at": "2025-07-10T14:05:08Z",
+  "closed_at": "2025-07-10T14:05:08Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/53",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/53",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/53/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/53/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/53/events"
+}

@@ -1,0 +1,43 @@
+{
+  "id": 3215928662,
+  "node_id": "PR_kwDOPJEskc6eIAGT",
+  "number": 80,
+  "title": "ci: Claude bash実行権限の設定",
+  "body": "## 概要\n\nGitHub ActionsでClaudeにbashコマンドの実行権限を付与する設定を追加\n\n## 変更内容\n\n- `allowed_tools`パラメータに`Bash(*)`を追加\n- 包括的なGitHub権限を設定（contents, pull-requests, issues等）\n- Claude Code Actionの機能を最大限活用可能に\n\n## テスト\n\n- GitHub Actions設定ファイルの構文チェック済み\n- 全権限が適切に設定されていることを確認\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T13:19:06Z",
+  "updated_at": "2025-07-09T13:22:24Z",
+  "closed_at": "2025-07-09T13:22:23Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/80",
+    "html_url": "https://github.com/nyasuto/beaver/pull/80",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/80.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/80.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/80",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/80",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/80/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/80/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/80/events"
+}

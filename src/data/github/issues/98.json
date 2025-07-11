@@ -1,0 +1,53 @@
+{
+  "id": 3217452445,
+  "node_id": "I_kwDOPJEskc6_xm2d",
+  "number": 98,
+  "title": "🔴 HIGH: チャートユーティリティのテスト実装 (chart.ts)",
+  "body": "## 🎯 概要\n\n**chart.ts** はChart.jsデータ変換とチャート設定生成を担う重要コンポーネントですが、現在テストカバレージが **0%** です。データ可視化機能の信頼性確保のため、テストを実装する必要があります。\n\n## 📊 現状\n\n- **テストカバレージ**: 0%\n- **ファイル**: `src/lib/utils/chart.ts`\n- **重要度**: アナリティクス・可視化機能の基盤\n\n## 🔧 実装が必要なテスト\n\n### データ変換機能テスト\n- [ ] `convertTimeSeriesData()` - 時系列データ変換\n- [ ] `convertCategoryData()` - カテゴリデータ整形\n- [ ] `convertPieData()` - 円グラフデータ生成\n- [ ] `convertClassificationData()` - 分類データ処理\n- [ ] `convertPerformanceData()` - パフォーマンスデータ変換\n\n### チャート設定機能テスト\n- [ ] `generateChartOptions()` - チャートオプション生成\n- [ ] `generateChartConfig()` - 完全チャート設定\n- [ ] `calculateChartDimensions()` - レスポンシブサイジング\n\n### ユーティリティ機能テスト\n- [ ] `debounce()` - パフォーマンス最適化関数\n\n## 🧪 テスト要件\n\n### 1. データ変換テスト\n```typescript\ndescribe('Data Conversion', () => {\n  it('should convert time series data correctly', () => {\n    const inputData = [\n      { date: '2024-01-01', value: 10 },\n      { date: '2024-01-02', value: 15 }\n    ];\n    const result = convertTimeSeriesData(inputData);\n    expect(result.labels).toEqual(['2024-01-01', '2024-01-02']);\n    expect(result.datasets[0].data).toEqual([10, 15]);\n  });\n  \n  it('should handle empty data gracefully', () => {\n    const result = convertTimeSeriesData([]);\n    expect(result.labels).toEqual([]);\n    expect(result.datasets[0].data).toEqual([]);\n  });\n});\n```\n\n### 2. Chart.js互換性テスト\n```typescript\ndescribe('Chart.js Compatibility', () => {\n  it('should generate valid Chart.js config', () => {\n    const config = generateChartConfig('line', mockData, 'Test Chart');\n    expect(config.type).toBe('line');\n    expect(config.data).toBeDefined();\n    expect(config.options).toBeDefined();\n  });\n  \n  it('should include proper color scheme', () => {\n    const config = generateChartConfig('bar', mockData);\n    expect(config.data.datasets[0].backgroundColor).toBeDefined();\n    expect(config.data.datasets[0].borderColor).toBeDefined();\n  });\n});\n```\n\n### 3. レスポンシブデザインテスト\n```typescript\ndescribe('Responsive Design', () => {\n  it('should calculate correct dimensions for different screen sizes', () => {\n    const dimensions = calculateChartDimensions('mobile');\n    expect(dimensions.width).toBeLessThan(768);\n    expect(dimensions.height).toBeGreaterThan(0);\n  });\n  \n  it('should maintain aspect ratio', () => {\n    const dimensions = calculateChartDimensions('desktop');\n    const aspectRatio = dimensions.width / dimensions.height;\n    expect(aspectRatio).toBeCloseTo(16/9, 1);\n  });\n});\n```\n\n### 4. テーマ統合テスト\n```typescript\ndescribe('Theme Integration', () => {\n  it('should apply dark theme colors', () => {\n    const options = generateChartOptions('dark');\n    expect(options.plugins.legend.labels.color).toBe('#ffffff');\n  });\n  \n  it('should apply light theme colors', () => {\n    const options = generateChartOptions('light');\n    expect(options.plugins.legend.labels.color).toBe('#000000');\n  });\n});\n```\n\n## 🎯 テストカバレージ目標\n\n- **Statement Coverage**: 90%+\n- **Branch Coverage**: 85%+\n- **Function Coverage**: 100%\n\n## 📝 実装ポイント\n\n### テストデータ準備\n- 時系列データサンプル\n- カテゴリデータサンプル\n- 円グラフ用データサンプル\n- 空データ・異常データ\n\n### Chart.js互換性確認\n- データフォーマットの正確性\n- オプション設定の妥当性\n- カラーパレットの適用\n\n### パフォーマンステスト\n- 大データセットの処理時間\n- debounce機能の動作確認\n- メモリ使用量の監視\n\n## 🚀 期待される効果\n\n- データ可視化の信頼性向上\n- Chart.js統合の安定性確保\n- レスポンシブデザインの動作保証\n- パフォーマンス最適化の検証\n\n**Priority**: High\n**Impact**: アナリティクス機能の信頼性向上\n**Component**: Visualization\n**Files**: `src/lib/utils/chart.ts`\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603282,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0EEg",
+      "name": "priority: high",
+      "description": "High priority tasks",
+      "color": "f85149",
+      "default": false
+    },
+    {
+      "id": 8910603599,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0FTw",
+      "name": "type: test",
+      "description": "Test related tasks",
+      "color": "f9d71c",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T23:59:06Z",
+  "updated_at": "2025-07-10T01:03:52Z",
+  "closed_at": "2025-07-10T01:03:52Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/98",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/98",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/98/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/98/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/98/events"
+}

@@ -1,0 +1,43 @@
+{
+  "id": 3221134899,
+  "node_id": "PR_kwDOPJEskc6eZvQf",
+  "number": 157,
+  "title": "fix: Issue #154 タスクカードの優先度情報重複表示を修正",
+  "body": "## 概要\n\nIssue #154で報告されたタスクカードの優先度情報重複表示問題を修正しました。\nTaskRecommendationServiceにタイトルクリーニング機能を実装し、優先度バッジとタイトルの重複を解決しました。\n\n## 変更内容\n\n### 主要な修正\n- **TaskRecommendationService**: `cleanTitle`メソッドを追加してタイトルから優先度プレフィックスを除去\n- **重複解決**: 優先度バッジとタイトルの両方に優先度情報が表示される問題を修正\n- **多様な形式対応**: 日本語、英語、複数の優先度表示形式に対応\n\n### 技術的詳細\n- `cleanTitle`メソッドで以下の形式の優先度プレフィックスを除去:\n  - 🔴 緊急: / 🟠 高: / 🟡 中: / 🟢 低: / ⚪ バックログ:\n  - CRITICAL: / HIGH: / MEDIUM: / LOW: / BACKLOG:\n  - priority: critical: / critical: など\n  - 混在形式（🟡Medium: など）\n- エッジケースに対応（空文字列、空白のみ、コロンのみ等）\n- `convertToTaskRecommendation`と`getFallbackRecommendations`の両方で適用\n- 正規表現のUnicodeフラグ対応でESLintエラーを解決\n\n### テストの追加\n- 包括的なテストケース（13テスト）を追加\n- 様々な優先度プレフィックス形式のテスト\n- エッジケースのテスト\n- 完全なTypeScriptタイプ対応\n\n## テスト\n\n- 全てのテストが通過することを確認\n- 新しいテストケースが13件追加\n- 品質チェック（lint、format、type-check）も全て通過\n- 実際のビルドでも動作確認済み\n\n## 影響範囲\n\n- **破壊的変更**: なし\n- **ユーザーエクスペリエンス**: 改善（重複表示解消）\n- **パフォーマンス**: 軽微な向上（冗長な情報削除）\n\n## 修正前後の比較\n\n**修正前:**\n```\n🟡 中                     <- 優先度バッジ\n🟡 MEDIUM: Issue Title    <- タイトル（優先度情報重複）\n```\n\n**修正後:**\n```\n🟡 中                     <- 優先度バッジ\nIssue Title               <- タイトル（クリーン）\n```\n\nCloses #154\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-11T01:04:58Z",
+  "updated_at": "2025-07-11T01:11:03Z",
+  "closed_at": "2025-07-11T01:11:01Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/157",
+    "html_url": "https://github.com/nyasuto/beaver/pull/157",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/157.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/157.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/157",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/157",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/157/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/157/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/157/events"
+}
