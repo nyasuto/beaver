@@ -1,0 +1,574 @@
+---
+/**
+ * Individual Module Detail Page
+ *
+ * Shows detailed analysis for a specific module including:
+ * - Module overview and metrics
+ * - File-level breakdown
+ * - Quality trends
+ * - Code smells and hotspots
+ * - Recommendations
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import { getModuleAnalysisService } from '../../lib/services/ModuleAnalysisService';
+import { resolveUrl } from '../../lib/utils/url';
+
+// Generate static paths for all modules
+export async function getStaticPaths() {
+  const service = getModuleAnalysisService();
+
+  try {
+    const analysisResult = await service.generateAnalysisReport({
+      includeFileDetails: false,
+      includeCodeSmells: false,
+      includeHotspots: false,
+      maxModules: 50,
+    });
+
+    if (analysisResult.success) {
+      return analysisResult.data.modules.map(module => ({
+        params: { module: encodeURIComponent(module.name) },
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to generate static paths for modules:', error);
+  }
+
+  // Return empty array as fallback
+  return [];
+}
+
+// Get module name from URL parameters
+const { module } = Astro.params;
+const moduleName = decodeURIComponent(module || '');
+
+if (!moduleName) {
+  return Astro.redirect('/modules');
+}
+
+const title = `モジュール分析: ${moduleName}`;
+const description = `${moduleName} の詳細分析とメトリクス`;
+
+// Get module details
+let moduleDetails = null;
+let qualityTrend = null;
+let isDataAvailable = false;
+let errorMessage = null;
+
+try {
+  const service = getModuleAnalysisService();
+
+  // Get module details
+  const moduleResult = await service.getModuleDetails(moduleName, {
+    includeFileDetails: true,
+    includeCodeSmells: true,
+    includeHotspots: true,
+  });
+
+  if (moduleResult.success) {
+    moduleDetails = moduleResult.data;
+    isDataAvailable = true;
+
+    // Get quality trend
+    const trendResult = await service.getModuleQualityTrend(moduleName, 30);
+    if (trendResult.success) {
+      qualityTrend = trendResult.data;
+    }
+  } else {
+    errorMessage = moduleResult.error?.message || 'モジュールが見つかりませんでした';
+  }
+} catch (error) {
+  console.error('Failed to load module details:', error);
+  errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+}
+
+if (!moduleDetails) {
+  return Astro.redirect('/modules');
+}
+
+// Process file data for display
+const filesByType = {
+  source: moduleDetails.files.filter(f => f.type === 'source'),
+  test: moduleDetails.files.filter(f => f.type === 'test'),
+  config: moduleDetails.files.filter(f => f.type === 'config'),
+  other: moduleDetails.files.filter(f => !['source', 'test', 'config'].includes(f.type)),
+};
+
+// Get problematic files
+const problematicFiles = moduleDetails.files
+  .filter(f => f.coverage < 50 || f.complexity > 15)
+  .sort((a, b) => b.complexity * (100 - b.coverage) - a.complexity * (100 - a.coverage))
+  .slice(0, 10);
+
+// Calculate file statistics
+const fileStats = {
+  total: moduleDetails.files.length,
+  highCoverage: moduleDetails.files.filter(f => f.coverage >= 80).length,
+  lowCoverage: moduleDetails.files.filter(f => f.coverage < 50).length,
+  highComplexity: moduleDetails.files.filter(f => f.complexity > 10).length,
+  highDuplication: moduleDetails.files.filter(f => f.duplication > 10).length,
+};
+
+// Get quality indicators
+const qualityIndicators = {
+  coverage: {
+    value: moduleDetails.coverage,
+    status:
+      moduleDetails.coverage >= 80
+        ? 'excellent'
+        : moduleDetails.coverage >= 60
+          ? 'good'
+          : moduleDetails.coverage >= 40
+            ? 'fair'
+            : 'poor',
+  },
+  complexity: {
+    value: moduleDetails.averageComplexity,
+    status:
+      moduleDetails.averageComplexity <= 5
+        ? 'excellent'
+        : moduleDetails.averageComplexity <= 10
+          ? 'good'
+          : moduleDetails.averageComplexity <= 15
+            ? 'fair'
+            : 'poor',
+  },
+  qualityScore: {
+    value: moduleDetails.qualityScore,
+    status:
+      moduleDetails.qualityScore >= 90
+        ? 'excellent'
+        : moduleDetails.qualityScore >= 70
+          ? 'good'
+          : moduleDetails.qualityScore >= 50
+            ? 'fair'
+            : 'poor',
+  },
+  maintainability: {
+    value: moduleDetails.maintainabilityIndex,
+    status:
+      moduleDetails.maintainabilityIndex >= 80
+        ? 'excellent'
+        : moduleDetails.maintainabilityIndex >= 60
+          ? 'good'
+          : moduleDetails.maintainabilityIndex >= 40
+            ? 'fair'
+            : 'poor',
+  },
+};
+
+// Helper function to get status color
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'excellent':
+      return 'text-green-600';
+    case 'good':
+      return 'text-blue-600';
+    case 'fair':
+      return 'text-yellow-600';
+    case 'poor':
+      return 'text-red-600';
+    default:
+      return 'text-gray-600';
+  }
+};
+
+const getStatusBg = (status: string) => {
+  switch (status) {
+    case 'excellent':
+      return 'bg-green-50 border-green-200';
+    case 'good':
+      return 'bg-blue-50 border-blue-200';
+    case 'fair':
+      return 'bg-yellow-50 border-yellow-200';
+    case 'poor':
+      return 'bg-red-50 border-red-200';
+    default:
+      return 'bg-gray-50 border-gray-200';
+  }
+};
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  showHeader={true}
+  showFooter={true}
+  showSearch={false}
+  maxWidth="7xl"
+  padding="lg"
+  class="page-background"
+>
+  <div class="space-y-8">
+    <PageHeader
+      title={`モジュール: ${moduleDetails.displayName}`}
+      description={moduleDetails.description || 'モジュールの詳細分析'}
+      icon="📦"
+      metaInfo={{
+        dataSource: `${moduleDetails.files.length} files, ${moduleDetails.totalLines.toLocaleString()} lines`,
+        lastUpdated: new Date(moduleDetails.lastAnalyzed),
+        isDataAvailable: isDataAvailable,
+      }}
+      warningMessage={errorMessage ? `分析エラー: ${errorMessage}` : undefined}
+    />
+
+    <!-- Module Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Key Metrics -->
+      <div class="lg:col-span-2">
+        <div class="card">
+          <h2 class="text-lg font-semibold text-heading mb-4">📊 主要メトリクス</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class={`p-4 rounded-lg border ${getStatusBg(qualityIndicators.coverage.status)}`}>
+              <div
+                class={`text-2xl font-bold ${getStatusColor(qualityIndicators.coverage.status)}`}
+              >
+                {qualityIndicators.coverage.value.toFixed(1)}%
+              </div>
+              <div class="text-sm text-muted">カバレッジ</div>
+            </div>
+            <div
+              class={`p-4 rounded-lg border ${getStatusBg(qualityIndicators.complexity.status)}`}
+            >
+              <div
+                class={`text-2xl font-bold ${getStatusColor(qualityIndicators.complexity.status)}`}
+              >
+                {qualityIndicators.complexity.value.toFixed(1)}
+              </div>
+              <div class="text-sm text-muted">平均複雑度</div>
+            </div>
+            <div
+              class={`p-4 rounded-lg border ${getStatusBg(qualityIndicators.qualityScore.status)}`}
+            >
+              <div
+                class={`text-2xl font-bold ${getStatusColor(qualityIndicators.qualityScore.status)}`}
+              >
+                {qualityIndicators.qualityScore.value.toFixed(0)}
+              </div>
+              <div class="text-sm text-muted">品質スコア</div>
+            </div>
+            <div
+              class={`p-4 rounded-lg border ${getStatusBg(qualityIndicators.maintainability.status)}`}
+            >
+              <div
+                class={`text-2xl font-bold ${getStatusColor(qualityIndicators.maintainability.status)}`}
+              >
+                {qualityIndicators.maintainability.value.toFixed(0)}
+              </div>
+              <div class="text-sm text-muted">保守性指数</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Info -->
+      <div class="card">
+        <h2 class="text-lg font-semibold text-heading mb-4">🏷️ モジュール情報</h2>
+        <div class="space-y-3">
+          <div>
+            <span class="text-sm text-muted">Type:</span>
+            <span class="ml-2 text-sm font-medium capitalize">{moduleDetails.type}</span>
+          </div>
+          <div>
+            <span class="text-sm text-muted">Priority:</span>
+            <span
+              class={`ml-2 text-sm font-medium capitalize ${
+                moduleDetails.priority === 'critical'
+                  ? 'text-red-600'
+                  : moduleDetails.priority === 'high'
+                    ? 'text-orange-600'
+                    : moduleDetails.priority === 'medium'
+                      ? 'text-yellow-600'
+                      : 'text-green-600'
+              }`}
+            >
+              {moduleDetails.priority}
+            </span>
+          </div>
+          <div>
+            <span class="text-sm text-muted">Technical Debt:</span>
+            <span class="ml-2 text-sm font-medium text-red-600"
+              >{moduleDetails.technicalDebt.toFixed(0)}h</span
+            >
+          </div>
+          <div>
+            <span class="text-sm text-muted">Duplication:</span>
+            <span class="ml-2 text-sm font-medium">{moduleDetails.duplication.toFixed(1)}%</span>
+          </div>
+          <div>
+            <span class="text-sm text-muted">Functions:</span>
+            <span class="ml-2 text-sm font-medium">{moduleDetails.totalFunctions}</span>
+          </div>
+          <div>
+            <span class="text-sm text-muted">Classes:</span>
+            <span class="ml-2 text-sm font-medium">{moduleDetails.totalClasses}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Statistics -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-heading mb-4">📁 ファイル統計</h2>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-blue-600">{fileStats.total}</div>
+          <div class="text-sm text-muted">総ファイル数</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-green-600">{fileStats.highCoverage}</div>
+          <div class="text-sm text-muted">高カバレッジ</div>
+          <div class="text-xs text-muted">(≥80%)</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-red-600">{fileStats.lowCoverage}</div>
+          <div class="text-sm text-muted">低カバレッジ</div>
+          <div class="text-xs text-muted">(&lt;50%)</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-orange-600">{fileStats.highComplexity}</div>
+          <div class="text-sm text-muted">高複雑度</div>
+          <div class="text-xs text-muted">(&gt;10)</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-purple-600">{fileStats.highDuplication}</div>
+          <div class="text-sm text-muted">高重複率</div>
+          <div class="text-xs text-muted">(&gt;10%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Trend -->
+    {
+      qualityTrend && (
+        <div class="card">
+          <h2 class="text-lg font-semibold text-heading mb-4">📈 品質トレンド（30日間）</h2>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="text-center">
+              <div class="text-lg font-semibold text-heading">カバレッジ</div>
+              <div
+                class={`text-sm font-medium ${
+                  qualityTrend.trends.coverage === 'improving'
+                    ? 'text-green-600'
+                    : qualityTrend.trends.coverage === 'stable'
+                      ? 'text-blue-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {qualityTrend.trends.coverage === 'improving'
+                  ? '📈 改善中'
+                  : qualityTrend.trends.coverage === 'stable'
+                    ? '➖ 安定'
+                    : '📉 悪化中'}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-lg font-semibold text-heading">複雑度</div>
+              <div
+                class={`text-sm font-medium ${
+                  qualityTrend.trends.complexity === 'improving'
+                    ? 'text-green-600'
+                    : qualityTrend.trends.complexity === 'stable'
+                      ? 'text-blue-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {qualityTrend.trends.complexity === 'improving'
+                  ? '📈 改善中'
+                  : qualityTrend.trends.complexity === 'stable'
+                    ? '➖ 安定'
+                    : '📉 悪化中'}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-lg font-semibold text-heading">技術的負債</div>
+              <div
+                class={`text-sm font-medium ${
+                  qualityTrend.trends.technicalDebt === 'improving'
+                    ? 'text-green-600'
+                    : qualityTrend.trends.technicalDebt === 'stable'
+                      ? 'text-blue-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {qualityTrend.trends.technicalDebt === 'improving'
+                  ? '📈 改善中'
+                  : qualityTrend.trends.technicalDebt === 'stable'
+                    ? '➖ 安定'
+                    : '📉 悪化中'}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-lg font-semibold text-heading">品質スコア</div>
+              <div
+                class={`text-sm font-medium ${
+                  qualityTrend.trends.qualityScore === 'improving'
+                    ? 'text-green-600'
+                    : qualityTrend.trends.qualityScore === 'stable'
+                      ? 'text-blue-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {qualityTrend.trends.qualityScore === 'improving'
+                  ? '📈 改善中'
+                  : qualityTrend.trends.qualityScore === 'stable'
+                    ? '➖ 安定'
+                    : '📉 悪化中'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Problematic Files -->
+    {
+      problematicFiles.length > 0 && (
+        <div class="card">
+          <h2 class="text-lg font-semibold text-heading mb-4">⚠️ 問題のあるファイル</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ファイル名
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    カバレッジ
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    複雑度
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    重複率
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    技術的負債
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    行数
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {problematicFiles.map(file => (
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">{file.name}</div>
+                      <div class="text-xs text-gray-500">{file.type}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        class={`text-sm font-medium ${
+                          file.coverage >= 80
+                            ? 'text-green-600'
+                            : file.coverage >= 50
+                              ? 'text-yellow-600'
+                              : 'text-red-600'
+                        }`}
+                      >
+                        {file.coverage.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        class={`text-sm font-medium ${
+                          file.complexity <= 5
+                            ? 'text-green-600'
+                            : file.complexity <= 10
+                              ? 'text-yellow-600'
+                              : 'text-red-600'
+                        }`}
+                      >
+                        {file.complexity.toFixed(1)}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        class={`text-sm font-medium ${
+                          file.duplication <= 5
+                            ? 'text-green-600'
+                            : file.duplication <= 10
+                              ? 'text-yellow-600'
+                              : 'text-red-600'
+                        }`}
+                      >
+                        {file.duplication.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="text-sm font-medium text-red-600">
+                        {file.technicalDebt.toFixed(0)}h
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="text-sm text-gray-900">{file.lines.toLocaleString()}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Files by Type -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {
+        Object.entries(filesByType).map(
+          ([type, files]) =>
+            files.length > 0 && (
+              <div class="card">
+                <h3 class="text-lg font-medium text-heading mb-4 capitalize flex items-center gap-2">
+                  <span
+                    class={`inline-block w-3 h-3 rounded-full ${
+                      type === 'source'
+                        ? 'bg-blue-500'
+                        : type === 'test'
+                          ? 'bg-green-500'
+                          : type === 'config'
+                            ? 'bg-purple-500'
+                            : 'bg-gray-500'
+                    }`}
+                  />
+                  {type} Files ({files.length})
+                </h3>
+                <div class="space-y-2 max-h-60 overflow-y-auto">
+                  {files.map(file => (
+                    <div class="p-2 border rounded hover:bg-gray-50">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-900">{file.name}</span>
+                        <div class="flex items-center gap-2">
+                          <span
+                            class={`text-xs px-2 py-1 rounded ${
+                              file.coverage >= 80
+                                ? 'bg-green-100 text-green-800'
+                                : file.coverage >= 50
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {file.coverage.toFixed(0)}%
+                          </span>
+                          <span class="text-xs text-gray-500">{file.lines} lines</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+        )
+      }
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-center space-x-4">
+      <a href={resolveUrl('/modules')} class="btn btn-secondary"> ← モジュール一覧に戻る </a>
+      <a href={resolveUrl('/modules/compare')} class="btn btn-primary"> 他のモジュールと比較 </a>
+    </div>
+  </div>
+</PageLayout>
