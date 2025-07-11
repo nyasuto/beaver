@@ -9,7 +9,7 @@
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import {
-  getIssuesWithFallback,
+  getIssuesOnlyWithFallback,
   getStaticMetadata,
   hasStaticData,
   getLastUpdated,
@@ -20,8 +20,8 @@ import { getFilterOptions } from '../../lib/utils/search';
 const title = 'Issue';
 const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
 
-// 静的データの読み込み
-let issues = getIssuesWithFallback();
+// 静的データの読み込み（PRを除外したissueのみ）
+const allIssues = getIssuesOnlyWithFallback();
 let metadata = null;
 let lastUpdated = null;
 let isDataAvailable = hasStaticData();
@@ -30,11 +30,6 @@ try {
   if (isDataAvailable) {
     metadata = getStaticMetadata();
     lastUpdated = getLastUpdated();
-
-    // 最新の Issue を先頭に表示
-    issues = issues.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
   }
 } catch (error) {
   // eslint-disable-next-line no-console
@@ -42,8 +37,17 @@ try {
   isDataAvailable = false;
 }
 
+// 最新の Issue を先頭に表示
+const issues = allIssues.sort(
+  (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+);
+
+// デフォルトはopenのissueのみ表示
 const openIssues = issues.filter(issue => issue.state === 'open');
 const closedIssues = issues.filter(issue => issue.state === 'closed');
+
+// 表示用のissues（デフォルトはopenのみ）
+const displayIssues = openIssues;
 
 // ラベルの集計とカテゴリ別グループ化
 const labelCounts = issues.reduce(
@@ -116,9 +120,9 @@ const filterOptions = getFilterOptions(issues);
           <div>
             <label class="label">ステータス</label>
             <select class="input" id="status-filter">
-              <option value="all">すべて ({issues.length})</option>
-              <option value="open">オープン ({openIssues.length})</option>
+              <option value="open" selected>オープン ({openIssues.length})</option>
               <option value="closed">クローズ ({closedIssues.length})</option>
+              <option value="all">すべて ({issues.length})</option>
             </select>
           </div>
 
@@ -247,7 +251,7 @@ const filterOptions = getFilterOptions(issues);
           <div class="flex items-center gap-4">
             <h2 class="text-lg font-semibold text-heading">Issue一覧</h2>
             <div class="flex items-center gap-2 text-sm text-muted" id="search-results-info">
-              <span id="results-count">{issues.length} 件の Issue を表示中</span>
+              <span id="results-count">{displayIssues.length} 件の Issue を表示中</span>
               <span id="search-time" class="hidden"></span>
             </div>
           </div>
@@ -276,7 +280,7 @@ const filterOptions = getFilterOptions(issues);
 
         <div class="space-y-4" id="issues-container">
           {
-            issues.length === 0 && (
+            displayIssues.length === 0 && (
               <div class="text-center py-8">
                 <p class="text-muted">
                   {isDataAvailable
@@ -288,7 +292,7 @@ const filterOptions = getFilterOptions(issues);
           }
 
           {
-            issues.map(issue => (
+            displayIssues.map(issue => (
               <div
                 class="p-4 border rounded-md issue-card"
                 data-state={issue.state}
@@ -361,7 +365,7 @@ const filterOptions = getFilterOptions(issues);
         </div>
 
         <div class="mt-6 text-center" id="pagination-info">
-          <p class="text-muted text-sm" id="pagination-text">{issues.length} 件の Issue を表示中</p>
+          <p class="text-muted text-sm" id="pagination-text">{displayIssues.length} 件の Issue を表示中</p>
           <div class="mt-2 hidden" id="search-stats">
             <span class="text-xs text-muted" id="search-performance"></span>
           </div>
@@ -471,7 +475,9 @@ const filterOptions = getFilterOptions(issues);
 
     constructor() {
       this.allIssues = Array.from(document.querySelectorAll('.issue-card'));
+      this.currentFilters.state = 'open'; // デフォルトはopenのみ
       this.initializeEventListeners();
+      this.performSearch(); // 初期フィルタリング実行
     }
 
     private initializeEventListeners() {
