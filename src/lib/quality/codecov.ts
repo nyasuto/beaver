@@ -77,6 +77,8 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
 
     const url = `${config.baseUrl}/api/v2/${config.service}/${config.owner}/${endpoint}`;
 
+    console.log('Making Codecov API request:', { url, endpoint });
+
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${config.token}`,
@@ -129,7 +131,7 @@ async function getCoverageTrends(
   config: CodecovConfig,
   interval: '1d' | '7d' | '30d' = '7d'
 ): Promise<Result<unknown>> {
-  const endpoint = `repos/${config.repo}/coverage/trends?interval=${interval}`;
+  const endpoint = `repos/${config.repo}/coverage/?interval=${interval}`;
   return makeCodecovRequest(endpoint, config);
 }
 
@@ -243,6 +245,14 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
     return generateSampleData();
   }
 
+  console.log('Codecov API configuration:', {
+    baseUrl: config.baseUrl,
+    service: config.service,
+    owner: config.owner,
+    repo: config.repo,
+    tokenConfigured: !!config.token,
+  });
+
   try {
     // Get repository coverage data
     const coverageResult = await getRepositoryCoverage(config);
@@ -257,6 +267,12 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
 
     if (!trendsResult.success) {
       console.warn('Failed to fetch trends data:', trendsResult.error);
+    } else {
+      console.log('Trends data retrieved successfully:', {
+        hasResults: !!(trendsResult.data as any)?.results,
+        resultsCount: ((trendsResult.data as any)?.results || []).length,
+        sampleData: JSON.stringify((trendsResult.data as any)?.results?.[0] || {}, null, 2),
+      });
     }
 
     // Transform and combine data
@@ -264,11 +280,37 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
 
     // Add trends data if available
     if (trendsResult.success && trendsResult.data) {
-      const trendsData = trendsResult.data as Array<{ date: string; coverage: number }>;
-      qualityMetrics.history = trendsData.map(item => ({
-        date: item.date,
-        coverage: item.coverage,
-      }));
+      const trendsResponse = trendsResult.data as { results?: Array<any> };
+      if (trendsResponse.results && Array.isArray(trendsResponse.results)) {
+        try {
+          qualityMetrics.history = trendsResponse.results
+            .filter(item => item && typeof item === 'object')
+            .map(item => ({
+              date:
+                item.date ||
+                item.timestamp?.split('T')[0] ||
+                new Date().toISOString().split('T')[0],
+              coverage:
+                typeof item.coverage === 'number'
+                  ? item.coverage
+                  : typeof item.totals?.coverage === 'number'
+                    ? item.totals.coverage
+                    : typeof item.avg === 'number'
+                      ? item.avg
+                      : 0,
+            }))
+            .filter(item => item.date && typeof item.coverage === 'number');
+        } catch (error) {
+          console.warn('Failed to parse trends data:', error);
+          qualityMetrics.history = generateCoverageHistory();
+        }
+      }
+    }
+
+    // Ensure history is not empty (fallback to generated data)
+    if (qualityMetrics.history.length === 0) {
+      console.log('No valid history data found, using generated data');
+      qualityMetrics.history = generateCoverageHistory();
     }
 
     return QualityMetricsSchema.parse(qualityMetrics);
