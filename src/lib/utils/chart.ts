@@ -15,6 +15,7 @@ import type {
 } from '../../components/charts/types/safe-chart';
 import type { PerformanceMetrics } from '../analytics/engine';
 import type { IssueClassification } from '../schemas/classification';
+import type { EnhancedIssueClassification } from '../schemas/enhanced-classification';
 
 /**
  * Chart theme configuration
@@ -190,7 +191,7 @@ export function convertPieData(
 }
 
 /**
- * Convert classification data to chart format
+ * Convert classification data to chart format (supports both legacy and enhanced)
  */
 export function convertClassificationData(classifications: IssueClassification[]): {
   categoryDistribution: SafeChartData<'pie'>;
@@ -231,6 +232,130 @@ export function convertClassificationData(classifications: IssueClassification[]
     priorityDistribution: convertCategoryData(priorityCount, 'Issues'),
     confidenceDistribution: convertCategoryData(confidenceRanges, 'Classifications'),
   };
+}
+
+/**
+ * Convert enhanced classification data to chart format
+ */
+export function convertEnhancedClassificationData(classifications: EnhancedIssueClassification[]): {
+  categoryDistribution: SafeChartData<'pie'>;
+  priorityDistribution: SafeChartData<'bar'>;
+  confidenceDistribution: SafeChartData<'bar'>;
+  scoreDistribution: SafeChartData<'bar'>;
+  scoreBreakdownChart: SafeChartData<'bar'>;
+} {
+  // Calculate category distribution
+  const categoryCount: Record<string, number> = {};
+  const priorityCount: Record<string, number> = {};
+  const confidenceRanges: Record<string, number> = {
+    'Low (0-0.3)': 0,
+    'Medium (0.3-0.7)': 0,
+    'High (0.7-1.0)': 0,
+  };
+  const scoreRanges: Record<string, number> = {
+    'Low (0-25)': 0,
+    'Medium (25-50)': 0,
+    'High (50-75)': 0,
+    'Very High (75-100)': 0,
+  };
+
+  // Score breakdown accumulator
+  const scoreBreakdownSum = {
+    category: 0,
+    priority: 0,
+    confidence: 0,
+    recency: 0,
+    custom: 0,
+  };
+
+  classifications.forEach(classification => {
+    // Count categories
+    categoryCount[classification.primaryCategory] =
+      (categoryCount[classification.primaryCategory] || 0) + 1;
+
+    // Count priorities
+    priorityCount[classification.estimatedPriority] =
+      (priorityCount[classification.estimatedPriority] || 0) + 1;
+
+    // Count confidence ranges
+    const confidence = classification.primaryConfidence;
+    if (confidence < 0.3) {
+      confidenceRanges['Low (0-0.3)'] = (confidenceRanges['Low (0-0.3)'] || 0) + 1;
+    } else if (confidence < 0.7) {
+      confidenceRanges['Medium (0.3-0.7)'] = (confidenceRanges['Medium (0.3-0.7)'] || 0) + 1;
+    } else {
+      confidenceRanges['High (0.7-1.0)'] = (confidenceRanges['High (0.7-1.0)'] || 0) + 1;
+    }
+
+    // Count score ranges
+    const score = classification.score;
+    if (score < 25) {
+      scoreRanges['Low (0-25)'] = (scoreRanges['Low (0-25)'] || 0) + 1;
+    } else if (score < 50) {
+      scoreRanges['Medium (25-50)'] = (scoreRanges['Medium (25-50)'] || 0) + 1;
+    } else if (score < 75) {
+      scoreRanges['High (50-75)'] = (scoreRanges['High (50-75)'] || 0) + 1;
+    } else {
+      scoreRanges['Very High (75-100)'] = (scoreRanges['Very High (75-100)'] || 0) + 1;
+    }
+
+    // Accumulate score breakdown
+    scoreBreakdownSum.category += classification.scoreBreakdown.category;
+    scoreBreakdownSum.priority += classification.scoreBreakdown.priority;
+    scoreBreakdownSum.confidence += classification.scoreBreakdown.confidence;
+    scoreBreakdownSum.recency += classification.scoreBreakdown.recency;
+    scoreBreakdownSum.custom += classification.scoreBreakdown.custom || 0;
+  });
+
+  // Calculate average score breakdown
+  const count = classifications.length;
+  const avgScoreBreakdown = {
+    Category: count > 0 ? scoreBreakdownSum.category / count : 0,
+    Priority: count > 0 ? scoreBreakdownSum.priority / count : 0,
+    Confidence: count > 0 ? scoreBreakdownSum.confidence / count : 0,
+    Recency: count > 0 ? scoreBreakdownSum.recency / count : 0,
+    Custom: count > 0 ? scoreBreakdownSum.custom / count : 0,
+  };
+
+  return {
+    categoryDistribution: convertPieData(categoryCount),
+    priorityDistribution: convertCategoryData(priorityCount, 'Issues'),
+    confidenceDistribution: convertCategoryData(confidenceRanges, 'Classifications'),
+    scoreDistribution: convertCategoryData(scoreRanges, 'Issues'),
+    scoreBreakdownChart: convertCategoryData(avgScoreBreakdown, 'Average Score'),
+  };
+}
+
+/**
+ * Type guard to check if classifications are enhanced
+ */
+export function isEnhancedClassificationArray(
+  classifications: IssueClassification[] | EnhancedIssueClassification[]
+): classifications is EnhancedIssueClassification[] {
+  return (
+    classifications.length > 0 &&
+    'score' in classifications[0]! &&
+    'scoreBreakdown' in classifications[0]!
+  );
+}
+
+/**
+ * Universal classification data converter (auto-detects type)
+ */
+export function convertClassificationDataUniversal(
+  classifications: IssueClassification[] | EnhancedIssueClassification[]
+): {
+  categoryDistribution: SafeChartData<'pie'>;
+  priorityDistribution: SafeChartData<'bar'>;
+  confidenceDistribution: SafeChartData<'bar'>;
+  scoreDistribution?: SafeChartData<'bar'>;
+  scoreBreakdownChart?: SafeChartData<'bar'>;
+} {
+  if (isEnhancedClassificationArray(classifications)) {
+    return convertEnhancedClassificationData(classifications);
+  } else {
+    return convertClassificationData(classifications);
+  }
 }
 
 /**

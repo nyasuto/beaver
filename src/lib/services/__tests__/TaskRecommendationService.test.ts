@@ -5,9 +5,15 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { TaskRecommendationService } from '../TaskRecommendationService';
+import {
+  TaskRecommendationService,
+  getDashboardTasks,
+  getEnhancedDashboardTasks,
+  validateTaskRecommendationMigration,
+} from '../TaskRecommendationService';
 import type { Issue } from '../../schemas/github';
 import type { TaskScore } from '../../classification/engine';
+import type { EnhancedTaskScore } from '../../types/enhanced-classification';
 
 // Mock dependencies
 vi.mock('../../classification/config-loader', () => ({
@@ -19,6 +25,52 @@ vi.mock('../../classification/config-loader', () => ({
       processingTimeMs: 0,
     })),
   })),
+}));
+
+vi.mock('../../classification/enhanced-engine', () => ({
+  createEnhancedClassificationEngine: vi.fn(() => ({
+    classifyIssuesBatch: vi.fn(() =>
+      Promise.resolve({
+        tasks: [],
+        totalAnalyzed: 0,
+        averageScore: 0,
+        processingTimeMs: 0,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+      })
+    ),
+    getPerformanceMetrics: vi.fn(() => ({
+      cacheHitRate: 0.75,
+      totalCacheHits: 15,
+      averageProcessingTime: 25,
+      throughput: 100,
+    })),
+  })),
+}));
+
+vi.mock('../../classification/enhanced-config-manager', () => ({
+  enhancedConfigManager: {
+    getConfig: vi.fn(() =>
+      Promise.resolve({
+        name: 'test-config',
+        version: '2.0.0',
+        scoring: {
+          weights: {
+            priority: 0.4,
+            category: 0.3,
+            confidence: 0.2,
+            recency: 0.1,
+          },
+          algorithms: {
+            priority: 'weighted',
+            category: 'bayesian',
+            confidence: 'entropy',
+            recency: 'exponential',
+          },
+        },
+      })
+    ),
+  },
 }));
 
 vi.mock('../../utils/markdown', () => ({
@@ -113,15 +165,9 @@ describe('TaskRecommendationService', () => {
     });
 
     it('should return original title if cleaning results in empty string', () => {
-      // Override the cleanTitle method to test the fallback behavior
-      const originalCleanTitle = cleanTitle;
-      const testCleanTitle = (title: string) => {
-        const cleaned = originalCleanTitle(title);
-        return cleaned || title;
-      };
-
-      expect(testCleanTitle('🟡 MEDIUM:')).toBe('🟡 MEDIUM:');
-      expect(testCleanTitle('CRITICAL:')).toBe('CRITICAL:');
+      // Test the actual implementation behavior
+      expect(cleanTitle('🟡 MEDIUM:')).toBe('🟡 MEDIUM:');
+      expect(cleanTitle('CRITICAL:')).toBe('CRITICAL:');
     });
   });
 
@@ -203,6 +249,207 @@ describe('TaskRecommendationService', () => {
 
       expect(result.topTasks[0].title).toBe('Fix authentication bug');
       expect(result.topTasks[0].priority).toBe('🟡 中');
+    });
+  });
+
+  describe('Enhanced Classification Support', () => {
+    const mockEnhancedTaskScore: EnhancedTaskScore = {
+      issueNumber: 456,
+      issueId: 456,
+      title: '🔴 CRITICAL: Enhanced Classification Test',
+      body: 'Enhanced classification test description.',
+      score: 95,
+      priority: 'critical',
+      category: 'bug',
+      confidence: 0.95,
+      reasons: ['High priority', 'Critical security bug', 'Affects multiple users'],
+      labels: ['priority: critical', 'type: bug', 'security'],
+      state: 'open',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      url: 'https://github.com/test/repo/issues/456',
+      scoreBreakdown: {
+        category: 30,
+        priority: 40,
+        confidence: 19,
+        recency: 6,
+        custom: 0,
+      },
+      metadata: {
+        configVersion: '2.0.0',
+        algorithmVersion: '2.0.0',
+        profileId: 'test-profile',
+        cacheHit: true,
+        processingTimeMs: 25,
+        repositoryContext: {
+          owner: 'test-owner',
+          repo: 'test-repo',
+          branch: 'main',
+        },
+      },
+      classification: {
+        issueId: 456,
+        issueNumber: 456,
+        primaryCategory: 'bug',
+        primaryConfidence: 0.95,
+        estimatedPriority: 'critical',
+        priorityConfidence: 0.9,
+        score: 95,
+        scoreBreakdown: {
+          category: 30,
+          priority: 40,
+          confidence: 19,
+          recency: 6,
+          custom: 0,
+        },
+        processingTimeMs: 25,
+        cacheHit: true,
+        configVersion: '2.0.0',
+        algorithmVersion: '2.0.0',
+        profileId: 'test-profile',
+        classifications: [
+          {
+            ruleId: 'security-critical',
+            ruleName: 'Security Critical Issues',
+            category: 'security',
+            confidence: 0.9,
+            reasons: ['Contains security keywords', 'High severity indicators'],
+            keywords: ['security', 'vulnerability', 'critical'],
+          },
+        ],
+        metadata: {
+          titleLength: 32,
+          bodyLength: 38,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 3,
+          existingLabels: ['priority: critical', 'type: bug', 'security'],
+          repositoryContext: {
+            owner: 'test-owner',
+            repo: 'test-repo',
+            branch: 'main',
+          },
+        },
+      },
+    };
+
+    it('should convert enhanced task score to enhanced recommendation', async () => {
+      const convertToEnhancedTaskRecommendation = (
+        TaskRecommendationService as any
+      ).convertToEnhancedTaskRecommendation.bind(TaskRecommendationService);
+      const result = await convertToEnhancedTaskRecommendation(mockEnhancedTaskScore);
+
+      expect(result.title).toBe('Enhanced Classification Test');
+      expect(result.score).toBe(95);
+      expect(result.scoreBreakdown).toEqual({
+        category: 30,
+        priority: 40,
+        confidence: 19,
+        recency: 6,
+        custom: 0,
+      });
+      expect(result.metadata.configVersion).toBe('2.0.0');
+      expect(result.metadata.algorithmVersion).toBe('2.0.0');
+      expect(result.metadata.cacheHit).toBe(true);
+      expect(result.classification.primaryCategory).toBe('bug');
+      expect(result.classification.primaryConfidence).toBe(0.95);
+    });
+
+    it('should calculate confidence distribution correctly', () => {
+      const calculateConfidenceDistribution = (
+        TaskRecommendationService as any
+      ).calculateConfidenceDistribution.bind(TaskRecommendationService);
+
+      const tasks = [
+        { ...mockEnhancedTaskScore, confidence: 0.2 },
+        { ...mockEnhancedTaskScore, confidence: 0.5 },
+        { ...mockEnhancedTaskScore, confidence: 0.8 },
+        { ...mockEnhancedTaskScore, confidence: 0.9 },
+      ];
+
+      const result = calculateConfidenceDistribution(tasks);
+
+      expect(result).toEqual({
+        'Low (0-0.3)': 1,
+        'Medium (0.3-0.7)': 1,
+        'High (0.7-1.0)': 2,
+      });
+    });
+  });
+
+  describe('Helper Functions', () => {
+    const mockIssues: Issue[] = [
+      {
+        id: 1,
+        node_id: 'I_test',
+        number: 1,
+        title: 'Test Issue',
+        body: 'Test description',
+        state: 'open',
+        locked: false,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        closed_at: null,
+        labels: [],
+        assignee: null,
+        assignees: [],
+        milestone: null,
+        comments: 0,
+        author_association: 'OWNER',
+        active_lock_reason: null,
+        user: {
+          login: 'testuser',
+          id: 1,
+          node_id: 'U_test',
+          avatar_url: 'https://avatar.url',
+          gravatar_id: null,
+          url: 'https://api.github.com/users/testuser',
+          html_url: 'https://github.com/testuser',
+          type: 'User',
+          site_admin: false,
+        },
+        html_url: 'https://github.com/test/repo/issues/1',
+        url: 'https://api.github.com/repos/test/repo/issues/1',
+        repository_url: 'https://api.github.com/repos/test/repo',
+        labels_url: 'https://api.github.com/repos/test/repo/issues/1/labels{/name}',
+        comments_url: 'https://api.github.com/repos/test/repo/issues/1/comments',
+        events_url: 'https://api.github.com/repos/test/repo/issues/1/events',
+      },
+    ];
+
+    it('should get dashboard tasks with legacy system by default', async () => {
+      const result = await getDashboardTasks(mockIssues, 3);
+
+      expect(result).toBeDefined();
+      expect(result.topTasks).toBeDefined();
+      expect(result.analysisMetrics).toBeDefined();
+      expect(result.lastUpdated).toBeDefined();
+    });
+
+    it('should get enhanced dashboard tasks when requested', async () => {
+      const result = await getEnhancedDashboardTasks(mockIssues, 3, {
+        owner: 'test-owner',
+        repo: 'test-repo',
+      });
+
+      expect(result).toBeDefined();
+      expect(result.topTasks).toBeDefined();
+      expect(result.performanceMetrics).toBeDefined();
+      expect(result.analysisMetrics).toBeDefined();
+    });
+
+    it('should validate migration between legacy and enhanced systems', async () => {
+      const result = await validateTaskRecommendationMigration(mockIssues, 3);
+
+      expect(result).toBeDefined();
+      expect(result.isValid).toBeDefined();
+      expect(result.scoreDifference).toBeDefined();
+      expect(result.categoryMatches).toBeDefined();
+      expect(result.priorityMatches).toBeDefined();
+      expect(result.confidenceDifference).toBeDefined();
+      expect(result.warnings).toBeDefined();
+      expect(result.errors).toBeDefined();
     });
   });
 });

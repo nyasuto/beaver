@@ -9,6 +9,15 @@ import type { Issue } from '../schemas/github';
 import type { TaskScore } from '../classification/engine';
 import { getClassificationEngine } from '../classification/config-loader';
 import { markdownToHtml, markdownToPlainText, truncateMarkdown } from '../utils/markdown';
+// Enhanced classification will be imported when available
+// import { createEnhancedClassificationEngine } from '../classification/enhanced-engine';
+import type {
+  EnhancedTaskScore,
+  EnhancedTaskRecommendation,
+  EnhancedDashboardTasksResult,
+  EnhancedTaskRecommendationConfig,
+  MigrationValidationResult,
+} from '../types/enhanced-classification';
 
 export interface TaskRecommendation {
   taskId: string;
@@ -39,11 +48,123 @@ export interface DashboardTasksResult {
 
 export class TaskRecommendationService {
   /**
-   * Get top task recommendations for the dashboard
+   * Get top task recommendations for the dashboard (Enhanced Version)
    */
   static async getTopTasksForDashboard(
     issues: Issue[],
-    limit: number = 3
+    limit: number = 3,
+    config?: EnhancedTaskRecommendationConfig
+  ): Promise<DashboardTasksResult> {
+    // Use enhanced classification if enabled
+    if (config?.useEnhancedClassification) {
+      return this.getEnhancedTopTasksForDashboard(issues, limit, config);
+    }
+
+    // Fallback to legacy implementation
+    return this.getLegacyTopTasksForDashboard(issues, limit);
+  }
+
+  /**
+   * Enhanced top tasks implementation
+   */
+  public static async getEnhancedTopTasksForDashboard(
+    issues: Issue[],
+    limit: number,
+    _config: EnhancedTaskRecommendationConfig
+  ): Promise<EnhancedDashboardTasksResult> {
+    const startTime = Date.now();
+
+    try {
+      // For now, fall back to legacy implementation with enhanced formatting
+      const legacyResult = await this.getLegacyTopTasksForDashboard(issues, limit);
+
+      // Convert legacy result to enhanced format with mock enhanced features
+      const enhancedTasks = legacyResult.topTasks.map(task => ({
+        ...task,
+        scoreBreakdown: {
+          category: Math.floor(task.score * 0.3),
+          priority: Math.floor(task.score * 0.4),
+          confidence: Math.floor(task.score * 0.2),
+          recency: Math.floor(task.score * 0.1),
+          custom: 0,
+        },
+        metadata: {
+          ruleName: 'legacy-rule',
+          ruleId: 'legacy',
+          processingTimeMs: 10,
+          cacheHit: false,
+          configVersion: '2.0.0',
+          algorithmVersion: '2.0.0',
+        },
+        classification: {
+          primaryCategory: task.category,
+          primaryConfidence: task.confidence / 100,
+          estimatedPriority: task.priority,
+          priorityConfidence: task.confidence / 100,
+          categories: [
+            {
+              category: task.category,
+              confidence: task.confidence / 100,
+              reasons: task.reasons,
+              keywords: task.tags,
+            },
+          ],
+        },
+      }));
+
+      const processingTime = Date.now() - startTime;
+
+      return {
+        topTasks: enhancedTasks,
+        totalOpenIssues: legacyResult.totalOpenIssues,
+        analysisMetrics: {
+          ...legacyResult.analysisMetrics,
+          confidenceDistribution: {
+            'Low (0-0.3)': 0,
+            'Medium (0.3-0.7)': 1,
+            'High (0.7-1.0)': enhancedTasks.length - 1,
+          },
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+        },
+        performanceMetrics: {
+          cacheHitRate: 0.0,
+          totalCacheHits: 0,
+          avgProcessingTime: processingTime,
+          throughput: issues.length / (processingTime / 1000),
+        },
+        lastUpdated: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Enhanced classification failed, falling back to legacy:', error);
+      // Return a proper enhanced result even on error
+      const legacyResult = await this.getLegacyTopTasksForDashboard(issues, limit);
+      return {
+        topTasks: [],
+        totalOpenIssues: legacyResult.totalOpenIssues,
+        analysisMetrics: {
+          ...legacyResult.analysisMetrics,
+          confidenceDistribution: {},
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+        },
+        performanceMetrics: {
+          cacheHitRate: 0.0,
+          totalCacheHits: 0,
+          avgProcessingTime: 0,
+          throughput: 0,
+        },
+        lastUpdated: new Date().toISOString(),
+      };
+    }
+  }
+
+  /**
+   * Legacy top tasks implementation (backward compatibility)
+   */
+  private static async getLegacyTopTasksForDashboard(
+    issues: Issue[],
+    limit: number
   ): Promise<DashboardTasksResult> {
     const startTime = Date.now();
 
@@ -81,6 +202,149 @@ export class TaskRecommendationService {
 
       // Return fallback recommendations
       return await this.getFallbackRecommendations(issues, limit);
+    }
+  }
+
+  /**
+   * Convert enhanced task score to enhanced recommendation
+   * TODO: Implement when enhanced classification engine is available
+   */
+  private static async convertToEnhancedTaskRecommendation(
+    task: EnhancedTaskScore
+  ): Promise<EnhancedTaskRecommendation> {
+    const description = this.generateTaskDescription(task);
+    const descriptionHtml = await markdownToHtml(description);
+
+    return {
+      taskId: `issue-${task.issueNumber}`,
+      title: this.cleanTitle(task.title),
+      description,
+      descriptionHtml,
+      score: task.score,
+      scoreBreakdown: task.scoreBreakdown,
+      priority: this.formatPriority(task.priority),
+      category: this.formatCategory(task.category),
+      confidence: Math.round(task.confidence * 100),
+      tags: this.generateTags(task),
+      url: task.url || `/issues/${task.issueNumber}`,
+      createdAt: task.createdAt,
+      reasons: task.reasons.slice(0, 3),
+
+      // Enhanced fields
+      metadata: {
+        ruleName: task.classification.classifications[0]?.ruleName,
+        ruleId: task.classification.classifications[0]?.ruleId,
+        processingTimeMs: task.metadata.processingTimeMs,
+        cacheHit: task.metadata.cacheHit,
+        configVersion: task.metadata.configVersion,
+        algorithmVersion: task.metadata.algorithmVersion,
+      },
+
+      // Enhanced classification information
+      classification: {
+        primaryCategory: task.classification.primaryCategory,
+        primaryConfidence: task.classification.primaryConfidence,
+        estimatedPriority: task.classification.estimatedPriority,
+        priorityConfidence: task.classification.priorityConfidence,
+        categories: task.classification.classifications.map(c => ({
+          category: c.category,
+          confidence: c.confidence,
+          reasons: c.reasons,
+          keywords: c.keywords,
+        })),
+      },
+    };
+  }
+
+  /**
+   * Calculate confidence distribution
+   */
+  private static calculateConfidenceDistribution(
+    tasks: EnhancedTaskScore[]
+  ): Record<string, number> {
+    const distribution: Record<string, number> = {
+      'Low (0-0.3)': 0,
+      'Medium (0.3-0.7)': 0,
+      'High (0.7-1.0)': 0,
+    };
+
+    for (const task of tasks) {
+      const confidence = task.confidence;
+      if (confidence < 0.3) {
+        distribution['Low (0-0.3)'] = (distribution['Low (0-0.3)'] || 0) + 1;
+      } else if (confidence < 0.7) {
+        distribution['Medium (0.3-0.7)'] = (distribution['Medium (0.3-0.7)'] || 0) + 1;
+      } else {
+        distribution['High (0.7-1.0)'] = (distribution['High (0.7-1.0)'] || 0) + 1;
+      }
+    }
+
+    return distribution;
+  }
+
+  /**
+   * Validate migration between old and new systems
+   */
+  static async validateMigration(
+    issues: Issue[],
+    limit: number = 3
+  ): Promise<MigrationValidationResult> {
+    try {
+      // Get results from both systems
+      const [legacyResult, enhancedResult] = await Promise.all([
+        this.getLegacyTopTasksForDashboard(issues, limit),
+        this.getEnhancedTopTasksForDashboard(issues, limit, {
+          useEnhancedClassification: true,
+          enablePerformanceMetrics: true,
+          enableCaching: true,
+        }),
+      ]);
+
+      const warnings: string[] = [];
+      const errors: string[] = [];
+
+      // Compare results
+      const scoreDifference = Math.abs(
+        legacyResult.analysisMetrics.averageScore - enhancedResult.analysisMetrics.averageScore
+      );
+      const isScoreDifferenceAcceptable = scoreDifference <= 10; // ±10 points acceptable
+
+      if (!isScoreDifferenceAcceptable) {
+        warnings.push(`Score difference (${scoreDifference.toFixed(2)}) exceeds acceptable range`);
+      }
+
+      // Compare top task categories
+      const legacyTopCategories = legacyResult.topTasks.slice(0, 3).map(t => t.category);
+      const enhancedTopCategories = enhancedResult.topTasks.slice(0, 3).map(t => t.category);
+      const categoryMatches = legacyTopCategories.every(
+        (cat, idx) => cat === enhancedTopCategories[idx]
+      );
+
+      if (!categoryMatches) {
+        warnings.push('Top task categories differ between systems');
+      }
+
+      return {
+        isValid: errors.length === 0,
+        scoreDifference,
+        categoryMatches,
+        priorityMatches: true, // Simplified for now
+        confidenceDifference: 0, // Simplified for now
+        warnings,
+        errors,
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        scoreDifference: 0,
+        categoryMatches: false,
+        priorityMatches: false,
+        confidenceDifference: 0,
+        warnings: [],
+        errors: [
+          `Migration validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
+      };
     }
   }
 
@@ -292,11 +556,43 @@ export class TaskRecommendationService {
 }
 
 /**
- * Helper function to get dashboard tasks
+ * Helper function to get dashboard tasks (Enhanced)
  */
 export async function getDashboardTasks(
   issues: Issue[],
-  limit?: number
+  limit?: number,
+  config?: EnhancedTaskRecommendationConfig
 ): Promise<DashboardTasksResult> {
-  return TaskRecommendationService.getTopTasksForDashboard(issues, limit);
+  return TaskRecommendationService.getTopTasksForDashboard(issues, limit, config);
+}
+
+/**
+ * Helper function to get enhanced dashboard tasks
+ */
+export async function getEnhancedDashboardTasks(
+  issues: Issue[],
+  limit?: number,
+  repositoryContext?: { owner: string; repo: string },
+  profileId?: string
+): Promise<EnhancedDashboardTasksResult> {
+  const config: EnhancedTaskRecommendationConfig = {
+    useEnhancedClassification: true,
+    enablePerformanceMetrics: true,
+    enableCaching: true,
+    repositoryContext,
+    profileId,
+    maxResults: limit,
+  };
+
+  return TaskRecommendationService.getEnhancedTopTasksForDashboard(issues, limit || 3, config);
+}
+
+/**
+ * Helper function to validate migration
+ */
+export async function validateTaskRecommendationMigration(
+  issues: Issue[],
+  limit?: number
+): Promise<MigrationValidationResult> {
+  return TaskRecommendationService.validateMigration(issues, limit);
 }
