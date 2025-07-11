@@ -24,7 +24,6 @@ const stats = statsResult.success ? statsResult.data : null;
 // Calculate derived metrics (preserve -1 for fallback data)
 const urgentIssues =
   stats && stats.meta.source !== 'fallback' ? stats.priority.critical + stats.priority.high : -1;
-const recentActivity = stats?.recentActivity.thisWeek ?? -1;
 
 // Export interface for type checking
 export interface Props {
@@ -34,7 +33,7 @@ export interface Props {
 const { class: className = '' } = Astro.props;
 ---
 
-<div class={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 ${className}`}>
+<div class={`grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 ${className}`}>
   <!-- オープンなIssue -->
   <StatCard
     title="オープンなIssue"
@@ -51,15 +50,6 @@ const { class: className = '' } = Astro.props;
     icon="🚨"
     description="クリティカル・高優先度"
     color="red"
-  />
-
-  <!-- 最近の活動 -->
-  <StatCard
-    title="最近の活動"
-    value={recentActivity}
-    icon="📈"
-    description="今週更新された"
-    color="blue"
   />
 </div>
 
