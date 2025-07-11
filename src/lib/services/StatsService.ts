@@ -115,7 +115,6 @@ export class StatsService {
       const fallbackStats = this.getFallbackStats();
       return { success: true, data: fallbackStats };
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('統計データ取得エラー:', error);
       const fallbackStats = this.getFallbackStats();
       return { success: true, data: fallbackStats };
@@ -158,7 +157,6 @@ export class StatsService {
 
       throw new Error('No data source available');
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('新しい統計データの取得に失敗:', error);
       return {
         success: false,

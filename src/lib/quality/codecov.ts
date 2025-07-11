@@ -207,7 +207,6 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
 
   // If no token is configured, return sample data
   if (!config.token) {
-    // eslint-disable-next-line no-console
     console.warn('Codecov token not configured, using sample data');
     return generateSampleData();
   }
@@ -217,7 +216,6 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
     const coverageResult = await getRepositoryCoverage(config);
 
     if (!coverageResult.success) {
-      // eslint-disable-next-line no-console
       console.error('Failed to fetch coverage data:', coverageResult.error);
       return generateSampleData();
     }
@@ -226,7 +224,6 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
     const trendsResult = await getCoverageTrends(config);
 
     if (!trendsResult.success) {
-      // eslint-disable-next-line no-console
       console.warn('Failed to fetch trends data:', trendsResult.error);
     }
 
@@ -244,7 +241,6 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
 
     return QualityMetricsSchema.parse(qualityMetrics);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Error fetching quality metrics:', error);
     return generateSampleData();
   }

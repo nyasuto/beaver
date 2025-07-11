@@ -29,7 +29,6 @@ try {
   qualityData = await getQualityMetrics();
   isDataAvailable = true;
 } catch (error) {
-  // eslint-disable-next-line no-console
   console.error('品質データの取得に失敗しました:', error);
   errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
 

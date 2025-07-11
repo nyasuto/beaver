@@ -69,7 +69,6 @@ export const GET: APIRoute = async () => {
       },
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Environment health check error:', error);
 
     return new Response(
@@ -157,7 +156,6 @@ export const POST: APIRoute = async ({ request }) => {
       }
     );
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Environment validation error:', error);
 
     return new Response(

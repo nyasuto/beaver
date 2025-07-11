@@ -55,7 +55,6 @@ function readJsonFile<T>(filePath: string, schema: z.ZodSchema<T>): T {
     return schema.parse(jsonData);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // eslint-disable-next-line no-console
       console.error('データ検証エラー:', error.issues);
       throw new Error(`データ形式が不正です: ${filePath}`);
     }
@@ -227,7 +226,7 @@ export function getFallbackIssues(): GitHubIssue[] {
     return readJsonFile(fallbackPath, IssuesArraySchema);
   } catch (error) {
     // フォールバックデータが GitHub API schema と合わない場合は空配列を返す
-    // eslint-disable-next-line no-console
+
     console.warn('サンプルデータの読み込みに失敗しました。空のデータを使用します。', error);
     return [];
   }
@@ -242,7 +241,6 @@ export function getIssuesWithFallback(): GitHubIssue[] {
   try {
     return getStaticIssues();
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn('静的データの読み込みに失敗しました。フォールバックデータを使用します:', error);
     return getFallbackIssues();
   }

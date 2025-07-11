@@ -251,7 +251,7 @@ export class EnvValidator {
       return { success: true, data: undefined };
     } catch (error) {
       // ネットワークエラーなどの場合は警告レベルで継続
-      // eslint-disable-next-line no-console
+
       console.warn('GitHub API connection test failed:', error);
       return { success: true, data: undefined };
     }

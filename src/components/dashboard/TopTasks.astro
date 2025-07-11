@@ -17,7 +17,6 @@ let dashboardTasks;
 try {
   dashboardTasks = await getDashboardTasks(issues, 3);
 } catch (error) {
-  // eslint-disable-next-line no-console
   console.error('Failed to get dashboard tasks:', error);
   dashboardTasks = {
     topTasks: [],

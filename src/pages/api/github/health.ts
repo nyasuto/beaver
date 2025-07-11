@@ -157,7 +157,6 @@ export const GET: APIRoute = async ({ request: _request }) => {
   } catch (error) {
     // Log error for debugging
     if (process.env['NODE_ENV'] === 'development') {
-      // eslint-disable-next-line no-console
       console.error('GitHub Health Check Error:', error);
     }
 

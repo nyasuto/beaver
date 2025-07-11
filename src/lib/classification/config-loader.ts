@@ -16,7 +16,6 @@ export function loadClassificationConfig(): ClassificationConfig {
     const config = ClassificationConfigSchema.parse(classificationRulesConfig);
     return config;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to load classification configuration:', error);
 
     // Return a minimal fallback configuration
