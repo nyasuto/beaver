@@ -136,7 +136,7 @@ export class EnvValidator {
       return { success: true, data: validatedEnv };
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const firstError = error.errors[0];
+        const firstError = error.issues[0];
         if (!firstError) {
           return {
             success: false,

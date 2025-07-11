@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Validate configuration update request
     const UpdateSchema = z.object({
       section: z.enum(['ui', 'features', 'performance']),
-      settings: z.record(z.unknown()),
+      settings: z.record(z.string(), z.unknown()),
     });
 
     const updateRequest = UpdateSchema.parse(body);

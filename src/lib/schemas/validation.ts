@@ -267,15 +267,15 @@ export class ValidationError extends Error {
     this.name = 'ValidationError';
   }
 
-  get errors() {
-    return this.zodError?.errors || [];
+  get issues() {
+    return this.zodError?.issues || [];
   }
 
   get fieldErrors() {
     if (!this.zodError) return {};
 
     const fieldErrors: Record<string, string[]> = {};
-    for (const error of this.zodError.errors) {
+    for (const error of this.zodError.issues) {
       const field = error.path.join('.');
       if (!fieldErrors[field]) {
         fieldErrors[field] = [];
@@ -290,7 +290,7 @@ export class ValidationError extends Error {
  * Format validation errors for display
  */
 export function formatValidationErrors(errors: z.ZodError): string[] {
-  return errors.errors.map(error => {
+  return errors.issues.map(error => {
     const field = error.path.join('.');
     return field ? `${field}: ${error.message}` : error.message;
   });
@@ -317,12 +317,12 @@ export function conditionalValidation<T>(
   schema: z.ZodSchema<unknown>
 ) {
   return z.unknown().superRefine((value: unknown, ctx: z.RefinementCtx): void => {
-    if (condition(ctx.path[0] as T)) {
+    if (condition(value as T)) {
       const result = schema.safeParse(value);
       if (!result.success) {
-        result.error.errors.forEach(error => {
+        result.error.issues.forEach(error => {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: 'custom',
             message: error.message,
             path: error.path,
           });
@@ -355,9 +355,10 @@ export async function validateAsync<T>(
           success: false,
           errors: new z.ZodError([
             {
-              code: z.ZodIssueCode.custom,
+              code: 'custom',
               message: typeof result === 'string' ? result : 'Async validation failed',
               path: [],
+              input: undefined,
             },
           ]),
         };
@@ -370,9 +371,10 @@ export async function validateAsync<T>(
       success: false,
       errors: new z.ZodError([
         {
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           message: error instanceof Error ? error.message : 'Async validation error',
           path: [],
+          input: undefined,
         },
       ]),
     };

@@ -56,7 +56,7 @@ function readJsonFile<T>(filePath: string, schema: z.ZodSchema<T>): T {
   } catch (error) {
     if (error instanceof z.ZodError) {
       // eslint-disable-next-line no-console
-      console.error('データ検証エラー:', error.errors);
+      console.error('データ検証エラー:', error.issues);
       throw new Error(`データ形式が不正です: ${filePath}`);
     }
     throw error;

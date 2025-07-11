@@ -45,7 +45,7 @@ function validateEnvironment() {
   } catch (error) {
     console.warn('⚠️ 環境変数が設定されていません:');
     if (error instanceof z.ZodError) {
-      error.errors.forEach((err) => {
+      error.issues.forEach((err) => {
         console.warn(`  - ${err.path.join('.')}: ${err.message}`);
       });
     }

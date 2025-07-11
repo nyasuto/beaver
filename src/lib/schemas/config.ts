@@ -255,7 +255,7 @@ export function parseEnvironment(): Environment {
 export class ConfigurationError extends Error {
   constructor(
     message: string,
-    public errors?: z.ZodError
+    public issues?: z.ZodError
   ) {
     super(message);
     this.name = 'ConfigurationError';

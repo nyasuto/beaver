@@ -105,14 +105,14 @@ export const PaginatedAPIResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T
       .object({
         totalCount: z.number().int().min(0),
         filteredCount: z.number().int().min(0),
-        query: z.record(z.unknown()).optional(),
+        query: z.record(z.string(), z.unknown()).optional(),
         sort: z
           .object({
             field: z.string(),
             direction: z.enum(['asc', 'desc']),
           })
           .optional(),
-        filters: z.record(z.unknown()).optional(),
+        filters: z.record(z.string(), z.unknown()).optional(),
       })
       .optional(),
   });
@@ -127,16 +127,18 @@ export const HealthCheckResponseSchema = z.object({
   uptime: z.number().int().min(0),
   environment: z.string(),
   checks: z.record(
+    z.string(),
     z.object({
       status: z.enum(['pass', 'fail', 'warn']),
       message: z.string().optional(),
       timestamp: z.string().datetime(),
       duration: z.number().optional(),
-      details: z.record(z.unknown()).optional(),
+      details: z.record(z.string(), z.unknown()).optional(),
     })
   ),
   dependencies: z
     .record(
+      z.string(),
       z.object({
         status: z.enum(['connected', 'disconnected', 'error']),
         responseTime: z.number().optional(),
@@ -177,8 +179,8 @@ export type RateLimit = z.infer<typeof RateLimitSchema>;
 export const APIRequestSchema = z.object({
   method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']),
   url: z.string().url(),
-  headers: z.record(z.string()).optional(),
-  query: z.record(z.union([z.string(), z.array(z.string())])).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
+  query: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
   body: z.any().optional(),
   timestamp: z.string().datetime(),
   requestId: z.string().uuid(),
@@ -194,7 +196,7 @@ export type APIRequest = z.infer<typeof APIRequestSchema>;
  */
 export const APIResponseValidationSchema = z.object({
   status: z.number().int().min(100).max(599),
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   body: z.any().optional(),
   timestamp: z.string().datetime(),
   requestId: z.string().uuid(),
@@ -271,6 +273,7 @@ export const SearchResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
     pagination: PaginationMetaSchema,
     facets: z
       .record(
+        z.string(),
         z.array(
           z.object({
             value: z.string(),
@@ -285,7 +288,7 @@ export const SearchResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
       searchTime: z.number().min(0),
       exactMatch: z.boolean(),
       fuzzyMatch: z.boolean(),
-      filters: z.record(z.unknown()).optional(),
+      filters: z.record(z.string(), z.unknown()).optional(),
     }),
   });
 
@@ -305,7 +308,7 @@ export const FileUploadResponseSchema = z.object({
     thumbnailUrl: z.string().url().optional(),
     uploadedAt: z.string().datetime(),
     expiresAt: z.string().datetime().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
   error: ErrorDetailsSchema.optional(),
 });
@@ -360,8 +363,8 @@ export const APIEndpointSchema = z.object({
     .optional(),
   validation: z
     .object({
-      headers: z.record(z.unknown()).optional(),
-      query: z.record(z.unknown()).optional(),
+      headers: z.record(z.string(), z.unknown()).optional(),
+      query: z.record(z.string(), z.unknown()).optional(),
       body: z.unknown().optional(),
     })
     .optional(),
