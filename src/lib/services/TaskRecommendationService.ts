@@ -605,10 +605,7 @@ export class TaskRecommendationService {
       );
       score += this.getCategoryScore(category);
 
-      // Age scoring (newer issues get slightly higher priority)
-      const ageInDays = (Date.now() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24);
-      const ageScore = Math.max(0, 20 - ageInDays * 0.5);
-      score += ageScore;
+      // Age scoring removed per user feedback - recency evaluation is unnecessary
 
       // Label count scoring
       score += Math.min(issue.labels.length * 2, 10);
@@ -736,10 +733,7 @@ export class TaskRecommendationService {
       reasons.push('複数のラベルが付いています');
     }
 
-    const ageInDays = (Date.now() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    if (ageInDays < 7) {
-      reasons.push('最近作成されたIssueです');
-    }
+    // Age-based reasoning removed - recency evaluation is unnecessary
 
     return reasons.slice(0, 3); // Return max 3 reasons
   }

@@ -479,5 +479,304 @@
     "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/127/comments",
     "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/127/events",
     "comments": 2
+  },
+  {
+    "id": 6,
+    "node_id": "I_kwDOABCDEF4ABcDK",
+    "number": 128,
+    "title": "CRITICAL: Data corruption in user profiles",
+    "body": "## Critical Security Issue\n🚨 **URGENT**: User profile data is being corrupted when users update their information.\n\n## Impact\n- User data loss\n- Potential security breach\n- Production system affected\n- Multiple user reports\n\n## Details\n- Started happening after deployment yesterday\n- Affects ~50 users so far\n- Data is being overwritten with null values\n- Database rollback may be needed\n\n## Immediate Actions Required\n1. Rollback recent deployment\n2. Restore user data from backup\n3. Investigate root cause\n4. Implement fix\n5. Deploy hotfix",
+    "state": "open",
+    "locked": false,
+    "assignee": {
+      "id": 12349,
+      "node_id": "U_kwDOABCDEF4ABcDK",
+      "login": "security-team",
+      "avatar_url": "https://github.com/security-team.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/security-team",
+      "html_url": "https://github.com/security-team",
+      "type": "User",
+      "site_admin": false
+    },
+    "assignees": [
+      {
+        "id": 12349,
+        "node_id": "U_kwDOABCDEF4ABcDK",
+        "login": "security-team",
+        "avatar_url": "https://github.com/security-team.png",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/security-team",
+        "html_url": "https://github.com/security-team",
+        "type": "User",
+        "site_admin": false
+      }
+    ],
+    "user": {
+      "id": 54326,
+      "node_id": "U_kwDOABCDEF4ABcDK",
+      "login": "ops-engineer",
+      "avatar_url": "https://github.com/ops-engineer.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ops-engineer",
+      "html_url": "https://github.com/ops-engineer",
+      "type": "User",
+      "site_admin": false
+    },
+    "labels": [
+      {
+        "id": 1015,
+        "node_id": "L_kwDOABCDEF4ABcDK",
+        "name": "critical",
+        "color": "B60205",
+        "description": "Critical priority issue",
+        "default": false
+      },
+      {
+        "id": 1016,
+        "node_id": "L_kwDOABCDEF4ABcDK",
+        "name": "security",
+        "color": "FF0000",
+        "description": "Security-related issue",
+        "default": false
+      },
+      {
+        "id": 1017,
+        "node_id": "L_kwDOABCDEF4ABcDK",
+        "name": "bug",
+        "color": "ee0701",
+        "description": "Something isn't working",
+        "default": false
+      },
+      {
+        "id": 1018,
+        "node_id": "L_kwDOABCDEF4ABcDK",
+        "name": "production",
+        "color": "D73A4A",
+        "description": "Production environment issue",
+        "default": false
+      }
+    ],
+    "milestone": {
+      "id": 2005,
+      "node_id": "M_kwDOABCDEF4ABcDK",
+      "number": 999,
+      "title": "Hotfix v1.2.1",
+      "description": "Critical production fixes",
+      "creator": {
+        "id": 54326,
+        "node_id": "U_kwDOABCDEF4ABcDK",
+        "login": "ops-engineer",
+        "avatar_url": "https://github.com/ops-engineer.png",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/ops-engineer",
+        "html_url": "https://github.com/ops-engineer",
+        "type": "User",
+        "site_admin": false
+      },
+      "open_issues": 1,
+      "closed_issues": 0,
+      "state": "open",
+      "created_at": "2023-12-05T09:00:00Z",
+      "updated_at": "2023-12-05T09:00:00Z",
+      "due_on": "2023-12-05T18:00:00Z",
+      "closed_at": null
+    },
+    "created_at": "2023-12-05T09:15:00Z",
+    "updated_at": "2023-12-05T09:15:00Z",
+    "closed_at": null,
+    "author_association": "MEMBER",
+    "active_lock_reason": null,
+    "html_url": "https://github.com/nyasuto/beaver/issues/128",
+    "url": "https://api.github.com/repos/nyasuto/beaver/issues/128",
+    "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+    "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/128/labels{/name}",
+    "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/128/comments",
+    "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/128/events",
+    "comments": 0
+  },
+  {
+    "id": 7,
+    "node_id": "I_kwDOABCDEF4ABcDL",
+    "number": 129,
+    "title": "Add unit tests for authentication module",
+    "body": "## Test Coverage Issue\nThe authentication module currently has no unit tests, which is a risk for our codebase.\n\n## Scope\n- Test login functionality\n- Test password validation\n- Test session management\n- Test error handling\n- Test edge cases\n\n## Requirements\n- Achieve 95% test coverage\n- Include both positive and negative test cases\n- Mock external dependencies\n- Add integration tests for auth flow\n\n## Priority\nWhile not urgent, this is important for code quality and maintenance.",
+    "state": "open",
+    "locked": false,
+    "assignee": {
+      "id": 12350,
+      "node_id": "U_kwDOABCDEF4ABcDL",
+      "login": "test-engineer",
+      "avatar_url": "https://github.com/test-engineer.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/test-engineer",
+      "html_url": "https://github.com/test-engineer",
+      "type": "User",
+      "site_admin": false
+    },
+    "assignees": [
+      {
+        "id": 12350,
+        "node_id": "U_kwDOABCDEF4ABcDL",
+        "login": "test-engineer",
+        "avatar_url": "https://github.com/test-engineer.png",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/test-engineer",
+        "html_url": "https://github.com/test-engineer",
+        "type": "User",
+        "site_admin": false
+      }
+    ],
+    "user": {
+      "id": 54327,
+      "node_id": "U_kwDOABCDEF4ABcDL",
+      "login": "code-reviewer",
+      "avatar_url": "https://github.com/code-reviewer.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/code-reviewer",
+      "html_url": "https://github.com/code-reviewer",
+      "type": "User",
+      "site_admin": false
+    },
+    "labels": [
+      {
+        "id": 1019,
+        "node_id": "L_kwDOABCDEF4ABcDL",
+        "name": "test",
+        "color": "0E8A16",
+        "description": "Testing-related issue",
+        "default": false
+      },
+      {
+        "id": 1020,
+        "node_id": "L_kwDOABCDEF4ABcDL",
+        "name": "priority: low",
+        "color": "0E8A16",
+        "description": "Low priority issue",
+        "default": false
+      },
+      {
+        "id": 1021,
+        "node_id": "L_kwDOABCDEF4ABcDL",
+        "name": "technical-debt",
+        "color": "FBCA04",
+        "description": "Technical debt issue",
+        "default": false
+      }
+    ],
+    "milestone": {
+      "id": 2006,
+      "node_id": "M_kwDOABCDEF4ABcDL",
+      "number": 13,
+      "title": "v1.5.0",
+      "description": "Quality improvements",
+      "creator": {
+        "id": 54327,
+        "node_id": "U_kwDOABCDEF4ABcDL",
+        "login": "code-reviewer",
+        "avatar_url": "https://github.com/code-reviewer.png",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/code-reviewer",
+        "html_url": "https://github.com/code-reviewer",
+        "type": "User",
+        "site_admin": false
+      },
+      "open_issues": 8,
+      "closed_issues": 2,
+      "state": "open",
+      "created_at": "2023-11-01T09:00:00Z",
+      "updated_at": "2023-12-04T16:00:00Z",
+      "due_on": "2024-03-31T23:59:59Z",
+      "closed_at": null
+    },
+    "created_at": "2023-11-15T14:00:00Z",
+    "updated_at": "2023-12-04T16:00:00Z",
+    "closed_at": null,
+    "author_association": "COLLABORATOR",
+    "active_lock_reason": null,
+    "html_url": "https://github.com/nyasuto/beaver/issues/129",
+    "url": "https://api.github.com/repos/nyasuto/beaver/issues/129",
+    "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+    "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/129/labels{/name}",
+    "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/129/comments",
+    "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/129/events",
+    "comments": 1
+  },
+  {
+    "id": 8,
+    "node_id": "I_kwDOABCDEF4ABcDM",
+    "number": 130,
+    "title": "Feature request: Export data to CSV",
+    "body": "## Feature Request\nUsers have requested the ability to export their data to CSV format for analysis in external tools.\n\n## Use Cases\n- Generate reports for management\n- Analyze trends in spreadsheet applications\n- Share data with external stakeholders\n- Create custom visualizations\n\n## Requirements\n- Export all issues data\n- Export filtered data based on search criteria\n- Include custom fields in export\n- Support for different date formats\n- Progress indicator for large exports\n\n## Nice to Have\n- Export to Excel format\n- Scheduled exports\n- Export templates\n- Email delivery of exports",
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [],
+    "user": {
+      "id": 54328,
+      "node_id": "U_kwDOABCDEF4ABcDM",
+      "login": "product-manager",
+      "avatar_url": "https://github.com/product-manager.png",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/product-manager",
+      "html_url": "https://github.com/product-manager",
+      "type": "User",
+      "site_admin": false
+    },
+    "labels": [
+      {
+        "id": 1022,
+        "node_id": "L_kwDOABCDEF4ABcDM",
+        "name": "feature",
+        "color": "0E8A16",
+        "description": "New feature or request",
+        "default": false
+      },
+      {
+        "id": 1023,
+        "node_id": "L_kwDOABCDEF4ABcDM",
+        "name": "export",
+        "color": "1D76DB",
+        "description": "Data export feature",
+        "default": false
+      }
+    ],
+    "milestone": {
+      "id": 2007,
+      "node_id": "M_kwDOABCDEF4ABcDM",
+      "number": 14,
+      "title": "v2.0.0",
+      "description": "Major feature release",
+      "creator": {
+        "id": 54328,
+        "node_id": "U_kwDOABCDEF4ABcDM",
+        "login": "product-manager",
+        "avatar_url": "https://github.com/product-manager.png",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/product-manager",
+        "html_url": "https://github.com/product-manager",
+        "type": "User",
+        "site_admin": false
+      },
+      "open_issues": 15,
+      "closed_issues": 3,
+      "state": "open",
+      "created_at": "2023-12-01T10:00:00Z",
+      "updated_at": "2023-12-04T15:00:00Z",
+      "due_on": "2024-06-30T23:59:59Z",
+      "closed_at": null
+    },
+    "created_at": "2023-12-04T15:00:00Z",
+    "updated_at": "2023-12-04T15:00:00Z",
+    "closed_at": null,
+    "author_association": "MEMBER",
+    "active_lock_reason": null,
+    "html_url": "https://github.com/nyasuto/beaver/issues/130",
+    "url": "https://api.github.com/repos/nyasuto/beaver/issues/130",
+    "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+    "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/130/labels{/name}",
+    "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/130/comments",
+    "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/130/events",
+    "comments": 5
   }
 ]
