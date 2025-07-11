@@ -7,7 +7,7 @@
  */
 
 import StatCard from './StatCard.astro';
-import { getStatsService } from '../../lib/services/StatsService';
+import { getStatsService, type UrgentIssueSummary } from '../../lib/services/StatsService';
 
 // Get unified statistics using the StatsService
 const statsService = getStatsService();
@@ -24,6 +24,15 @@ const stats = statsResult.success ? statsResult.data : null;
 // Calculate derived metrics (preserve -1 for fallback data)
 const urgentIssues =
   stats && stats.meta.source !== 'fallback' ? stats.priority.critical + stats.priority.high : -1;
+
+// Get urgent issues summary for tooltip
+let urgentIssueSummary: UrgentIssueSummary | null = null;
+if (stats && stats.meta.source !== 'fallback' && urgentIssues > 0) {
+  const summaryResult = await statsService.getUrgentIssuesSummary();
+  if (summaryResult.success) {
+    urgentIssueSummary = summaryResult.data;
+  }
+}
 
 // Export interface for type checking
 export interface Props {
@@ -50,6 +59,12 @@ const { class: className = '' } = Astro.props;
     icon="🚨"
     description="クリティカル・高優先度"
     color="red"
+    tooltip={urgentIssueSummary
+      ? {
+          enabled: true,
+          content: urgentIssueSummary.issues,
+        }
+      : undefined}
   />
 </div>
 

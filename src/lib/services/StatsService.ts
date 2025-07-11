@@ -50,6 +50,26 @@ export const UnifiedStatsSchema = z.object({
 
 export type UnifiedStats = z.infer<typeof UnifiedStatsSchema>;
 
+// 緊急Issue詳細の型定義
+export const UrgentIssueSummarySchema = z.object({
+  totalUrgent: z.number(),
+  critical: z.number(),
+  high: z.number(),
+  issues: z.array(
+    z.object({
+      number: z.number(),
+      title: z.string(),
+      priority: z.enum(['critical', 'high']),
+      category: z.string(),
+      url: z.string(),
+      labels: z.array(z.string()),
+      description: z.string().optional(),
+    })
+  ),
+});
+
+export type UrgentIssueSummary = z.infer<typeof UrgentIssueSummarySchema>;
+
 // 統計オプション
 export const StatsOptionsSchema = z.object({
   includeRecentActivity: z.boolean().default(true),
@@ -387,6 +407,125 @@ export class StatsService {
       data: stats,
       timestamp: Date.now(),
     });
+  }
+
+  /**
+   * 緊急Issue（Critical + High Priority）の詳細サマリーを取得
+   */
+  async getUrgentIssuesSummary(): Promise<Result<UrgentIssueSummary, Error>> {
+    try {
+      const issues = getIssuesWithFallback();
+      const openIssues = issues.filter(issue => issue.state === 'open');
+
+      const urgentIssues = openIssues
+        .map(issue => {
+          const priority = this.extractPriorityFromLabels(issue.labels);
+          const category = this.extractCategoryFromLabels(issue.labels);
+
+          return {
+            ...issue,
+            priority,
+            category,
+          };
+        })
+        .filter(issue => issue.priority === 'critical' || issue.priority === 'high')
+        .map(issue => ({
+          number: issue.number,
+          title: issue.title,
+          priority: issue.priority as 'critical' | 'high',
+          category: this.formatCategory(issue.category),
+          url: issue.html_url || `https://github.com/nyasuto/beaver/issues/${issue.number}`,
+          labels: issue.labels.map(label => label.name),
+          description: this.extractDescription(issue.body),
+        }))
+        .sort((a, b) => {
+          // Critical を High より先にソート
+          if (a.priority === 'critical' && b.priority === 'high') return -1;
+          if (a.priority === 'high' && b.priority === 'critical') return 1;
+          return b.number - a.number; // 新しいものから
+        });
+
+      const critical = urgentIssues.filter(issue => issue.priority === 'critical').length;
+      const high = urgentIssues.filter(issue => issue.priority === 'high').length;
+
+      const summary: UrgentIssueSummary = {
+        totalUrgent: critical + high,
+        critical,
+        high,
+        issues: urgentIssues.slice(0, 10), // 最大10件
+      };
+
+      return { success: true, data: summary };
+    } catch (error) {
+      console.error('Failed to get urgent issues summary:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error('Unknown error'),
+      };
+    }
+  }
+
+  /**
+   * Issue本文から短い説明を抽出
+   */
+  private extractDescription(body: string | null): string {
+    if (!body) return '';
+
+    // マークダウンの見出しやコードブロックを除去して最初の文を取得
+    const cleanText = body
+      .replace(/```[\s\S]*?```/g, '') // コードブロック除去
+      .replace(/`[^`]*`/g, '') // インラインコード除去
+      .replace(/#{1,6}\s+/g, '') // 見出し記号除去
+      .replace(/\*\*([^*]*)\*\*/g, '$1') // 太字記号除去
+      .replace(/\*([^*]*)\*/g, '$1') // イタリック記号除去
+      .replace(/\n+/g, ' ') // 改行をスペースに
+      .trim();
+
+    // 最初の文（または最初の100文字）を取得
+    const firstSentence = cleanText.split(/[.。!！?？]/)[0];
+    return firstSentence && firstSentence.length > 100
+      ? firstSentence.substring(0, 100) + '...'
+      : firstSentence || cleanText.substring(0, 100) + '...';
+  }
+
+  /**
+   * カテゴリをフォーマット
+   */
+  private formatCategory(category: string): string {
+    const categoryMap: Record<string, string> = {
+      bug: '🐛 バグ',
+      security: '🔒 セキュリティ',
+      feature: '✨ 新機能',
+      enhancement: '⚡ 改善',
+      performance: '🚀 パフォーマンス',
+      documentation: '📚 ドキュメント',
+      question: '❓ 質問',
+      test: '🧪 テスト',
+      refactor: '🔧 リファクタ',
+      'ci-cd': '⚙️ CI/CD',
+      dependencies: '📦 依存関係',
+    };
+    return categoryMap[category] || '📋 その他';
+  }
+
+  /**
+   * ラベルからカテゴリを抽出
+   */
+  private extractCategoryFromLabels(labels: Array<{ name: string }>): string {
+    const labelNames = labels.map(label => label.name.toLowerCase());
+
+    if (labelNames.some(name => name.includes('bug') || name.includes('error'))) return 'bug';
+    if (labelNames.some(name => name.includes('security'))) return 'security';
+    if (labelNames.some(name => name.includes('feature'))) return 'feature';
+    if (labelNames.some(name => name.includes('enhancement'))) return 'enhancement';
+    if (labelNames.some(name => name.includes('performance'))) return 'performance';
+    if (labelNames.some(name => name.includes('documentation') || name.includes('docs')))
+      return 'documentation';
+    if (labelNames.some(name => name.includes('question'))) return 'question';
+    if (labelNames.some(name => name.includes('test'))) return 'test';
+    if (labelNames.some(name => name.includes('refactor'))) return 'refactor';
+
+    return 'enhancement';
   }
 
   /**
