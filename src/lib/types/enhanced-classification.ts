@@ -35,8 +35,7 @@ export interface EnhancedTaskScore extends TaskScore {
   scoreBreakdown: {
     category: number;
     priority: number;
-    confidence: number;
-    // recency: number; // Removed - no longer used
+    recency?: number;
     custom?: number;
   };
 
@@ -123,7 +122,7 @@ export interface EnhancedTaskRecommendation {
   scoreBreakdown: {
     category: number;
     priority: number;
-    confidence: number;
+    // confidence: number; // Removed - misleading mock value
     // recency: number; // Removed - no longer used
     custom?: number;
   };
@@ -153,7 +152,7 @@ export interface EnhancedTaskRecommendation {
     priorityConfidence: number;
     categories: Array<{
       category: string;
-      confidence: number;
+      // confidence: number; // Removed - misleading mock value
       reasons: string[];
       keywords: string[];
     }>;

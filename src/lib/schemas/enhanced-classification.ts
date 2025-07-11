@@ -51,12 +51,12 @@ export const ScoringAlgorithmSchema = z.object({
         .max(100)
         .default(30)
         .describe('Priority weight in scoring (0-100)'),
-      confidence: z
-        .number()
-        .min(0)
-        .max(100)
-        .default(20)
-        .describe('Confidence weight in scoring (0-100)'),
+      // confidence: z
+      //   .number()
+      //   .min(0)
+      //   .max(100)
+      //   .default(20)
+      //   .describe('Confidence weight in scoring (0-100)'), // Removed - misleading mock value
       recency: z.number().min(0).max(100).optional().describe('Recency weight in scoring (0-100)'),
       custom: z
         .number()
@@ -339,7 +339,7 @@ export const EnhancedIssueClassificationSchema = z.object({
   scoreBreakdown: z.object({
     category: z.number(),
     priority: z.number(),
-    confidence: z.number(),
+    // confidence: z.number(), // Removed - misleading mock value
     recency: z.number().optional(),
     custom: z.number().optional(),
   }),
@@ -422,9 +422,9 @@ export const DEFAULT_ENHANCED_CONFIG: EnhancedClassificationConfig = {
     description: 'Standard scoring algorithm with balanced weights',
     version: '1.0.0',
     weights: {
-      category: 40,
-      priority: 30,
-      confidence: 30,
+      category: 50,
+      priority: 50,
+      // confidence: 30, // Removed - misleading mock value
       custom: 0,
     },
     enabled: true,

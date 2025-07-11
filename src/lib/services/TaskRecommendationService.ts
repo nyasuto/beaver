@@ -30,7 +30,7 @@ export interface TaskScore {
   score: number;
   priority: PriorityLevel;
   category: ClassificationCategory;
-  confidence: number;
+  confidence: number; // Restored for backward compatibility
   reasons: string[];
   labels: string[];
   state: 'open' | 'closed';
@@ -47,7 +47,7 @@ export interface TaskRecommendation {
   score: number;
   priority: string;
   category: string;
-  confidence: number;
+  confidence: number; // Keep for backward compatibility
   tags: string[];
   url: string;
   createdAt: string;
@@ -102,10 +102,9 @@ export class TaskRecommendationService {
       const enhancedTasks = legacyResult.topTasks.map(task => ({
         ...task,
         scoreBreakdown: {
-          category: Math.floor(task.score * 0.35),
-          priority: Math.floor(task.score * 0.45),
-          confidence: Math.floor(task.score * 0.2),
-          // recency: undefined, // Removed - no longer used
+          category: Math.floor(task.score * 0.5),
+          priority: Math.floor(task.score * 0.5),
+          // confidence: Math.floor(task.score * 0.2), // Removed - no longer part of scoreBreakdown
           custom: 0,
         },
         metadata: {
@@ -251,7 +250,7 @@ export class TaskRecommendationService {
       scoreBreakdown: task.scoreBreakdown,
       priority: this.formatPriority(task.priority),
       category: this.formatCategory(task.category),
-      confidence: Math.round(task.confidence * 100),
+      confidence: Math.round(task.confidence * 100), // Restored for backward compatibility
       tags: this.generateTags(task),
       url: task.url || `/issues/${task.issueNumber}`,
       createdAt: task.createdAt,
@@ -284,29 +283,17 @@ export class TaskRecommendationService {
   }
 
   /**
-   * Calculate confidence distribution
+   * Calculate confidence distribution - removed since confidence is no longer calculated
    */
   private static calculateConfidenceDistribution(
-    tasks: EnhancedTaskScore[]
+    _tasks: EnhancedTaskScore[]
   ): Record<string, number> {
-    const distribution: Record<string, number> = {
+    // Return empty distribution since confidence is no longer calculated
+    return {
       'Low (0-0.3)': 0,
       'Medium (0.3-0.7)': 0,
       'High (0.7-1.0)': 0,
     };
-
-    for (const task of tasks) {
-      const confidence = task.confidence;
-      if (confidence < 0.3) {
-        distribution['Low (0-0.3)'] = (distribution['Low (0-0.3)'] || 0) + 1;
-      } else if (confidence < 0.7) {
-        distribution['Medium (0.3-0.7)'] = (distribution['Medium (0.3-0.7)'] || 0) + 1;
-      } else {
-        distribution['High (0.7-1.0)'] = (distribution['High (0.7-1.0)'] || 0) + 1;
-      }
-    }
-
-    return distribution;
   }
 
   /**
@@ -390,7 +377,7 @@ export class TaskRecommendationService {
       score: task.score,
       priority: this.formatPriority(task.priority),
       category: this.formatCategory(task.category),
-      confidence: Math.round(task.confidence * 100),
+      confidence: Math.round(task.confidence * 100), // Restored for backward compatibility
       tags: this.generateTags(task),
       url: task.url || `/issues/${task.issueNumber}`,
       createdAt: task.createdAt,
@@ -501,10 +488,10 @@ export class TaskRecommendationService {
       tags.push('優先度高');
     }
 
-    // Add confidence tag
-    if (task.confidence > 0.8) {
-      tags.push('確実');
-    }
+    // Add confidence tag - removed since confidence is no longer calculated
+    // if (task.confidence > 0.8) {
+    //   tags.push('確実');
+    // }
 
     // Add category-specific tags
     if (task.category === 'security') {
@@ -618,7 +605,7 @@ export class TaskRecommendationService {
         score: Math.round(score),
         priority,
         category,
-        confidence: 0.7, // Default confidence for simple scoring
+        confidence: 0.7, // Restored for backward compatibility
         reasons: this.getSimpleReasons(issue, priority, category),
         labels: issue.labels.map(l => l.name),
         state: issue.state,

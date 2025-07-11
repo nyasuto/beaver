@@ -276,7 +276,6 @@ export function convertEnhancedClassificationData(classifications: EnhancedIssue
   const scoreBreakdownSum = {
     category: 0,
     priority: 0,
-    confidence: 0,
     recency: 0,
     custom: 0,
   };
@@ -315,8 +314,7 @@ export function convertEnhancedClassificationData(classifications: EnhancedIssue
     // Accumulate score breakdown
     scoreBreakdownSum.category += classification.scoreBreakdown.category;
     scoreBreakdownSum.priority += classification.scoreBreakdown.priority;
-    scoreBreakdownSum.confidence += classification.scoreBreakdown.confidence;
-    // scoreBreakdownSum.recency += classification.scoreBreakdown.recency; // Removed - no longer used
+    scoreBreakdownSum.recency += classification.scoreBreakdown.recency || 0;
     scoreBreakdownSum.custom += classification.scoreBreakdown.custom || 0;
   });
 
@@ -325,7 +323,6 @@ export function convertEnhancedClassificationData(classifications: EnhancedIssue
   const avgScoreBreakdown = {
     Category: count > 0 ? scoreBreakdownSum.category / count : 0,
     Priority: count > 0 ? scoreBreakdownSum.priority / count : 0,
-    Confidence: count > 0 ? scoreBreakdownSum.confidence / count : 0,
     Recency: count > 0 ? scoreBreakdownSum.recency / count : 0,
     Custom: count > 0 ? scoreBreakdownSum.custom / count : 0,
   };

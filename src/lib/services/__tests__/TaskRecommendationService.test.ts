@@ -21,7 +21,7 @@ vi.mock('../../classification/enhanced-config-manager', () => ({
       Promise.resolve({
         version: '2.0.0',
         algorithm: 'enhanced-v2',
-        thresholds: { confidence: 0.5 },
+        thresholds: { minConfidence: 0.5 },
       })
     ),
   },
@@ -58,14 +58,16 @@ vi.mock('../../classification/enhanced-config-manager', () => ({
           weights: {
             priority: 0.4,
             category: 0.3,
-            confidence: 0.2,
-            // recency: 0.1, // Removed - no longer used
+            // confidence: 0.2, // Removed - no longer used
+            recency: 0.1,
+            custom: 0.2,
           },
           algorithms: {
             priority: 'weighted',
             category: 'bayesian',
-            confidence: 'entropy',
-            // recency: 'exponential', // Removed - no longer used
+            // confidence: 'entropy', // Removed - no longer used
+            recency: 'exponential',
+            custom: 'additive',
           },
         },
       })
@@ -271,8 +273,6 @@ describe('TaskRecommendationService', () => {
       scoreBreakdown: {
         category: 30,
         priority: 40,
-        confidence: 19,
-        // recency: 6, // Removed - no longer used
         custom: 0,
       },
       metadata: {
@@ -298,8 +298,6 @@ describe('TaskRecommendationService', () => {
         scoreBreakdown: {
           category: 30,
           priority: 40,
-          confidence: 19,
-          // recency: 6, // Removed - no longer used
           custom: 0,
         },
         processingTimeMs: 25,
@@ -345,8 +343,6 @@ describe('TaskRecommendationService', () => {
       expect(result.scoreBreakdown).toEqual({
         category: 30,
         priority: 40,
-        confidence: 19,
-        // recency: 6, // Removed - no longer used
         custom: 0,
       });
       expect(result.metadata.configVersion).toBe('2.0.0');
@@ -370,10 +366,11 @@ describe('TaskRecommendationService', () => {
 
       const result = calculateConfidenceDistribution(tasks);
 
+      // Since confidence calculation is removed, expect empty distribution
       expect(result).toEqual({
-        'Low (0-0.3)': 1,
-        'Medium (0.3-0.7)': 1,
-        'High (0.7-1.0)': 2,
+        'Low (0-0.3)': 0,
+        'Medium (0.3-0.7)': 0,
+        'High (0.7-1.0)': 0,
       });
     });
   });

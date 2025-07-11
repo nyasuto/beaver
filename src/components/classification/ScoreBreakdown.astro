@@ -10,7 +10,7 @@ export interface Props {
   scoreBreakdown: {
     category: number;
     priority: number;
-    confidence: number;
+    // confidence: number; // Removed - misleading mock value
     recency?: number; // Optional for backward compatibility
     custom?: number;
   };
@@ -38,7 +38,7 @@ const getPercentage = (value: number, total: number) => {
 
 const categoryPercent = getPercentage(scoreBreakdown.category, totalScore);
 const priorityPercent = getPercentage(scoreBreakdown.priority, totalScore);
-const confidencePercent = getPercentage(scoreBreakdown.confidence, totalScore);
+// const confidencePercent = getPercentage(scoreBreakdown.confidence, totalScore); // Removed
 const recencyPercent = scoreBreakdown.recency
   ? getPercentage(scoreBreakdown.recency, totalScore)
   : 0;
@@ -62,14 +62,14 @@ const breakdownItems = [
     color: 'var(--color-priority)',
     icon: '🔥',
   },
-  {
-    key: 'confidence',
-    label: '信頼度',
-    value: scoreBreakdown.confidence,
-    percentage: confidencePercent,
-    color: 'var(--color-confidence)',
-    icon: '✅',
-  },
+  // {
+  //   key: 'confidence',
+  //   label: '信頼度',
+  //   value: scoreBreakdown.confidence,
+  //   percentage: confidencePercent,
+  //   color: 'var(--color-confidence)',
+  //   icon: '✅',
+  // }, // Removed - misleading mock value
   // Only show recency if it exists (backward compatibility)
   ...(scoreBreakdown.recency
     ? [

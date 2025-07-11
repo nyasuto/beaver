@@ -138,12 +138,7 @@ const processingTimeText = getProcessingTimeText(classification.processingTimeMs
               {classification.scoreBreakdown.priority}
             </span>
           </div>
-          <div class="classification-details__score-item">
-            <span class="classification-details__score-item-label">信頼度</span>
-            <span class="classification-details__score-item-value">
-              {classification.scoreBreakdown.confidence}
-            </span>
-          </div>
+          {/* Confidence score removed from scoreBreakdown */}
           {classification.scoreBreakdown.recency && (
             <div class="classification-details__score-item">
               <span class="classification-details__score-item-label">最新性</span>

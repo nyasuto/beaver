@@ -12,7 +12,7 @@ import {
   getDashboardTasks,
   getEnhancedDashboardTasks,
 } from '../../lib/services/TaskRecommendationService';
-import ConfidenceIndicator from '../classification/ConfidenceIndicator.astro';
+// import ConfidenceIndicator from '../classification/ConfidenceIndicator.astro'; // Removed - confidence no longer displayed
 import ScoreBreakdown from '../classification/ScoreBreakdown.astro';
 
 // Load issues data
@@ -148,16 +148,8 @@ function getPriorityColor(priority: string): string {
                 ))}
               </div>
               <div class="flex items-center gap-2">
-                {isEnhanced ? (
-                  <ConfidenceIndicator
-                    confidence={task.confidence / 100}
-                    size="small"
-                    variant="compact"
-                    showPercentage={true}
-                  />
-                ) : (
-                  <div class="text-xs text-muted">信頼度: {task.confidence}%</div>
-                )}
+                {/* Confidence indicator removed - no longer calculated */}
+                <div class="text-xs text-muted">分析済み</div>
               </div>
             </div>
 
