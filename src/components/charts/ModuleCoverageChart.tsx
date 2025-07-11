@@ -170,8 +170,8 @@ export function ModuleCoverageChart({
           label: (context: any) => {
             const index = context.dataIndex;
             const module = processedData[index];
-            const parsed = context.parsed;
-            const coverage = typeof parsed === 'object' ? parsed.y || parsed.x : parsed;
+            // For horizontal bar charts (indexAxis: 'y'), the value is in parsed.x
+            const coverage = context.parsed?.x ?? context.raw ?? 0;
 
             if (showValues && module) {
               return `カバレッジ: ${coverage.toFixed(1)}% | 総行数: ${module.lines.toLocaleString()}行 | 未カバー: ${module.missedLines.toLocaleString()}行`;
@@ -194,7 +194,12 @@ export function ModuleCoverageChart({
             size: 12,
             family: 'Inter, system-ui, sans-serif',
           },
-          callback: value => `${value}%`,
+          callback: value => {
+            if (typeof value === 'number') {
+              return `${value}%`;
+            }
+            return value;
+          },
         },
         grid: {
           display: true,
@@ -219,6 +224,12 @@ export function ModuleCoverageChart({
             family: 'Monaco, monospace',
           },
           maxTicksLimit: maxModules,
+          // Ensure module names are properly displayed
+          callback: function (value, index) {
+            const chart = (this as any)['chart'];
+            const labels = chart?.data?.labels;
+            return labels && labels[index] ? labels[index] : '';
+          },
         },
         grid: {
           display: false,
