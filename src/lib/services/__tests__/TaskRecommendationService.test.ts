@@ -288,6 +288,8 @@ describe('TaskRecommendationService', () => {
         },
       },
       classification: {
+        issueId: 456,
+        issueNumber: 456,
         primaryCategory: 'bug',
         primaryConfidence: 0.95,
         estimatedPriority: 'critical',
@@ -300,6 +302,11 @@ describe('TaskRecommendationService', () => {
           recency: 6,
           custom: 0,
         },
+        processingTimeMs: 25,
+        cacheHit: true,
+        configVersion: '2.0.0',
+        algorithmVersion: '2.0.0',
+        profileId: 'test-profile',
         classifications: [
           {
             ruleId: 'security-critical',
@@ -310,6 +317,20 @@ describe('TaskRecommendationService', () => {
             keywords: ['security', 'vulnerability', 'critical'],
           },
         ],
+        metadata: {
+          titleLength: 32,
+          bodyLength: 38,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 3,
+          existingLabels: ['priority: critical', 'type: bug', 'security'],
+          repositoryContext: {
+            owner: 'test-owner',
+            repo: 'test-repo',
+            branch: 'main',
+          },
+        },
       },
     };
 

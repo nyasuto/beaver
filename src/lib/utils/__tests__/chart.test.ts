@@ -493,6 +493,20 @@ describe('Chart Utilities', () => {
             keywords: ['security', 'vulnerability', 'critical'],
           },
         ],
+        metadata: {
+          titleLength: 32,
+          bodyLength: 38,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 3,
+          existingLabels: ['priority: critical', 'type: bug', 'security'],
+          repositoryContext: {
+            owner: 'test-owner',
+            repo: 'test-repo',
+            branch: 'main',
+          },
+        },
       },
       {
         issueId: 2,
@@ -524,6 +538,20 @@ describe('Chart Utilities', () => {
             keywords: ['feature', 'enhancement', 'request'],
           },
         ],
+        metadata: {
+          titleLength: 32,
+          bodyLength: 38,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 3,
+          existingLabels: ['priority: critical', 'type: bug', 'security'],
+          repositoryContext: {
+            owner: 'test-owner',
+            repo: 'test-repo',
+            branch: 'main',
+          },
+        },
       },
       {
         issueId: 3,
@@ -555,6 +583,20 @@ describe('Chart Utilities', () => {
             keywords: ['minor', 'bug', 'small'],
           },
         ],
+        metadata: {
+          titleLength: 32,
+          bodyLength: 38,
+          hasCodeBlocks: false,
+          hasStepsToReproduce: false,
+          hasExpectedBehavior: false,
+          labelCount: 3,
+          existingLabels: ['priority: critical', 'type: bug', 'security'],
+          repositoryContext: {
+            owner: 'test-owner',
+            repo: 'test-repo',
+            branch: 'main',
+          },
+        },
       },
     ];
 
@@ -654,6 +696,20 @@ describe('Chart Utilities', () => {
           configVersion: '2.0.0',
           profileId: 'test-profile',
           classifications: [],
+          metadata: {
+            titleLength: 15,
+            bodyLength: 25,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 1,
+            existingLabels: ['test'],
+            repositoryContext: {
+              owner: 'test-owner',
+              repo: 'test-repo',
+              branch: 'main',
+            },
+          },
         },
         {
           issueId: 5,
@@ -670,6 +726,20 @@ describe('Chart Utilities', () => {
           configVersion: '2.0.0',
           profileId: 'test-profile',
           classifications: [],
+          metadata: {
+            titleLength: 15,
+            bodyLength: 25,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 1,
+            existingLabels: ['test'],
+            repositoryContext: {
+              owner: 'test-owner',
+              repo: 'test-repo',
+              branch: 'main',
+            },
+          },
         },
         {
           issueId: 6,
@@ -686,6 +756,20 @@ describe('Chart Utilities', () => {
           configVersion: '2.0.0',
           profileId: 'test-profile',
           classifications: [],
+          metadata: {
+            titleLength: 15,
+            bodyLength: 25,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 1,
+            existingLabels: ['test'],
+            repositoryContext: {
+              owner: 'test-owner',
+              repo: 'test-repo',
+              branch: 'main',
+            },
+          },
         },
       ];
 
@@ -722,6 +806,20 @@ describe('Chart Utilities', () => {
           configVersion: '2.0.0',
           profileId: 'test-profile',
           classifications: [],
+          metadata: {
+            titleLength: 15,
+            bodyLength: 25,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 1,
+            existingLabels: ['test'],
+            repositoryContext: {
+              owner: 'test-owner',
+              repo: 'test-repo',
+              branch: 'main',
+            },
+          },
         },
       ];
 
@@ -780,6 +878,20 @@ describe('Chart Utilities', () => {
           configVersion: '2.0.0',
           profileId: 'test-profile',
           classifications: [],
+          metadata: {
+            titleLength: 15,
+            bodyLength: 25,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 1,
+            existingLabels: ['test'],
+            repositoryContext: {
+              owner: 'test-owner',
+              repo: 'test-repo',
+              branch: 'main',
+            },
+          },
         },
       ];
 
