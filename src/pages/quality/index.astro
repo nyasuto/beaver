@@ -10,7 +10,6 @@
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
-import CoverageChart from '../../components/charts/CoverageChart.tsx';
 import ModuleCoverageChart from '../../components/charts/ModuleCoverageChart.tsx';
 import { getQualityMetrics } from '../../lib/quality/codecov';
 
@@ -65,16 +64,7 @@ const modulesNeedingAttention = qualityData.modules
   .sort((a, b) => a.coverage - b.coverage)
   .slice(0, 5);
 
-// チャート用データの準備
-const coverageMetricsData = {
-  overallCoverage: qualityData.overallCoverage,
-  branchCoverage: qualityData.branchCoverage,
-  lineCoverage: qualityData.lineCoverage,
-  totalLines: qualityData.totalLines,
-  coveredLines: qualityData.coveredLines,
-  missedLines: qualityData.missedLines,
-};
-
+// モジュール別カバレッジチャート用データの準備
 const moduleCoverageData = qualityData.modules.map(module => ({
   name: module.name,
   coverage: module.coverage,
@@ -171,31 +161,17 @@ const moduleCoverageData = qualityData.modules.map(module => ({
       </div>
     </div>
 
-    <!-- Interactive Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-      <!-- Coverage Metrics Chart -->
-      <div>
-        <CoverageChart
-          data={coverageMetricsData}
-          type="doughnut"
-          title="総合カバレッジ"
-          description="カバー済み vs 未カバー"
-          height={300}
-          showPercentage={true}
-          showLegend={true}
-          loading={false}
-          error={errorMessage || undefined}
-          client:load
-        />
-      </div>
-
-      <!-- Coverage History Chart -->
-      <div>
-        <div class="card p-6 flex items-center justify-center h-80">
-          <div class="text-center">
-            <div class="text-4xl mb-4">📈</div>
-            <p class="text-lg font-medium text-heading">カバレッジ履歴</p>
-            <p class="text-sm text-muted mt-2">将来実装予定</p>
+    <!-- Coverage History Chart (Full Width) -->
+    <div class="mb-8">
+      <div class="card p-8 flex items-center justify-center h-64">
+        <div class="text-center">
+          <div class="text-5xl mb-6">📈</div>
+          <h3 class="text-xl font-semibold text-heading mb-2">カバレッジ履歴チャート</h3>
+          <p class="text-sm text-muted mb-4">将来実装予定 - 時系列でのカバレッジ変化を可視化</p>
+          <div class="text-xs text-muted">
+            <p>• トレンド分析機能</p>
+            <p>• 目標値との比較</p>
+            <p>• 期間別フィルタリング</p>
           </div>
         </div>
       </div>
@@ -205,13 +181,13 @@ const moduleCoverageData = qualityData.modules.map(module => ({
     <div class="mb-8">
       <ModuleCoverageChart
         data={moduleCoverageData}
-        title="モジュール別カバレッジ"
-        description="カバレッジ率の低いモジュールから順に表示"
-        height={350}
+        title="モジュール別カバレッジ分析"
+        description="全モジュールのカバレッジ状況（低い順に表示）"
+        height={400}
         showPercentage={true}
         showValues={true}
         threshold={50}
-        maxModules={8}
+        maxModules={10}
         sortOrder="asc"
         loading={false}
         error={errorMessage || undefined}
