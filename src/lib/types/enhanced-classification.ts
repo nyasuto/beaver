@@ -6,6 +6,7 @@
 
 import type { EnhancedIssueClassification } from '../schemas/enhanced-classification';
 import type { ClassificationCategory, PriorityLevel } from '../schemas/classification';
+import type { TaskRecommendation } from '../services/TaskRecommendationService';
 
 /**
  * Legacy TaskScore interface (standalone to replace engine dependency)
@@ -113,12 +114,7 @@ export interface EnhancedDashboardTasksResult {
 /**
  * Enhanced Task Recommendation
  */
-export interface EnhancedTaskRecommendation {
-  taskId: string;
-  title: string;
-  description: string;
-  descriptionHtml: string;
-  score: number;
+export interface EnhancedTaskRecommendation extends TaskRecommendation {
   scoreBreakdown: {
     category: number;
     priority: number;
@@ -126,13 +122,6 @@ export interface EnhancedTaskRecommendation {
     // recency: number; // Removed - no longer used
     custom?: number;
   };
-  priority: string;
-  category: string;
-  confidence: number;
-  tags: string[];
-  url: string;
-  createdAt: string;
-  reasons: string[];
 
   // Enhanced fields
   metadata: {

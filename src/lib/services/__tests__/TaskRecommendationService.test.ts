@@ -375,6 +375,218 @@ describe('TaskRecommendationService', () => {
     });
   });
 
+  describe('Priority Ranking Logic', () => {
+    it('should prioritize critical issues over medium issues', async () => {
+      const mockIssues: Issue[] = [
+        {
+          id: 204,
+          node_id: 'I_critical',
+          number: 204,
+          title: '🔒 セキュリティ: 環境変数の不適切な露出の修正',
+          body: 'Critical security issue',
+          state: 'open',
+          locked: false,
+          created_at: '2025-07-11T15:00:29Z',
+          updated_at: '2025-07-11T15:00:29Z',
+          closed_at: null,
+          labels: [
+            {
+              id: 8910603242,
+              node_id: 'LA_kwDOPJEskc8AAAACEx0D6g',
+              name: 'priority: critical',
+              description: 'Critical priority tasks',
+              color: 'd73a4a',
+              default: false,
+            },
+          ],
+          assignee: null,
+          assignees: [],
+          milestone: null,
+          comments: 0,
+          author_association: 'OWNER',
+          active_lock_reason: null,
+          user: {
+            login: 'testuser',
+            id: 1,
+            node_id: 'U_test',
+            avatar_url: 'https://avatar.url',
+            gravatar_id: null,
+            url: 'https://api.github.com/users/testuser',
+            html_url: 'https://github.com/testuser',
+            type: 'User',
+            site_admin: false,
+          },
+          html_url: 'https://github.com/nyasuto/beaver/issues/204',
+          url: 'https://api.github.com/repos/nyasuto/beaver/issues/204',
+          repository_url: 'https://api.github.com/repos/nyasuto/beaver',
+          labels_url: 'https://api.github.com/repos/nyasuto/beaver/issues/204/labels{/name}',
+          comments_url: 'https://api.github.com/repos/nyasuto/beaver/issues/204/comments',
+          events_url: 'https://api.github.com/repos/nyasuto/beaver/issues/204/events',
+        },
+        {
+          id: 208,
+          node_id: 'I_medium',
+          number: 208,
+          title: '🚀 パフォーマンス: ダッシュボード読み込み速度の改善',
+          body: 'Medium priority performance issue',
+          state: 'open',
+          locked: false,
+          created_at: '2025-07-11T15:02:16Z',
+          updated_at: '2025-07-11T15:02:16Z',
+          closed_at: null,
+          labels: [
+            {
+              id: 8910603341,
+              node_id: 'LA_kwDOPJEskc8AAAACEx0ETQ',
+              name: 'priority: medium',
+              description: 'Medium priority tasks',
+              color: 'fb8500',
+              default: false,
+            },
+          ],
+          assignee: null,
+          assignees: [],
+          milestone: null,
+          comments: 0,
+          author_association: 'OWNER',
+          active_lock_reason: null,
+          user: {
+            login: 'testuser',
+            id: 1,
+            node_id: 'U_test',
+            avatar_url: 'https://avatar.url',
+            gravatar_id: null,
+            url: 'https://api.github.com/users/testuser',
+            html_url: 'https://github.com/testuser',
+            type: 'User',
+            site_admin: false,
+          },
+          html_url: 'https://github.com/nyasuto/beaver/issues/208',
+          url: 'https://api.github.com/repos/nyasuto/beaver/issues/208',
+          repository_url: 'https://api.github.com/repos/nyasuto/beaver',
+          labels_url: 'https://api.github.com/repos/nyasuto/beaver/issues/208/labels{/name}',
+          comments_url: 'https://api.github.com/repos/nyasuto/beaver/issues/208/comments',
+          events_url: 'https://api.github.com/repos/nyasuto/beaver/issues/208/events',
+        },
+      ];
+
+      const result = await getDashboardTasks(mockIssues, 3);
+
+      // Critical issue (#204) should be ranked higher than medium issue (#208)
+      expect(result.topTasks).toHaveLength(2);
+      expect(result.topTasks[0]?.issueNumber).toBe(204); // Critical should be first
+      expect(result.topTasks[1]?.issueNumber).toBe(208); // Medium should be second
+
+      // Critical issue should have higher score than medium
+      expect(result.topTasks[0]?.score).toBeGreaterThan(result.topTasks[1]?.score || 0);
+    });
+
+    it('should prioritize high issues over medium issues', async () => {
+      const mockIssues: Issue[] = [
+        {
+          id: 205,
+          node_id: 'I_high',
+          number: 205,
+          title: '🐛 バグ: カバレッジチャートの描画エラー',
+          body: 'High priority bug',
+          state: 'open',
+          locked: false,
+          created_at: '2025-07-11T15:00:51Z',
+          updated_at: '2025-07-11T15:00:51Z',
+          closed_at: null,
+          labels: [
+            {
+              id: 8910603282,
+              node_id: 'LA_kwDOPJEskc8AAAACEx0EEg',
+              name: 'priority: high',
+              description: 'High priority tasks',
+              color: 'f85149',
+              default: false,
+            },
+          ],
+          assignee: null,
+          assignees: [],
+          milestone: null,
+          comments: 0,
+          author_association: 'OWNER',
+          active_lock_reason: null,
+          user: {
+            login: 'testuser',
+            id: 1,
+            node_id: 'U_test',
+            avatar_url: 'https://avatar.url',
+            gravatar_id: null,
+            url: 'https://api.github.com/users/testuser',
+            html_url: 'https://github.com/testuser',
+            type: 'User',
+            site_admin: false,
+          },
+          html_url: 'https://github.com/nyasuto/beaver/issues/205',
+          url: 'https://api.github.com/repos/nyasuto/beaver/issues/205',
+          repository_url: 'https://api.github.com/repos/nyasuto/beaver',
+          labels_url: 'https://api.github.com/repos/nyasuto/beaver/issues/205/labels{/name}',
+          comments_url: 'https://api.github.com/repos/nyasuto/beaver/issues/205/comments',
+          events_url: 'https://api.github.com/repos/nyasuto/beaver/issues/205/events',
+        },
+        {
+          id: 208,
+          node_id: 'I_medium2',
+          number: 208,
+          title: '🚀 パフォーマンス: ダッシュボード読み込み速度の改善',
+          body: 'Medium priority performance issue',
+          state: 'open',
+          locked: false,
+          created_at: '2025-07-11T15:02:16Z',
+          updated_at: '2025-07-11T15:02:16Z',
+          closed_at: null,
+          labels: [
+            {
+              id: 8910603341,
+              node_id: 'LA_kwDOPJEskc8AAAACEx0ETQ',
+              name: 'priority: medium',
+              description: 'Medium priority tasks',
+              color: 'fb8500',
+              default: false,
+            },
+          ],
+          assignee: null,
+          assignees: [],
+          milestone: null,
+          comments: 0,
+          author_association: 'OWNER',
+          active_lock_reason: null,
+          user: {
+            login: 'testuser',
+            id: 1,
+            node_id: 'U_test',
+            avatar_url: 'https://avatar.url',
+            gravatar_id: null,
+            url: 'https://api.github.com/users/testuser',
+            html_url: 'https://github.com/testuser',
+            type: 'User',
+            site_admin: false,
+          },
+          html_url: 'https://github.com/nyasuto/beaver/issues/208',
+          url: 'https://api.github.com/repos/nyasuto/beaver/issues/208',
+          repository_url: 'https://api.github.com/repos/nyasuto/beaver',
+          labels_url: 'https://api.github.com/repos/nyasuto/beaver/issues/208/labels{/name}',
+          comments_url: 'https://api.github.com/repos/nyasuto/beaver/issues/208/comments',
+          events_url: 'https://api.github.com/repos/nyasuto/beaver/issues/208/events',
+        },
+      ];
+
+      const result = await getDashboardTasks(mockIssues, 3);
+
+      // High issue (#205) should be ranked higher than medium issue (#208)
+      expect(result.topTasks).toHaveLength(2);
+      expect(result.topTasks[0]?.issueNumber).toBe(205); // High should be first
+      expect(result.topTasks[1]?.issueNumber).toBe(208); // Medium should be second
+
+      // High issue should have higher score than medium
+      expect(result.topTasks[0]?.score).toBeGreaterThan(result.topTasks[1]?.score || 0);
+    });
+  });
+
   describe('Helper Functions', () => {
     const mockIssues: Issue[] = [
       {
