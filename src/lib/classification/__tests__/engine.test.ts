@@ -685,6 +685,51 @@ describe('IssueClassificationEngine', () => {
   });
 
   describe('Priority Estimation', () => {
+    it('should prioritize existing priority labels over classification rules', () => {
+      const highPriorityIssue = createMockIssue({
+        title: 'Regular feature request',
+        body: 'Just a normal feature request',
+        labels: [
+          {
+            id: 1,
+            name: 'priority: high',
+            color: 'orange',
+            default: false,
+            description: null,
+            node_id: 'MDU6TGFiZWwx',
+          },
+        ],
+      });
+
+      const classification = engine.classifyIssue(highPriorityIssue);
+
+      expect(classification.estimatedPriority).toBe('high');
+      expect(classification.classifications[0]?.reasons).toContain(
+        'Has priority label: "priority: high"'
+      );
+    });
+
+    it('should handle priority:critical labels', () => {
+      const criticalIssue = createMockIssue({
+        title: 'Some issue',
+        body: 'Some content',
+        labels: [
+          {
+            id: 1,
+            name: 'priority: critical',
+            color: 'red',
+            default: false,
+            description: null,
+            node_id: 'MDU6TGFiZWwx',
+          },
+        ],
+      });
+
+      const classification = engine.classifyIssue(criticalIssue);
+
+      expect(classification.estimatedPriority).toBe('critical');
+    });
+
     it('should estimate critical priority for security issues', () => {
       const securityIssue = createMockIssue({
         title: 'Security vulnerability found',
