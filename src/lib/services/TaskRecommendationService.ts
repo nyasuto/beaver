@@ -648,9 +648,15 @@ export class TaskRecommendationService {
     if (title.includes('critical') || title.includes('urgent') || title.includes('security')) {
       return 'critical';
     }
-    if (title.includes('high') || title.includes('important') || body.includes('urgent') || 
-        title.includes('バグ') || title.includes('bug') || title.includes('error')) {
-      return 'high';  // Bugs are generally high priority
+    if (
+      title.includes('high') ||
+      title.includes('important') ||
+      body.includes('urgent') ||
+      title.includes('バグ') ||
+      title.includes('bug') ||
+      title.includes('error')
+    ) {
+      return 'high'; // Bugs are generally high priority
     }
     if (title.includes('low') || title.includes('minor') || title.includes('doc')) {
       return 'low';
