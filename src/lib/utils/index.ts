@@ -7,14 +7,13 @@
  * @module Utilities
  */
 
-// Utility modules will be exported here
-// Example exports (to be implemented):
-// export { formatDate, parseDate, isValidDate } from './date';
-// export { slugify, truncate, capitalize } from './string';
-// export { debounce, throttle, retry } from './async';
-// export { generateId, randomString, hash } from './crypto';
-// export { deepMerge, omit, pick } from './object';
-// export { validateEmail, validateUrl, sanitizeHtml } from './validation';
+// Utility modules exports
+export { 
+  markdownToHtml, 
+  markdownToPlainText, 
+  truncateMarkdown, 
+  extractFirstParagraph 
+} from './markdown';
 
 // Common utility functions
 export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));

@@ -9,6 +9,7 @@
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import { getIssuesWithFallback, getStaticIssueById, hasStaticData } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
+import { markdownToHtml } from '../../lib/utils/markdown';
 
 export function getStaticPaths() {
   try {
@@ -42,12 +43,9 @@ if (!currentIssue) {
 const title = `Issue #${currentIssue.number}: ${currentIssue.title}`;
 const description = `Detailed view of GitHub issue #${currentIssue.number} with AI-powered analysis`;
 
-// Issue 本文の markdown 処理（簡易版）
+// Issue 本文の markdown 処理
 const processedBody = currentIssue.body
-  ? currentIssue.body
-      .replace(/\n/g, '<br>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+  ? await markdownToHtml(currentIssue.body)
   : '';
 ---
 

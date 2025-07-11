@@ -16,6 +16,7 @@ import {
 } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
 import { getFilterOptions } from '../../lib/utils/search';
+import { markdownToPlainText, truncateMarkdown } from '../../lib/utils/markdown';
 
 const title = 'Issue';
 const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
@@ -345,8 +346,7 @@ const filterOptions = getFilterOptions(issues);
 
                 {issue.body && (
                   <p class="text-sm text-muted mt-2 line-clamp-3 issue-body">
-                    {issue.body.substring(0, 200)}
-                    {issue.body.length > 200 && '...'}
+                    {truncateMarkdown(markdownToPlainText(issue.body), 200)}
                   </p>
                 )}
 
