@@ -68,6 +68,32 @@ export type {
   BatchClassificationResult,
 } from './classification';
 
+// Enhanced Classification schemas
+export {
+  EnhancedClassificationConfigSchema,
+  EnhancedIssueClassificationSchema,
+  RepositoryConfigSchema,
+  ScoringAlgorithmSchema,
+  ConfidenceThresholdSchema,
+  PriorityEstimationConfigSchema,
+  PerformanceConfigSchema as EnhancedPerformanceConfigSchema,
+  ABTestConfigSchema,
+  ConfigurationProfileSchema,
+  ConfigurationUpdateSchema,
+} from './enhanced-classification';
+export type {
+  EnhancedClassificationConfig,
+  EnhancedIssueClassification,
+  RepositoryConfig,
+  ScoringAlgorithm,
+  ConfidenceThreshold,
+  PriorityEstimationConfig,
+  PerformanceConfig as EnhancedPerformanceConfig,
+  ABTestConfig,
+  ConfigurationProfile,
+  ConfigurationUpdate,
+} from './enhanced-classification';
+
 // UI component schemas
 export * from './ui';
 export type {

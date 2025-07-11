@@ -25,11 +25,15 @@ type PerformanceMetrics = {
   burndownRate: number;
 };
 import type { IssueClassification } from '../../schemas/classification';
+import type { EnhancedIssueClassification } from '../../schemas/enhanced-classification';
 import {
   convertTimeSeriesData,
   convertCategoryData,
   convertPieData,
   convertClassificationData,
+  convertEnhancedClassificationData,
+  convertClassificationDataUniversal,
+  isEnhancedClassificationArray,
   convertPerformanceData,
   generateChartOptions,
   generateChartConfig,
@@ -454,6 +458,378 @@ describe('Chart Utilities', () => {
 
       expect(confidenceData.datasets[0]!.data[mediumIndex]).toBe(1); // 0.3 -> Medium
       expect(confidenceData.datasets[0]!.data[highIndex]).toBe(1); // 0.7 -> High
+    });
+  });
+
+  describe('convertEnhancedClassificationData', () => {
+    const mockEnhancedClassifications: EnhancedIssueClassification[] = [
+      {
+        issueId: 1,
+        issueNumber: 1,
+        primaryCategory: 'bug',
+        primaryConfidence: 0.95,
+        estimatedPriority: 'critical',
+        priorityConfidence: 0.9,
+        score: 85,
+        scoreBreakdown: {
+          category: 30,
+          priority: 35,
+          confidence: 15,
+          recency: 5,
+          custom: 0,
+        },
+        processingTimeMs: 100,
+        cacheHit: false,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+        profileId: 'test-profile',
+        classifications: [
+          {
+            ruleId: 'security-critical',
+            ruleName: 'Security Critical Issues',
+            category: 'security',
+            confidence: 0.9,
+            reasons: ['Contains security keywords', 'High severity indicators'],
+            keywords: ['security', 'vulnerability', 'critical'],
+          },
+        ],
+      },
+      {
+        issueId: 2,
+        issueNumber: 2,
+        primaryCategory: 'feature',
+        primaryConfidence: 0.7,
+        estimatedPriority: 'medium',
+        priorityConfidence: 0.8,
+        score: 60,
+        scoreBreakdown: {
+          category: 20,
+          priority: 25,
+          confidence: 10,
+          recency: 5,
+          custom: 0,
+        },
+        processingTimeMs: 100,
+        cacheHit: false,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+        profileId: 'test-profile',
+        classifications: [
+          {
+            ruleId: 'feature-request',
+            ruleName: 'Feature Request',
+            category: 'feature',
+            confidence: 0.7,
+            reasons: ['Feature request patterns', 'Enhancement indicators'],
+            keywords: ['feature', 'enhancement', 'request'],
+          },
+        ],
+      },
+      {
+        issueId: 3,
+        issueNumber: 3,
+        primaryCategory: 'bug',
+        primaryConfidence: 0.4,
+        estimatedPriority: 'low',
+        priorityConfidence: 0.5,
+        score: 30,
+        scoreBreakdown: {
+          category: 10,
+          priority: 15,
+          confidence: 3,
+          recency: 2,
+          custom: 0,
+        },
+        processingTimeMs: 100,
+        cacheHit: false,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+        profileId: 'test-profile',
+        classifications: [
+          {
+            ruleId: 'minor-bug',
+            ruleName: 'Minor Bug',
+            category: 'bug',
+            confidence: 0.4,
+            reasons: ['Minor issue indicators', 'Low severity'],
+            keywords: ['minor', 'bug', 'small'],
+          },
+        ],
+      },
+    ];
+
+    it('拡張分類データを適切に変換できること', () => {
+      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+
+      expect(result).toBeDefined();
+      expect(result.categoryDistribution).toBeDefined();
+      expect(result.priorityDistribution).toBeDefined();
+      expect(result.confidenceDistribution).toBeDefined();
+      expect(result.scoreDistribution).toBeDefined();
+      expect(result.scoreBreakdownChart).toBeDefined();
+    });
+
+    it('スコア分布が正しく計算されること', () => {
+      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+      const scoreData = result.scoreDistribution;
+
+      expect(scoreData.labels).toContain('Low (0-25)');
+      expect(scoreData.labels).toContain('Medium (25-50)');
+      expect(scoreData.labels).toContain('High (50-75)');
+      expect(scoreData.labels).toContain('Very High (75-100)');
+
+      // scores: 85 (Very High), 60 (High), 30 (Medium)
+      const lowIndex = scoreData.labels!.indexOf('Low (0-25)');
+      const mediumIndex = scoreData.labels!.indexOf('Medium (25-50)');
+      const highIndex = scoreData.labels!.indexOf('High (50-75)');
+      const veryHighIndex = scoreData.labels!.indexOf('Very High (75-100)');
+
+      expect(scoreData.datasets[0]!.data[lowIndex]).toBe(0);
+      expect(scoreData.datasets[0]!.data[mediumIndex]).toBe(1);
+      expect(scoreData.datasets[0]!.data[highIndex]).toBe(1);
+      expect(scoreData.datasets[0]!.data[veryHighIndex]).toBe(1);
+    });
+
+    it('スコア内訳チャートが正しく計算されること', () => {
+      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+      const scoreBreakdownData = result.scoreBreakdownChart;
+
+      expect(scoreBreakdownData.labels).toContain('Category');
+      expect(scoreBreakdownData.labels).toContain('Priority');
+      expect(scoreBreakdownData.labels).toContain('Confidence');
+      expect(scoreBreakdownData.labels).toContain('Recency');
+      expect(scoreBreakdownData.labels).toContain('Custom');
+
+      // Average: category: 20, priority: 25, confidence: 9.33, recency: 4, custom: 0
+      const categoryIndex = scoreBreakdownData.labels!.indexOf('Category');
+      const priorityIndex = scoreBreakdownData.labels!.indexOf('Priority');
+      const confidenceIndex = scoreBreakdownData.labels!.indexOf('Confidence');
+      const recencyIndex = scoreBreakdownData.labels!.indexOf('Recency');
+      const customIndex = scoreBreakdownData.labels!.indexOf('Custom');
+
+      expect(scoreBreakdownData.datasets[0]!.data[categoryIndex]).toBe(20); // (30+20+10)/3
+      expect(scoreBreakdownData.datasets[0]!.data[priorityIndex]).toBe(25); // (35+25+15)/3
+      expect(scoreBreakdownData.datasets[0]!.data[confidenceIndex]).toBeCloseTo(9.33, 1); // (15+10+3)/3
+      expect(scoreBreakdownData.datasets[0]!.data[recencyIndex]).toBe(4); // (5+5+2)/3
+      expect(scoreBreakdownData.datasets[0]!.data[customIndex]).toBe(0); // (0+0+0)/3
+    });
+
+    it('信頼度分布が正しく計算されること', () => {
+      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+      const confidenceData = result.confidenceDistribution;
+
+      // confidence: 0.95 (High), 0.7 (High), 0.4 (Medium)
+      const lowIndex = confidenceData.labels!.indexOf('Low (0-0.3)');
+      const mediumIndex = confidenceData.labels!.indexOf('Medium (0.3-0.7)');
+      const highIndex = confidenceData.labels!.indexOf('High (0.7-1.0)');
+
+      expect(confidenceData.datasets[0]!.data[lowIndex]).toBe(0);
+      expect(confidenceData.datasets[0]!.data[mediumIndex]).toBe(1); // 0.4
+      expect(confidenceData.datasets[0]!.data[highIndex]).toBe(2); // 0.95, 0.7
+    });
+
+    it('空の拡張分類配列を処理できること', () => {
+      const result = convertEnhancedClassificationData([]);
+
+      expect(result.categoryDistribution.labels).toHaveLength(0);
+      expect(result.priorityDistribution.labels).toHaveLength(0);
+      expect(result.scoreDistribution.datasets[0]!.data).toEqual([0, 0, 0, 0]);
+      expect(result.scoreBreakdownChart.datasets[0]!.data).toEqual([0, 0, 0, 0, 0]);
+    });
+
+    it('スコア境界値が正しく処理されること', () => {
+      const boundaryClassifications: EnhancedIssueClassification[] = [
+        {
+          issueId: 4,
+          issueNumber: 4,
+          primaryCategory: 'test',
+          primaryConfidence: 0.5,
+          estimatedPriority: 'medium',
+          priorityConfidence: 0.5,
+          score: 25, // Medium boundary
+          scoreBreakdown: { category: 10, priority: 10, confidence: 3, recency: 2, custom: 0 },
+          processingTimeMs: 100,
+          cacheHit: false,
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+          profileId: 'test-profile',
+          classifications: [],
+        },
+        {
+          issueId: 5,
+          issueNumber: 5,
+          primaryCategory: 'test',
+          primaryConfidence: 0.5,
+          estimatedPriority: 'medium',
+          priorityConfidence: 0.5,
+          score: 50, // High boundary
+          scoreBreakdown: { category: 20, priority: 20, confidence: 7, recency: 3, custom: 0 },
+          processingTimeMs: 100,
+          cacheHit: false,
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+          profileId: 'test-profile',
+          classifications: [],
+        },
+        {
+          issueId: 6,
+          issueNumber: 6,
+          primaryCategory: 'test',
+          primaryConfidence: 0.5,
+          estimatedPriority: 'medium',
+          priorityConfidence: 0.5,
+          score: 75, // Very High boundary
+          scoreBreakdown: { category: 30, priority: 30, confidence: 10, recency: 5, custom: 0 },
+          processingTimeMs: 100,
+          cacheHit: false,
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+          profileId: 'test-profile',
+          classifications: [],
+        },
+      ];
+
+      const result = convertEnhancedClassificationData(boundaryClassifications);
+      const scoreData = result.scoreDistribution;
+
+      const lowIndex = scoreData.labels!.indexOf('Low (0-25)');
+      const mediumIndex = scoreData.labels!.indexOf('Medium (25-50)');
+      const highIndex = scoreData.labels!.indexOf('High (50-75)');
+      const veryHighIndex = scoreData.labels!.indexOf('Very High (75-100)');
+
+      expect(scoreData.datasets[0]!.data[lowIndex]).toBe(0);
+      expect(scoreData.datasets[0]!.data[mediumIndex]).toBe(1); // 25
+      expect(scoreData.datasets[0]!.data[highIndex]).toBe(1); // 50
+      expect(scoreData.datasets[0]!.data[veryHighIndex]).toBe(1); // 75
+    });
+  });
+
+  describe('isEnhancedClassificationArray', () => {
+    it('拡張分類配列を正しく検出できること', () => {
+      const enhanced: EnhancedIssueClassification[] = [
+        {
+          issueId: 7,
+          issueNumber: 7,
+          primaryCategory: 'bug',
+          primaryConfidence: 0.9,
+          estimatedPriority: 'high',
+          priorityConfidence: 0.8,
+          score: 85,
+          scoreBreakdown: { category: 30, priority: 35, confidence: 15, recency: 5, custom: 0 },
+          processingTimeMs: 100,
+          cacheHit: false,
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+          profileId: 'test-profile',
+          classifications: [],
+        },
+      ];
+
+      expect(isEnhancedClassificationArray(enhanced)).toBe(true);
+    });
+
+    it('通常の分類配列を正しく検出できること', () => {
+      const normal: IssueClassification[] = [
+        {
+          issueId: 1,
+          issueNumber: 1,
+          primaryCategory: 'bug',
+          classifications: [
+            { category: 'bug', confidence: 0.9, reasons: ['Test reason'], keywords: ['bug'] },
+          ],
+          primaryConfidence: 0.9,
+          estimatedPriority: 'high',
+          priorityConfidence: 0.9,
+          processingTimeMs: 100,
+          version: '1.0.0',
+          metadata: {
+            titleLength: 20,
+            bodyLength: 100,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 0,
+            existingLabels: [],
+          },
+        },
+      ];
+
+      expect(isEnhancedClassificationArray(normal)).toBe(false);
+    });
+
+    it('空の配列を正しく処理できること', () => {
+      expect(isEnhancedClassificationArray([])).toBe(false);
+    });
+  });
+
+  describe('convertClassificationDataUniversal', () => {
+    it('拡張分類データを自動検出して変換できること', () => {
+      const enhanced: EnhancedIssueClassification[] = [
+        {
+          issueId: 8,
+          issueNumber: 8,
+          primaryCategory: 'bug',
+          primaryConfidence: 0.9,
+          estimatedPriority: 'high',
+          priorityConfidence: 0.8,
+          score: 85,
+          scoreBreakdown: { category: 30, priority: 35, confidence: 15, recency: 5, custom: 0 },
+          processingTimeMs: 100,
+          cacheHit: false,
+          algorithmVersion: '2.0.0',
+          configVersion: '2.0.0',
+          profileId: 'test-profile',
+          classifications: [],
+        },
+      ];
+
+      const result = convertClassificationDataUniversal(enhanced);
+
+      expect(result).toBeDefined();
+      expect(result.scoreDistribution).toBeDefined();
+      expect(result.scoreBreakdownChart).toBeDefined();
+    });
+
+    it('通常の分類データを自動検出して変換できること', () => {
+      const normal: IssueClassification[] = [
+        {
+          issueId: 1,
+          issueNumber: 1,
+          primaryCategory: 'bug',
+          classifications: [
+            { category: 'bug', confidence: 0.9, reasons: ['Test reason'], keywords: ['bug'] },
+          ],
+          primaryConfidence: 0.9,
+          estimatedPriority: 'high',
+          priorityConfidence: 0.9,
+          processingTimeMs: 100,
+          version: '1.0.0',
+          metadata: {
+            titleLength: 20,
+            bodyLength: 100,
+            hasCodeBlocks: false,
+            hasStepsToReproduce: false,
+            hasExpectedBehavior: false,
+            labelCount: 0,
+            existingLabels: [],
+          },
+        },
+      ];
+
+      const result = convertClassificationDataUniversal(normal);
+
+      expect(result).toBeDefined();
+      expect(result.scoreDistribution).toBeUndefined();
+      expect(result.scoreBreakdownChart).toBeUndefined();
+    });
+
+    it('空の配列を正しく処理できること', () => {
+      const result = convertClassificationDataUniversal([]);
+
+      expect(result).toBeDefined();
+      expect(result.categoryDistribution).toBeDefined();
+      expect(result.priorityDistribution).toBeDefined();
+      expect(result.confidenceDistribution).toBeDefined();
     });
   });
 
