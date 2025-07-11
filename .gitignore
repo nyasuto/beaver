@@ -132,6 +132,11 @@ gh-pages/
 *.old
 *.orig
 
+# Data files (GitHub API responses, cached data)
+src/data/github/issues/*.json
+src/data/github/repositories/*.json
+src/data/cache/*.json
+
 # Lock files (choose one based on your preference)
 # package-lock.json
 # yarn.lock
