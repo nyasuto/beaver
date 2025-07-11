@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .beaver-primary { fill: #3b82f6; }
+      .beaver-secondary { fill: #1e40af; }
+      .beaver-accent { fill: #fbbf24; }
+    </style>
+  </defs>
+  <!-- Beaver silhouette -->
+  <circle cx="16" cy="16" r="14" class="beaver-primary"/>
+  <!-- Beaver tail -->
+  <ellipse cx="25" cy="20" rx="4" ry="8" class="beaver-secondary"/>
+  <!-- Beaver head -->
+  <circle cx="12" cy="12" r="6" class="beaver-secondary"/>
+  <!-- Eye -->
+  <circle cx="10" cy="10" r="1.5" fill="white"/>
+  <!-- Tooth -->
+  <rect x="8" y="14" width="1.5" height="3" fill="white"/>
+  <!-- Letter B -->
+  <text x="16" y="20" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">B</text>
+</svg>
