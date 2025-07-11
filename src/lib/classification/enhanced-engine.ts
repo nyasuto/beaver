@@ -36,7 +36,6 @@ export interface EnhancedTaskScore {
   scoreBreakdown: {
     category: number;
     priority: number;
-    confidence: number;
     recency?: number;
     custom?: number;
   };
@@ -502,7 +501,6 @@ export class EnhancedClassificationEngine {
     const breakdown = {
       category: 0,
       priority: 0,
-      confidence: 0,
       recency: 0,
       custom: 0,
     };
@@ -515,8 +513,7 @@ export class EnhancedClassificationEngine {
     const priorityWeight = this.config.priorityWeights?.[estimatedPriority] ?? 0.5;
     breakdown.priority = priorityWeight * weights.priority;
 
-    // Confidence score
-    breakdown.confidence = primaryConfidence * weights.confidence;
+    // Confidence score removed - no longer part of scoreBreakdown
 
     // Recency score - removed per user feedback
     // const daysSinceCreated =

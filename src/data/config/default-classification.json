@@ -21,9 +21,9 @@
     "description": "Advanced scoring algorithm with customizable weights and factors",
     "version": "2.0.0",
     "weights": {
-      "category": 40,
-      "priority": 35,
-      "confidence": 25,
+      "category": 50,
+      "priority": 45,
+      "recency": 5,
       "custom": 0
     },
     "customFactors": [],
