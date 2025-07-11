@@ -19,7 +19,6 @@ export interface TaskRecommendation {
   priority: string;
   category: string;
   confidence: number;
-  estimatedEffort: 'low' | 'medium' | 'high';
   tags: string[];
   url: string;
   createdAt: string;
@@ -102,7 +101,6 @@ export class TaskRecommendationService {
       priority: this.formatPriority(task.priority),
       category: this.formatCategory(task.category),
       confidence: Math.round(task.confidence * 100),
-      estimatedEffort: this.estimateEffort(task),
       tags: this.generateTags(task),
       url: task.url || `/issues/${task.issueNumber}`,
       createdAt: task.createdAt,
@@ -161,42 +159,6 @@ export class TaskRecommendationService {
   }
 
   /**
-   * Estimate effort based on task characteristics
-   */
-  private static estimateEffort(task: TaskScore): 'low' | 'medium' | 'high' {
-    const { category, body = '', labels } = task;
-
-    // High effort indicators
-    const highEffortKeywords = ['refactor', 'redesign', 'architecture', 'breaking change'];
-    const hasHighEffortKeyword = highEffortKeywords.some(
-      keyword =>
-        body.toLowerCase().includes(keyword) ||
-        labels.some(label => label.toLowerCase().includes(keyword))
-    );
-
-    if (hasHighEffortKeyword || category === 'refactor') {
-      return 'high';
-    }
-
-    // Low effort indicators
-    const lowEffortCategories = ['documentation', 'test', 'question'];
-    const lowEffortKeywords = ['typo', 'fix typo', 'update docs', 'small fix'];
-    const hasLowEffortKeyword = lowEffortKeywords.some(keyword =>
-      body.toLowerCase().includes(keyword)
-    );
-
-    if (
-      lowEffortCategories.includes(category) ||
-      hasLowEffortKeyword ||
-      labels.includes('good first issue')
-    ) {
-      return 'low';
-    }
-
-    return 'medium';
-  }
-
-  /**
    * Generate tags for the task
    */
   private static generateTags(task: TaskScore): string[] {
@@ -205,14 +167,6 @@ export class TaskRecommendationService {
     // Add priority tag
     if (task.priority === 'critical' || task.priority === 'high') {
       tags.push('優先度高');
-    }
-
-    // Add effort tag
-    const effort = this.estimateEffort(task);
-    if (effort === 'low') {
-      tags.push('簡単');
-    } else if (effort === 'high') {
-      tags.push('大きなタスク');
     }
 
     // Add confidence tag
@@ -273,7 +227,6 @@ export class TaskRecommendationService {
           priority: '🟡 中',
           category: '📋 その他',
           confidence: 50,
-          estimatedEffort: 'medium' as const,
           tags: ['最新'],
           url: issue.html_url || `/issues/${issue.number}`,
           createdAt: issue.created_at,
