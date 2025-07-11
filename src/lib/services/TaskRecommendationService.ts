@@ -8,7 +8,7 @@
 import type { Issue } from '../schemas/github';
 import type { TaskScore } from '../classification/engine';
 import { getClassificationEngine } from '../classification/config-loader';
-import { markdownToHtml, extractFirstParagraph, truncateMarkdown } from '../utils/markdown';
+import { markdownToHtml, markdownToPlainText, truncateMarkdown } from '../utils/markdown';
 
 export interface TaskRecommendation {
   taskId: string;
@@ -114,9 +114,9 @@ export class TaskRecommendationService {
   private static generateTaskDescription(task: TaskScore): string {
     const body = task.body || '';
 
-    // Extract first paragraph and truncate if needed
-    const firstParagraph = extractFirstParagraph(body);
-    const truncated = truncateMarkdown(firstParagraph, 150);
+    // Convert to plain text and truncate to 100 characters
+    const plainText = markdownToPlainText(body);
+    const truncated = truncateMarkdown(plainText, 100);
 
     return truncated || 'No description available';
   }
@@ -257,7 +257,8 @@ export class TaskRecommendationService {
 
     const fallbackTasks: TaskRecommendation[] = await Promise.all(
       recentIssues.map(async (issue, index) => {
-        const description = truncateMarkdown(issue.body || '', 150);
+        const plainText = markdownToPlainText(issue.body || '');
+        const description = truncateMarkdown(plainText, 100);
         const descriptionHtml = await markdownToHtml(description);
 
         return {
