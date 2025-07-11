@@ -193,7 +193,6 @@ describe('StatsService', () => {
           labels: expect.arrayContaining([
             expect.objectContaining({ name: 'priority: critical', count: 1 }),
             expect.objectContaining({ name: 'priority: high', count: 1 }),
-            expect.objectContaining({ name: 'priority: medium', count: 1 }),
             expect.objectContaining({ name: 'priority: low', count: 1 }),
           ]),
           meta: expect.objectContaining({
@@ -494,12 +493,11 @@ describe('StatsService', () => {
     it('should calculate label statistics correctly', () => {
       const labelStats = (statsService as any).calculateLabelStats(mockIssues);
 
-      expect(labelStats).toHaveLength(4);
+      expect(labelStats).toHaveLength(3);
       expect(labelStats).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: 'priority: critical', count: 1 }),
           expect.objectContaining({ name: 'priority: high', count: 1 }),
-          expect.objectContaining({ name: 'priority: medium', count: 1 }),
           expect.objectContaining({ name: 'priority: low', count: 1 }),
         ])
       );

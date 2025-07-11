@@ -49,16 +49,24 @@ const closedIssues = issues.filter(issue => issue.state === 'closed');
 // 表示用のissues（デフォルトはopenのみ）
 const displayIssues = openIssues;
 
-// ラベルの集計とカテゴリ別グループ化
-const labelCounts = issues.reduce(
-  (acc, issue) => {
-    issue.labels.forEach(label => {
-      acc[label.name] = (acc[label.name] || 0) + 1;
-    });
-    return acc;
-  },
-  {} as Record<string, number>
-);
+// ラベルの集計関数（フィルター状態に応じて動的に計算）
+function calculateLabelCounts(issueList: typeof issues) {
+  return issueList.reduce(
+    (acc, issue) => {
+      issue.labels.forEach(label => {
+        acc[label.name] = (acc[label.name] || 0) + 1;
+      });
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+}
+
+// 初期表示用のラベルカウント（オープンIssueのみ）
+const initialLabelCounts = calculateLabelCounts(openIssues);
+
+// デフォルト表示用
+const labelCounts = initialLabelCounts;
 
 // ラベルをカテゴリ別にグループ化
 const labelCategories = {
@@ -474,12 +482,57 @@ const filterOptions = getFilterOptions(issues);
     };
     private currentQuery = '';
     private currentSort = { by: 'created', order: 'desc' };
+    private openLabelCounts: Record<string, number>;
+    private allLabelCounts: Record<string, number>;
 
     constructor() {
       this.allIssues = Array.from(document.querySelectorAll('.issue-card'));
       this.currentFilters.state = 'open'; // デフォルトはopenのみ
+
+      // ラベルカウントの初期化
+      this.openLabelCounts = this.calculateLabelCountsFromDOM('open');
+      this.allLabelCounts = this.calculateLabelCountsFromDOM('all');
+
       this.initializeEventListeners();
+      this.updateLabelCounts(); // 初期表示時にラベル数を更新
       this.performSearch(); // 初期フィルタリング実行
+    }
+
+    private calculateLabelCountsFromDOM(state: 'open' | 'closed' | 'all'): Record<string, number> {
+      const labelCounts: Record<string, number> = {};
+
+      this.allIssues.forEach(issue => {
+        const issueState = issue.getAttribute('data-state');
+        if (state !== 'all' && issueState !== state) return;
+
+        const labels = (issue.getAttribute('data-labels') || '').split(',');
+        labels.forEach(label => {
+          if (label.trim()) {
+            labelCounts[label] = (labelCounts[label] || 0) + 1;
+          }
+        });
+      });
+
+      return labelCounts;
+    }
+
+    private updateLabelCounts() {
+      const currentCounts =
+        this.currentFilters.state === 'all'
+          ? this.allLabelCounts
+          : this.currentFilters.state === 'open'
+            ? this.openLabelCounts
+            : this.calculateLabelCountsFromDOM('closed');
+
+      // ラベル数の表示を更新
+      document.querySelectorAll('.label-filter').forEach(checkbox => {
+        const labelName = (checkbox as HTMLInputElement).value;
+        const countElement = checkbox.parentElement?.querySelector('.text-xs.text-muted');
+        if (countElement) {
+          const count = currentCounts[labelName] || 0;
+          countElement.textContent = `(${count})`;
+        }
+      });
     }
 
     private initializeEventListeners() {
@@ -514,6 +567,7 @@ const filterOptions = getFilterOptions(issues);
         statusFilter.addEventListener('change', e => {
           const value = (e.target as HTMLSelectElement).value;
           this.currentFilters.state = value as 'open' | 'closed' | 'all';
+          this.updateLabelCounts(); // ラベル数を更新
           this.performSearch();
         });
       }
