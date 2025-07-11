@@ -1,0 +1,53 @@
+{
+  "id": 3214090437,
+  "node_id": "I_kwDOPJEskc6_kyDF",
+  "number": 42,
+  "title": "feat: 検索・フィルタリング機能の実装",
+  "body": "## 🎯 feature: 検索・フィルタリング機能の実装\n\n### **Priority: MEDIUM**\n\n**Impact:** ユーザビリティの向上、大量データの効率的な検索\n\n**Component:** 検索コンポーネント、フィルタリングロジック、UI/UX\n\n**Files:** \n- `src/components/navigation/Header.astro`\n- `src/components/ui/SearchInput.astro`\n- `src/lib/utils/search.ts`\n- `src/lib/utils/filter.ts`\n- `src/pages/issues/index.astro`\n\n### Problem Description\n\n現在のアプリケーションには検索フィールドが存在しますが、実際の検索機能が実装されていません：\n\n1. **検索フィールドの未実装**: Header に検索フィールドはあるが機能しない\n2. **フィルタリング機能の不足**: Issue の状態、ラベル、優先度でのフィルタリング未実装\n3. **検索結果の表示不足**: 検索結果のハイライト、件数表示なし\n4. **パフォーマンスの考慮不足**: 大量データでの検索パフォーマンス未検討\n\n### Recommended Solution\n\n**Phase 1: 基本検索機能**\n1. テキスト検索の実装（タイトル、本文）\n2. 検索結果のハイライト表示\n3. 検索件数の表示\n4. 検索履歴の保存\n\n**Phase 2: 高度なフィルタリング**\n1. 状態別フィルタリング（open/closed）\n2. ラベル別フィルタリング\n3. 優先度別フィルタリング\n4. 作成者別フィルタリング\n5. 日付範囲フィルタリング\n\n**Phase 3: 検索体験の向上**\n1. オートコンプリート機能\n2. 検索候補の表示\n3. 複合検索（AND/OR条件）\n4. 検索結果の並び替え\n5. 検索結果のエクスポート\n\n### Implementation Details\n\n**検索機能の実装:**\n```typescript\n// src/lib/utils/search.ts\nexport interface SearchOptions {\n  query: string;\n  filters: {\n    state?: 'open' | 'closed' | 'all';\n    labels?: string[];\n    priority?: string[];\n    author?: string;\n    dateRange?: {\n      start: Date;\n      end: Date;\n    };\n  };\n  sortBy?: 'created' | 'updated' | 'priority';\n  sortOrder?: 'asc' | 'desc';\n}\n\nexport const searchIssues = (\n  issues: Issue[], \n  options: SearchOptions\n): SearchResult => {\n  let filteredIssues = issues;\n  \n  // テキスト検索\n  if (options.query) {\n    filteredIssues = filteredIssues.filter(issue =>\n      issue.title.toLowerCase().includes(options.query.toLowerCase()) ||\n      issue.body?.toLowerCase().includes(options.query.toLowerCase())\n    );\n  }\n  \n  // フィルタリング\n  if (options.filters.state && options.filters.state \\!== 'all') {\n    filteredIssues = filteredIssues.filter(issue => \n      issue.state === options.filters.state\n    );\n  }\n  \n  return {\n    issues: filteredIssues,\n    totalCount: filteredIssues.length,\n    searchTime: Date.now()\n  };\n};\n```\n\n**検索UI の実装:**\n```astro\n<\\!-- src/components/ui/SearchInput.astro -->\n---\ninterface Props {\n  placeholder?: string;\n  onSearch?: (query: string) => void;\n}\n\nconst { placeholder = \"Issues を検索...\", onSearch } = Astro.props;\n---\n\n<div class=\"search-container\">\n  <input\n    type=\"text\"\n    placeholder={placeholder}\n    class=\"search-input\"\n    id=\"search-input\"\n  />\n  <button class=\"search-button\" type=\"button\">\n    <svg class=\"search-icon\" viewBox=\"0 0 20 20\">\n      <path d=\"M9 3a6 6 0 11-6 6 6 6 0 016-6zM2 9a7 7 0 1112.452 4.391l3.328 3.329a1 1 0 01-1.414 1.414l-3.329-3.328A7 7 0 012 9z\"/>\n    </svg>\n  </button>\n</div>\n\n<script>\n  document.getElementById('search-input')?.addEventListener('input', (e) => {\n    const query = (e.target as HTMLInputElement).value;\n    // 検索ロジックの実行\n    window.dispatchEvent(new CustomEvent('search', { detail: { query } }));\n  });\n</script>\n```\n\n### Acceptance Criteria\n\n- [ ] テキスト検索機能の実装（タイトル、本文）\n- [ ] 状態別フィルタリング（open/closed）\n- [ ] ラベル別フィルタリング\n- [ ] 優先度別フィルタリング\n- [ ] 検索結果のハイライト表示\n- [ ] 検索件数の表示\n- [ ] 検索履歴の保存\n- [ ] フィルタリング条件の保存\n- [ ] 検索結果の並び替え機能\n- [ ] レスポンシブな検索UI\n- [ ] 検索パフォーマンスの最適化\n\n**大量のIssueデータの中から効率的に情報を見つけられる価値の高い機能**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603442,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Esg",
+      "name": "type: feature",
+      "description": "New feature implementation",
+      "color": "a2eeef",
+      "default": false
+    }
+  ],
+  "state": "open",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T00:30:46Z",
+  "updated_at": "2025-07-09T00:30:46Z",
+  "closed_at": null,
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/42",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/42",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/42/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/42/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/42/events"
+}

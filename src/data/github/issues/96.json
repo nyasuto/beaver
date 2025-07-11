@@ -1,0 +1,53 @@
+{
+  "id": 3217450949,
+  "node_id": "I_kwDOPJEskc6_xmfF",
+  "number": 96,
+  "title": "🔥 CRITICAL: StatsServiceの包括的テスト実装",
+  "body": "## 🎯 概要\n\n**StatsService.ts** は統計データの統合処理を担う最重要コンポーネントですが、現在テストカバレージが **0%** です。システムの信頼性確保のため、緊急でテストを実装する必要があります。\n\n## 📊 現状\n\n- **テストカバレージ**: 0%\n- **ファイル**: `src/lib/services/StatsService.ts`\n- **重要度**: システム全体の統計機能の中核\n\n## 🔧 実装が必要なテスト\n\n### コア機能テスト\n- [ ] `getUnifiedStats()` - 統計データの統合処理\n- [ ] `fetchFreshStats()` - API データ取得とフォールバック\n- [ ] `calculateStats()` - 統計計算エンジン\n- [ ] `calculatePriorityStats()` - 優先度分類ロジック\n- [ ] `calculateLabelStats()` - ラベル統計集計\n- [ ] `getFallbackStats()` - フォールバックデータ生成\n\n### キャッシュ機能テスト\n- [ ] `getCachedStats()` - キャッシュデータ取得\n- [ ] `setCachedStats()` - キャッシュデータ保存\n- [ ] `clearCache()` - キャッシュクリア\n- [ ] `cleanupExpiredCache()` - 期限切れキャッシュ削除\n\n### ユーティリティ機能テスト\n- [ ] `generateCacheKey()` - キャッシュキー生成\n- [ ] `extractPriorityFromLabels()` - ラベルから優先度抽出\n\n## 🧪 テスト要件\n\n### 1. シングルトンパターンテスト\n```typescript\ndescribe('StatsService Singleton', () => {\n  it('should return same instance', () => {\n    const instance1 = StatsService.getInstance();\n    const instance2 = StatsService.getInstance();\n    expect(instance1).toBe(instance2);\n  });\n});\n```\n\n### 2. キャッシュ機能テスト\n```typescript\ndescribe('Cache Management', () => {\n  it('should cache and retrieve stats', () => {\n    // キャッシュ保存・取得・TTL期限のテスト\n  });\n  \n  it('should handle cache expiration', () => {\n    // キャッシュ有効期限のテスト\n  });\n});\n```\n\n### 3. データソースフォールバックテスト\n```typescript\ndescribe('Data Source Fallback', () => {\n  it('should fallback from API to static to fallback', () => {\n    // API → 静的データ → フォールバックの順序テスト\n  });\n});\n```\n\n### 4. 統計計算テスト\n```typescript\ndescribe('Statistics Calculation', () => {\n  it('should calculate correct statistics', () => {\n    // 統計計算の正確性テスト\n  });\n  \n  it('should handle empty data', () => {\n    // 空データ時の動作テスト\n  });\n});\n```\n\n## 🎯 テストカバレージ目標\n\n- **Statement Coverage**: 95%+\n- **Branch Coverage**: 90%+\n- **Function Coverage**: 100%\n\n## 📝 実装ポイント\n\n### モックが必要な外部依存\n- `getIssuesWithFallback()` - 静的データ取得\n- `hasStaticData()` - データ存在確認\n- `fetch()` - API呼び出し\n- `Date.now()` - キャッシュTTL計算\n\n### テストデータ準備\n- サンプルIssueデータ（様々な優先度・ラベル）\n- エラーレスポンスデータ\n- 空データ・不正データ\n\n## 🚀 期待される効果\n\n- システム最重要機能の動作保証\n- 統計データ計算の正確性確保\n- キャッシュ機能の信頼性向上\n- フォールバック機能の動作確認\n\n**Priority**: Critical\n**Impact**: システム中核機能の信頼性確保\n**Component**: Services\n**Files**: `src/lib/services/StatsService.ts`\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603242,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0D6g",
+      "name": "priority: critical",
+      "description": "Critical priority tasks",
+      "color": "d73a4a",
+      "default": false
+    },
+    {
+      "id": 8910603599,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0FTw",
+      "name": "type: test",
+      "description": "Test related tasks",
+      "color": "f9d71c",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T23:57:59Z",
+  "updated_at": "2025-07-10T00:11:43Z",
+  "closed_at": "2025-07-10T00:11:43Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/96",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/96",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/96/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/96/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/96/events"
+}

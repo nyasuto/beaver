@@ -1,0 +1,43 @@
+{
+  "id": 3216095046,
+  "node_id": "PR_kwDOPJEskc6eIk0p",
+  "number": 83,
+  "title": "fix: TailwindCSS v4 アップグレード互換性問題の修正",
+  "body": "## 概要\n\nPR #82 の TailwindCSS v4 アップグレードで発生した互換性問題を修正し、安定した v3 構成に復元しました。\n\n## 問題の詳細分析\n\n### 🚫 発生した問題\n1. **@astrojs/tailwind 非互換**\n   - 現在のバージョン (6.0.2) は TailwindCSS v3 のみサポート  \n   - v4 では PostCSS プラグイン構造が根本的に変更\n\n2. **ビルドエラー**\n   ```\n   [@astrojs/tailwind] The PostCSS plugin has moved to a separate package, \n   so to continue using Tailwind CSS with PostCSS you'll need to install \n   `@tailwindcss/postcss` and update your PostCSS configuration.\n   ```\n\n3. **プラグインアーキテクチャの変更**\n   - `@tailwindcss/typography` などのプラグインが削除されていた\n   - CSS インポート構文が変更されていた\n\n## 修正内容\n\n### 📦 依存関係の復元\n- **TailwindCSS**: `^4.1.11` → `^3.4.17` (安定版)\n- **必要なプラグイン再追加**:\n  - `@tailwindcss/typography@^0.5.15`\n  - `@tailwindcss/forms@^0.5.9`\n  - `@tailwindcss/aspect-ratio@^0.4.2`\n  - `@tailwindcss/container-queries@^0.1.1`\n\n### ⚙️ 設定の復元\n- **`tailwind.config.mjs`**: プラグイン設定を復元\n- **`src/styles/global.css`**: v3 互換の CSS インポート構文に戻す\n  ```css\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n  ```\n\n### 🔮 将来のアップグレード戦略\nTailwindCSS v4 への移行は以下の条件が整い次第実施：\n\n1. **Astro 公式対応待ち**\n   - `@astrojs/tailwind` の v4 対応版リリース\n   - または実験版 `experimental--tw5` の安定化\n\n2. **手動設定による回避策**\n   - `@tailwindcss/postcss` を使用\n   - PostCSS 設定の手動管理\n\n3. **プラグイン移行計画**\n   - 新しいプラグインアーキテクチャへの対応\n   - 依存プラグインの v4 対応確認\n\n## テスト結果\n\n✅ **ビルド**: 成功 (静的サイト生成完了)  \n✅ **TypeScript**: エラー0件、警告0件  \n✅ **テスト**: 469件パス、スキップ2件  \n✅ **ESLint**: 軽微な警告のみ (既存コードベース由来)  \n✅ **品質チェック**: 全項目通過  \n\n## 影響評価\n\n### ✅ 正常動作確認\n- 全ページのレンダリング正常\n- TailwindCSS クラスの適用正常\n- ダークモード切り替え正常\n- レスポンシブデザイン正常\n\n### 📋 後方互換性\n- 既存の CSS クラス全て動作\n- プラグイン機能 (Typography, Forms) 利用可能\n- カスタムテーマ設定維持\n\nSupersedes #82  \nResolves #70 (部分的 - 安定版での解決)\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T14:09:37Z",
+  "updated_at": "2025-07-09T14:16:09Z",
+  "closed_at": "2025-07-09T14:16:07Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/83",
+    "html_url": "https://github.com/nyasuto/beaver/pull/83",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/83.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/83.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/83",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/83",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/83/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/83/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/83/events"
+}

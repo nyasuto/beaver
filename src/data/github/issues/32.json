@@ -1,0 +1,53 @@
+{
+  "id": 3213939323,
+  "node_id": "I_kwDOPJEskc6_kNJ7",
+  "number": 32,
+  "title": "fix: TypeScript anyタイプの排除による型安全性向上",
+  "body": "## 🎯 enhancement: TypeScript anyタイプの排除による型安全性向上\n\n### **Priority: MEDIUM**\n\n**Impact:** コードの型安全性とメンテナンス性の向上\n\n**Component:** UI コンポーネント、スキーマ定義\n\n**Files:** \n- `src/components/layouts/BaseLayout.astro`\n- `src/components/navigation/Header.astro`\n- `src/components/ui/Button.astro`\n- `src/components/ui/Card.astro`\n- `src/components/ui/Input.astro`\n- `src/components/ui/Modal.astro`\n- `src/lib/schemas/processing.ts`\n- `src/lib/schemas/ui.ts`\n\n### Problem Description\n\n現在のコードベースで `make quality` を実行すると、8つの `any` タイプに関する TypeScript 警告が発生しています。これらの警告は型安全性を損なう可能性があり、TypeScript のベストプラクティスに反しています。\n\n**検出された警告:**\n- BaseLayout.astro:181:18 - `any` タイプの使用\n- Header.astro:247:20 - `any` タイプの使用\n- Button.astro:103:17 - `any` タイプの使用\n- Card.astro:119:57 - `any` タイプの使用\n- Input.astro:184:21 - `any` タイプの使用\n- Modal.astro:149:35 - `any` タイプの使用\n- processing.ts:58:43 - `any` タイプの使用\n- ui.ts:205:46 - `any` タイプの使用\n\n### Recommended Solution\n\n各ファイルの `any` タイプを適切な具体的な型に置き換える：\n\n1. **DOM イベント関連**: `MouseEvent`, `KeyboardEvent`, `InputEvent` などの具体的なイベント型を使用\n2. **プロパティ関連**: `Record<string, unknown>`, `object`, または具体的なインターフェース定義を使用\n3. **関数型**: 適切な関数シグネチャを定義\n4. **Zod スキーマ**: `z.unknown()` や `z.object()` を使用して型安全性を保つ\n\n### Acceptance Criteria\n\n- [ ] 全ての `any` タイプを適切な型に置き換える\n- [ ] `make quality` 実行時に `any` 関連の警告が0件になる\n- [ ] 型安全性を保ちながら既存機能が正常に動作する\n- [ ] 可能な限り具体的で制約のある型を使用する\n\n**プロジェクトの型安全性向上とコード品質向上に貢献する価値のある改善**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603512,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0E-A",
+      "name": "type: enhancement",
+      "description": "Enhancement to existing feature",
+      "color": "84d09a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-08T22:45:58Z",
+  "updated_at": "2025-07-08T23:06:51Z",
+  "closed_at": "2025-07-08T23:06:51Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/32",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/32",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/32/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/32/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/32/events"
+}

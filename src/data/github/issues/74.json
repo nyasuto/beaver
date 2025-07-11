@@ -1,0 +1,53 @@
+{
+  "id": 3215700680,
+  "node_id": "I_kwDOPJEskc6_q7LI",
+  "number": 74,
+  "title": "🧭 トップページナビゲーションの改善",
+  "body": "## 🎯 ENHANCEMENT: トップページナビゲーションの改善\n\n### **Priority: HIGH**\n\n**Impact:** ユーザビリティの大幅向上\n\n**Component:** ナビゲーションシステム\n\n**Files:** `src/components/navigation/`, `src/pages/index.astro`\n\n### Problem Description\n\n現在のトップページでは主要なアクションボタンが整理されておらず、階層的なナビゲーション構造も不明確です。ユーザーが目的の機能にたどり着くのが困難な状況です。\n\n### Recommended Solution\n\n1. **主要アクションボタンの整理**\n   - 最重要なアクションを明確に識別\n   - プライマリ・セカンダリボタンの区別\n   - 適切な配置とサイズ設定\n\n2. **階層的ナビゲーション構造の構築**\n   - メインナビゲーションの明確化\n   - ブレッドクラムの実装\n   - サブナビゲーションの整理\n\n3. **ユーザビリティの向上**\n   - 直感的なナビゲーションフロー\n   - 一貫したナビゲーション体験\n   - アクセシビリティの改善\n\n### Acceptance Criteria\n\n- [ ] 主要なアクションボタンが明確に識別できる\n- [ ] プライマリ・セカンダリボタンが適切に区別されている\n- [ ] 階層的ナビゲーション構造が実装されている\n- [ ] ブレッドクラムが適切に機能している\n- [ ] ナビゲーションが直感的で使いやすい\n- [ ] アクセシビリティ基準を満たしている\n\n**Issue #67 の改善により、ユーザーが目的の機能に迅速にアクセスできる**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603282,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0EEg",
+      "name": "priority: high",
+      "description": "High priority tasks",
+      "color": "f85149",
+      "default": false
+    },
+    {
+      "id": 8910603512,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0E-A",
+      "name": "type: enhancement",
+      "description": "Enhancement to existing feature",
+      "color": "84d09a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T12:04:26Z",
+  "updated_at": "2025-07-09T13:42:32Z",
+  "closed_at": "2025-07-09T13:42:32Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/74",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/74",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/74/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/74/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/74/events"
+}

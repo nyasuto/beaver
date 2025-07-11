@@ -1,0 +1,43 @@
+{
+  "id": 3216371549,
+  "node_id": "PR_kwDOPJEskc6eJg6j",
+  "number": 92,
+  "title": "fix: 統計データ取得ロジックの本質的な修正",
+  "body": "## 概要\n\nPR #90を破棄し、トップページ統計情報の本質的な問題を修正しました。ダミーデータを綺麗にするのではなく、実際のデータ取得ロジックを根本的に改善しました。\n\n## 本質的な問題と修正\n\n### 🔴 問題: ビルド時のAPI呼び出しエラー\n\n**従来の問題のある実装:**\n```typescript\n// ビルド時にfetchが失敗する\nconst response = await fetch('/api/github/issues?include_stats=true&state=all&per_page=100');\n```\n\n**エラーメッセージ:**\n```\nTypeError: Failed to parse URL from /api/github/issues?include_stats=true&state=all&per_page=100\n```\n\n### ✅ 修正: データソースの適切な優先順位\n\n**新しい実装:**\n```typescript\n// 1. 静的データを優先\nif (hasStaticData()) {\n  const issues = getIssuesWithFallback();\n  const stats = this.calculateStats(issues, options, 'static_data');\n  return { success: true, data: stats };\n}\n\n// 2. クライアントサイドでのみAPIを試行\nif (typeof window \\!== 'undefined' && window.location) {\n  const response = await fetch('/api/github/issues?...');\n  // ...\n}\n\n// 3. 最終的にフォールバック\nconst fallbackStats = this.getFallbackStats();\n```\n\n## 変更内容\n\n### 1. StatsService.ts の修正\n\n- **fetchFreshStats()**: 静的データを最初にチェック\n- **calculateStats()**: データソースを明示的に記録\n- **'static_data'** ソースタイプを追加\n\n### 2. データソース表示の改善\n\n**3つの状態を明確に区別:**\n\n1. **静的データ使用時** (緑色):\n   ```\n   ✅ 静的データを使用中 - 最新データを取得するには `npm run fetch-data` を実行してください\n   ```\n\n2. **フォールバック時** (黄色):\n   ```\n   ⚠️ サンプルデータを表示中 - GitHub API接続を確認して実際のデータを取得してください\n   ```\n\n3. **API エラー時** (青色):\n   ```\n   データが制限されている可能性があります。APIステータス確認\n   ```\n\n## 技術的詳細\n\n### データフロー改善\n\n```mermaid\ngraph TD\n    A[StatsService.getUnifiedStats] --> B[キャッシュチェック]\n    B --> C[fetchFreshStats]\n    C --> D{hasStaticData?}\n    D -->|Yes| E[静的データ使用]\n    D -->|No| F{クライアントサイド?}\n    F -->|Yes| G[API呼び出し]\n    F -->|No| H[フォールバック]\n    G --> I{API成功?}\n    I -->|Yes| J[APIデータ使用]\n    I -->|No| H\n    E --> K[static_data]\n    J --> L[github_api]\n    H --> M[fallback]\n```\n\n### 型システムの改善\n\n```typescript\n// 新しいソースタイプ\nsource: z.enum(['github_api', 'static_data', 'fallback', 'cache'])\n\n// データソース別の処理\nprivate calculateStats(\n  issues: Issue[], \n  options: StatsOptions, \n  source: 'github_api' | 'static_data' = 'github_api'\n): UnifiedStats\n```\n\n## 動作確認\n\n### Before\n- ビルド時にfetchエラーが発生\n- フォールバックデータが常に表示される\n- データソースが不明\n\n### After\n- ビルド時エラーが解消\n- 静的データが適切に使用される\n- データソースが明確に表示される\n\n## 影響\n\nこの修正により：\n1. **ビルド時の安定性向上** - fetchエラーが解消\n2. **データソースの透明性** - 使用中のデータソースが明確\n3. **適切なフォールバック** - 段階的なデータ取得フロー\n4. **実際のデータ活用** - 既存の静的データを正しく使用\n\n## テスト\n\n- ✅ ローカルビルド成功\n- ✅ 静的データ使用確認\n- ✅ データソース表示確認\n- ✅ 全品質チェック通過\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T15:41:09Z",
+  "updated_at": "2025-07-09T15:48:54Z",
+  "closed_at": "2025-07-09T15:48:51Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/92",
+    "html_url": "https://github.com/nyasuto/beaver/pull/92",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/92.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/92.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/92",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/92",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/92/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/92/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/92/events"
+}

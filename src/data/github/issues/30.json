@@ -1,0 +1,43 @@
+{
+  "id": 3213877947,
+  "node_id": "PR_kwDOPJEskc6eBJlK",
+  "number": 30,
+  "title": "feat: 基本UIコンポーネント（Button, Card, Input, Modal）の実装",
+  "body": "## 概要\n\nIssue #5 の基本UIコンポーネント実装を完了しました。すべてのコンポーネントはZod検証スキーマに基づいて型安全に設計され、アクセシビリティとユーザビリティを重視して実装されています。\n\n## 実装されたコンポーネント\n\n### 🔘 Button.astro\n- **Variants**: primary, secondary, outline, ghost, link (5種類)\n- **Sizes**: sm, md, lg, xl (4種類)\n- **States**: loading, disabled\n- **Features**: 左右アイコン、href指定時のリンク機能\n- **Accessibility**: ARIA属性、キーボードナビゲーション対応\n\n### 🗃️ Card.astro\n- **Variants**: default, outlined, elevated, filled (4種類)\n- **Customization**: padding, radius, shadow, hover effects\n- **Layout**: header, content, footer領域の分離\n- **Interactive**: クリック可能な機能、hover効果\n\n### 📝 Input.astro\n- **Types**: text, email, password, number, tel, url, search (7種類)\n- **Variants**: default, outlined, filled, flushed (4種類)\n- **Features**: 左右アイコン・要素、バリデーション状態\n- **Form Support**: ラベル、ヘルパーテキスト、エラー表示\n- **Accessibility**: ARIA属性、フォームアクセシビリティ\n\n### 🪟 Modal.astro\n- **Sizes**: sm, md, lg, xl, full (5種類)\n- **Interaction**: オーバーレイクリック、ESCキーで閉じる\n- **Accessibility**: フォーカス管理、キーボードナビゲーション\n- **Customization**: カスタマイズ可能なheader、footer\n- **Animation**: フェード・スライドアニメーション\n- **Events**: modalOpen, modalClose イベント\n\n## 技術的改善\n\n### 型安全性\n- すべてのコンポーネントでZod検証を実装\n- TypeScript型推論による開発体験向上\n- `src/lib/schemas/ui.ts` との完全な統合\n\n### コード品質\n- Tailwind CSSによる一貫したスタイリング\n- ESLint/Prettier による品質管理\n- 完全なJSDoc ドキュメンテーション\n\n### 開発体験\n- `src/components/ui/index.ts` にメタデータとヘルパー関数を追加\n- コンポーネント発見性の向上\n- 再利用可能な設計パターン\n\n## テスト\n\n- ✅ ESLint チェック (6 warnings - any型使用による)\n- ✅ Prettier フォーマット\n- ✅ TypeScript型チェック\n- ⚠️ ユニットテスト (今後の課題)\n\n## 次のステップ\n\nこのPRマージ後は Issue #6 「レイアウトコンポーネントとページ構造の作成」に進む予定です。\n\nCloses #5",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-08T22:04:55Z",
+  "updated_at": "2025-07-08T22:07:17Z",
+  "closed_at": "2025-07-08T22:07:15Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/30",
+    "html_url": "https://github.com/nyasuto/beaver/pull/30",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/30.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/30.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/30",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/30",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/30/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/30/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/30/events"
+}

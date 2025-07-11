@@ -1,0 +1,43 @@
+{
+  "id": 3219790609,
+  "node_id": "PR_kwDOPJEskc6eVKlm",
+  "number": 140,
+  "title": "feat: Issue #42 検索・フィルタリング機能の実装",
+  "body": "## 概要\n\nGitHub Issue #42で要求された包括的な検索・フィルタリング機能をIssuesページに実装しました。\n\n## 実装した機能\n\n### 🔍 検索機能\n- **テキスト検索**: タイトル、本文、作者、ラベルを対象とした全文検索\n- **リアルタイム検索**: 300msのデバウンス機能付きでパフォーマンスを最適化\n- **検索結果ハイライト**: マッチした検索語句をハイライト表示\n\n### 🎯 フィルタリング機能\n- **ステータスフィルタ**: オープン、クローズ、すべてのIssueを切り替え\n- **ラベルフィルタ**: 複数ラベルによる絞り込み（AND条件）\n- **作者フィルタ**: Issue作成者による絞り込み\n- **担当者フィルタ**: アサインされた担当者による絞り込み\n\n### 📊 ソート機能\n- 作成日（新しい順/古い順）\n- 更新日（新しい順/古い順）\n- Issue番号（昇順/降順）\n- 優先度（高い順/低い順）\n\n### ⚡ パフォーマンス\n- 検索実行時間の表示\n- 効率的なDOM操作とフィルタリング\n- メモリ使用量を抑えた実装\n\n## 技術的実装\n\n### 新規作成ファイル\n- `src/lib/utils/search.ts` - 検索・フィルタリングユーティリティ関数\n- `src/lib/utils/__tests__/search.test.ts` - テストカバレッジ\n\n### 変更ファイル\n- `src/pages/issues/index.astro` - UIの拡張とクライアントサイド検索機能\n\n### 特徴\n- **型安全性**: TypeScriptとZodによる完全な型安全性\n- **テスト**: Vitestによる包括的なテストカバレッジ\n- **パフォーマンス**: デバウンス、効率的なDOM操作\n- **ユーザビリティ**: 直感的なUI、リアルタイムフィードバック\n\n## テスト\n\n- ✅ 全10個のテストがパス\n- ✅ TypeScript型チェック完了\n- ✅ ESLint品質チェック完了（警告のみ）\n- ✅ 既存機能に影響なし\n\n## UI/UX改善\n\n- 検索ボックスとクリアボタンの追加\n- リアルタイム結果カウント表示\n- 検索時間パフォーマンス指標\n- 視覚的なフィードバック（ハイライト、フェードエフェクト）\n\nCloses #42\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T15:25:13Z",
+  "updated_at": "2025-07-10T15:31:06Z",
+  "closed_at": "2025-07-10T15:31:05Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/140",
+    "html_url": "https://github.com/nyasuto/beaver/pull/140",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/140.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/140.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/140",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/140",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/140/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/140/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/140/events"
+}

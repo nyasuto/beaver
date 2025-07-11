@@ -1,0 +1,53 @@
+{
+  "id": 3217455853,
+  "node_id": "I_kwDOPJEskc6_xnrt",
+  "number": 102,
+  "title": "🟡 MEDIUM: 統計計算ユーティリティのテスト実装 (statsCalculations.ts)",
+  "body": "## 🎯 概要\n\n**statsCalculations.ts** は統計計算・分析機能を担う重要ユーティリティですが、現在テストカバレージが **0%** です。データ分析の正確性確保のため、包括的なテストを実装する必要があります。\n\n## 📊 現状\n\n- **テストカバレージ**: 0%\n- **ファイル**: `src/lib/utils/statsCalculations.ts`\n- **重要度**: データ分析・統計処理の基盤\n\n## 🔧 実装が必要なテスト\n\n### 統計計算機能テスト\n- [ ] `calculateTimeSeriesStats()` - 時系列統計計算\n- [ ] `calculateAssigneeStats()` - 担当者別統計\n- [ ] `calculateHealthScore()` - リポジトリヘルススコア\n- [ ] `calculateTrend()` - トレンド分析\n- [ ] `calculateBasicStats()` - 基本統計\n- [ ] `calculateDetailedStats()` - 詳細統計\n\n### データ集約機能テスト\n- [ ] 日付範囲計算\n- [ ] カテゴリ別集計\n- [ ] パーセンタイル計算\n- [ ] 移動平均計算\n\n## 🧪 テスト要件\n\n### 1. 基本統計計算テスト\n```typescript\ndescribe('Basic Statistics', () => {\n  const sampleIssues = [\n    { state: 'open', created_at: '2024-01-01', assignee: 'user1' },\n    { state: 'closed', created_at: '2024-01-02', assignee: 'user2' },\n    { state: 'open', created_at: '2024-01-03', assignee: 'user1' }\n  ];\n  \n  it('should calculate basic statistics correctly', () => {\n    const stats = calculateBasicStats(sampleIssues);\n    \n    expect(stats.total).toBe(3);\n    expect(stats.open).toBe(2);\n    expect(stats.closed).toBe(1);\n    expect(stats.openRate).toBeCloseTo(0.67, 2);\n  });\n  \n  it('should handle empty data', () => {\n    const stats = calculateBasicStats([]);\n    \n    expect(stats.total).toBe(0);\n    expect(stats.open).toBe(0);\n    expect(stats.closed).toBe(0);\n    expect(stats.openRate).toBe(0);\n  });\n});\n```\n\n### 2. 時系列統計テスト\n```typescript\ndescribe('Time Series Statistics', () => {\n  it('should calculate time series data correctly', () => {\n    const issues = [\n      { created_at: '2024-01-01T00:00:00Z' },\n      { created_at: '2024-01-01T12:00:00Z' },\n      { created_at: '2024-01-02T00:00:00Z' }\n    ];\n    \n    const timeSeriesStats = calculateTimeSeriesStats(issues, 'daily');\n    \n    expect(timeSeriesStats['2024-01-01']).toBe(2);\n    expect(timeSeriesStats['2024-01-02']).toBe(1);\n  });\n  \n  it('should handle different time granularities', () => {\n    const weeklyStats = calculateTimeSeriesStats(issues, 'weekly');\n    const monthlyStats = calculateTimeSeriesStats(issues, 'monthly');\n    \n    expect(Object.keys(weeklyStats).length).toBeLessThanOrEqual(Object.keys(monthlyStats).length);\n  });\n});\n```\n\n### 3. ヘルススコア計算テスト\n```typescript\ndescribe('Health Score Calculation', () => {\n  it('should calculate repository health score', () => {\n    const repoData = {\n      stargazers_count: 100,\n      forks_count: 50,\n      open_issues_count: 10,\n      updated_at: new Date().toISOString(),\n      has_wiki: true,\n      has_readme: true\n    };\n    \n    const healthScore = calculateHealthScore(repoData);\n    \n    expect(healthScore).toBeGreaterThan(0);\n    expect(healthScore).toBeLessThanOrEqual(100);\n  });\n  \n  it('should penalize inactive repositories', () => {\n    const activeRepo = {\n      updated_at: new Date().toISOString(),\n      stargazers_count: 50\n    };\n    \n    const inactiveRepo = {\n      updated_at: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),\n      stargazers_count: 50\n    };\n    \n    const activeScore = calculateHealthScore(activeRepo);\n    const inactiveScore = calculateHealthScore(inactiveRepo);\n    \n    expect(activeScore).toBeGreaterThan(inactiveScore);\n  });\n});\n```\n\n### 4. トレンド分析テスト\n```typescript\ndescribe('Trend Analysis', () => {\n  it('should detect upward trend', () => {\n    const dataPoints = [1, 2, 3, 4, 5];\n    const trend = calculateTrend(dataPoints);\n    \n    expect(trend.direction).toBe('up');\n    expect(trend.confidence).toBeGreaterThan(0.8);\n  });\n  \n  it('should detect downward trend', () => {\n    const dataPoints = [5, 4, 3, 2, 1];\n    const trend = calculateTrend(dataPoints);\n    \n    expect(trend.direction).toBe('down');\n    expect(trend.confidence).toBeGreaterThan(0.8);\n  });\n  \n  it('should detect stable trend', () => {\n    const dataPoints = [3, 3, 3, 3, 3];\n    const trend = calculateTrend(dataPoints);\n    \n    expect(trend.direction).toBe('stable');\n  });\n});\n```\n\n### 5. 担当者統計テスト\n```typescript\ndescribe('Assignee Statistics', () => {\n  it('should calculate assignee workload correctly', () => {\n    const issues = [\n      { assignee: { login: 'user1' }, state: 'open' },\n      { assignee: { login: 'user1' }, state: 'closed' },\n      { assignee: { login: 'user2' }, state: 'open' },\n      { assignee: null, state: 'open' }\n    ];\n    \n    const assigneeStats = calculateAssigneeStats(issues);\n    \n    expect(assigneeStats.user1.total).toBe(2);\n    expect(assigneeStats.user1.open).toBe(1);\n    expect(assigneeStats.user2.total).toBe(1);\n    expect(assigneeStats.unassigned).toBe(1);\n  });\n});\n```\n\n## 🎯 テストカバレージ目標\n\n- **Statement Coverage**: 95%+\n- **Branch Coverage**: 90%+\n- **Function Coverage**: 100%\n\n## 📝 実装ポイント\n\n### 数学的正確性検証\n- 統計計算の精度確認\n- エッジケース（ゼロ除算等）処理\n- 浮動小数点計算の誤差許容\n\n### パフォーマンステスト\n- 大データセットでの計算時間\n- メモリ使用量の監視\n- 最適化アルゴリズムの効果測定\n\n### データバリエーション\n- 様々な期間のデータ\n- 異なるデータ分布\n- 欠損データの処理\n\n## 🚀 期待される効果\n\n- 統計計算の正確性保証\n- データ分析機能の信頼性向上\n- パフォーマンスの最適化\n- エッジケース処理の強化\n\n**Priority**: Medium\n**Impact**: データ分析機能の信頼性向上\n**Component**: Statistics\n**Files**: `src/lib/utils/statsCalculations.ts`\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603599,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0FTw",
+      "name": "type: test",
+      "description": "Test related tasks",
+      "color": "f9d71c",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T00:01:37Z",
+  "updated_at": "2025-07-10T07:42:14Z",
+  "closed_at": "2025-07-10T07:42:14Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/102",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/102",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/102/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/102/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/102/events"
+}

@@ -1,0 +1,53 @@
+{
+  "id": 3215399574,
+  "node_id": "I_kwDOPJEskc6_pxqW",
+  "number": 58,
+  "title": "fix: GitHub Pages internal links missing base path causing 404 errors",
+  "body": "## 🎯 **BUG**: GitHub Pages ルーティングエラー修正\n\n### **Priority: HIGH**\n\n**Impact:** Website navigation\n\n**Component:** Astro routing, Navigation components\n\n**Files:** Header.astro, Footer.astro, pages/*.astro\n\n## Problem Description\n\nGitHub Pages デプロイ後に内部リンクが404エラーになる問題が発生しています。\n\n### 現象\n- デプロイURL: `https://nyasuto.github.io/beaver/`\n- 内部リンクが `/issues` となり、実際のURLは `https://nyasuto.github.io/issues` (404)\n- 正しくは `/beaver/issues` で `https://nyasuto.github.io/beaver/issues` である必要\n\n### 根本原因分析\n1. **Astro設定**: ✅ `base: '/beaver'` は正しく設定済み\n2. **アセット**: ✅ CSS/JSファイルは正しくプレフィックス付き (`/beaver/assets/...`)\n3. **内部リンク**: ❌ ハードコードされたリンクにベースパスが不足\n\n### 影響範囲\n- ナビゲーションメニュー\n- パンくずリスト\n- ボタンリンク\n- Issue詳細ページへのリンク\n- フッターリンク\n\n## Recommended Solution\n\n### 1. URL ユーティリティ関数の作成\n```typescript\n// src/lib/utils/url.ts\nexport function resolveUrl(path: string): string {\n  const base = import.meta.env.BASE_URL || '/';\n  return base === '/' ? path : `${base.replace(/\\/$/, '')}${path}`;\n}\n```\n\n### 2. 修正が必要なファイル\n\n#### **Navigation Components**\n- `src/components/navigation/Header.astro` (6箇所)\n  - ナビゲーションアイテム: `href: '/issues'` → `href: resolveUrl('/issues')`\n  - ロゴリンク: `href=\"/\"` → `href={resolveUrl('/')}`\n\n- `src/components/navigation/Footer.astro` (3箇所)\n  - フッターリンク修正\n\n#### **Page Components**\n- `src/pages/index.astro` (6箇所)\n  - ホームページの各種リンク修正\n\n- `src/pages/issues/index.astro` (4箇所)  \n  - Issues一覧ページのリンク修正\n\n- `src/pages/issues/[id].astro` (8箇所)\n  - Issue詳細ページのリンク修正\n\n- `src/pages/analytics/index.astro` (3箇所)\n  - Analyticsページのリンク修正\n\n### 3. 実装アプローチ\n1. URL utility function作成\n2. 各コンポーネントでutility import\n3. ハードコードされたパスを utility function呼び出しに置換\n4. 開発環境とプロダクション環境での動作確認\n\n## Acceptance Criteria\n\n- [ ] `/` → `/beaver/` (プロダクション) or `/` (開発)\n- [ ] `/issues` → `/beaver/issues` (プロダクション) or `/issues` (開発)  \n- [ ] `/analytics` → `/beaver/analytics` (プロダクション) or `/analytics` (開発)\n- [ ] すべての内部リンクが正しく機能する\n- [ ] 開発環境で既存動作が維持される\n- [ ] GitHub Pagesデプロイ後に404エラーが解消される\n\n**GitHub Pages上でのナビゲーション体験向上と、適切なルーティングの実現**\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603282,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0EEg",
+      "name": "priority: high",
+      "description": "High priority tasks",
+      "color": "f85149",
+      "default": false
+    },
+    {
+      "id": 8910603467,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Eyw",
+      "name": "type: bug",
+      "description": "Bug fix",
+      "color": "d73a4a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 1,
+  "created_at": "2025-07-09T10:23:04Z",
+  "updated_at": "2025-07-09T10:58:18Z",
+  "closed_at": "2025-07-09T10:58:18Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/58",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/58",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/58/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/58/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/58/events"
+}

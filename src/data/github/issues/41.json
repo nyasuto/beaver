@@ -1,0 +1,53 @@
+{
+  "id": 3214089918,
+  "node_id": "I_kwDOPJEskc6_kx6-",
+  "number": 41,
+  "title": "feat: Analytics ダッシュボードとChart.js統合の実装",
+  "body": "## 🎯 feature: Analytics ダッシュボードとChart.js統合の実装\n\n### **Priority: MEDIUM**\n\n**Impact:** データ分析機能の活用、視覚化の実現\n\n**Component:** Analytics エンジン、Chart.js コンポーネント、ダッシュボード\n\n**Files:** \n- `src/pages/analytics/index.astro`\n- `src/components/charts/`\n- `src/lib/analytics/engine.ts`\n- `src/lib/analytics/classifier.ts`\n\n### Problem Description\n\n現在のコードベースには充実した Analytics エンジンが存在しますが、フロントエンドでの可視化が未実装です：\n\n1. **Analytics エンジンの未活用**: 分析ロジックが存在するが使用されていない\n2. **Chart.js コンポーネントの未統合**: Chart.js は導入済みだが実データとの連携なし\n3. **ダッシュボードの静的表示**: 分析結果を動的に表示できない\n4. **データ流れの断絶**: バックエンド分析からフロントエンド表示までの流れが未完成\n\n### Recommended Solution\n\n**Phase 1: Analytics エンジンの活用**\n1. 既存の Analytics エンジンを Analytics ページで使用\n2. GitHub Issue データの分析結果を生成\n3. 分析結果の型定義を完全化\n\n**Phase 2: Chart.js 統合**\n1. Chart.js コンポーネントを実データで初期化\n2. 複数のチャート種類の実装（円グラフ、棒グラフ、線グラフ）\n3. インタラクティブなチャート機能\n\n**Phase 3: ダッシュボードの実装**\n1. 分析結果の可視化\n2. フィルタリング機能の実装\n3. エクスポート機能の追加\n\n### Implementation Details\n\n**Analytics エンジンの活用:**\n```typescript\n// src/pages/analytics/index.astro\n---\nimport { AnalyticsEngine } from '@/lib/analytics/engine';\nimport { fetchGitHubIssues } from '@/lib/github/issues';\n\nconst config = getConfig();\nconst issuesResult = await fetchGitHubIssues(config.github);\n\nif (issuesResult.success) {\n  const engine = new AnalyticsEngine();\n  const analysisResult = await engine.analyze(issuesResult.data);\n  \n  const chartData = {\n    labels: analysisResult.categories.map(c => c.name),\n    datasets: [{\n      data: analysisResult.categories.map(c => c.count),\n      backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']\n    }]\n  };\n}\n---\n```\n\n**Chart.js コンポーネント統合:**\n```typescript\n// src/components/charts/IssueAnalysisChart.tsx\nimport { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';\nimport { Doughnut } from 'react-chartjs-2';\n\nChartJS.register(ArcElement, Tooltip, Legend);\n\ninterface Props {\n  data: ChartData;\n  title: string;\n}\n\nexport const IssueAnalysisChart: React.FC<Props> = ({ data, title }) => {\n  return (\n    <div className=\"chart-container\">\n      <h3>{title}</h3>\n      <Doughnut data={data} options={chartOptions} />\n    </div>\n  );\n};\n```\n\n### Acceptance Criteria\n\n- [ ] Analytics エンジンをフロントエンドで使用\n- [ ] Chart.js コンポーネントを実データで初期化\n- [ ] Issue 分類結果の円グラフ表示\n- [ ] 時系列データの線グラフ表示\n- [ ] 優先度別の棒グラフ表示\n- [ ] インタラクティブなチャート機能\n- [ ] ダッシュボードでの複数チャート表示\n- [ ] データフィルタリング機能\n- [ ] 分析結果のエクスポート機能\n\n**プロジェクトの分析機能を実際に使用可能にする価値の高い実装**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603442,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0Esg",
+      "name": "type: feature",
+      "description": "New feature implementation",
+      "color": "a2eeef",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T00:30:19Z",
+  "updated_at": "2025-07-09T01:26:19Z",
+  "closed_at": "2025-07-09T01:26:19Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/41",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/41",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/41/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/41/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/41/events"
+}

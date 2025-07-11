@@ -1,0 +1,53 @@
+{
+  "id": 3215701515,
+  "node_id": "I_kwDOPJEskc6_q7YL",
+  "number": 75,
+  "title": "🎨 デザインシステムの統一化",
+  "body": "## 🎯 ENHANCEMENT: デザインシステムの統一化\n\n### **Priority: MEDIUM**\n\n**Impact:** 視覚的一貫性の向上\n\n**Component:** デザインシステム\n\n**Files:** `src/styles/`, `src/components/`\n\n### Problem Description\n\n現在のトップページでは統一されたデザインシステムが適用されておらず、カラーパレット、タイポグラフィ、アイコンスタイルの一貫性が欠けています。\n\n### Recommended Solution\n\n1. **統一されたデザインシステムの適用**\n   - 一貫したカラーパレットの使用\n   - タイポグラフィの標準化\n   - アイコンスタイルの統一\n\n2. **スタイルガイドの実装**\n   - CSS変数の活用\n   - コンポーネントスタイルの標準化\n   - 再利用可能なスタイルクラスの作成\n\n3. **視覚的一貫性の確保**\n   - 間隔とパディングの統一\n   - ボーダーとシャドウの標準化\n   - 状態（hover、focus、active）の一貫した表現\n\n### Acceptance Criteria\n\n- [ ] 統一されたカラーパレットが適用されている\n- [ ] タイポグラフィが標準化されている\n- [ ] アイコンスタイルが統一されている\n- [ ] CSS変数が効果的に使用されている\n- [ ] 再利用可能なスタイルクラスが作成されている\n- [ ] 視覚的一貫性が全体的に向上している\n\n**Issue #67 の改善により、プロフェッショナルで統一感のある見た目を実現**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603512,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0E-A",
+      "name": "type: enhancement",
+      "description": "Enhancement to existing feature",
+      "color": "84d09a",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T12:04:43Z",
+  "updated_at": "2025-07-09T14:31:43Z",
+  "closed_at": "2025-07-09T14:31:43Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/75",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/75",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/75/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/75/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/75/events"
+}

@@ -1,0 +1,53 @@
+{
+  "id": 3219771776,
+  "node_id": "I_kwDOPJEskc6_6dGA",
+  "number": 139,
+  "title": "feat: Zod v3からv4への段階的アップグレード計画",
+  "body": "## 🎯 FEAT: Zod v3からv4への段階的アップグレード計画\n\n### **Priority: MEDIUM**\n\n**Impact:** 依存関係とパフォーマンス向上、長期的保守性\n\n**Component:** 全スキーマ定義、バリデーション、型生成\n\n**Files:** 30個のZod使用ファイル、138個のテストファイル\n\n### 問題の背景\n\n現在のコードベースはZod v3.23.8を使用していますが、Zod v4では以下の重要な改善が提供されています：\n\n#### Zod v4の主要改善点\n- **パフォーマンス向上**: 解析速度最大3倍、バンドルサイズ57%縮小\n- **型推論の改善**: より正確なTypeScript型推論\n- **新機能**: `z.readonly()`、`z.pipe()`、改善された`z.discriminatedUnion()`\n- **エラーハンドリング改善**: より詳細なエラーメッセージ\n\n### 現在の使用状況\n\n**Zod使用ファイル数**: 30ファイル\n**主要スキーマ定義箇所**:\n- `src/lib/schemas/` (6ファイル)\n- `src/lib/types/` (型定義との統合)\n- `src/pages/api/` (APIバリデーション)\n- `src/components/` (コンポーネントpropsバリデーション)\n\n**使用されている主要機能**:\n- `z.object()`, `z.array()`, `z.string()`, `z.number()`, `z.boolean()`\n- `z.enum()`, `z.union()`, `z.discriminatedUnion()`\n- `z.coerce.*()`, `z.transform()`, `z.refine()`\n- `z.infer<typeof Schema>` (型推論)\n\n### 互換性分析\n\n#### ✅ 互換性のある部分 (95%以上)\n- 基本的なスキーマ定義\n- 型推論(`z.infer`)\n- ほとんどのバリデーション機能\n- 既存のAPIエンドポイント\n\n#### ⚠️ 確認・修正が必要な部分\n- エラーハンドリングコード（`ZodError`の構造変更）\n- カスタムバリデーション関数\n- 複雑な`discriminatedUnion`の使用箇所\n\n### 推奨実装計画\n\n#### Phase 1: 準備・調査段階 (1-2週間)\n1. **依存関係の互換性確認**\n   - Astro 5.11.0のZod v4対応状況を確認\n   - 関連パッケージの対応状況調査\n   - 開発・テスト環境での互換性テスト\n\n2. **コードベース詳細分析**\n   - 破壊的変更の影響を受ける可能性のあるコード特定\n   - 移行による恩恵を受けるコード特定\n   - テストケースの網羅性確認\n\n#### Phase 2: 段階的移行準備 (2-3週間)\n1. **サブパッケージ方式での並行テスト**\n   ```typescript\n   // 既存コード\n   import { z } from 'zod';\n   \n   // 新規テスト用\n   import { z as z4 } from 'zod/v4';\n   ```\n\n2. **重要スキーマの移行テスト**\n   - `src/lib/schemas/github.ts`\n   - `src/lib/schemas/config.ts`\n   - `src/lib/schemas/analytics.ts`\n\n3. **エラーハンドリングの調整**\n   - `ZodError`の新しい構造への対応\n   - カスタムエラーメッセージの調整\n\n#### Phase 3: 本格移行 (1-2週間)\n1. **依存関係の更新**\n   - `package.json`の更新\n   - 関連パッケージの同期更新\n\n2. **全ファイルの一括更新**\n   - インポート文の統一\n   - 破壊的変更への対応\n\n3. **包括的テスト**\n   - 138個のテストファイルでの検証\n   - APIエンドポイントの動作確認\n   - 型チェックの確認\n\n#### Phase 4: 最適化・改善 (1週間)\n1. **新機能の活用**\n   - `z.readonly()`の適用\n   - `z.pipe()`による複雑バリデーションの改善\n   - パフォーマンス最適化\n\n2. **ドキュメント更新**\n   - CLAUDE.mdの更新\n   - スキーマ定義ガイドラインの見直し\n\n### 受け入れ基準\n\n- [ ] **フェーズ1完了**: 依存関係の互換性確認とコードベース分析\n- [ ] **フェーズ2完了**: サブパッケージ方式での並行テスト成功\n- [ ] **フェーズ3完了**: Zod v4への完全移行とテスト通過\n- [ ] **フェーズ4完了**: 新機能活用とドキュメント更新\n- [ ] **全テスト通過**: 138個のテストファイルで100%通過\n- [ ] **型チェック成功**: TypeScript strict mode でエラー0件\n- [ ] **ビルド成功**: プロダクションビルドが正常完了\n- [ ] **パフォーマンス改善**: バンドルサイズ削減を確認\n- [ ] **API動作確認**: 全APIエンドポイントの正常動作\n- [ ] **後方互換性**: 既存機能の動作保証\n\n### リスク評価\n\n**低リスク**: \n- 基本的なスキーマ定義の互換性は高い\n- 段階的移行により影響を最小化\n\n**中リスク**:\n- Astro等の依存関係の対応待ち\n- 複雑なバリデーションロジックの調整\n\n**高リスク**:\n- 一括移行時のテスト失敗\n- 本番環境でのバリデーション不具合\n\n### 推奨スケジュール\n\n**開始条件**: Astro 5.11.0以降でZod v4対応が完了\n**推定期間**: 6-8週間（準備期間含む）\n**開始時期**: 依存関係の対応完了後\n\n**この移行により、パフォーマンス向上、型安全性の強化、長期的な保守性の改善が期待できます。**",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603341,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0ETQ",
+      "name": "priority: medium",
+      "description": "Medium priority tasks",
+      "color": "fb8500",
+      "default": false
+    },
+    {
+      "id": 8910603648,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0FgA",
+      "name": "type: refactor",
+      "description": "Code refactoring",
+      "color": "7c3aed",
+      "default": false
+    }
+  ],
+  "state": "open",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 1,
+  "created_at": "2025-07-10T15:19:44Z",
+  "updated_at": "2025-07-10T15:25:50Z",
+  "closed_at": null,
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/139",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/139",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/139/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/139/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/139/events"
+}

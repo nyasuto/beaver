@@ -1,0 +1,53 @@
+{
+  "id": 3217451551,
+  "node_id": "I_kwDOPJEskc6_xmof",
+  "number": 97,
+  "title": "🔥 CRITICAL: データ処理レイヤーのテスト実装 (github/data.ts)",
+  "body": "## 🎯 概要\n\n**github/data.ts** は静的データの読み込み・処理・フォールバック機能を担う重要コンポーネントですが、現在テストカバレージが **0%** です。データ整合性とシステム安定性のため、緊急でテストを実装する必要があります。\n\n## 📊 現状\n\n- **テストカバレージ**: 0%\n- **ファイル**: `src/lib/data/github.ts`\n- **重要度**: データ取得・処理の基盤機能\n\n## 🔧 実装が必要なテスト\n\n### データ取得機能テスト\n- [ ] `getStaticIssues()` - 静的Issue データ読み込み\n- [ ] `getStaticMetadata()` - メタデータ読み込み・検証\n- [ ] `getStaticIssueById()` - 個別Issue取得\n- [ ] `hasStaticData()` - データ存在確認\n\n### フィルタリング・ソート機能テスト\n- [ ] `getOpenIssues()` / `getClosedIssues()` - 状態別フィルタリング\n- [ ] `getIssuesByLabel()` - ラベル別フィルタリング\n- [ ] `sortIssuesByDate()` - 作成日ソート\n- [ ] `sortIssuesByUpdatedDate()` - 更新日ソート\n\n### フォールバック機能テスト\n- [ ] `getFallbackIssues()` - フォールバックデータ取得\n- [ ] `getIssuesWithFallback()` - フォールバックチェーン\n\n### メタデータ機能テスト\n- [ ] `getLastUpdated()` - 最終更新日時取得\n\n## 🧪 テスト要件\n\n### 1. ファイルシステム操作テスト\n```typescript\ndescribe('File System Operations', () => {\n  it('should read valid JSON files', () => {\n    // 正常なJSONファイル読み込みテスト\n  });\n  \n  it('should handle missing files', () => {\n    // ファイル不存在時のエラーハンドリング\n  });\n  \n  it('should handle corrupted JSON', () => {\n    // 不正JSONのエラーハンドリング\n  });\n});\n```\n\n### 2. Zodスキーマ検証テスト\n```typescript\ndescribe('Data Validation', () => {\n  it('should validate issue data with Zod schema', () => {\n    // Zodスキーマによるデータ検証\n  });\n  \n  it('should reject invalid data format', () => {\n    // 不正データの拒否テスト\n  });\n});\n```\n\n### 3. フィルタリング・ソートテスト\n```typescript\ndescribe('Data Processing', () => {\n  it('should filter issues by state correctly', () => {\n    // 状態別フィルタリングの正確性\n  });\n  \n  it('should sort issues by date correctly', () => {\n    // 日付ソートの正確性\n  });\n  \n  it('should filter by labels correctly', () => {\n    // ラベルフィルタリングの正確性\n  });\n});\n```\n\n### 4. フォールバック機能テスト\n```typescript\ndescribe('Fallback Mechanism', () => {\n  it('should use static data when available', () => {\n    // 静的データ優先使用テスト\n  });\n  \n  it('should fallback to sample data when static unavailable', () => {\n    // フォールバックデータ使用テスト\n  });\n  \n  it('should handle fallback data loading errors', () => {\n    // フォールバックデータエラー処理\n  });\n});\n```\n\n## 🎯 テストカバレージ目標\n\n- **Statement Coverage**: 95%+\n- **Branch Coverage**: 90%+\n- **Function Coverage**: 100%\n\n## 📝 実装ポイント\n\n### モックが必要な外部依存\n- `fs.readFileSync()` - ファイル読み込み\n- `fs.existsSync()` - ファイル存在確認\n- `JSON.parse()` - JSON解析\n- `process.cwd()` - 作業ディレクトリ\n\n### テストデータ準備\n- 有効なIssueデータJSON\n- 無効・破損JSONデータ\n- サンプルメタデータ\n- 様々な日付・ラベルのテストデータ\n\n### エラーケーステスト\n- ファイル不存在\n- ファイル読み込み権限エラー\n- JSON解析エラー\n- Zodスキーマ検証エラー\n\n## 🚀 期待される効果\n\n- データ読み込み機能の信頼性向上\n- フォールバック機能の動作保証\n- データ整合性の確保\n- ファイルシステムエラーの適切な処理\n\n**Priority**: Critical\n**Impact**: データ処理基盤の信頼性確保\n**Component**: Data Processing\n**Files**: `src/lib/data/github.ts`\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 8910603242,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0D6g",
+      "name": "priority: critical",
+      "description": "Critical priority tasks",
+      "color": "d73a4a",
+      "default": false
+    },
+    {
+      "id": 8910603599,
+      "node_id": "LA_kwDOPJEskc8AAAACEx0FTw",
+      "name": "type: test",
+      "description": "Test related tasks",
+      "color": "f9d71c",
+      "default": false
+    }
+  ],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T23:58:33Z",
+  "updated_at": "2025-07-10T00:21:15Z",
+  "closed_at": "2025-07-10T00:21:15Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "html_url": "https://github.com/nyasuto/beaver/issues/97",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/97",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/97/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/97/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/97/events"
+}

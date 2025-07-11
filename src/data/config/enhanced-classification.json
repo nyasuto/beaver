@@ -1,0 +1,383 @@
+{
+  "version": "2.0.0",
+  "minConfidence": 0.7,
+  "maxCategories": 3,
+  "enableAutoClassification": true,
+  "enablePriorityEstimation": true,
+
+  "repositories": [
+    {
+      "owner": "nyasuto",
+      "repo": "beaver",
+      "branch": "main",
+      "enabled": true,
+      "lastUpdated": "2025-01-11T12:00:00Z"
+    }
+  ],
+
+  "scoringAlgorithm": {
+    "id": "enhanced-default",
+    "name": "Enhanced Default Scoring",
+    "description": "Advanced scoring algorithm with customizable weights and factors",
+    "version": "2.0.0",
+    "weights": {
+      "category": 35,
+      "priority": 30,
+      "confidence": 25,
+      "recency": 10,
+      "custom": 0
+    },
+    "customFactors": [],
+    "enabled": true
+  },
+
+  "confidenceThresholds": [
+    {
+      "category": "security",
+      "minConfidence": 0.9,
+      "maxConfidence": 1.0,
+      "adjustmentFactor": 1.2
+    },
+    {
+      "category": "bug",
+      "minConfidence": 0.8,
+      "maxConfidence": 1.0,
+      "adjustmentFactor": 1.1
+    },
+    {
+      "category": "feature",
+      "minConfidence": 0.7,
+      "maxConfidence": 1.0,
+      "adjustmentFactor": 1.0
+    },
+    {
+      "category": "documentation",
+      "minConfidence": 0.6,
+      "maxConfidence": 1.0,
+      "adjustmentFactor": 0.9
+    }
+  ],
+
+  "priorityEstimation": {
+    "algorithm": "rule-based",
+    "rules": [
+      {
+        "id": "security-critical",
+        "name": "Security Issues are Critical",
+        "conditions": {
+          "categories": ["security"],
+          "confidenceThreshold": 0.8
+        },
+        "resultPriority": "critical",
+        "weight": 1.0,
+        "enabled": true
+      },
+      {
+        "id": "urgent-bug",
+        "name": "High-confidence bugs are urgent",
+        "conditions": {
+          "categories": ["bug"],
+          "confidenceThreshold": 0.9,
+          "keywords": ["urgent", "critical", "production", "crash"]
+        },
+        "resultPriority": "high",
+        "weight": 0.9,
+        "enabled": true
+      },
+      {
+        "id": "performance-high",
+        "name": "Performance issues are high priority",
+        "conditions": {
+          "categories": ["performance"],
+          "confidenceThreshold": 0.7
+        },
+        "resultPriority": "high",
+        "weight": 0.8,
+        "enabled": true
+      },
+      {
+        "id": "stale-issue",
+        "name": "Old issues get lower priority",
+        "conditions": {
+          "ageThreshold": 30
+        },
+        "resultPriority": "low",
+        "weight": 0.6,
+        "enabled": true
+      }
+    ],
+    "fallbackPriority": "medium",
+    "confidenceBonus": 0.1
+  },
+
+  "performance": {
+    "caching": {
+      "enabled": true,
+      "ttl": 3600,
+      "maxSize": 1000,
+      "strategy": "lru"
+    },
+    "batchProcessing": {
+      "enabled": true,
+      "batchSize": 50,
+      "parallelism": 4
+    },
+    "precomputation": {
+      "enabled": false,
+      "schedule": "0 0 * * *",
+      "outputPath": "src/data/generated/precomputed-classifications.json"
+    }
+  },
+
+  "rules": [
+    {
+      "id": "bug-detection-enhanced",
+      "name": "Enhanced Bug Detection",
+      "description": "Improved bug detection with additional patterns and exclusions",
+      "category": "bug",
+      "priority": "high",
+      "weight": 0.95,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": [
+          "bug",
+          "error",
+          "issue",
+          "problem",
+          "broken",
+          "fix",
+          "crash",
+          "fails",
+          "doesn't work",
+          "not working",
+          "unexpected",
+          "incorrect",
+          "wrong"
+        ],
+        "bodyKeywords": [
+          "error",
+          "exception",
+          "stack trace",
+          "reproduce",
+          "expected",
+          "actual",
+          "traceback",
+          "failure",
+          "regression",
+          "broken",
+          "malfunction"
+        ],
+        "titlePatterns": ["/\\b(bug|error|issue|fix|crash|fail)\\b/i", "/\\b(broken|incorrect|wrong|unexpected)\\b/i"],
+        "bodyPatterns": [
+          "/steps to reproduce/i",
+          "/expected behavior/i",
+          "/actual behavior/i",
+          "/error message/i",
+          "/stack trace/i"
+        ],
+        "excludeKeywords": ["feature request", "enhancement", "improvement", "documentation"]
+      }
+    },
+    {
+      "id": "feature-request-enhanced",
+      "name": "Enhanced Feature Request Detection",
+      "description": "Improved feature request detection with better differentiation",
+      "category": "feature",
+      "priority": "medium",
+      "weight": 0.85,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": [
+          "feature",
+          "add",
+          "implement",
+          "support",
+          "request",
+          "proposal",
+          "new",
+          "allow",
+          "enable",
+          "create",
+          "build",
+          "develop"
+        ],
+        "bodyKeywords": [
+          "would like",
+          "could we",
+          "suggestion",
+          "proposal",
+          "feature",
+          "functionality",
+          "capability",
+          "enhancement",
+          "new feature"
+        ],
+        "titlePatterns": ["/\\b(add|implement|support|create|build)\\b/i", "/\\b(feature|request|proposal)\\b/i"],
+        "excludeKeywords": ["bug", "error", "broken", "fix", "crash"]
+      }
+    },
+    {
+      "id": "security-enhanced",
+      "name": "Enhanced Security Detection",
+      "description": "Comprehensive security issue detection with CVE patterns",
+      "category": "security",
+      "priority": "critical",
+      "weight": 1.0,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": [
+          "security",
+          "vulnerability",
+          "exploit",
+          "xss",
+          "csrf",
+          "injection",
+          "attack",
+          "malicious",
+          "breach",
+          "cve",
+          "disclosure",
+          "privilege"
+        ],
+        "bodyKeywords": [
+          "security",
+          "vulnerability",
+          "exploit",
+          "attack",
+          "malicious",
+          "unauthorized",
+          "privilege",
+          "sensitive data",
+          "encryption",
+          "authentication",
+          "authorization",
+          "sanitization",
+          "validation"
+        ],
+        "titlePatterns": [
+          "/\\b(security|vulnerability|exploit)\\b/i",
+          "/\\b(xss|csrf|sql injection|rce)\\b/i",
+          "/\\bcve-\\d{4}-\\d{4,}/i"
+        ],
+        "bodyPatterns": ["/\\bCVE-\\d{4}-\\d{4,}/i", "/\\b(privilege escalation|code injection|buffer overflow)\\b/i"]
+      }
+    },
+    {
+      "id": "performance-enhanced",
+      "name": "Enhanced Performance Detection",
+      "description": "Detailed performance issue detection with metrics",
+      "category": "performance",
+      "priority": "medium",
+      "weight": 0.8,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": [
+          "performance",
+          "slow",
+          "fast",
+          "speed",
+          "optimization",
+          "memory",
+          "cpu",
+          "latency",
+          "timeout",
+          "bottleneck",
+          "lag",
+          "freeze"
+        ],
+        "bodyKeywords": [
+          "performance",
+          "slow",
+          "fast",
+          "optimization",
+          "memory",
+          "cpu",
+          "latency",
+          "bottleneck",
+          "profiling",
+          "metrics",
+          "benchmark"
+        ],
+        "titlePatterns": [
+          "/\\b(slow|fast|performance|optimization)\\b/i",
+          "/\\b(memory|cpu|latency|bottleneck)\\b/i",
+          "/\\d+ms|\\d+s|\\d+%/i"
+        ],
+        "bodyPatterns": ["/\\b(memory leak|cpu usage|response time)\\b/i", "/\\b(\\d+ms|\\d+s|\\d+%)/i"]
+      }
+    }
+  ],
+
+  "customRules": [
+    {
+      "id": "ai-ml-detection",
+      "name": "AI/ML Feature Detection",
+      "description": "Custom rule for AI and machine learning related issues",
+      "category": "feature",
+      "priority": "medium",
+      "weight": 0.7,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": [
+          "ai",
+          "artificial intelligence",
+          "ml",
+          "machine learning",
+          "neural network",
+          "deep learning",
+          "classification",
+          "prediction"
+        ],
+        "bodyKeywords": [
+          "algorithm",
+          "model",
+          "training",
+          "dataset",
+          "neural",
+          "tensorflow",
+          "pytorch",
+          "scikit-learn",
+          "prediction",
+          "classification"
+        ],
+        "titlePatterns": ["/\\b(ai|ml|neural|deep learning)\\b/i"]
+      }
+    }
+  ],
+
+  "categoryWeights": {
+    "bug": 1.0,
+    "security": 1.0,
+    "feature": 0.8,
+    "enhancement": 0.7,
+    "performance": 0.9,
+    "documentation": 0.5,
+    "question": 0.4,
+    "duplicate": 0.3,
+    "invalid": 0.3,
+    "wontfix": 0.3,
+    "help-wanted": 0.6,
+    "good-first-issue": 0.5,
+    "refactor": 0.6,
+    "test": 0.5,
+    "ci-cd": 0.6,
+    "dependencies": 0.5
+  },
+
+  "priorityWeights": {
+    "critical": 1.0,
+    "high": 0.8,
+    "medium": 0.6,
+    "low": 0.4,
+    "backlog": 0.2
+  },
+
+  "metadata": {
+    "createdAt": "2025-01-11T12:00:00Z",
+    "updatedAt": "2025-01-11T12:00:00Z",
+    "createdBy": "system",
+    "updatedBy": "enhanced-config-manager",
+    "configSource": "file",
+    "tags": ["default", "enhanced", "v2.0"]
+  }
+}

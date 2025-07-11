@@ -1,0 +1,43 @@
+{
+  "id": 3215331815,
+  "node_id": "PR_kwDOPJEskc6eF_rF",
+  "number": 56,
+  "title": "fix: CSS読み込み問題修正 - Tailwind baseStyles有効化",
+  "body": "## 🚨 緊急修正\n\n**デプロイサイトでCSSが全く効いていない問題を修正**\n\n### 🔍 問題の原因\n- `applyBaseStyles: false` により Tailwind CSS の基本スタイルが無効化されていた\n- 結果として美しいダッシュボードUIが全く表示されず、基本的なHTMLのみの表示\n\n### 🔧 修正内容\n- `astro.config.mjs` で `applyBaseStyles: true` に変更\n- Tailwind CSS の基本スタイルを有効化\n\n### 📊 修正前後の比較\n**Before**: \n- 白い背景に基本テキストのみ\n- カードデザインなし\n- グラデーションバナーなし\n- レスポンシブレイアウト機能なし\n\n**After (期待結果)**:\n- 美しいグラデーションバナー\n- ガラスモーフィズムカードデザイン\n- 3カラムレスポンシブレイアウト\n- 統計カードの色分け表示\n\n### 🎯 影響範囲\n- GitHub Pages デプロイ全体のスタイル適用\n- 全コンポーネントのTailwind CSS適用\n- レスポンシブデザイン機能\n\n### ✅ テスト結果\n- 186 tests passed\n- TypeScript: 0 errors, 0 warnings\n- ESLint: 29 warnings (既存問題)\n\n**緊急度**: Critical\n**優先度**: High\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T10:04:35Z",
+  "updated_at": "2025-07-09T10:07:06Z",
+  "closed_at": "2025-07-09T10:07:04Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/56",
+    "html_url": "https://github.com/nyasuto/beaver/pull/56",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/56.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/56.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/56",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/56",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/56/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/56/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/56/events"
+}

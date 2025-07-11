@@ -1,0 +1,43 @@
+{
+  "id": 3214087221,
+  "node_id": "PR_kwDOPJEskc6eB16L",
+  "number": 39,
+  "title": "fix: CodecovのPRコメント投稿を無効化",
+  "body": "## 概要\n\nCodecovがPRにコメントを自動投稿することを無効化しました。\n\n## 変更内容\n\n- `codecov.yml` に `comment: false` を追加\n- PRへの自動カバレッジコメント投稿を抑制\n\n## 効果\n\n- PRのコメント欄がCodecovの自動投稿で溢れることを防止\n- カバレッジレポートは引き続きCodecovダッシュボードで確認可能\n- CI/CDでのカバレッジチェック機能は維持\n\n## テスト\n\n- ✅ 全TypeScriptエラーなし\n- ✅ ESLint警告のみ（16件、既存のnon-null assertion）\n- ✅ 全テスト通過（186 passed | 2 skipped）\n- ✅ Pre-commit hooks完全通過\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T00:28:35Z",
+  "updated_at": "2025-07-09T00:30:12Z",
+  "closed_at": "2025-07-09T00:30:11Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/39",
+    "html_url": "https://github.com/nyasuto/beaver/pull/39",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/39.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/39.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/39",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/39",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/39/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/39/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/39/events"
+}

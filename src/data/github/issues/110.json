@@ -1,0 +1,43 @@
+{
+  "id": 3217751107,
+  "node_id": "PR_kwDOPJEskc6eOLJN",
+  "number": 110,
+  "title": "feat: Issue #101 設定管理とバリデーションの包括的テスト実装",
+  "body": "## 概要\n\nIssue #101 - 設定管理とバリデーションの包括的テスト実装\n\n**カバレージ目標達成:**\n- `env-validation.ts`: 14% → **96.82%** (目標90%+を超えて達成)\n- `index.ts`: 0% → **100%** (目標85%+を超えて達成)\n\n## 変更内容\n\n### 新規作成ファイル\n- `src/lib/config/__tests__/env-validation.test.ts` (1,050+ lines)\n- `src/lib/config/__tests__/index.test.ts` (450+ lines)\n\n### 主要なテスト実装\n\n#### env-validation.test.ts\n- **Zodスキーマバリデーション**: GitHub・Astro環境変数の完全テスト\n- **シングルトンパターンテスト**: EnvValidatorクラスのインスタンス管理\n- **GitHub API統合テスト**: トークン認証・リポジトリアクセス・エラーハンドリング\n- **ヘルスチェックシステム**: healthy/degraded/unhealthyステータス判定\n- **セットアップガイド**: 環境変数設定手順の生成機能\n- **エラーハンドリング**: カスタムエラークラスと提案機能\n\n#### index.test.ts  \n- **ENV_CONFIG**: 環境検出ロジック・型安全性\n- **DEFAULT_CONFIG**: デフォルト設定値・構造整合性\n- **CONFIG_PATHS**: 設定ファイルパス・命名規則\n- **モジュール統合**: re-export機能・型定義\n- **設定一貫性**: 複数設定間の整合性チェック\n\n### 技術的改善\n- **モック戦略**: fetch API・環境変数・import.meta の適切なモック\n- **型安全性**: TypeScript型注釈による実行時型チェック\n- **包括的テスト**: 93テスト中の多様なエラーケース対応\n- **日本語コメント**: Issue要件に準拠した言語統一\n\n## テスト\n\n**全テスト成功:** 93 passed (env-validation: 58 tests, index: 35 tests)\n\n**カバレージ確認:**\n```bash\nnpm run test -- --coverage src/lib/config\n```\n\n**品質チェック:**\n```bash\nmake quality  # 全チェック通過 (linting, formatting, type-check, testing)\n```\n\n## 影響範囲\n\n- 設定管理モジュールの信頼性大幅向上\n- 環境設定エラーの事前検出・防止\n- 新規機能追加時の回帰テスト基盤\n- 開発体験の向上 (適切なエラーメッセージと修正提案)\n\nCloses #101\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-10T03:29:16Z",
+  "updated_at": "2025-07-10T03:40:46Z",
+  "closed_at": "2025-07-10T03:40:45Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/110",
+    "html_url": "https://github.com/nyasuto/beaver/pull/110",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/110.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/110.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/110",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/110",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/110/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/110/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/110/events"
+}

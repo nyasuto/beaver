@@ -1,0 +1,43 @@
+{
+  "id": 3216152361,
+  "node_id": "PR_kwDOPJEskc6eIxNu",
+  "number": 84,
+  "title": "feat: Issue #75 Design System Unification完了",
+  "body": "## 概要\n\nIssue #75 のデザインシステム統一を包括的に実装しました。アプリケーション全体で一貫した視覚的体験を提供するための統一されたデザインシステムを構築しました。\n\n## 主要な変更内容\n\n### 🎨 統一されたカラーパレット\n- 全UIコンポーネントでtheme colors (primary/secondary/accent) を使用\n- ハードコードされたblue色を削除し、セマンティックな色名に置き換え\n- Dark mode完全対応で一貫したカラーリング\n\n### 📝 タイポグラフィ標準化\n- display (5xl, 4xl, 3xl) レベルの階層システム\n- heading (2xl, xl, lg) レベルの階層システム  \n- body (base, sm, xs) レベルの階層システム\n- caption レベルの実装\n\n### 🎯 アイコンシステム統一\n- 一貫したサイズ設定 (xs/sm/md/lg/xl)\n- セマンティックなカラーリング (primary/secondary/muted/success/warning/error)\n- Dark mode対応\n\n### 🔧 CSS変数システム\n- 包括的なデザイントークン実装\n- 色、スペース、border-radius、影のCSS変数\n- Light/Dark mode切り替え対応\n\n### 🧩 再利用可能ユーティリティクラス\n- `.btn-*` - 統一されたボタンスタイル\n- `.card-*` - 統一されたカードスタイル  \n- `.input-*` - 統一されたフォームスタイル\n- `.badge-*` - 統一されたバッジシステム\n- `.state-*` - 統一された状態管理\n\n### 📐 視覚的一貫性\n- 統一されたspacing utilities\n- 統一されたborder utilities\n- 統一されたshadow utilities\n- 統一されたsurface utilities\n\n### 🎪 状態表現標準化\n- hover/focus/active状態の統一動作\n- キーボードナビゲーション対応\n- アニメーション減少設定対応\n- High contrast mode対応\n\n## 技術的改善\n\n- **Performance最適化**: 効率的なCSS変数とユーティリティクラスの活用\n- **開発者体験向上**: 予測可能で使いやすいクラス命名規則\n- **メンテナンス性向上**: 集中管理されたデザイントークン\n- **アクセシビリティ改善**: WCAG準拠のフォーカススタイルと状態管理\n\n## テスト\n\n- ✅ Build成功 - エラーなくビルド完了\n- ✅ TypeScript型チェック - 全ファイルでエラーなし\n- ✅ Linting - 機能に影響のない軽微な警告のみ\n- ✅ Unit Tests - 469テスト通過\n\nCloses #75\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T14:28:39Z",
+  "updated_at": "2025-07-09T14:31:44Z",
+  "closed_at": "2025-07-09T14:31:42Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/84",
+    "html_url": "https://github.com/nyasuto/beaver/pull/84",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/84.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/84.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/84",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/84",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/84/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/84/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/84/events"
+}

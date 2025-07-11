@@ -1,0 +1,43 @@
+{
+  "id": 3216061038,
+  "node_id": "PR_kwDOPJEskc6eIdUs",
+  "number": 82,
+  "title": "feat: upgrade TailwindCSS from v3 to v4",
+  "body": "- Upgrade tailwindcss from v3.4.10 to v4.1.11\r\n- Remove deprecated plugins (@tailwindcss/typography, @tailwindcss/forms, @tailwindcss/aspect-ratio, @tailwindcss/container-queries)\r\n- Update tailwind.config.mjs to remove plugin requirements (now built-in)\r\n- Update global.css to use v4 import syntax (@import \"tailwindcss\")\r\n\r\nCloses #70",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 1,
+  "created_at": "2025-07-09T13:58:49Z",
+  "updated_at": "2025-07-10T10:03:24Z",
+  "closed_at": "2025-07-09T14:09:07Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/82",
+    "html_url": "https://github.com/nyasuto/beaver/pull/82",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/82.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/82.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/82",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/82",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/82/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/82/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/82/events"
+}

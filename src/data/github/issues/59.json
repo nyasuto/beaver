@@ -1,0 +1,43 @@
+{
+  "id": 3215438634,
+  "node_id": "PR_kwDOPJEskc6eGVKm",
+  "number": 59,
+  "title": "feat: 統計データ整合性の修正と環境変数検証の強化",
+  "body": "## 概要\n\n統計データの整合性問題を修正し、GitHub API 設定の検証を強化しました。これにより、ダッシュボードコンポーネント間でのデータ不整合を解決し、設定関連のエラーを早期に発見できるようになります。\n\n## 主な変更内容\n\n### 🔧 統計データ整合性の修正\n- **統一データ取得サービス**: `StatsService` を実装してコンポーネント間のデータ整合性を確保\n- **共通統計計算**: `statsCalculations.ts` で統一された計算ロジックを提供\n- **フォールバックデータ修正**: GitHub API スキーマに完全準拠した `sample-issues.json` の更新\n- **コンポーネント統合**: `IssueStats` と `RecentActivity` を統一サービスに移行\n\n### 🔐 環境変数検証の強化\n- **包括的な環境変数検証**: `env-validation.ts` で GitHub API 設定の検証強化\n- **リアルタイム接続テスト**: GitHub API の実際の接続確認\n- **詳細なエラーレポート**: 設定問題の解決提案付きエラーメッセージ\n- **健全性チェック API**: `/api/config/env-health` エンドポイントの追加\n\n### ⚡ 技術的改善\n- **キャッシュ機能**: 5分間の TTL キャッシュでパフォーマンス向上\n- **エラーハンドリング**: 一貫した `Result` 型パターンの使用\n- **型安全性**: Zod スキーマによる実行時検証\n- **データソース追跡**: 統計データの生成元とタイムスタンプ表示\n\n## 修正された問題\n\n1. **データ整合性**: 複数のコンポーネントで異なる統計値が表示される問題\n2. **計算ロジック**: 統計計算の重複実装による不整合\n3. **フォールバック品質**: サンプルデータが GitHub API スキーマと不一致\n4. **環境設定**: GitHub API 設定エラーが実行時まで発見されない問題\n\n## テスト\n\n- ✅ 全ての既存テストが通過\n- ✅ 型チェックエラーなし\n- ✅ リントエラーなし（警告のみ）\n- ✅ 新しい統計サービスの統合テスト\n- ✅ 環境変数検証のテスト\n\n## 影響範囲\n\n### 変更されたファイル\n- `src/components/dashboard/IssueStats.astro` - 統一サービスに移行\n- `src/components/dashboard/RecentActivity.astro` - 統一サービスに移行\n- `src/data/fixtures/sample-issues.json` - GitHub API スキーマに準拠\n\n### 新規追加ファイル\n- `src/lib/services/StatsService.ts` - 統一統計データサービス\n- `src/lib/utils/statsCalculations.ts` - 共通統計計算ユーティリティ\n- `src/lib/config/env-validation.ts` - 環境変数検証モジュール\n- `src/pages/api/config/env-health.ts` - 環境健全性チェック API\n\n### 後方互換性\n- 既存の API エンドポイントは変更なし\n- 既存のコンポーネントインターフェースは維持\n- 新機能は段階的に導入可能\n\n🤖 Generated with [Claude Code](https://claude.ai/code)",
+  "user": {
+    "login": "nyasuto",
+    "id": 17446383,
+    "node_id": "MDQ6VXNlcjE3NDQ2Mzgz",
+    "avatar_url": "https://avatars.githubusercontent.com/u/17446383?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nyasuto",
+    "html_url": "https://github.com/nyasuto",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [],
+  "state": "closed",
+  "locked": false,
+  "assignee": null,
+  "assignees": [],
+  "milestone": null,
+  "comments": 0,
+  "created_at": "2025-07-09T10:34:53Z",
+  "updated_at": "2025-07-09T10:51:10Z",
+  "closed_at": "2025-07-09T10:51:09Z",
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/nyasuto/beaver/pulls/59",
+    "html_url": "https://github.com/nyasuto/beaver/pull/59",
+    "diff_url": "https://github.com/nyasuto/beaver/pull/59.diff",
+    "patch_url": "https://github.com/nyasuto/beaver/pull/59.patch"
+  },
+  "html_url": "https://github.com/nyasuto/beaver/pull/59",
+  "url": "https://api.github.com/repos/nyasuto/beaver/issues/59",
+  "repository_url": "https://api.github.com/repos/nyasuto/beaver",
+  "labels_url": "https://api.github.com/repos/nyasuto/beaver/issues/59/labels{/name}",
+  "comments_url": "https://api.github.com/repos/nyasuto/beaver/issues/59/comments",
+  "events_url": "https://api.github.com/repos/nyasuto/beaver/issues/59/events"
+}
