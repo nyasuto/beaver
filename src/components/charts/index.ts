@@ -15,6 +15,21 @@
 export { BaseChart, ChartContainer, withChartTheme } from './BaseChart';
 export type { BaseChartProps, ChartContainerProps } from './BaseChart';
 
+// Specialized chart components
+export { CoverageChart, CoverageMetricsCard } from './CoverageChart';
+export type {
+  CoverageMetrics,
+  CoverageChartProps,
+  CoverageMetricsCardProps,
+} from './CoverageChart';
+
+export { ModuleCoverageChart, ModuleCoverageSummary } from './ModuleCoverageChart';
+export type {
+  ModuleCoverageData,
+  ModuleCoverageChartProps,
+  ModuleCoverageSummaryProps,
+} from './ModuleCoverageChart';
+
 // Type-safe chart wrapper system
 import type {
   SafeChartData,
