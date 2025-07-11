@@ -1,0 +1,306 @@
+---
+/**
+ * ConfidenceIndicator Component
+ *
+ * Displays classification confidence levels with visual indicators
+ * Supports threshold-based styling and accessibility features
+ */
+export interface Props {
+  confidence: number;
+  threshold?: number;
+  size?: 'small' | 'medium' | 'large';
+  variant?: 'default' | 'compact' | 'detailed';
+  showLabel?: boolean;
+  showPercentage?: boolean;
+  className?: string;
+}
+
+const {
+  confidence,
+  threshold = 0.7,
+  size = 'medium',
+  variant = 'default',
+  showLabel = true,
+  showPercentage = true,
+  className = '',
+} = Astro.props;
+
+// Normalize confidence to 0-1 range
+const normalizedConfidence = Math.max(0, Math.min(1, confidence));
+const percentage = Math.round(normalizedConfidence * 100);
+
+// Determine confidence level
+const getConfidenceLevel = (conf: number, thresh: number) => {
+  if (conf < 0.3) return 'low';
+  if (conf < thresh) return 'medium';
+  return 'high';
+};
+
+const confidenceLevel = getConfidenceLevel(normalizedConfidence, threshold);
+
+// Generate accessibility label
+const getAccessibilityLabel = (level: string, percentage: number) => {
+  const levelLabels = {
+    low: '低信頼度',
+    medium: '中信頼度',
+    high: '高信頼度',
+  };
+  return `${levelLabels[level as keyof typeof levelLabels]} ${percentage}%`;
+};
+
+const accessibilityLabel = getAccessibilityLabel(confidenceLevel, percentage);
+---
+
+<div
+  class={`confidence-indicator confidence-indicator--${size} confidence-indicator--${variant} confidence-indicator--${confidenceLevel} ${className}`}
+  aria-label={accessibilityLabel}
+  role="img"
+>
+  {
+    variant === 'detailed' && (
+      <div class="confidence-indicator__header">
+        {showLabel && <span class="confidence-indicator__label">信頼度</span>}
+        {showPercentage && <span class="confidence-indicator__percentage">{percentage}%</span>}
+      </div>
+    )
+  }
+
+  <div class="confidence-indicator__bar">
+    <div class="confidence-indicator__fill" style={`width: ${percentage}%`} aria-hidden="true">
+    </div>
+    {
+      threshold > 0 && (
+        <div
+          class="confidence-indicator__threshold"
+          style={`left: ${threshold * 100}%`}
+          aria-hidden="true"
+        />
+      )
+    }
+  </div>
+
+  {
+    variant === 'compact' && showPercentage && (
+      <span class="confidence-indicator__percentage confidence-indicator__percentage--compact">
+        {percentage}%
+      </span>
+    )
+  }
+
+  {
+    variant === 'default' && (
+      <div class="confidence-indicator__footer">
+        {showLabel && (
+          <span class="confidence-indicator__level">
+            {confidenceLevel === 'low' && '低信頼度'}
+            {confidenceLevel === 'medium' && '中信頼度'}
+            {confidenceLevel === 'high' && '高信頼度'}
+          </span>
+        )}
+        {showPercentage && <span class="confidence-indicator__percentage">{percentage}%</span>}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .confidence-indicator {
+    --color-low: #ef4444;
+    --color-medium: #f59e0b;
+    --color-high: #10b981;
+    --color-bg: #f3f4f6;
+    --color-threshold: #6b7280;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-family: var(--font-sans);
+  }
+
+  .confidence-indicator--small {
+    font-size: 0.75rem;
+    gap: 0.125rem;
+  }
+
+  .confidence-indicator--medium {
+    font-size: 0.875rem;
+    gap: 0.25rem;
+  }
+
+  .confidence-indicator--large {
+    font-size: 1rem;
+    gap: 0.375rem;
+  }
+
+  .confidence-indicator--compact {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .confidence-indicator__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.125rem;
+  }
+
+  .confidence-indicator__label {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+
+  .confidence-indicator__percentage {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .confidence-indicator__percentage--compact {
+    font-size: 0.875em;
+    min-width: 2.5rem;
+    text-align: right;
+  }
+
+  .confidence-indicator__bar {
+    position: relative;
+    height: 0.5rem;
+    background-color: var(--color-bg);
+    border-radius: 0.25rem;
+    overflow: hidden;
+  }
+
+  .confidence-indicator--small .confidence-indicator__bar {
+    height: 0.375rem;
+  }
+
+  .confidence-indicator--large .confidence-indicator__bar {
+    height: 0.75rem;
+  }
+
+  .confidence-indicator__fill {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+    border-radius: 0.25rem;
+  }
+
+  .confidence-indicator--low .confidence-indicator__fill {
+    background-color: var(--color-low);
+  }
+
+  .confidence-indicator--medium .confidence-indicator__fill {
+    background-color: var(--color-medium);
+  }
+
+  .confidence-indicator--high .confidence-indicator__fill {
+    background-color: var(--color-high);
+  }
+
+  .confidence-indicator__threshold {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--color-threshold);
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  .confidence-indicator__threshold::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 3px solid var(--color-threshold);
+  }
+
+  .confidence-indicator__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.125rem;
+  }
+
+  .confidence-indicator__level {
+    font-size: 0.75em;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+
+  .confidence-indicator--low .confidence-indicator__level {
+    color: var(--color-low);
+  }
+
+  .confidence-indicator--medium .confidence-indicator__level {
+    color: var(--color-medium);
+  }
+
+  .confidence-indicator--high .confidence-indicator__level {
+    color: var(--color-high);
+  }
+
+  /* Dark mode support */
+  :global(.dark) .confidence-indicator {
+    --color-bg: #374151;
+    --color-threshold: #9ca3af;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .confidence-indicator__header,
+    .confidence-indicator__footer {
+      font-size: 0.875em;
+    }
+
+    .confidence-indicator__bar {
+      height: 0.375rem;
+    }
+  }
+
+  /* Animation for loading states */
+  .confidence-indicator--loading .confidence-indicator__fill {
+    background: linear-gradient(90deg, var(--color-bg) 0%, #e5e7eb 50%, var(--color-bg) 100%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+  }
+
+  @keyframes loading-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Focus styles for accessibility */
+  .confidence-indicator:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .confidence-indicator {
+      --color-low: #dc2626;
+      --color-medium: #d97706;
+      --color-high: #059669;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .confidence-indicator__fill {
+      transition: none;
+    }
+
+    .confidence-indicator--loading .confidence-indicator__fill {
+      animation: none;
+    }
+  }
+</style>
