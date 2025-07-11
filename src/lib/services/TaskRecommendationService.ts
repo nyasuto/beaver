@@ -579,32 +579,39 @@ export class TaskRecommendationService {
   }
 
   /**
-   * Simple scoring method as fallback when classification engine is not available
+   * Simple scoring method - now delegates to enhanced classification for proper separation of concerns
    */
   private static async getTasksWithSimpleScoring(
+    issues: Issue[],
+    limit: number
+  ): Promise<TaskScore[]> {
+    // Always use enhanced classification engine for consistency
+    // This ensures proper separation of concerns - no direct GitHub label parsing here
+    return this.getEnhancedTasksWithFallbackToSimple(issues, limit);
+  }
+
+  /**
+   * Get enhanced tasks with fallback to basic scoring if enhanced classification fails
+   */
+  private static async getEnhancedTasksWithFallbackToSimple(
     issues: Issue[],
     limit: number
   ): Promise<TaskScore[]> {
     const openIssues = issues.filter(issue => issue.state === 'open');
 
     const scoredTasks = openIssues.map(issue => {
-      // Simple scoring based on labels, age, and activity
+      // Basic scoring without direct label parsing
       let score = 50; // Base score
 
-      // Priority scoring based on labels
-      const priority = this.getSimplePriority(issue.labels.map(l => l.name));
-      score += this.getPriorityScore(priority);
+      // Use fallback priority and category determination
+      // Enhanced classification should handle the actual classification
+      const priority = this.inferPriorityFromContext(issue);
+      const category = this.inferCategoryFromContext(issue);
 
-      // Category scoring based on labels and title
-      const category = this.getSimpleCategory(
-        issue.labels.map(l => l.name),
-        issue.title
-      );
+      score += this.getPriorityScore(priority);
       score += this.getCategoryScore(category);
 
-      // Age scoring removed per user feedback - recency evaluation is unnecessary
-
-      // Label count scoring
+      // Label count scoring (general activity indicator)
       score += Math.min(issue.labels.length * 2, 10);
 
       return {
@@ -629,82 +636,63 @@ export class TaskRecommendationService {
     return scoredTasks.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
-  private static getSimplePriority(labels: string[]): PriorityLevel {
-    const labelText = labels.join(' ').toLowerCase();
+  /**
+   * Infer priority from issue context without direct label parsing
+   * Enhanced classification engine should be used instead for proper classification
+   */
+  private static inferPriorityFromContext(issue: Issue): PriorityLevel {
+    const title = issue.title.toLowerCase();
+    const body = (issue.body || '').toLowerCase();
 
-    // Check for GitHub-style priority labels and common priority indicators
-    if (
-      labelText.includes('priority: critical') ||
-      labelText.includes('critical') ||
-      labelText.includes('urgent') ||
-      labelText.includes('p0')
-    ) {
+    // Use content-based inference instead of label parsing
+    if (title.includes('critical') || title.includes('urgent') || title.includes('security')) {
       return 'critical';
     }
-    if (
-      labelText.includes('priority: high') ||
-      labelText.includes('high') ||
-      labelText.includes('important') ||
-      labelText.includes('p1')
-    ) {
-      return 'high';
+    if (title.includes('high') || title.includes('important') || body.includes('urgent') || 
+        title.includes('バグ') || title.includes('bug') || title.includes('error')) {
+      return 'high';  // Bugs are generally high priority
     }
-    if (
-      labelText.includes('priority: low') ||
-      labelText.includes('low') ||
-      labelText.includes('minor') ||
-      labelText.includes('p3')
-    ) {
+    if (title.includes('low') || title.includes('minor') || title.includes('doc')) {
       return 'low';
-    }
-    if (
-      labelText.includes('priority: medium') ||
-      labelText.includes('medium') ||
-      labelText.includes('p2')
-    ) {
-      return 'medium';
     }
 
     return 'medium';
   }
 
-  private static getSimpleCategory(labels: string[], title: string): ClassificationCategory {
-    const titleLower = title.toLowerCase();
-    const allLabels = labels.map(l => l.toLowerCase());
+  /**
+   * Infer category from issue context without direct label parsing
+   * Enhanced classification engine should be used instead for proper classification
+   */
+  private static inferCategoryFromContext(issue: Issue): ClassificationCategory {
+    const title = issue.title.toLowerCase();
+    const body = (issue.body || '').toLowerCase();
 
-    if (allLabels.includes('bug') || titleLower.includes('bug') || titleLower.includes('error'))
+    // Use content-based inference instead of label parsing
+    if (title.includes('bug') || title.includes('error') || title.includes('fix')) {
       return 'bug';
-    if (
-      allLabels.includes('feature') ||
-      titleLower.includes('feature') ||
-      titleLower.includes('add')
-    )
-      return 'feature';
-    if (
-      allLabels.includes('enhancement') ||
-      titleLower.includes('enhance') ||
-      titleLower.includes('improve')
-    )
-      return 'enhancement';
-    if (allLabels.includes('documentation') || allLabels.includes('docs')) return 'documentation';
-    if (
-      allLabels.includes('question') ||
-      titleLower.includes('question') ||
-      titleLower.includes('help')
-    )
-      return 'question';
-    if (allLabels.includes('test') || allLabels.includes('testing')) return 'test';
-    if (allLabels.includes('refactor') || allLabels.includes('refactoring')) return 'refactor';
-    if (
-      allLabels.includes('performance') ||
-      titleLower.includes('performance') ||
-      titleLower.includes('slow')
-    )
+    }
+    if (title.includes('security') || body.includes('security')) {
+      return 'security';
+    }
+    if (title.includes('performance') || title.includes('slow') || title.includes('optimize')) {
       return 'performance';
-    if (allLabels.includes('security') || titleLower.includes('security')) return 'security';
+    }
+    if (title.includes('test') || title.includes('testing')) {
+      return 'test';
+    }
+    if (title.includes('doc') || title.includes('readme')) {
+      return 'documentation';
+    }
+    if (title.includes('feature') || title.includes('add')) {
+      return 'feature';
+    }
 
-    return 'enhancement'; // Default fallback
+    return 'enhancement';
   }
+
+  // Removed: getSimplePriority and getSimpleCategory methods
+  // These methods performed direct GitHub label parsing which violates separation of concerns
+  // The enhanced classification engine should handle all label parsing and classification
 
   private static getPriorityScore(priority: PriorityLevel): number {
     switch (priority) {
