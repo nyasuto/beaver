@@ -168,38 +168,32 @@ function transformCodecovData(rawData: unknown): QualityMetrics {
 }
 
 /**
- * Generate sample coverage history data
+ * Generate sample coverage history data (clearly marked as dummy data)
  */
 function generateCoverageHistory(): CoverageHistory[] {
   const history: CoverageHistory[] = [];
   const now = new Date();
-  const daysToGenerate = 90; // Generate 3 months of data
+  const daysToGenerate = 30; // Generate 1 month of dummy data
 
-  // Start with a baseline coverage
-  let currentCoverage = 68.5;
+  // Use obviously fake/demo coverage values that make it clear this is sample data
+  const dummyPatterns = [
+    42.0, 37.5, 33.3, 25.0, 20.0, 15.0, 10.0, 5.0, 1.0, 0.1, 99.9, 95.0, 90.0, 85.0, 80.0, 75.0,
+    70.0, 65.0, 60.0, 55.0, 50.0, 45.0, 40.0, 35.0, 30.0, 25.0, 20.0, 15.0, 10.0, 7.77,
+  ];
 
   for (let i = daysToGenerate; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
 
-    // Add some realistic variation
-    const variation = (Math.random() - 0.5) * 3; // ±1.5% variation
-    currentCoverage = Math.max(65, Math.min(85, currentCoverage + variation));
-
-    // Add weekly trends (slightly higher on weekdays)
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      currentCoverage -= 0.2; // Weekends slightly lower
-    }
-
-    // Add long-term improvement trend
-    const improvementTrend = (daysToGenerate - i) * 0.08; // Gradual improvement
+    // Use pattern values that are clearly dummy data (nice round numbers, π, etc.)
+    const patternIndex = i % dummyPatterns.length;
+    const dummyCoverage = dummyPatterns[patternIndex] ?? 50.0; // Fallback value
 
     const dateString = date.toISOString().split('T')[0];
     if (dateString) {
       history.push({
         date: dateString,
-        coverage: Math.round((currentCoverage + improvementTrend) * 10) / 10,
+        coverage: dummyCoverage,
       });
     }
   }
