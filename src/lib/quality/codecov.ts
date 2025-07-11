@@ -166,6 +166,46 @@ function transformCodecovData(rawData: unknown): QualityMetrics {
 }
 
 /**
+ * Generate sample coverage history data
+ */
+function generateCoverageHistory(): CoverageHistory[] {
+  const history: CoverageHistory[] = [];
+  const now = new Date();
+  const daysToGenerate = 90; // Generate 3 months of data
+
+  // Start with a baseline coverage
+  let currentCoverage = 68.5;
+
+  for (let i = daysToGenerate; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+
+    // Add some realistic variation
+    const variation = (Math.random() - 0.5) * 3; // ±1.5% variation
+    currentCoverage = Math.max(65, Math.min(85, currentCoverage + variation));
+
+    // Add weekly trends (slightly higher on weekdays)
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      currentCoverage -= 0.2; // Weekends slightly lower
+    }
+
+    // Add long-term improvement trend
+    const improvementTrend = (daysToGenerate - i) * 0.08; // Gradual improvement
+
+    const dateString = date.toISOString().split('T')[0];
+    if (dateString) {
+      history.push({
+        date: dateString,
+        coverage: Math.round((currentCoverage + improvementTrend) * 10) / 10,
+      });
+    }
+  }
+
+  return history;
+}
+
+/**
  * Generate sample data for development/testing
  */
 function generateSampleData(): QualityMetrics {
@@ -187,15 +227,7 @@ function generateSampleData(): QualityMetrics {
       { name: 'src/components/charts', coverage: 67.2, lines: 789, missedLines: 259 },
       { name: 'src/lib/data', coverage: 78.6, lines: 345, missedLines: 74 },
     ],
-    history: [
-      { date: '2025-01-03', coverage: 73.2 },
-      { date: '2025-01-04', coverage: 74.1 },
-      { date: '2025-01-05', coverage: 73.8 },
-      { date: '2025-01-06', coverage: 75.2 },
-      { date: '2025-01-07', coverage: 74.9 },
-      { date: '2025-01-08', coverage: 75.1 },
-      { date: '2025-01-09', coverage: 75.5 },
-    ],
+    history: generateCoverageHistory(),
   };
 }
 

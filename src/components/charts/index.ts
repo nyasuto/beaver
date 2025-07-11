@@ -30,6 +30,14 @@ export type {
   ModuleCoverageSummaryProps,
 } from './ModuleCoverageChart';
 
+export { CoverageHistoryChart, CoverageHistorySummary } from './CoverageHistoryChart';
+export type {
+  CoverageHistoryPoint,
+  TimePeriod,
+  CoverageHistoryChartProps,
+  CoverageHistorySummaryProps,
+} from './CoverageHistoryChart';
+
 // Type-safe chart wrapper system
 import type {
   SafeChartData,
