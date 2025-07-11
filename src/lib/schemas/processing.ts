@@ -136,7 +136,7 @@ export const DataTransformationSchema = z.object({
   type: z.enum(['map', 'filter', 'reduce', 'group', 'sort', 'join', 'aggregate']),
   name: z.string().min(1, 'Transformation name is required'),
   description: z.string().optional(),
-  config: z.record(z.any()),
+  config: z.record(z.string(), z.any()),
   order: z.number().int().min(0).default(0),
   enabled: z.boolean().default(true),
   conditions: z.array(FilterConditionSchema).optional(),
@@ -154,12 +154,12 @@ export const DataPipelineSchema = z.object({
   version: z.string().default('1.0.0'),
   source: z.object({
     type: z.enum(['github', 'api', 'file', 'database']),
-    config: z.record(z.any()),
+    config: z.record(z.string(), z.any()),
   }),
   transformations: z.array(DataTransformationSchema).default([]),
   output: z.object({
     type: z.enum(['json', 'csv', 'database', 'api']),
-    config: z.record(z.any()),
+    config: z.record(z.string(), z.any()),
   }),
   schedule: z
     .object({
@@ -182,7 +182,7 @@ export const DataPipelineSchema = z.object({
       metrics: z.array(z.string()).default(['duration', 'success_rate', 'error_count']),
     })
     .optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   createdBy: z.string().optional(),
@@ -197,7 +197,7 @@ export type DataPipeline = z.infer<typeof DataPipelineSchema>;
 export const DataValidationRuleSchema = z.object({
   field: z.string().min(1, 'Field is required'),
   type: z.enum(['required', 'type', 'format', 'range', 'custom']),
-  config: z.record(z.any()),
+  config: z.record(z.string(), z.any()),
   message: z.string().min(1, 'Error message is required'),
   severity: z.enum(['error', 'warning', 'info']).default('error'),
   enabled: z.boolean().default(true),
@@ -279,7 +279,7 @@ export const DataImportConfigSchema = z.object({
   hasHeaders: z.boolean().default(true),
   skipRows: z.number().int().min(0).default(0),
   maxRows: z.number().int().min(1).optional(),
-  fieldMapping: z.record(z.string()).optional(), // Map source fields to target fields
+  fieldMapping: z.record(z.string(), z.string()).optional(), // Map source fields to target fields
   transformations: z.array(DataTransformationSchema).optional(),
   validationRules: z.array(DataValidationRuleSchema).optional(),
   onError: z.enum(['skip', 'stop', 'log']).default('log'),
@@ -310,12 +310,12 @@ export const ProcessingResultSchema = z.object({
     )
     .default([]),
   warnings: z.array(z.string()).default([]),
-  metrics: z.record(z.number()).default({}),
+  metrics: z.record(z.string(), z.number()).default({}),
   output: z.any().optional(),
   duration: z.number().min(0), // in milliseconds
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type ProcessingResult = z.infer<typeof ProcessingResultSchema>;
