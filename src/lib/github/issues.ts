@@ -201,8 +201,11 @@ export class GitHubIssuesService {
         ...(validatedQuery.mentioned && { mentioned: validatedQuery.mentioned }),
       });
 
-      // Validate response data
-      const issues = z.array(IssueSchema).parse(response.data);
+      // Validate response data and filter out pull requests
+      const allItems = z.array(IssueSchema).parse(response.data);
+
+      // Filter out pull requests (they have a pull_request property)
+      const issues = allItems.filter(item => !item.pull_request);
 
       return { success: true, data: issues };
     } catch (error: unknown) {
