@@ -2,7 +2,7 @@
  * Module Coverage Chart Component
  *
  * A specialized chart component for displaying module-level code coverage
- * with horizontal bar chart visualizations.
+ * with vertical bar chart visualizations.
  *
  * @module ModuleCoverageChart
  */
@@ -70,7 +70,7 @@ export interface ModuleCoverageChartProps {
 /**
  * Module Coverage Chart Component
  *
- * Displays module-level code coverage as a horizontal bar chart
+ * Displays module-level code coverage as a vertical bar chart
  */
 export function ModuleCoverageChart({
   data,
@@ -170,8 +170,8 @@ export function ModuleCoverageChart({
           label: (context: any) => {
             const index = context.dataIndex;
             const module = processedData[index];
-            // For horizontal bar charts (indexAxis: 'y'), the value is in parsed.x
-            const coverage = context.parsed?.x ?? context.raw ?? 0;
+            // For vertical bar charts, the value is in parsed.y
+            const coverage = context.parsed?.y ?? context.raw ?? 0;
 
             if (showValues && module) {
               return `カバレッジ: ${coverage.toFixed(1)}% | 総行数: ${module.lines.toLocaleString()}行 | 未カバー: ${module.missedLines.toLocaleString()}行`;
@@ -186,6 +186,30 @@ export function ModuleCoverageChart({
     },
     scales: {
       x: {
+        ticks: {
+          color: '#6B7280',
+          font: {
+            size: 11,
+            family: 'Monaco, monospace',
+          },
+          maxTicksLimit: maxModules,
+          maxRotation: 45,
+          minRotation: 0,
+        },
+        grid: {
+          display: false,
+        },
+        title: {
+          display: true,
+          text: 'モジュール',
+          color: '#374151',
+          font: {
+            size: 14,
+            family: 'Inter, system-ui, sans-serif',
+          },
+        },
+      },
+      y: {
         beginAtZero: true,
         max: 100,
         ticks: {
@@ -216,36 +240,8 @@ export function ModuleCoverageChart({
           },
         },
       },
-      y: {
-        ticks: {
-          color: '#6B7280',
-          font: {
-            size: 11,
-            family: 'Monaco, monospace',
-          },
-          maxTicksLimit: maxModules,
-          // Ensure module names are properly displayed
-          callback: function (value, index) {
-            const chart = (this as any)['chart'];
-            const labels = chart?.data?.labels;
-            return labels && labels[index] ? labels[index] : '';
-          },
-        },
-        grid: {
-          display: false,
-        },
-        title: {
-          display: true,
-          text: 'モジュール',
-          color: '#374151',
-          font: {
-            size: 14,
-            family: 'Inter, system-ui, sans-serif',
-          },
-        },
-      },
     },
-    indexAxis: 'y', // Horizontal bar chart
+    // Vertical bar chart (default)
     animation: {
       duration: animationDuration,
       easing: 'easeInOutQuart',
