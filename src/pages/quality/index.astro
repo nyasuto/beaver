@@ -117,7 +117,7 @@ const moduleCoverageData = qualityData.modules.map(module => ({
     />
 
     <!-- Key Quality Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 space-lg">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="card">
         <div class="flex items-center justify-between">
           <div>
@@ -172,15 +172,15 @@ const moduleCoverageData = qualityData.modules.map(module => ({
     </div>
 
     <!-- Interactive Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 space-lg">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
       <!-- Coverage Metrics Chart -->
-      <div class="h-80">
+      <div>
         <CoverageChart
           data={coverageMetricsData}
           type="doughnut"
           title="総合カバレッジ"
           description="カバー済み vs 未カバー"
-          height={320}
+          height={300}
           showPercentage={true}
           showLegend={true}
           loading={false}
@@ -190,8 +190,8 @@ const moduleCoverageData = qualityData.modules.map(module => ({
       </div>
 
       <!-- Coverage History Chart -->
-      <div class="h-80">
-        <div class="card p-6 flex items-center justify-center">
+      <div>
+        <div class="card p-6 flex items-center justify-center h-80">
           <div class="text-center">
             <div class="text-4xl mb-4">📈</div>
             <p class="text-lg font-medium text-heading">カバレッジ履歴</p>
@@ -202,27 +202,25 @@ const moduleCoverageData = qualityData.modules.map(module => ({
     </div>
 
     <!-- Module Coverage Analysis -->
-    <div class="space-lg">
-      <div class="h-96">
-        <ModuleCoverageChart
-          data={moduleCoverageData}
-          title="モジュール別カバレッジ"
-          description="カバレッジ率の低いモジュールから順に表示"
-          height={380}
-          showPercentage={true}
-          showValues={true}
-          threshold={50}
-          maxModules={8}
-          sortOrder="asc"
-          loading={false}
-          error={errorMessage || undefined}
-          client:load
-        />
-      </div>
+    <div class="mb-8">
+      <ModuleCoverageChart
+        data={moduleCoverageData}
+        title="モジュール別カバレッジ"
+        description="カバレッジ率の低いモジュールから順に表示"
+        height={350}
+        showPercentage={true}
+        showValues={true}
+        threshold={50}
+        maxModules={8}
+        sortOrder="asc"
+        loading={false}
+        error={errorMessage || undefined}
+        client:load
+      />
     </div>
 
     <!-- Modules Needing Attention -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div class="card">
         <h2 class="text-lg font-semibold text-heading mb-4">対処が必要な上位5モジュール</h2>
         <div class="space-y-4">
