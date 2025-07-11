@@ -13,7 +13,20 @@ import type {
   SafeChartOptions,
   TimeSeriesPoint,
 } from '../../components/charts/types/safe-chart';
-import type { PerformanceMetrics } from '../analytics/engine';
+/**
+ * Performance metrics interface (standalone to replace analytics dependency)
+ */
+export interface PerformanceMetrics {
+  averageResponseTime: number;
+  averageResolutionTime: number;
+  medianResolutionTime: number;
+  totalRequests: number;
+  errorRate: number;
+  cacheHitRate: number;
+  throughput: number;
+  backlogSize: number;
+  timestamp: string;
+}
 import type { IssueClassification } from '../schemas/classification';
 import type { EnhancedIssueClassification } from '../schemas/enhanced-classification';
 

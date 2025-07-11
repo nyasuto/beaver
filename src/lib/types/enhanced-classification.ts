@@ -4,8 +4,28 @@
  * Extended types for the enhanced classification system with backward compatibility
  */
 
-import type { TaskScore } from '../classification/engine';
 import type { EnhancedIssueClassification } from '../schemas/enhanced-classification';
+import type { ClassificationCategory, PriorityLevel } from '../schemas/classification';
+
+/**
+ * Legacy TaskScore interface (standalone to replace engine dependency)
+ */
+export interface TaskScore {
+  issueNumber: number;
+  issueId: number;
+  title: string;
+  body?: string;
+  score: number;
+  priority: PriorityLevel;
+  category: ClassificationCategory;
+  confidence: number;
+  reasons: string[];
+  labels: string[];
+  state: 'open' | 'closed';
+  createdAt: string;
+  updatedAt: string;
+  url: string;
+}
 
 /**
  * Enhanced Task Score with additional metadata
