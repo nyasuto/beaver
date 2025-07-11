@@ -45,24 +45,6 @@ function getPriorityColor(priority: string): string {
     return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
   return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 }
-
-// Helper function to get effort color
-function getEffortColor(effort: string): string {
-  if (effort === 'high')
-    return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-  if (effort === 'medium') return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-}
-
-// Format effort text
-function formatEffort(effort: string): string {
-  const effortMap: Record<string, string> = {
-    low: '軽量',
-    medium: '中規模',
-    high: '大規模',
-  };
-  return effortMap[effort] || effort;
-}
 ---
 
 <div class="card">
@@ -131,9 +113,6 @@ function formatEffort(effort: string): string {
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
                   {task.category}
-                </span>
-                <span class={`text-xs px-2 py-1 rounded ${getEffortColor(task.estimatedEffort)}`}>
-                  {formatEffort(task.estimatedEffort)}
                 </span>
                 {task.tags.map(tag => (
                   <span class="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded">
