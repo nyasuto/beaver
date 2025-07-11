@@ -1,0 +1,302 @@
+---
+/**
+ * Theme Toggle Component
+ *
+ * Provides a toggle button for switching between light and dark themes.
+ * Supports system preference detection and user preference persistence.
+ */
+
+interface Props {
+  class?: string;
+  size?: 'sm' | 'md' | 'lg';
+  variant?: 'button' | 'toggle';
+}
+
+const { class: className = '', size = 'md', variant = 'button' } = Astro.props;
+
+const sizeClasses = {
+  sm: 'w-4 h-4',
+  md: 'w-5 h-5',
+  lg: 'w-6 h-6',
+};
+
+const buttonSizeClasses = {
+  sm: 'p-1.5',
+  md: 'p-2',
+  lg: 'p-2.5',
+};
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  class={`
+    theme-toggle
+    ${variant === 'button' ? 'btn btn-ghost' : 'toggle-switch'}
+    ${buttonSizeClasses[size]}
+    ${className}
+  `}
+  aria-label="テーマを切り替える"
+  title="テーマを切り替える"
+>
+  <!-- Sun Icon (Light Mode) -->
+  <svg
+    class={`theme-icon theme-icon-light ${sizeClasses[size]}`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+    ></path>
+  </svg>
+
+  <!-- Moon Icon (Dark Mode) -->
+  <svg
+    class={`theme-icon theme-icon-dark ${sizeClasses[size]}`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+    ></path>
+  </svg>
+</button>
+
+<script>
+  interface ThemeManager {
+    currentTheme: 'light' | 'dark' | 'system';
+    systemTheme: 'light' | 'dark';
+    effectiveTheme: 'light' | 'dark';
+  }
+
+  class ThemeToggle {
+    private button: HTMLButtonElement;
+    private lightIcon!: SVGElement;
+    private darkIcon!: SVGElement;
+    private manager!: ThemeManager;
+    private mediaQuery!: MediaQueryList;
+
+    constructor() {
+      this.button = document.getElementById('theme-toggle') as HTMLButtonElement;
+      if (!this.button) return;
+
+      this.lightIcon = this.button.querySelector('.theme-icon-light') as SVGElement;
+      this.darkIcon = this.button.querySelector('.theme-icon-dark') as SVGElement;
+      this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      this.manager = {
+        currentTheme: this.getStoredTheme(),
+        systemTheme: this.mediaQuery.matches ? 'dark' : 'light',
+        effectiveTheme: 'light',
+      };
+
+      this.init();
+    }
+
+    private init(): void {
+      this.updateEffectiveTheme();
+      this.applyTheme();
+      this.updateIcons();
+      this.bindEvents();
+    }
+
+    private bindEvents(): void {
+      this.button.addEventListener('click', () => this.toggleTheme());
+      this.mediaQuery.addEventListener('change', e => {
+        this.manager.systemTheme = e.matches ? 'dark' : 'light';
+        if (this.manager.currentTheme === 'system') {
+          this.updateEffectiveTheme();
+          this.applyTheme();
+          this.updateIcons();
+        }
+      });
+
+      // Handle keyboard navigation
+      this.button.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.toggleTheme();
+        }
+      });
+    }
+
+    private toggleTheme(): void {
+      // Cycle through: light -> dark -> system -> light
+      switch (this.manager.currentTheme) {
+        case 'light':
+          this.manager.currentTheme = 'dark';
+          break;
+        case 'dark':
+          this.manager.currentTheme = 'system';
+          break;
+        case 'system':
+          this.manager.currentTheme = 'light';
+          break;
+      }
+
+      this.updateEffectiveTheme();
+      this.applyTheme();
+      this.updateIcons();
+      this.storeTheme();
+    }
+
+    private updateEffectiveTheme(): void {
+      if (this.manager.currentTheme === 'system') {
+        this.manager.effectiveTheme = this.manager.systemTheme;
+      } else {
+        this.manager.effectiveTheme = this.manager.currentTheme;
+      }
+    }
+
+    private applyTheme(): void {
+      const root = document.documentElement;
+
+      if (this.manager.effectiveTheme === 'dark') {
+        root.classList.add('dark');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        root.setAttribute('data-theme', 'light');
+      }
+
+      // Dispatch custom event for other components
+      window.dispatchEvent(
+        new CustomEvent('theme-changed', {
+          detail: {
+            theme: this.manager.effectiveTheme,
+            userPreference: this.manager.currentTheme,
+          },
+        })
+      );
+    }
+
+    private updateIcons(): void {
+      const isEffectiveDark = this.manager.effectiveTheme === 'dark';
+      const isSystemMode = this.manager.currentTheme === 'system';
+
+      // Update button title
+      let title = '';
+      if (isSystemMode) {
+        title = `テーマ: システム (${isEffectiveDark ? 'ダーク' : 'ライト'})`;
+      } else {
+        title = `テーマ: ${isEffectiveDark ? 'ダーク' : 'ライト'}`;
+      }
+      this.button.setAttribute('title', title);
+      this.button.setAttribute('aria-label', title);
+
+      // Show/hide icons with smooth transition
+      if (isEffectiveDark) {
+        this.lightIcon.style.display = 'none';
+        this.darkIcon.style.display = 'block';
+      } else {
+        this.lightIcon.style.display = 'block';
+        this.darkIcon.style.display = 'none';
+      }
+
+      // Add visual indicator for system mode
+      if (isSystemMode) {
+        this.button.classList.add('theme-system-mode');
+      } else {
+        this.button.classList.remove('theme-system-mode');
+      }
+    }
+
+    private getStoredTheme(): 'light' | 'dark' | 'system' {
+      if (typeof localStorage === 'undefined') return 'system';
+
+      const stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        return stored;
+      }
+      return 'system';
+    }
+
+    private storeTheme(): void {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('theme', this.manager.currentTheme);
+      }
+    }
+  }
+
+  // Initialize theme toggle when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    new ThemeToggle();
+  });
+
+  // Initialize immediately if DOM is already loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => new ThemeToggle());
+  } else {
+    new ThemeToggle();
+  }
+</script>
+
+<style>
+  .theme-toggle {
+    @apply relative transition-all duration-200;
+  }
+
+  .theme-icon {
+    @apply transition-all duration-200;
+  }
+
+  .theme-icon-dark {
+    display: none;
+  }
+
+  .dark .theme-icon-light {
+    display: none;
+  }
+
+  .dark .theme-icon-dark {
+    display: block;
+  }
+
+  .theme-system-mode {
+    @apply ring-2 ring-blue-200 dark:ring-blue-800 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+  }
+
+  .theme-toggle:hover {
+    @apply scale-105;
+  }
+
+  .theme-toggle:active {
+    @apply scale-95;
+  }
+
+  .theme-toggle:focus {
+    @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+  }
+
+  /* Smooth theme transition */
+  .theme-toggle,
+  .theme-toggle * {
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle,
+    .theme-toggle *,
+    .theme-icon {
+      transition: none !important;
+    }
+
+    .theme-toggle:hover,
+    .theme-toggle:active {
+      transform: none !important;
+    }
+  }
+</style>

@@ -1,0 +1,308 @@
+---
+/**
+ * Performance Optimizations Component
+ *
+ * Demonstrates and implements key performance optimizations
+ * for Issue #52 responsive design and accessibility requirements
+ */
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<!-- Performance optimizations are implemented throughout the component --><!-- 1. Preload critical resources -->
+<link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/fira-code.woff2" as="font" type="font/woff2" crossorigin />
+
+<!-- 2. DNS prefetch for external resources -->
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="dns-prefetch" href="//fonts.gstatic.com" />
+
+<!-- 3. Preconnect to improve loading speed -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- Critical CSS inlined in head -->
+<style>
+  /* Critical above-the-fold styles */
+  .performance-optimized {
+    /* Use CSS containment for better performance */
+    contain: layout style paint;
+
+    /* Optimize font loading */
+    font-display: swap;
+
+    /* Hardware acceleration for animations */
+    transform: translateZ(0);
+    will-change: transform;
+
+    /* Optimize reflows */
+    box-sizing: border-box;
+  }
+
+  /* Intersection Observer loading states */
+  .lazy-load {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.6s ease-out,
+      transform 0.6s ease-out;
+  }
+
+  .lazy-load.loaded {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Optimize list rendering */
+  .virtualized-list {
+    /* Use CSS containment for better scrolling performance */
+    contain: strict;
+    overflow: auto;
+    will-change: scroll-position;
+  }
+
+  /* Reduce layout thrashing */
+  .performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    /* Prevent layout shift */
+    min-height: 200px;
+  }
+
+  /* Optimize animations */
+  @media (prefers-reduced-motion: reduce) {
+    .lazy-load,
+    .performance-optimized {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /* Content visibility for off-screen content */
+  .content-visibility {
+    content-visibility: auto;
+    contain-intrinsic-size: 200px;
+  }
+</style>
+
+<!-- Performance demonstration section -->
+<section
+  class={`performance-optimized ${className}`}
+  role="region"
+  aria-label="パフォーマンス最適化の例"
+>
+  <div class="performance-grid">
+    <!-- Lazy loading example -->
+    <div class="lazy-load card p-6" data-performance="lazy">
+      <h3 class="text-lg font-semibold mb-2">🚀 遅延読み込み</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        Intersection Observer APIを使用して、ビューポートに入ったときにコンテンツを読み込み
+      </p>
+    </div>
+
+    <!-- Bundle optimization example -->
+    <div class="lazy-load card p-6" data-performance="bundle">
+      <h3 class="text-lg font-semibold mb-2">📦 バンドル最適化</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        コードスプリッティングとvendorチャンクの分離により、初期読み込み時間を短縮
+      </p>
+    </div>
+
+    <!-- Image optimization example -->
+    <div class="lazy-load card p-6" data-performance="image">
+      <h3 class="text-lg font-semibold mb-2">🖼️ 画像最適化</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        WebP形式対応とresponsive imagesによる帯域幅の効率化
+      </p>
+    </div>
+
+    <!-- CSS optimization example -->
+    <div class="lazy-load card p-6" data-performance="css">
+      <h3 class="text-lg font-semibold mb-2">🎨 CSS最適化</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        Critical CSS, CSS containment, content-visibilityによる描画性能向上
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  /**
+   * Performance Optimization Scripts
+   * Implements lazy loading, performance monitoring, and optimization techniques
+   */
+
+  interface PerformanceMetrics {
+    fcp?: number;
+    lcp?: number;
+    cls?: number;
+    fid?: number;
+    ttfb?: number;
+  }
+
+  class PerformanceOptimizer {
+    private observer!: IntersectionObserver;
+    private metrics: PerformanceMetrics = {};
+
+    constructor() {
+      this.initializeLazyLoading();
+      this.initializePerformanceMonitoring();
+      this.optimizeImages();
+      this.prefetchResources();
+    }
+
+    private initializeLazyLoading(): void {
+      // Intersection Observer for lazy loading
+      this.observer = new IntersectionObserver(
+        entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const target = entry.target as HTMLElement;
+              target.classList.add('loaded');
+              this.observer.unobserve(target);
+            }
+          });
+        },
+        {
+          rootMargin: '50px 0px', // Load 50px before entering viewport
+          threshold: 0.1,
+        }
+      );
+
+      // Observe all lazy-load elements
+      document.querySelectorAll('.lazy-load').forEach(el => {
+        this.observer.observe(el);
+      });
+    }
+
+    private initializePerformanceMonitoring(): void {
+      // Web Vitals monitoring
+      if ('performance' in window && 'PerformanceObserver' in window) {
+        // Largest Contentful Paint
+        new PerformanceObserver(list => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry) {
+            this.metrics.lcp = lastEntry.startTime;
+          }
+        }).observe({ entryTypes: ['largest-contentful-paint'] });
+
+        // First Input Delay
+        new PerformanceObserver(list => {
+          const entries = list.getEntries();
+          const firstEntry = entries[0];
+          if (firstEntry && 'processingStart' in firstEntry) {
+            this.metrics.fid = (firstEntry as any).processingStart - firstEntry.startTime;
+          }
+        }).observe({ entryTypes: ['first-input'] });
+
+        // Cumulative Layout Shift
+        new PerformanceObserver(list => {
+          let clsValue = 0;
+          const entries = list.getEntries();
+
+          entries.forEach(entry => {
+            // Only count layout shifts without recent user input
+            if (!(entry as any).hadRecentInput) {
+              clsValue += (entry as any).value;
+            }
+          });
+
+          this.metrics.cls = clsValue;
+        }).observe({ entryTypes: ['layout-shift'] });
+
+        // Time to First Byte
+        window.addEventListener('load', () => {
+          const navigation = performance.getEntriesByType(
+            'navigation'
+          )[0] as PerformanceNavigationTiming;
+          this.metrics.ttfb = navigation.responseStart - navigation.requestStart;
+        });
+      }
+    }
+
+    private optimizeImages(): void {
+      // Optimize image loading with native lazy loading fallback
+      const images = document.querySelectorAll('img[loading="lazy"]');
+
+      images.forEach(img => {
+        const imageElement = img as HTMLImageElement;
+
+        // Add loading event listeners
+        imageElement.addEventListener('load', () => {
+          imageElement.classList.add('loaded');
+        });
+
+        imageElement.addEventListener('error', () => {
+          imageElement.classList.add('error');
+        });
+      });
+    }
+
+    private prefetchResources(): void {
+      // Prefetch critical resources during idle time
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+          // Prefetch next page resources
+          const navLinks = document.querySelectorAll('a[href^="/"]');
+          navLinks.forEach(link => {
+            const href = (link as HTMLAnchorElement).href;
+            if (href && href !== window.location.href) {
+              const prefetchLink = document.createElement('link');
+              prefetchLink.rel = 'prefetch';
+              prefetchLink.href = href;
+              document.head.appendChild(prefetchLink);
+            }
+          });
+        });
+      }
+    }
+
+    public getMetrics(): PerformanceMetrics {
+      return { ...this.metrics };
+    }
+  }
+
+  // Initialize performance optimizations
+  document.addEventListener('DOMContentLoaded', () => {
+    new PerformanceOptimizer();
+  });
+
+  // Service Worker registration for caching (if available)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(() => {
+          // Service worker registered successfully
+        })
+        .catch(() => {
+          // Service worker registration failed
+        });
+    });
+  }
+</script>
+
+<!-- Performance monitoring and debugging -->
+<script>
+  // Performance metrics collection for development
+  if (import.meta.env.DEV) {
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const performanceData = {
+          navigation: performance.getEntriesByType('navigation')[0],
+          paint: performance.getEntriesByType('paint'),
+          memory: (performance as any).memory,
+        };
+
+        // Store performance data for debugging
+        (window as any).performanceMetrics = performanceData;
+      }, 1000);
+    });
+  }
+</script>

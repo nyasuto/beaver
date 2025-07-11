@@ -52,14 +52,14 @@ const description = 'GitHub Issuesを永続的な知識ベースに変換';
     <!-- Main Dashboard Content -->
     <section class="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-6xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6 sm:gap-8">
           <!-- Top Tasks Recommendations -->
-          <div>
+          <div class="order-1 md:order-1">
             <TopTasks />
           </div>
 
           <!-- Recent Activity -->
-          <div>
+          <div class="order-2 md:order-2">
             <RecentActivity />
           </div>
         </div>
