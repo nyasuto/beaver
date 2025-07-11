@@ -1,0 +1,74 @@
+---
+/**
+ * Skip Links Component
+ *
+ * Provides keyboard navigation shortcuts for accessibility.
+ * Allows users to quickly jump to main content sections.
+ */
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<div class={`skip-links ${className}`} role="navigation" aria-label="スキップリンク">
+  <a href="#main-content" class="skip-link"> メインコンテンツへスキップ </a>
+  <a href="#navigation" class="skip-link"> ナビゲーションへスキップ </a>
+  <a href="#sidebar" class="skip-link"> サイドバーへスキップ </a>
+  <a href="#footer" class="skip-link"> フッターへスキップ </a>
+</div>
+
+<style>
+  .skip-links {
+    @apply absolute top-0 left-0 z-50;
+  }
+
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2;
+    @apply bg-primary-600 text-white px-4 py-2 rounded-md;
+    @apply font-medium text-sm shadow-lg;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply dark:bg-primary-500 dark:ring-primary-400;
+  }
+
+  .skip-link:hover {
+    @apply bg-primary-700 dark:bg-primary-600;
+  }
+
+  .skip-link:active {
+    @apply scale-95;
+  }
+
+  /* Ensure skip links are always visible when focused */
+  .skip-link:focus {
+    position: absolute !important;
+    top: 0.5rem;
+    left: 0.5rem;
+    clip: auto !important;
+    clip-path: none !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .skip-link {
+      @apply border-2 border-white;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .skip-link {
+      transition: none !important;
+    }
+
+    .skip-link:active {
+      transform: none !important;
+    }
+  }
+</style>

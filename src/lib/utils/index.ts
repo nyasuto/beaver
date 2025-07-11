@@ -8,11 +8,11 @@
  */
 
 // Utility modules exports
-export { 
-  markdownToHtml, 
-  markdownToPlainText, 
-  truncateMarkdown, 
-  extractFirstParagraph 
+export {
+  markdownToHtml,
+  markdownToPlainText,
+  truncateMarkdown,
+  extractFirstParagraph,
 } from './markdown';
 
 // Common utility functions

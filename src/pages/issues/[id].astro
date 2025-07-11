@@ -44,9 +44,7 @@ const title = `Issue #${currentIssue.number}: ${currentIssue.title}`;
 const description = `Detailed view of GitHub issue #${currentIssue.number} with AI-powered analysis`;
 
 // Issue 本文の markdown 処理
-const processedBody = currentIssue.body
-  ? await markdownToHtml(currentIssue.body)
-  : '';
+const processedBody = currentIssue.body ? await markdownToHtml(currentIssue.body) : '';
 ---
 
 <PageLayout

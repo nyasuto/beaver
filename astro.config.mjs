@@ -14,6 +14,18 @@ export default defineConfig({
   base: '/beaver',
   build: {
     assets: 'assets',
+    // Performance optimizations
+    minify: true,
+    inlineStylesheets: 'auto',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-charts': ['chart.js'],
+          'vendor-date': ['date-fns'],
+        },
+      },
+    },
   },
   vite: {
     optimizeDeps: {
@@ -21,6 +33,20 @@ export default defineConfig({
     },
     define: {
       'import.meta.env.BUILD_TIME': JSON.stringify(new Date().toISOString()),
+    },
+    build: {
+      // Performance optimizations
+      target: 'es2020',
+      minify: 'esbuild',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-charts': ['chart.js'],
+            'vendor-date': ['date-fns'],
+          },
+        },
+      },
     },
   },
   markdown: {

@@ -8,6 +8,7 @@
 
 import Header from '../navigation/Header.astro';
 import Footer from '../navigation/Footer.astro';
+import SkipLinks from '../accessibility/SkipLinks.astro';
 
 // Import global styles
 import '../../styles/global.css';
@@ -199,13 +200,8 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
     </script>
   </head>
   <body class={bodyClasses}>
-    {/* Skip to main content for accessibility */}
-    <a
-      href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-md z-50 focus-visible"
-    >
-      Skip to main content
-    </a>
+    {/* Skip Links for accessibility */}
+    <SkipLinks />
 
     {/* Header */}
     {

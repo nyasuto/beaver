@@ -1,0 +1,172 @@
+---
+/**
+ * Responsive Image Component
+ *
+ * Provides responsive image loading with lazy loading, multiple formats,
+ * and optimized performance for different screen sizes.
+ */
+
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  class?: string;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  priority?: boolean;
+  quality?: number;
+  format?: 'webp' | 'avif' | 'jpeg' | 'png';
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
+  class: className = '',
+  loading = 'lazy',
+  decoding = 'async',
+  priority = false,
+  quality = 80,
+  format = 'webp',
+} = Astro.props;
+
+// Generate responsive image URLs (for future implementation with image optimization)
+const generateResponsiveUrls = (baseSrc: string) => {
+  const breakpoints = [320, 640, 768, 1024, 1280, 1920];
+  return breakpoints.map(bp => `${baseSrc}?w=${bp}&q=${quality}&f=${format} ${bp}w`).join(', ');
+};
+
+const srcset = generateResponsiveUrls(src);
+---
+
+<picture class={`responsive-image ${className}`}>
+  <!-- WebP format for modern browsers -->
+  <source srcset={srcset} sizes={sizes} type="image/webp" />
+
+  <!-- Fallback to original format -->
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    loading={priority ? 'eager' : loading}
+    decoding={decoding}
+    sizes={sizes}
+    class="w-full h-auto"
+    style={priority ? undefined : 'content-visibility: auto;'}
+  />
+</picture>
+
+<style>
+  .responsive-image {
+    @apply block w-full;
+  }
+
+  .responsive-image img {
+    @apply transition-opacity duration-300;
+  }
+
+  /* Lazy loading placeholder */
+  .responsive-image img[loading='lazy'] {
+    @apply opacity-0;
+  }
+
+  .responsive-image img[loading='lazy'].loaded {
+    @apply opacity-100;
+  }
+
+  /* Aspect ratio preservation */
+  .responsive-image {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .responsive-image::before {
+    content: '';
+    display: block;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    @apply bg-gray-200 dark:bg-gray-700;
+  }
+
+  .responsive-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    @apply w-full h-full object-cover;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .responsive-image img {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  // Intersection Observer for lazy loading
+  class LazyImageLoader {
+    private observer: IntersectionObserver;
+    private images: HTMLImageElement[];
+
+    constructor() {
+      this.images = Array.from(document.querySelectorAll('img[loading="lazy"]'));
+      this.observer = new IntersectionObserver(
+        entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target as HTMLImageElement;
+              this.loadImage(img);
+              this.observer.unobserve(img);
+            }
+          });
+        },
+        {
+          rootMargin: '50px 0px', // Start loading 50px before entering viewport
+          threshold: 0.1,
+        }
+      );
+
+      this.initializeImages();
+    }
+
+    private initializeImages(): void {
+      this.images.forEach(img => {
+        // Add loading class
+        img.classList.add('loading');
+
+        // Observe for lazy loading
+        this.observer.observe(img);
+      });
+    }
+
+    private loadImage(img: HTMLImageElement): void {
+      img.addEventListener('load', () => {
+        img.classList.remove('loading');
+        img.classList.add('loaded');
+      });
+
+      img.addEventListener('error', () => {
+        img.classList.remove('loading');
+        img.classList.add('error');
+      });
+    }
+  }
+
+  // Initialize lazy loading when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    if ('IntersectionObserver' in window) {
+      new LazyImageLoader();
+    } else {
+      // Fallback for older browsers
+      const images = document.querySelectorAll('img[loading="lazy"]');
+      images.forEach(img => {
+        (img as HTMLImageElement).classList.add('loaded');
+      });
+    }
+  });
+</script>
