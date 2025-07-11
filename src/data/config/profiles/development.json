@@ -20,10 +20,9 @@
       "description": "Fast scoring algorithm optimized for development",
       "version": "2.0.0",
       "weights": {
-        "category": 40,
-        "priority": 25,
+        "category": 45,
+        "priority": 35,
         "confidence": 20,
-        "recency": 15,
         "custom": 0
       },
       "enabled": true

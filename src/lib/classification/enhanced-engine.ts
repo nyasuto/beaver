@@ -37,7 +37,7 @@ export interface EnhancedTaskScore {
     category: number;
     priority: number;
     confidence: number;
-    recency: number;
+    recency?: number;
     custom?: number;
   };
   priority: PriorityLevel;
@@ -518,11 +518,11 @@ export class EnhancedClassificationEngine {
     // Confidence score
     breakdown.confidence = primaryConfidence * weights.confidence;
 
-    // Recency score
-    const daysSinceCreated =
-      (Date.now() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    const recencyScore = Math.max(0, 1 - daysSinceCreated / 30); // Decay over 30 days
-    breakdown.recency = recencyScore * weights.recency;
+    // Recency score - removed per user feedback
+    // const daysSinceCreated =
+    //   (Date.now() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24);
+    // const recencyScore = Math.max(0, 1 - daysSinceCreated / 30); // Decay over 30 days
+    // breakdown.recency = recencyScore * weights.recency;
 
     // Custom factors
     if (algorithm.customFactors && weights.custom > 0) {

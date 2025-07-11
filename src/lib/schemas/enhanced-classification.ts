@@ -57,7 +57,7 @@ export const ScoringAlgorithmSchema = z.object({
         .max(100)
         .default(20)
         .describe('Confidence weight in scoring (0-100)'),
-      recency: z.number().min(0).max(100).default(10).describe('Recency weight in scoring (0-100)'),
+      recency: z.number().min(0).max(100).optional().describe('Recency weight in scoring (0-100)'),
       custom: z
         .number()
         .min(0)
@@ -67,7 +67,7 @@ export const ScoringAlgorithmSchema = z.object({
     })
     .refine(
       weights => {
-        const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+        const total = Object.values(weights).reduce((sum, weight) => sum + (weight || 0), 0);
         return total === 100;
       },
       {
@@ -340,7 +340,7 @@ export const EnhancedIssueClassificationSchema = z.object({
     category: z.number(),
     priority: z.number(),
     confidence: z.number(),
-    recency: z.number(),
+    recency: z.number().optional(),
     custom: z.number().optional(),
   }),
 
@@ -424,8 +424,7 @@ export const DEFAULT_ENHANCED_CONFIG: EnhancedClassificationConfig = {
     weights: {
       category: 40,
       priority: 30,
-      confidence: 20,
-      recency: 10,
+      confidence: 30,
       custom: 0,
     },
     enabled: true,

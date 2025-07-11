@@ -465,7 +465,7 @@ describe('Chart Utilities', () => {
           category: 30,
           priority: 35,
           confidence: 15,
-          recency: 5,
+          // recency: 5, // Removed - no longer used
           custom: 0,
         },
         processingTimeMs: 100,
@@ -510,7 +510,7 @@ describe('Chart Utilities', () => {
           category: 20,
           priority: 25,
           confidence: 10,
-          recency: 5,
+          // recency: 5, // Removed - no longer used
           custom: 0,
         },
         processingTimeMs: 100,
@@ -555,7 +555,7 @@ describe('Chart Utilities', () => {
           category: 10,
           priority: 15,
           confidence: 3,
-          recency: 2,
+          // recency: 2, // Removed - no longer used
           custom: 0,
         },
         processingTimeMs: 100,
@@ -632,7 +632,7 @@ describe('Chart Utilities', () => {
       expect(scoreBreakdownData.labels).toContain('Recency');
       expect(scoreBreakdownData.labels).toContain('Custom');
 
-      // Average: category: 20, priority: 25, confidence: 9.33, recency: 4, custom: 0
+      // Average: category: 20, priority: 25, confidence: 9.33, recency: 0, custom: 0
       const categoryIndex = scoreBreakdownData.labels!.indexOf('Category');
       const priorityIndex = scoreBreakdownData.labels!.indexOf('Priority');
       const confidenceIndex = scoreBreakdownData.labels!.indexOf('Confidence');
@@ -642,7 +642,7 @@ describe('Chart Utilities', () => {
       expect(scoreBreakdownData.datasets[0]!.data[categoryIndex]).toBe(20); // (30+20+10)/3
       expect(scoreBreakdownData.datasets[0]!.data[priorityIndex]).toBe(25); // (35+25+15)/3
       expect(scoreBreakdownData.datasets[0]!.data[confidenceIndex]).toBeCloseTo(9.33, 1); // (15+10+3)/3
-      expect(scoreBreakdownData.datasets[0]!.data[recencyIndex]).toBe(4); // (5+5+2)/3
+      expect(scoreBreakdownData.datasets[0]!.data[recencyIndex]).toBe(0); // Recency is no longer calculated
       expect(scoreBreakdownData.datasets[0]!.data[customIndex]).toBe(0); // (0+0+0)/3
     });
 
@@ -679,7 +679,7 @@ describe('Chart Utilities', () => {
           estimatedPriority: 'medium',
           priorityConfidence: 0.5,
           score: 25, // Medium boundary
-          scoreBreakdown: { category: 10, priority: 10, confidence: 3, recency: 2, custom: 0 },
+          scoreBreakdown: { category: 10, priority: 10, confidence: 3, custom: 0 },
           processingTimeMs: 100,
           cacheHit: false,
           algorithmVersion: '2.0.0',
@@ -709,7 +709,7 @@ describe('Chart Utilities', () => {
           estimatedPriority: 'medium',
           priorityConfidence: 0.5,
           score: 50, // High boundary
-          scoreBreakdown: { category: 20, priority: 20, confidence: 7, recency: 3, custom: 0 },
+          scoreBreakdown: { category: 20, priority: 20, confidence: 7, custom: 0 },
           processingTimeMs: 100,
           cacheHit: false,
           algorithmVersion: '2.0.0',
@@ -739,7 +739,7 @@ describe('Chart Utilities', () => {
           estimatedPriority: 'medium',
           priorityConfidence: 0.5,
           score: 75, // Very High boundary
-          scoreBreakdown: { category: 30, priority: 30, confidence: 10, recency: 5, custom: 0 },
+          scoreBreakdown: { category: 30, priority: 30, confidence: 10, custom: 0 },
           processingTimeMs: 100,
           cacheHit: false,
           algorithmVersion: '2.0.0',
@@ -789,7 +789,7 @@ describe('Chart Utilities', () => {
           estimatedPriority: 'high',
           priorityConfidence: 0.8,
           score: 85,
-          scoreBreakdown: { category: 30, priority: 35, confidence: 15, recency: 5, custom: 0 },
+          scoreBreakdown: { category: 30, priority: 35, confidence: 15, custom: 0 },
           processingTimeMs: 100,
           cacheHit: false,
           algorithmVersion: '2.0.0',
@@ -861,7 +861,7 @@ describe('Chart Utilities', () => {
           estimatedPriority: 'high',
           priorityConfidence: 0.8,
           score: 85,
-          scoreBreakdown: { category: 30, priority: 35, confidence: 15, recency: 5, custom: 0 },
+          scoreBreakdown: { category: 30, priority: 35, confidence: 15, custom: 0 },
           processingTimeMs: 100,
           cacheHit: false,
           algorithmVersion: '2.0.0',

@@ -316,7 +316,7 @@ export function convertEnhancedClassificationData(classifications: EnhancedIssue
     scoreBreakdownSum.category += classification.scoreBreakdown.category;
     scoreBreakdownSum.priority += classification.scoreBreakdown.priority;
     scoreBreakdownSum.confidence += classification.scoreBreakdown.confidence;
-    scoreBreakdownSum.recency += classification.scoreBreakdown.recency;
+    // scoreBreakdownSum.recency += classification.scoreBreakdown.recency; // Removed - no longer used
     scoreBreakdownSum.custom += classification.scoreBreakdown.custom || 0;
   });
 

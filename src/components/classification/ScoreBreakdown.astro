@@ -11,7 +11,7 @@ export interface Props {
     category: number;
     priority: number;
     confidence: number;
-    recency: number;
+    recency?: number; // Optional for backward compatibility
     custom?: number;
   };
   totalScore?: number;
@@ -39,7 +39,9 @@ const getPercentage = (value: number, total: number) => {
 const categoryPercent = getPercentage(scoreBreakdown.category, totalScore);
 const priorityPercent = getPercentage(scoreBreakdown.priority, totalScore);
 const confidencePercent = getPercentage(scoreBreakdown.confidence, totalScore);
-const recencyPercent = getPercentage(scoreBreakdown.recency, totalScore);
+const recencyPercent = scoreBreakdown.recency
+  ? getPercentage(scoreBreakdown.recency, totalScore)
+  : 0;
 const customPercent = scoreBreakdown.custom ? getPercentage(scoreBreakdown.custom, totalScore) : 0;
 
 // Score breakdown items with metadata
@@ -68,14 +70,19 @@ const breakdownItems = [
     color: 'var(--color-confidence)',
     icon: '✅',
   },
-  {
-    key: 'recency',
-    label: '最新性',
-    value: scoreBreakdown.recency,
-    percentage: recencyPercent,
-    color: 'var(--color-recency)',
-    icon: '🕒',
-  },
+  // Only show recency if it exists (backward compatibility)
+  ...(scoreBreakdown.recency
+    ? [
+        {
+          key: 'recency',
+          label: '最新性',
+          value: scoreBreakdown.recency,
+          percentage: recencyPercent,
+          color: 'var(--color-recency)',
+          icon: '🕒',
+        },
+      ]
+    : []),
   ...(scoreBreakdown.custom
     ? [
         {
