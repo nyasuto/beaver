@@ -104,33 +104,43 @@ export function getStaticIssueById(issueNumber: number): GitHubIssue | undefined
 }
 
 /**
- * オープンな Issue のみを取得
+ * Pull Request を除外して Issue のみを取得
+ *
+ * @returns Pull Request を除外した Issue データ配列
+ */
+export function getIssuesOnly(): GitHubIssue[] {
+  const issues = getStaticIssues();
+  return issues.filter(issue => !issue.pull_request);
+}
+
+/**
+ * オープンな Issue のみを取得（Pull Request を除外）
  *
  * @returns オープンな Issue データ配列
  */
 export function getOpenIssues(): GitHubIssue[] {
-  const issues = getStaticIssues();
+  const issues = getIssuesOnly();
   return issues.filter(issue => issue.state === 'open');
 }
 
 /**
- * クローズされた Issue のみを取得
+ * クローズされた Issue のみを取得（Pull Request を除外）
  *
  * @returns クローズされた Issue データ配列
  */
 export function getClosedIssues(): GitHubIssue[] {
-  const issues = getStaticIssues();
+  const issues = getIssuesOnly();
   return issues.filter(issue => issue.state === 'closed');
 }
 
 /**
- * 特定のラベルを持つ Issue を取得
+ * 特定のラベルを持つ Issue を取得（Pull Request を除外）
  *
  * @param labelName ラベル名
  * @returns 指定されたラベルを持つ Issue データ配列
  */
 export function getIssuesByLabel(labelName: string): GitHubIssue[] {
-  const issues = getStaticIssues();
+  const issues = getIssuesOnly();
   return issues.filter(issue => issue.labels.some(label => label.name === labelName));
 }
 
@@ -236,4 +246,14 @@ export function getIssuesWithFallback(): GitHubIssue[] {
     console.warn('静的データの読み込みに失敗しました。フォールバックデータを使用します:', error);
     return getFallbackIssues();
   }
+}
+
+/**
+ * Pull Request を除外した Issue のみを安全に取得（フォールバック付き）
+ *
+ * @returns Pull Request を除外した Issue データ配列
+ */
+export function getIssuesOnlyWithFallback(): GitHubIssue[] {
+  const issues = getIssuesWithFallback();
+  return issues.filter(issue => !issue.pull_request);
 }
