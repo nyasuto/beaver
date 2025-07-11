@@ -105,6 +105,21 @@ npm run test         # Run tests
 npm run validate     # Validate schemas and types
 ```
 
+## 🌐 Development Server
+
+**IMPORTANT: Development Server URL Structure**
+
+- ❌ Wrong: `http://localhost:3000/` (returns 404)
+- ✅ Correct: `http://localhost:3000/beaver/` (works properly)
+
+The development server serves the application at the `/beaver` subdirectory path, not the root path. This is consistent with the GitHub Pages deployment structure.
+
+### Testing Environments
+
+1. **Local Development**: `http://localhost:3000/beaver/`
+2. **Production (GitHub Pages)**: `https://nyasuto.github.io/beaver/`
+3. **MCP Testing**: Use production URL for testing with MCP tools
+
 ## 📋 AI Agent Task Checklist
 
 When implementing new features, ensure:
