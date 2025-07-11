@@ -23,7 +23,7 @@ vi.mock('../../classification/config-loader', () => ({
 
 vi.mock('../../utils/markdown', () => ({
   markdownToHtml: vi.fn((text: string) => Promise.resolve(text)),
-  extractFirstParagraph: vi.fn((text: string) => text.split('\n')[0]),
+  markdownToPlainText: vi.fn((text: string) => text.replace(/[*_`#]/g, '')),
   truncateMarkdown: vi.fn((text: string, limit: number) =>
     text.length > limit ? text.substring(0, limit) + '...' : text
   ),
