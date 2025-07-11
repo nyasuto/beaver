@@ -21,17 +21,14 @@ import {
   Legend,
   Filler,
   type ChartType,
-  type ChartData,
-  type ChartOptions,
-  type Chart,
 } from 'chart.js';
+import { LIGHT_THEME, DARK_THEME, debounce, type ChartTheme } from '../../lib/utils/chart';
 import {
-  LIGHT_THEME,
-  DARK_THEME,
-  generateChartOptions,
-  debounce,
-  type ChartTheme,
-} from '../../lib/utils/chart';
+  createSafeChart,
+  type SafeChartData,
+  type SafeChartOptions,
+  type SafeChart,
+} from './utils/safe-wrapper';
 
 // Register Chart.js components
 ChartJS.register(
@@ -54,9 +51,9 @@ export interface BaseChartProps<T extends ChartType> {
   /** Chart type */
   type: T;
   /** Chart data */
-  data: ChartData<T>;
+  data: SafeChartData<T>;
   /** Chart options */
-  options?: Partial<ChartOptions<T>>;
+  options?: SafeChartOptions<T>;
   /** Chart theme */
   theme?: ChartTheme;
   /** Whether to use dark theme */
@@ -78,11 +75,11 @@ export interface BaseChartProps<T extends ChartType> {
   /** Responsive behavior */
   responsive?: boolean;
   /** Callback when chart is ready */
-  onChartReady?: (chart: Chart<T>) => void;
+  onChartReady?: (chart: SafeChart<T>) => void;
   /** Callback when chart is clicked */
-  onChartClick?: (event: any, elements: any[]) => void;
+  onChartClick?: (event: Event, elements: unknown[]) => void;
   /** Callback when chart is hovered */
-  onChartHover?: (event: any, elements: any[]) => void;
+  onChartHover?: (event: Event, elements: unknown[]) => void;
 }
 
 /**
@@ -109,58 +106,75 @@ export function BaseChart<T extends ChartType>({
   onChartHover,
 }: BaseChartProps<T>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<Chart<T> | null>(null);
+  const chartRef = useRef<SafeChart<T> | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [chartError, setChartError] = useState<string | null>(null);
 
   // Select theme based on mode
   const currentTheme = theme || (isDarkMode ? DARK_THEME : LIGHT_THEME);
 
-  // Generate chart options with theme
-  const chartOptions = generateChartOptions(type, currentTheme, {
-    responsive,
-    maintainAspectRatio: !height,
-    animation: {
-      duration: animationDuration,
-    },
-    onClick: onChartClick,
-    onHover: onChartHover,
-    ...options,
-  });
+  // Create safe chart options
+  const safeChartOptions: SafeChartOptions<T> = React.useMemo(
+    () => ({
+      responsive,
+      maintainAspectRatio: !height,
+      animation: {
+        duration: animationDuration,
+      },
+      onClick: onChartClick,
+      onHover: onChartHover,
+      ...options,
+    }),
+    [responsive, height, animationDuration, onChartClick, onChartHover, options]
+  );
 
   // Debounced chart update function
-  const debouncedUpdate = useCallback(
-    debounce(() => {
-      if (chartRef.current) {
-        chartRef.current.update(updateMode);
-      }
-    }, 150),
-    [updateMode]
-  );
+  const debouncedUpdate = useCallback(() => {
+    if (chartRef.current) {
+      chartRef.current.update(updateMode);
+    }
+  }, [updateMode]);
 
   // Initialize chart
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
+    const canvas = canvasRef.current;
 
     // Destroy existing chart
     if (chartRef.current) {
       chartRef.current.destroy();
+      chartRef.current = null;
     }
 
-    // Create new chart
-    chartRef.current = new ChartJS(ctx, {
-      type,
-      data,
-      options: chartOptions,
+    // Create safe chart
+    const result = createSafeChart<T>({
+      canvas,
+      config: {
+        type,
+        data,
+        options: safeChartOptions,
+      },
+      theme: currentTheme,
+      onReady: chart => {
+        chartRef.current = chart;
+        setIsReady(true);
+        setChartError(null);
+
+        // Notify parent component
+        if (onChartReady) {
+          onChartReady(chart);
+        }
+      },
+      onError: err => {
+        setChartError(err.message);
+        setIsReady(false);
+      },
     });
 
-    setIsReady(true);
-
-    // Notify parent component
-    if (onChartReady) {
-      onChartReady(chartRef.current);
+    if (!result.success) {
+      setChartError(result.error.message);
+      setIsReady(false);
     }
 
     // Cleanup function
@@ -170,16 +184,17 @@ export function BaseChart<T extends ChartType>({
         chartRef.current = null;
       }
     };
-  }, [type, currentTheme, responsive, animationDuration]);
+  }, [type, currentTheme, responsive, animationDuration, data, safeChartOptions, onChartReady]);
 
   // Update chart when data changes
   useEffect(() => {
     if (!chartRef.current || !isReady) return;
 
     chartRef.current.data = data;
-    chartRef.current.options = chartOptions;
-    debouncedUpdate();
-  }, [data, chartOptions, debouncedUpdate, isReady]);
+    chartRef.current.options = safeChartOptions;
+    const debouncedUpdateFn = debounce(debouncedUpdate, 150);
+    debouncedUpdateFn();
+  }, [data, safeChartOptions, debouncedUpdate, isReady]);
 
   // Handle resize
   useEffect(() => {
@@ -214,7 +229,8 @@ export function BaseChart<T extends ChartType>({
   }
 
   // Error state
-  if (error) {
+  if (error || chartError) {
+    const displayError = error || chartError;
     return (
       <div className={`chart-error ${className}`}>
         <div className="flex items-center justify-center h-64 text-red-600">
@@ -233,7 +249,7 @@ export function BaseChart<T extends ChartType>({
               />
             </svg>
             <p className="text-sm font-medium">Chart Error</p>
-            <p className="text-xs text-gray-500 mt-1">{error}</p>
+            <p className="text-xs text-gray-500 mt-1">{displayError}</p>
           </div>
         </div>
       </div>
