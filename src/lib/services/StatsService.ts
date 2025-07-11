@@ -289,15 +289,18 @@ export class StatsService {
   private calculateLabelStats(issues: Issue[]): UnifiedStats['labels'] {
     const labelCounts = new Map<string, { color: string; count: number }>();
 
-    issues.forEach(issue => {
-      (issue.labels || []).forEach(label => {
-        const existing = labelCounts.get(label.name);
-        labelCounts.set(label.name, {
-          color: label.color,
-          count: (existing?.count || 0) + 1,
+    // オープンな issue のみを対象にする
+    issues
+      .filter(issue => issue.state === 'open')
+      .forEach(issue => {
+        (issue.labels || []).forEach(label => {
+          const existing = labelCounts.get(label.name);
+          labelCounts.set(label.name, {
+            color: label.color,
+            count: (existing?.count || 0) + 1,
+          });
         });
       });
-    });
 
     return Array.from(labelCounts.entries())
       .map(([name, { color, count }]) => ({ name, color, count }))
