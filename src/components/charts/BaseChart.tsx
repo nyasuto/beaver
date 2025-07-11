@@ -20,6 +20,10 @@ import {
   Tooltip,
   Legend,
   Filler,
+  BarController,
+  DoughnutController,
+  PieController,
+  LineController,
   type ChartType,
 } from 'chart.js';
 import { LIGHT_THEME, DARK_THEME, debounce, type ChartTheme } from '../../lib/utils/chart';
@@ -41,7 +45,11 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarController,
+  DoughnutController,
+  PieController,
+  LineController
 );
 
 /**
