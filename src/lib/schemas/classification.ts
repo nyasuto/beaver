@@ -53,6 +53,8 @@ export const CategoryClassificationSchema = z.object({
   confidence: ConfidenceScoreSchema,
   reasons: z.array(z.string()).describe('Reasons for this classification'),
   keywords: z.array(z.string()).describe('Keywords that influenced classification'),
+  ruleName: z.string().optional().describe('Name of the rule that applied this classification'),
+  ruleId: z.string().optional().describe('ID of the rule that applied this classification'),
 });
 
 export type CategoryClassification = z.infer<typeof CategoryClassificationSchema>;
