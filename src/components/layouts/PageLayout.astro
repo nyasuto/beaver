@@ -31,9 +31,6 @@ export interface Props {
   showSearch?: boolean;
   headerFixed?: boolean;
   headerTransparent?: boolean;
-  footerMinimal?: boolean;
-  footerShowSocial?: boolean;
-  footerShowNewsletter?: boolean;
 
   // Content props
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
@@ -63,9 +60,6 @@ const {
   showSearch = false,
   headerFixed = false,
   headerTransparent = false,
-  footerMinimal = false,
-  footerShowSocial = true,
-  footerShowNewsletter = false,
 
   maxWidth = 'full',
   padding = 'md',
@@ -221,16 +215,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
     </main>
 
     {/* Footer */}
-    {
-      showFooter && (
-        <Footer
-          minimal={footerMinimal}
-          showSocial={footerShowSocial}
-          showNewsletter={footerShowNewsletter}
-          class={footerClass}
-        />
-      )
-    }
+    {showFooter && <Footer class={footerClass} />}
 
     {/* Back to top button */}
     <button
