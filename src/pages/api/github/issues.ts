@@ -125,7 +125,6 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
   } catch (error) {
     // Log error for debugging
     if (process.env['NODE_ENV'] === 'development') {
-      // eslint-disable-next-line no-console
       console.error('GitHub Issues API Error:', error);
     }
 
@@ -218,7 +217,6 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     // Log error for debugging
     if (process.env['NODE_ENV'] === 'development') {
-      // eslint-disable-next-line no-console
       console.error('GitHub Issues Create API Error:', error);
     }
 

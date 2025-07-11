@@ -169,7 +169,6 @@ export const GET: APIRoute = async ({ request: _request, url }) => {
   } catch (error) {
     // Log error for debugging
     if (process.env['NODE_ENV'] === 'development') {
-      // eslint-disable-next-line no-console
       console.error('GitHub Repository API Error:', error);
     }
 

@@ -55,7 +55,7 @@ export type FilterCondition = z.infer<typeof FilterConditionSchema>;
 /**
  * Filter group schema for complex filtering
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const FilterGroupSchema: any = z.object({
   operator: z.enum(['and', 'or']).default('and'),
   conditions: z.array(FilterConditionSchema),

@@ -273,7 +273,7 @@ export type ModalProps = z.infer<typeof ModalPropsSchema>;
 /**
  * Navigation item schema
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const NavigationItemSchema: any = z.object({
   id: z.string(),
   label: z.string().min(1, 'Label is required'),

@@ -254,7 +254,7 @@ export class IssueClassificationEngine {
           }
         } catch {
           // Skip invalid regex patterns
-          // eslint-disable-next-line no-console
+
           console.warn(`Invalid regex pattern: ${pattern}`);
         }
       }
@@ -271,7 +271,6 @@ export class IssueClassificationEngine {
             reasons.push(`Body matches pattern: ${pattern}`);
           }
         } catch {
-          // eslint-disable-next-line no-console
           console.warn(`Invalid regex pattern: ${pattern}`);
         }
       }

@@ -77,7 +77,6 @@ export class TaskRecommendationService {
         lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Failed to get task recommendations:', error);
 
       // Return fallback recommendations
