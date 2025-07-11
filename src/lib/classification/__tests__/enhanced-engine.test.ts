@@ -253,7 +253,7 @@ const mockEnhancedConfig: EnhancedClassificationConfig = {
       category: 40,
       priority: 30,
       confidence: 20,
-      recency: 10,
+      // recency: 10, // Removed - no longer used
       custom: 0,
     },
     enabled: true,
@@ -423,7 +423,7 @@ describe('EnhancedClassificationEngine', () => {
             category: 50,
             priority: 20,
             confidence: 20,
-            recency: 10,
+            // recency: 10, // Removed - no longer used
             custom: 0,
           },
           enabled: true,
@@ -448,7 +448,7 @@ describe('EnhancedClassificationEngine', () => {
             category: 30,
             priority: 30,
             confidence: 20,
-            recency: 10,
+            // recency: 10, // Removed - no longer used
             custom: 10,
           },
           customFactors: [

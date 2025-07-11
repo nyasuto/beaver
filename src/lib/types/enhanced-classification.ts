@@ -36,7 +36,7 @@ export interface EnhancedTaskScore extends TaskScore {
     category: number;
     priority: number;
     confidence: number;
-    recency: number;
+    // recency: number; // Removed - no longer used
     custom?: number;
   };
 
@@ -124,7 +124,7 @@ export interface EnhancedTaskRecommendation {
     category: number;
     priority: number;
     confidence: number;
-    recency: number;
+    // recency: number; // Removed - no longer used
     custom?: number;
   };
   priority: string;
