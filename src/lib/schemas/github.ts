@@ -95,7 +95,7 @@ export const GitHubWebhookEventSchema = z.object({
       account: z.any(), // UserSchema - lazy-loaded to avoid circular imports
     })
     .optional(),
-  payload: z.record(z.any()),
+  payload: z.record(z.string(), z.any()),
   created_at: z.string().datetime(),
   delivered_at: z.string().datetime().optional(),
 });
@@ -115,7 +115,7 @@ export const GitHubAppInstallationSchema = z.object({
   app_id: z.number(),
   target_id: z.number(),
   target_type: z.enum(['User', 'Organization']),
-  permissions: z.record(z.enum(['read', 'write', 'admin'])),
+  permissions: z.record(z.string(), z.enum(['read', 'write', 'admin'])),
   events: z.array(z.string()),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -292,7 +292,7 @@ export const GitHubCheckRunSchema = z.object({
       html_url: z.string().url(),
       created_at: z.string().datetime(),
       updated_at: z.string().datetime(),
-      permissions: z.record(z.string()),
+      permissions: z.record(z.string(), z.string()),
       events: z.array(z.string()),
     })
     .optional(),
@@ -333,7 +333,7 @@ export const GitHubDeploymentSchema = z.object({
   sha: z.string(),
   ref: z.string(),
   task: z.string(),
-  payload: z.record(z.any()),
+  payload: z.record(z.string(), z.any()),
   original_environment: z.string().optional(),
   environment: z.string(),
   description: z.string().optional(),

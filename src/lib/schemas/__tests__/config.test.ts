@@ -925,7 +925,7 @@ describe('Configuration Schema Validation', () => {
         } catch (error) {
           expect(error).toBeInstanceOf(ConfigurationError);
           if (error instanceof ConfigurationError) {
-            expect(error.errors).toBeInstanceOf(z.ZodError);
+            expect(error.issues).toBeInstanceOf(z.ZodError);
             expect(error.message).toBe('Configuration validation failed');
           }
         }
@@ -937,7 +937,7 @@ describe('Configuration Schema Validation', () => {
         const error = new ConfigurationError('Test error');
         expect(error.name).toBe('ConfigurationError');
         expect(error.message).toBe('Test error');
-        expect(error.errors).toBeUndefined();
+        expect(error.issues).toBeUndefined();
       });
 
       it('should create error with message and Zod errors', () => {
@@ -945,7 +945,7 @@ describe('Configuration Schema Validation', () => {
         const error = new ConfigurationError('Test error', zodError);
         expect(error.name).toBe('ConfigurationError');
         expect(error.message).toBe('Test error');
-        expect(error.errors).toBe(zodError);
+        expect(error.issues).toBe(zodError);
       });
     });
   });

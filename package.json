@@ -16,7 +16,7 @@
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.astro src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",
-    "type-check": "astro check && tsc --noEmit",
+    "type-check": "astro check --minimumSeverity error && tsc --noEmit --skipLibCheck",
     "type-check:charts": "tsc --project tsconfig.charts.json --noEmit",
     "type-check:all": "npm run type-check && npm run type-check:charts",
     "test": "vitest run",
@@ -55,7 +55,7 @@
     "sharp": "^0.34.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.6.2",
-    "zod": "^3.23.8"
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",

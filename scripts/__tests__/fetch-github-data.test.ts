@@ -91,8 +91,8 @@ describe('fetch-github-data スクリプト', () => {
       await fetchAndSaveGitHubData();
 
       expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ 環境変数が設定されていません:');
-      expect(consoleWarnSpy).toHaveBeenCalledWith('  - GITHUB_OWNER: Required');
-      expect(consoleWarnSpy).toHaveBeenCalledWith('  - GITHUB_REPO: Required');
+      expect(consoleWarnSpy).toHaveBeenCalledWith('  - GITHUB_OWNER: Invalid input: expected string, received undefined');
+      expect(consoleWarnSpy).toHaveBeenCalledWith('  - GITHUB_REPO: Invalid input: expected string, received undefined');
     });
 
     it('すべての環境変数が正しく設定されている場合は処理を続行する', async () => {

@@ -578,22 +578,22 @@ describe('ValidationError', () => {
     const error = new ValidationError('Test error');
     expect(error.message).toBe('Test error');
     expect(error.name).toBe('ValidationError');
-    expect(error.errors).toEqual([]);
+    expect(error.issues).toEqual([]);
   });
 
   it('should create error with Zod error', () => {
     const zodError = new z.ZodError([
       {
-        code: z.ZodIssueCode.invalid_type,
+        code: 'invalid_type',
         expected: 'string',
-        received: 'number',
         path: ['field'],
         message: 'Expected string, received number',
+        input: 123,
       },
     ]);
 
     const error = new ValidationError('Validation failed', zodError);
-    expect(error.errors).toHaveLength(1);
+    expect(error.issues).toHaveLength(1);
     expect(error.fieldErrors).toEqual({
       field: ['Expected string, received number'],
     });
@@ -602,19 +602,20 @@ describe('ValidationError', () => {
   it('should handle multiple field errors', () => {
     const zodError = new z.ZodError([
       {
-        code: z.ZodIssueCode.invalid_type,
+        code: 'invalid_type',
         expected: 'string',
-        received: 'number',
         path: ['field1'],
         message: 'Error 1',
+        input: 123,
       },
       {
-        code: z.ZodIssueCode.too_small,
+        code: 'too_small',
         minimum: 1,
-        type: 'string',
         inclusive: true,
         path: ['field2'],
         message: 'Error 2',
+        input: '',
+        origin: 'value',
       },
     ]);
 
@@ -685,19 +686,20 @@ describe('formatValidationErrors', () => {
   it('should format validation errors', () => {
     const zodError = new z.ZodError([
       {
-        code: z.ZodIssueCode.invalid_type,
+        code: 'invalid_type',
         expected: 'string',
-        received: 'number',
         path: ['name'],
         message: 'Expected string',
+        input: 123,
       },
       {
-        code: z.ZodIssueCode.too_small,
+        code: 'too_small',
         minimum: 0,
-        type: 'number',
         inclusive: true,
         path: ['age'],
         message: 'Must be positive',
+        input: -1,
+        origin: 'value',
       },
     ]);
 
@@ -708,9 +710,10 @@ describe('formatValidationErrors', () => {
   it('should handle errors without path', () => {
     const zodError = new z.ZodError([
       {
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: [],
         message: 'General error',
+        input: undefined,
       },
     ]);
 
@@ -761,7 +764,7 @@ describe('validateAsync', () => {
     const result = await validateAsync(testSchema, validData, [asyncValidator]);
 
     expect(result.success).toBe(false);
-    expect(result.errors?.errors[0]?.message).toBe('Email already exists');
+    expect(result.errors?.issues[0]?.message).toBe('Email already exists');
   });
 
   it('should handle async validator errors', async () => {
@@ -771,7 +774,7 @@ describe('validateAsync', () => {
     const result = await validateAsync(testSchema, validData, [asyncValidator]);
 
     expect(result.success).toBe(false);
-    expect(result.errors?.errors[0]?.message).toBe('Async error');
+    expect(result.errors?.issues[0]?.message).toBe('Async error');
   });
 });
 

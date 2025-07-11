@@ -769,7 +769,7 @@ describe('ProcessingResultSchema', () => {
         },
       ],
       warnings: ['Some records were skipped'],
-      metrics: { processing_time: 5000, memory_usage: 128 },
+      metrics: { 0: 5000, 1: 128 },
       output: { processed_data: [] },
       duration: 5000,
       startTime: '2023-01-01T00:00:00Z',

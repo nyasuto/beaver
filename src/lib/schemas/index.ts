@@ -28,7 +28,7 @@ export const PaginationSchema = z.object({
 export const ErrorSchema = z.object({
   message: z.string(),
   code: z.string().optional(),
-  details: z.record(z.unknown()).optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
 });
 
 // API Response schema
@@ -207,9 +207,7 @@ export { ValidationError } from './validation';
 // Legacy type exports for backward compatibility
 export type Pagination = z.infer<typeof PaginationSchema>;
 export type ApiError = z.infer<typeof ErrorSchema>;
-export type ApiResponse<T> = z.infer<
-  ReturnType<typeof ApiResponseSchema<z.ZodType<T, z.ZodTypeDef, T>>>
->;
+export type ApiResponse<T> = z.infer<ReturnType<typeof ApiResponseSchema<z.ZodType<T>>>>;
 
 // Common validation helpers
 export { validateData, validateDataOrThrow } from './validation';

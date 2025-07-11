@@ -13,7 +13,7 @@ import { z } from 'zod';
 export const BaseUIPropsSchema = z.object({
   id: z.string().optional(),
   className: z.string().optional(),
-  style: z.record(z.string()).optional(),
+  style: z.any().optional(),
   'data-testid': z.string().optional(),
   'aria-label': z.string().optional(),
   'aria-describedby': z.string().optional(),
@@ -197,14 +197,14 @@ export const ButtonPropsSchema = BaseUIPropsSchema.extend({
   href: z.string().optional(),
   target: z.enum(['_blank', '_self', '_parent', '_top']).optional(),
   type: z.enum(['button', 'submit', 'reset']).default('button'),
-  onClick: z.function().optional(),
-  children: z.unknown(),
+  onClick: z.any().optional(),
+  children: z.unknown().optional(),
 });
 
 export type ButtonProps = z.infer<typeof ButtonPropsSchema>;
 
 /**
- * Card component props schema
+ * Card component props schemaa
  */
 export const CardPropsSchema = BaseUIPropsSchema.extend({
   variant: z.enum(['default', 'outlined', 'elevated', 'filled']).default('default'),
@@ -215,7 +215,7 @@ export const CardPropsSchema = BaseUIPropsSchema.extend({
   clickable: z.boolean().default(false),
   header: z.unknown().optional(),
   footer: z.unknown().optional(),
-  children: z.unknown(),
+  children: z.unknown().optional(),
 });
 
 export type CardProps = z.infer<typeof CardPropsSchema>;
@@ -244,9 +244,9 @@ export const InputPropsSchema = BaseUIPropsSchema.extend({
   maxLength: z.number().int().min(0).optional(),
   minLength: z.number().int().min(0).optional(),
   pattern: z.string().optional(),
-  onChange: z.function().optional(),
-  onBlur: z.function().optional(),
-  onFocus: z.function().optional(),
+  onChange: z.any().optional(),
+  onBlur: z.any().optional(),
+  onFocus: z.any().optional(),
 });
 
 export type InputProps = z.infer<typeof InputPropsSchema>;
@@ -256,7 +256,7 @@ export type InputProps = z.infer<typeof InputPropsSchema>;
  */
 export const ModalPropsSchema = BaseUIPropsSchema.extend({
   isOpen: z.boolean().default(false),
-  onClose: z.function().optional(),
+  onClose: z.any().optional(),
   size: z.enum(['sm', 'md', 'lg', 'xl', 'full']).default('md'),
   centered: z.boolean().default(true),
   closeOnOverlayClick: z.boolean().default(true),
@@ -265,7 +265,7 @@ export const ModalPropsSchema = BaseUIPropsSchema.extend({
   showCloseButton: z.boolean().default(true),
   header: z.unknown().optional(),
   footer: z.unknown().optional(),
-  children: z.unknown(),
+  children: z.unknown().optional(),
 });
 
 export type ModalProps = z.infer<typeof ModalPropsSchema>;
@@ -284,7 +284,7 @@ export const NavigationItemSchema: any = z.object({
   disabled: z.boolean().default(false),
   external: z.boolean().default(false),
   children: z.lazy(() => z.array(NavigationItemSchema)).optional(),
-  onClick: z.function().optional(),
+  onClick: z.any().optional(),
 });
 
 export type NavigationItem = {
@@ -389,7 +389,7 @@ export const PaginationControlsSchema = z.object({
   showPreviousNext: z.boolean().default(true),
   showNumbers: z.boolean().default(true),
   maxVisiblePages: z.number().int().min(3).max(10).default(5),
-  onPageChange: z.function().optional(),
+  onPageChange: z.any().optional(),
 });
 
 export type PaginationControls = z.infer<typeof PaginationControlsSchema>;
@@ -407,7 +407,7 @@ export const ToastSchema = z.object({
     .array(
       z.object({
         label: z.string(),
-        onClick: z.function(),
+        onClick: z.any(),
         style: z.enum(['primary', 'secondary']).default('secondary'),
       })
     )

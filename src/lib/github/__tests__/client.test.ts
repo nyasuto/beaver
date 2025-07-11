@@ -534,7 +534,7 @@ describe('GitHubClient', () => {
 
       expect(() => {
         new GitHubClient(invalidUrlConfig);
-      }).toThrow('Invalid url');
+      }).toThrow('Invalid URL');
     });
   });
 
