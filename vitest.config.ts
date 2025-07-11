@@ -19,6 +19,8 @@ export default defineConfig({
       'src/components/charts/__tests__.bak/**/*',
       '**/*.bak',
       '**/*.bak/**/*',
+      'src/__tests__/e2e/**/*',
+      'src/__tests__/integration/**/*',
     ],
     coverage: {
       provider: 'v8',
