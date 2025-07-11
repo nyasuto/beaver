@@ -5,7 +5,12 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { TaskRecommendationService, getDashboardTasks, getEnhancedDashboardTasks, validateTaskRecommendationMigration } from '../TaskRecommendationService';
+import {
+  TaskRecommendationService,
+  getDashboardTasks,
+  getEnhancedDashboardTasks,
+  validateTaskRecommendationMigration,
+} from '../TaskRecommendationService';
 import type { Issue } from '../../schemas/github';
 import type { TaskScore } from '../../classification/engine';
 import type { EnhancedTaskScore } from '../../types/enhanced-classification';
@@ -24,14 +29,16 @@ vi.mock('../../classification/config-loader', () => ({
 
 vi.mock('../../classification/enhanced-engine', () => ({
   createEnhancedClassificationEngine: vi.fn(() => ({
-    classifyIssuesBatch: vi.fn(() => Promise.resolve({
-      tasks: [],
-      totalAnalyzed: 0,
-      averageScore: 0,
-      processingTimeMs: 0,
-      algorithmVersion: '2.0.0',
-      configVersion: '2.0.0',
-    })),
+    classifyIssuesBatch: vi.fn(() =>
+      Promise.resolve({
+        tasks: [],
+        totalAnalyzed: 0,
+        averageScore: 0,
+        processingTimeMs: 0,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+      })
+    ),
     getPerformanceMetrics: vi.fn(() => ({
       cacheHitRate: 0.75,
       totalCacheHits: 15,
@@ -43,24 +50,26 @@ vi.mock('../../classification/enhanced-engine', () => ({
 
 vi.mock('../../classification/enhanced-config-manager', () => ({
   enhancedConfigManager: {
-    getConfig: vi.fn(() => Promise.resolve({
-      name: 'test-config',
-      version: '2.0.0',
-      scoring: {
-        weights: {
-          priority: 0.4,
-          category: 0.3,
-          confidence: 0.2,
-          recency: 0.1,
+    getConfig: vi.fn(() =>
+      Promise.resolve({
+        name: 'test-config',
+        version: '2.0.0',
+        scoring: {
+          weights: {
+            priority: 0.4,
+            category: 0.3,
+            confidence: 0.2,
+            recency: 0.1,
+          },
+          algorithms: {
+            priority: 'weighted',
+            category: 'bayesian',
+            confidence: 'entropy',
+            recency: 'exponential',
+          },
         },
-        algorithms: {
-          priority: 'weighted',
-          category: 'bayesian',
-          confidence: 'entropy',
-          recency: 'exponential',
-        },
-      },
-    })),
+      })
+    ),
   },
 }));
 
@@ -330,7 +339,7 @@ describe('TaskRecommendationService', () => {
       const calculateConfidenceDistribution = (
         TaskRecommendationService as any
       ).calculateConfidenceDistribution.bind(TaskRecommendationService);
-      
+
       const tasks = [
         { ...mockEnhancedTaskScore, confidence: 0.2 },
         { ...mockEnhancedTaskScore, confidence: 0.5 },
