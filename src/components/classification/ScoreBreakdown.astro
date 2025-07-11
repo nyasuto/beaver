@@ -31,18 +31,18 @@ const {
   className = '',
 } = Astro.props;
 
-// Calculate percentages for each component
+// Calculate percentages for each component based on actual score, not totalScore
 const getPercentage = (value: number, total: number) => {
-  return Math.round((value / total) * 100);
+  return total > 0 ? Math.round((value / total) * 100) : 0;
 };
 
-const categoryPercent = getPercentage(scoreBreakdown.category, totalScore);
-const priorityPercent = getPercentage(scoreBreakdown.priority, totalScore);
+const categoryPercent = getPercentage(scoreBreakdown.category, score);
+const priorityPercent = getPercentage(scoreBreakdown.priority, score);
 // const confidencePercent = getPercentage(scoreBreakdown.confidence, totalScore); // Removed
 const recencyPercent = scoreBreakdown.recency
-  ? getPercentage(scoreBreakdown.recency, totalScore)
+  ? getPercentage(scoreBreakdown.recency, score)
   : 0;
-const customPercent = scoreBreakdown.custom ? getPercentage(scoreBreakdown.custom, totalScore) : 0;
+const customPercent = scoreBreakdown.custom ? getPercentage(scoreBreakdown.custom, score) : 0;
 
 // Score breakdown items with metadata
 const breakdownItems = [

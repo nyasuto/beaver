@@ -102,9 +102,8 @@ export class TaskRecommendationService {
       const enhancedTasks = legacyResult.topTasks.map(task => ({
         ...task,
         scoreBreakdown: {
-          category: Math.floor(task.score * 0.5),
-          priority: Math.floor(task.score * 0.5),
-          // confidence: Math.floor(task.score * 0.2), // Removed - no longer part of scoreBreakdown
+          category: Math.ceil(task.score * 0.5),
+          priority: task.score - Math.ceil(task.score * 0.5),  // Ensure total equals task.score
           custom: 0,
         },
         metadata: {
