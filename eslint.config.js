@@ -15,6 +15,12 @@ export default [
       'coverage/',
       '*.config.{js,ts,mjs}',
       '*.d.ts',
+      'src/components/charts/AreaChart.tsx',
+      'src/components/charts/BarChart.tsx',
+      'src/components/charts/LineChart.tsx',
+      'src/components/charts/PieChart.tsx',
+      'src/components/charts/QualityCharts.tsx',
+      'src/components/charts/__tests__/**/*',
     ],
   },
 

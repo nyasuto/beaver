@@ -1,59 +1,59 @@
 /**
  * Charts Module Index
  *
- * This module exports all chart components and utilities for the Beaver Astro application.
+ * This module exports the type-safe chart components and utilities for the Beaver Astro application.
  * It provides comprehensive data visualization capabilities with Chart.js integration.
+ *
+ * Note: This version focuses on the type-safe BaseChart foundation. Other chart components
+ * (LineChart, BarChart, PieChart, AreaChart, QualityCharts) are being migrated to use
+ * the new SafeChart wrapper system and will be re-enabled once migration is complete.
  *
  * @module Charts
  */
 
-import React from 'react';
-import { ThemedLineChart } from './LineChart';
-import { ThemedBarChart } from './BarChart';
-import { ThemedPieChart } from './PieChart';
-import { ThemedAreaChart } from './AreaChart';
-
-// Base chart components
+// Base chart components (fully type-safe)
 export { BaseChart, ChartContainer, withChartTheme } from './BaseChart';
 export type { BaseChartProps, ChartContainerProps } from './BaseChart';
 
-// Line chart components
-export { LineChart, ThemedLineChart, TimeSeriesChart } from './LineChart';
-export type { LineChartProps, TimeSeriesChartProps } from './LineChart';
+// Type-safe chart wrapper system
+import type {
+  SafeChartData,
+  SafeChartOptions,
+  SafeChart,
+  SafeChartConfiguration,
+  SafeChartResult,
+  SafeChartTheme,
+  SafeDataset,
+  TimeSeriesPoint,
+} from './types/safe-chart';
 
-// Bar chart components
-export {
-  BarChart,
-  ThemedBarChart,
-  HorizontalBarChart,
-  StackedBarChart,
-  ComparisonBarChart,
-} from './BarChart';
 export type {
-  BarChartProps,
-  HorizontalBarChartProps,
-  StackedBarChartProps,
-  ComparisonBarChartProps,
-} from './BarChart';
+  SafeChartData,
+  SafeChartOptions,
+  SafeChart,
+  SafeChartConfiguration,
+  SafeChartResult,
+  SafeChartTheme,
+  SafeDataset,
+  TimeSeriesPoint,
+};
 
-// Pie chart components
-export { PieChart, ThemedPieChart, DoughnutChart, SemiCircleChart } from './PieChart';
-export type { PieChartProps, DoughnutChartProps, SemiCircleChartProps } from './PieChart';
-
-// Area chart components
 export {
-  AreaChart,
-  ThemedAreaChart,
-  StackedAreaChart,
-  StreamChart,
-  SparklineAreaChart,
-} from './AreaChart';
-export type {
-  AreaChartProps,
-  StackedAreaChartProps,
-  StreamChartProps,
-  SparklineAreaChartProps,
-} from './AreaChart';
+  createSafeChart,
+  validateChartData,
+  validateChartOptions,
+  convertToChartJSData,
+  convertToChartJSOptions,
+  updateSafeChart,
+  resizeSafeChart,
+  exportSafeChart,
+  destroySafeChart,
+  createSafeDataset,
+  mergeSafeDatasets,
+  normalizeSafeChartData,
+  debounce,
+  throttle,
+} from './utils/safe-wrapper';
 
 // Chart utilities
 export {
@@ -66,7 +66,6 @@ export {
   generateChartConfig,
   calculateChartDimensions,
   formatChartValue,
-  debounce,
   LIGHT_THEME,
   DARK_THEME,
   CHART_COLORS,
@@ -108,9 +107,9 @@ export interface ChartProps {
   /** Chart type */
   type: ChartType;
   /** Chart data */
-  data: any;
+  data: SafeChartData;
   /** Chart options */
-  options?: any;
+  options?: SafeChartOptions;
   /** Chart theme */
   theme?: 'light' | 'dark' | 'auto';
   /** Chart size */
@@ -181,41 +180,32 @@ export const PRESET_CHARTS = {
   },
 } as const;
 
-// Chart factory function
-export function createChart(type: ChartType, props: any = {}) {
+// Chart factory function (currently limited to BaseChart)
+export function createChart(type: ChartType, props: ChartProps = {} as ChartProps) {
   const preset = PRESET_CHARTS[type as keyof typeof PRESET_CHARTS] || {};
 
-  switch (type) {
-    case 'line':
-      return { component: 'ThemedLineChart', props: { ...preset, ...props } };
-    case 'bar':
-      return { component: 'ThemedBarChart', props: { ...preset, ...props } };
-    case 'pie':
-      return { component: 'ThemedPieChart', props: { ...preset, ...props } };
-    case 'area':
-      return { component: 'ThemedAreaChart', props: { ...preset, ...props } };
-    default:
-      return { component: 'ThemedLineChart', props };
-  }
+  return {
+    component: 'BaseChart',
+    props: {
+      ...preset,
+      ...props,
+      type,
+    },
+  };
 }
 
-// Export default chart component selector
-export function Chart({ type, ...props }: ChartProps) {
-  const { props: chartProps } = createChart(type, props);
-
-  // Return the appropriate component based on type
-  switch (type) {
-    case 'line':
-      return React.createElement(ThemedLineChart, chartProps);
-    case 'bar':
-      return React.createElement(ThemedBarChart, chartProps);
-    case 'pie':
-      return React.createElement(ThemedPieChart, chartProps);
-    case 'area':
-      return React.createElement(ThemedAreaChart, chartProps);
-    default:
-      return React.createElement(ThemedLineChart, chartProps);
-  }
+// Export default chart component selector (using BaseChart foundation)
+export function Chart({ type, data, options, ...props }: ChartProps) {
+  // Return component configuration object instead of React element
+  return {
+    component: 'BaseChart',
+    props: {
+      type,
+      data,
+      options,
+      ...props,
+    },
+  };
 }
 
 export default Chart;

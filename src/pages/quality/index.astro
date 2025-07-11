@@ -10,11 +10,12 @@
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
-import {
-  CoverageMetricsChart,
-  ModuleCoverageChart,
-  CoverageHistoryChart,
-} from '../../components/charts/QualityCharts.tsx';
+// TODO: Re-enable when QualityCharts is migrated to SafeChart wrapper
+// import {
+//   CoverageMetricsChart,
+//   ModuleCoverageChart,
+//   CoverageHistoryChart,
+// } from '../../components/charts/QualityCharts.tsx';
 import { getQualityMetrics } from '../../lib/quality/codecov';
 
 const title = '品質分析ダッシュボード';
@@ -68,27 +69,27 @@ const modulesNeedingAttention = qualityData.modules
   .sort((a, b) => a.coverage - b.coverage)
   .slice(0, 5);
 
-// チャート用データの準備
-const coverageMetricsData = {
-  overall: qualityData.overallCoverage,
-  branch: qualityData.branchCoverage,
-  line: qualityData.lineCoverage,
-  totalLines: qualityData.totalLines,
-  coveredLines: qualityData.coveredLines,
-  missedLines: qualityData.missedLines,
-};
+// チャート用データの準備 (TODO: Re-enable when QualityCharts is migrated)
+// const coverageMetricsData = {
+//   overall: qualityData.overallCoverage,
+//   branch: qualityData.branchCoverage,
+//   line: qualityData.lineCoverage,
+//   totalLines: qualityData.totalLines,
+//   coveredLines: qualityData.coveredLines,
+//   missedLines: qualityData.missedLines,
+// };
 
-const moduleCoverageData = qualityData.modules.map(module => ({
-  name: module.name,
-  coverage: module.coverage,
-  lines: module.lines,
-  missedLines: module.missedLines,
-}));
+// const moduleCoverageData = qualityData.modules.map(module => ({
+//   name: module.name,
+//   coverage: module.coverage,
+//   lines: module.lines,
+//   missedLines: module.missedLines,
+// }));
 
-const coverageHistoryData = qualityData.history.map(entry => ({
-  date: entry.date,
-  coverage: entry.coverage,
-}));
+// const coverageHistoryData = qualityData.history.map(entry => ({
+//   date: entry.date,
+//   coverage: entry.coverage,
+// }));
 ---
 
 <PageLayout
@@ -174,37 +175,41 @@ const coverageHistoryData = qualityData.history.map(entry => ({
     </div>
 
     <!-- Interactive Charts -->
+    <!-- TODO: Re-enable when QualityCharts is migrated to SafeChart wrapper -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 space-lg">
       <!-- Coverage Metrics Chart -->
       <div class="h-80">
-        <CoverageMetricsChart
-          client:load
-          height={300}
-          data={coverageMetricsData}
-          title="カバレッジメトリクス"
-        />
+        <div class="card p-6 flex items-center justify-center">
+          <div class="text-center">
+            <div class="text-4xl mb-4">📊</div>
+            <p class="text-lg font-medium text-heading">カバレッジメトリクス</p>
+            <p class="text-sm text-muted mt-2">チャート機能は準備中です</p>
+          </div>
+        </div>
       </div>
 
       <!-- Coverage History Chart -->
       <div class="h-80">
-        <CoverageHistoryChart
-          client:load
-          height={300}
-          data={coverageHistoryData}
-          title="カバレッジ履歴"
-        />
+        <div class="card p-6 flex items-center justify-center">
+          <div class="text-center">
+            <div class="text-4xl mb-4">📈</div>
+            <p class="text-lg font-medium text-heading">カバレッジ履歴</p>
+            <p class="text-sm text-muted mt-2">チャート機能は準備中です</p>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Module Coverage Analysis -->
     <div class="space-lg">
       <div class="h-96">
-        <ModuleCoverageChart
-          client:load
-          height={350}
-          data={moduleCoverageData}
-          title="モジュール別カバレッジ"
-        />
+        <div class="card p-6 flex items-center justify-center">
+          <div class="text-center">
+            <div class="text-4xl mb-4">🎯</div>
+            <p class="text-lg font-medium text-heading">モジュール別カバレッジ</p>
+            <p class="text-sm text-muted mt-2">チャート機能は準備中です</p>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -7,22 +7,13 @@
  * @module ChartUtils
  */
 
-import type { ChartData, ChartOptions, ChartConfiguration, TooltipItem, ChartType } from 'chart.js';
-// Local type definitions (formerly from analytics engine)
-type TimeSeriesPoint = {
-  timestamp: Date;
-  value: number;
-};
-
-type PerformanceMetrics = {
-  resolutionRate: number;
-  throughput: number;
-  averageResolutionTime: number;
-  medianResolutionTime: number;
-  responseTime: number;
-  backlogSize: number;
-  burndownRate: number;
-};
+import type { ChartType } from 'chart.js';
+import type {
+  SafeChartData,
+  SafeChartOptions,
+  TimeSeriesPoint,
+} from '../../components/charts/types/safe-chart';
+import type { PerformanceMetrics } from '../analytics/engine';
 import type { IssueClassification } from '../schemas/classification';
 
 /**
@@ -126,7 +117,7 @@ export function convertTimeSeriesData(
   data: TimeSeriesPoint[],
   label: string = 'Data',
   color: string = CHART_COLORS[0] || '#3B82F6'
-): ChartData<'line'> {
+): SafeChartData<'line'> {
   return {
     labels: data.map(point => {
       const year = point.timestamp.getFullYear();
@@ -154,7 +145,7 @@ export function convertCategoryData(
   data: Record<string, number>,
   label: string = 'Count',
   colors: string[] = CHART_COLORS
-): ChartData<'bar'> {
+): SafeChartData<'bar'> {
   const entries = Object.entries(data);
 
   return {
@@ -163,8 +154,10 @@ export function convertCategoryData(
       {
         label,
         data: entries.map(([, value]) => value),
-        backgroundColor: entries.map((_, index) => colors[index % colors.length] + '80'),
-        borderColor: entries.map((_, index) => colors[index % colors.length]),
+        backgroundColor: entries.map(
+          (_, index) => (colors[index % colors.length] || '#3B82F6') + '80'
+        ),
+        borderColor: entries.map((_, index) => colors[index % colors.length] || '#3B82F6'),
         borderWidth: 1,
       },
     ],
@@ -177,16 +170,19 @@ export function convertCategoryData(
 export function convertPieData(
   data: Record<string, number>,
   colors: string[] = CHART_COLORS
-): ChartData<'pie'> {
+): SafeChartData<'pie'> {
   const entries = Object.entries(data);
 
   return {
     labels: entries.map(([key]) => key),
     datasets: [
       {
+        label: 'Distribution',
         data: entries.map(([, value]) => value),
-        backgroundColor: entries.map((_, index) => colors[index % colors.length] + '80'),
-        borderColor: entries.map((_, index) => colors[index % colors.length]),
+        backgroundColor: entries.map(
+          (_, index) => (colors[index % colors.length] || '#3B82F6') + '80'
+        ),
+        borderColor: entries.map((_, index) => colors[index % colors.length] || '#3B82F6'),
         borderWidth: 2,
       },
     ],
@@ -197,9 +193,9 @@ export function convertPieData(
  * Convert classification data to chart format
  */
 export function convertClassificationData(classifications: IssueClassification[]): {
-  categoryDistribution: ChartData<'pie'>;
-  priorityDistribution: ChartData<'bar'>;
-  confidenceDistribution: ChartData<'bar'>;
+  categoryDistribution: SafeChartData<'pie'>;
+  priorityDistribution: SafeChartData<'bar'>;
+  confidenceDistribution: SafeChartData<'bar'>;
 } {
   // Calculate category distribution
   const categoryCount: Record<string, number> = {};
@@ -241,9 +237,9 @@ export function convertClassificationData(classifications: IssueClassification[]
  * Convert performance metrics to chart format
  */
 export function convertPerformanceData(metrics: PerformanceMetrics[]): {
-  resolutionTimeChart: ChartData<'line'>;
-  throughputChart: ChartData<'bar'>;
-  backlogChart: ChartData<'line'>;
+  resolutionTimeChart: SafeChartData<'line'>;
+  throughputChart: SafeChartData<'bar'>;
+  backlogChart: SafeChartData<'line'>;
 } {
   const labels = metrics.map((_, index) => `Period ${index + 1}`);
 
@@ -254,15 +250,15 @@ export function convertPerformanceData(metrics: PerformanceMetrics[]): {
         {
           label: 'Average Resolution Time (hours)',
           data: metrics.map(m => m.averageResolutionTime),
-          borderColor: CHART_COLORS[0],
-          backgroundColor: CHART_COLORS[0] + '20',
+          borderColor: CHART_COLORS[0] || '#3B82F6',
+          backgroundColor: (CHART_COLORS[0] || '#3B82F6') + '20',
           fill: false,
         },
         {
           label: 'Median Resolution Time (hours)',
           data: metrics.map(m => m.medianResolutionTime),
-          borderColor: CHART_COLORS[1],
-          backgroundColor: CHART_COLORS[1] + '20',
+          borderColor: CHART_COLORS[1] || '#10B981',
+          backgroundColor: (CHART_COLORS[1] || '#10B981') + '20',
           fill: false,
         },
       ],
@@ -273,8 +269,8 @@ export function convertPerformanceData(metrics: PerformanceMetrics[]): {
         {
           label: 'Issues Resolved Per Day',
           data: metrics.map(m => m.throughput),
-          backgroundColor: CHART_COLORS[2] + '80',
-          borderColor: CHART_COLORS[2],
+          backgroundColor: (CHART_COLORS[2] || '#F59E0B') + '80',
+          borderColor: CHART_COLORS[2] || '#F59E0B',
           borderWidth: 1,
         },
       ],
@@ -285,8 +281,8 @@ export function convertPerformanceData(metrics: PerformanceMetrics[]): {
         {
           label: 'Backlog Size',
           data: metrics.map(m => m.backlogSize),
-          backgroundColor: CHART_COLORS[3] + '40',
-          borderColor: CHART_COLORS[3],
+          backgroundColor: (CHART_COLORS[3] || '#EF4444') + '40',
+          borderColor: CHART_COLORS[3] || '#EF4444',
           fill: true,
         },
       ],
@@ -300,8 +296,8 @@ export function convertPerformanceData(metrics: PerformanceMetrics[]): {
 export function generateChartOptions<T extends ChartType>(
   type: T,
   theme: ChartTheme,
-  customOptions?: Partial<ChartOptions<T>>
-): ChartOptions<T> {
+  customOptions?: Partial<SafeChartOptions<T>>
+): SafeChartOptions<T> {
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -323,8 +319,8 @@ export function generateChartOptions<T extends ChartType>(
         borderColor: theme.colors.border,
         borderWidth: 1,
         callbacks: {
-          label: (context: TooltipItem<T>) => {
-            const label = (context.dataset as any).label || '';
+          label: (context: any) => {
+            const label = context.dataset?.label || '';
             const value = context.parsed;
 
             if (typeof value === 'number') {
@@ -341,7 +337,7 @@ export function generateChartOptions<T extends ChartType>(
 
   // Add scale configuration for charts that support scales
   if (type === 'line' || type === 'bar') {
-    (baseOptions as any).scales = {
+    baseOptions.scales = {
       x: {
         ticks: {
           color: theme.colors.text,
@@ -373,7 +369,7 @@ export function generateChartOptions<T extends ChartType>(
   return {
     ...baseOptions,
     ...customOptions,
-  } as ChartOptions<T>;
+  } as SafeChartOptions<T>;
 }
 
 /**
@@ -401,10 +397,10 @@ export function formatChartValue(
  */
 export function generateChartConfig<T extends ChartType>(
   type: T,
-  data: ChartData<T>,
+  data: SafeChartData<T>,
   theme: ChartTheme,
-  customOptions?: Partial<ChartOptions<T>>
-): ChartConfiguration<T> {
+  customOptions?: Partial<SafeChartOptions<T>>
+): { type: T; data: SafeChartData<T>; options: SafeChartOptions<T> } {
   return {
     type,
     data,
