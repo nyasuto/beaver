@@ -60,7 +60,7 @@ export class EnhancedConfigManager {
       configPaths.length > 0
         ? configPaths
         : [
-            join(process.cwd(), 'src/data/config/enhanced-classification.json'),
+            join(process.cwd(), 'src/data/config/default-classification.json'),
             join(process.cwd(), 'src/data/config/classification-rules.json'),
             join(process.cwd(), 'classification-config.json'),
           ];
