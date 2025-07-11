@@ -10,12 +10,8 @@
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
-// TODO: Re-enable when QualityCharts is migrated to SafeChart wrapper
-// import {
-//   CoverageMetricsChart,
-//   ModuleCoverageChart,
-//   CoverageHistoryChart,
-// } from '../../components/charts/QualityCharts.tsx';
+import CoverageChart from '../../components/charts/CoverageChart.tsx';
+import ModuleCoverageChart from '../../components/charts/ModuleCoverageChart.tsx';
 import { getQualityMetrics } from '../../lib/quality/codecov';
 
 const title = '品質分析ダッシュボード';
@@ -69,23 +65,24 @@ const modulesNeedingAttention = qualityData.modules
   .sort((a, b) => a.coverage - b.coverage)
   .slice(0, 5);
 
-// チャート用データの準備 (TODO: Re-enable when QualityCharts is migrated)
-// const coverageMetricsData = {
-//   overall: qualityData.overallCoverage,
-//   branch: qualityData.branchCoverage,
-//   line: qualityData.lineCoverage,
-//   totalLines: qualityData.totalLines,
-//   coveredLines: qualityData.coveredLines,
-//   missedLines: qualityData.missedLines,
-// };
+// チャート用データの準備
+const coverageMetricsData = {
+  overallCoverage: qualityData.overallCoverage,
+  branchCoverage: qualityData.branchCoverage,
+  lineCoverage: qualityData.lineCoverage,
+  totalLines: qualityData.totalLines,
+  coveredLines: qualityData.coveredLines,
+  missedLines: qualityData.missedLines,
+};
 
-// const moduleCoverageData = qualityData.modules.map(module => ({
-//   name: module.name,
-//   coverage: module.coverage,
-//   lines: module.lines,
-//   missedLines: module.missedLines,
-// }));
+const moduleCoverageData = qualityData.modules.map(module => ({
+  name: module.name,
+  coverage: module.coverage,
+  lines: module.lines,
+  missedLines: module.missedLines,
+}));
 
+// 将来の履歴チャート用データ（現在未使用）
 // const coverageHistoryData = qualityData.history.map(entry => ({
 //   date: entry.date,
 //   coverage: entry.coverage,
@@ -175,17 +172,21 @@ const modulesNeedingAttention = qualityData.modules
     </div>
 
     <!-- Interactive Charts -->
-    <!-- TODO: Re-enable when QualityCharts is migrated to SafeChart wrapper -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 space-lg">
       <!-- Coverage Metrics Chart -->
       <div class="h-80">
-        <div class="card p-6 flex items-center justify-center">
-          <div class="text-center">
-            <div class="text-4xl mb-4">📊</div>
-            <p class="text-lg font-medium text-heading">カバレッジメトリクス</p>
-            <p class="text-sm text-muted mt-2">チャート機能は準備中です</p>
-          </div>
-        </div>
+        <CoverageChart
+          data={coverageMetricsData}
+          type="doughnut"
+          title="総合カバレッジ"
+          description="カバー済み vs 未カバー"
+          height={320}
+          showPercentage={true}
+          showLegend={true}
+          loading={false}
+          error={errorMessage || undefined}
+          client:load
+        />
       </div>
 
       <!-- Coverage History Chart -->
@@ -194,7 +195,7 @@ const modulesNeedingAttention = qualityData.modules
           <div class="text-center">
             <div class="text-4xl mb-4">📈</div>
             <p class="text-lg font-medium text-heading">カバレッジ履歴</p>
-            <p class="text-sm text-muted mt-2">チャート機能は準備中です</p>
+            <p class="text-sm text-muted mt-2">将来実装予定</p>
           </div>
         </div>
       </div>
@@ -203,13 +204,20 @@ const modulesNeedingAttention = qualityData.modules
     <!-- Module Coverage Analysis -->
     <div class="space-lg">
       <div class="h-96">
-        <div class="card p-6 flex items-center justify-center">
-          <div class="text-center">
-            <div class="text-4xl mb-4">🎯</div>
-            <p class="text-lg font-medium text-heading">モジュール別カバレッジ</p>
-            <p class="text-sm text-muted mt-2">チャート機能は準備中です</p>
-          </div>
-        </div>
+        <ModuleCoverageChart
+          data={moduleCoverageData}
+          title="モジュール別カバレッジ"
+          description="カバレッジ率の低いモジュールから順に表示"
+          height={380}
+          showPercentage={true}
+          showValues={true}
+          threshold={50}
+          maxModules={8}
+          sortOrder="asc"
+          loading={false}
+          error={errorMessage || undefined}
+          client:load
+        />
       </div>
     </div>
 
