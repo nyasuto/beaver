@@ -12,19 +12,19 @@ import {
   validateTaskRecommendationMigration,
 } from '../TaskRecommendationService';
 import type { Issue } from '../../schemas/github';
-import type { TaskScore } from '../../classification/engine';
-import type { EnhancedTaskScore } from '../../types/enhanced-classification';
+import type { TaskScore, EnhancedTaskScore } from '../../types/enhanced-classification';
 
-// Mock dependencies
-vi.mock('../../classification/config-loader', () => ({
-  getClassificationEngine: vi.fn(() => ({
-    getTopTasks: vi.fn(() => ({
-      tasks: [],
-      totalAnalyzed: 0,
-      averageScore: 0,
-      processingTimeMs: 0,
-    })),
-  })),
+// Mock enhanced classification dependencies
+vi.mock('../../classification/enhanced-config-manager', () => ({
+  enhancedConfigManager: {
+    getConfig: vi.fn(() =>
+      Promise.resolve({
+        version: '2.0.0',
+        algorithm: 'enhanced-v2',
+        thresholds: { confidence: 0.5 },
+      })
+    ),
+  },
 }));
 
 vi.mock('../../classification/enhanced-engine', () => ({

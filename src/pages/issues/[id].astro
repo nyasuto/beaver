@@ -10,8 +10,7 @@ import PageLayout from '../../components/layouts/PageLayout.astro';
 import { getIssuesWithFallback, getStaticIssueById, hasStaticData } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
 import { markdownToHtml } from '../../lib/utils/markdown';
-// TODO: Re-enable when enhanced classification is implemented
-// import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
+import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
 // import { enhancedConfigManager } from '../../lib/classification/enhanced-config-manager';
 import ClassificationDetails from '../../components/classification/ClassificationDetails.astro';
 import type { EnhancedIssueClassification } from '../../lib/schemas/enhanced-classification';
@@ -54,63 +53,52 @@ const processedBody = currentIssue.body ? await markdownToHtml(currentIssue.body
 let issueClassification: EnhancedIssueClassification | null = null;
 
 try {
-  // TODO: Implement enhanced classification engine integration
-  // For now, use simple heuristic-based classification
-  const hasLabels = currentIssue.labels.length > 0;
-  const hasAssignees = currentIssue.assignees && currentIssue.assignees.length > 0;
+  // Use enhanced classification engine
+  const enhancedEngine = await createEnhancedClassificationEngine();
+  // Get configuration (currently unused but available for future enhancements)
+  // const config = await enhancedConfigManager.getEffectiveConfig(
+  //   { owner: 'owner', repo: 'repo' }, // TODO: Get from repository context
+  //   'default'
+  // );
 
-  // Simple heuristic classification
-  const category = currentIssue.title.toLowerCase().includes('bug')
-    ? 'bug'
-    : currentIssue.title.toLowerCase().includes('feature')
-      ? 'feature'
-      : 'enhancement';
-  const priority = hasLabels ? 'high' : 'medium';
-
-  // Create classification result
-  issueClassification = {
-    issueId: currentIssue.number,
-    issueNumber: currentIssue.number,
-    primaryCategory: category,
-    primaryConfidence: 0.75,
-    estimatedPriority: priority,
-    priorityConfidence: 0.68,
-    score: 70 + (hasLabels ? 10 : 0) + (hasAssignees ? 5 : 0),
-    scoreBreakdown: {
-      category: 25,
-      priority: 20,
-      confidence: 15,
-      recency: 10,
+  // Generate classification for this issue
+  // Note: Enhanced engine returns the result directly
+  issueClassification = await enhancedEngine.classifyIssue(
+    {
+      id: currentIssue.id,
+      node_id: currentIssue.node_id || `issue-${currentIssue.id}`,
+      number: currentIssue.number,
+      title: currentIssue.title,
+      body: currentIssue.body || '',
+      labels: currentIssue.labels,
+      state: currentIssue.state,
+      locked: currentIssue.locked || false,
+      assignee: currentIssue.assignee || null,
+      assignees: currentIssue.assignees || [],
+      milestone: currentIssue.milestone,
+      comments: 0, // TODO: Get actual comment count
+      created_at: currentIssue.created_at,
+      updated_at: currentIssue.updated_at,
+      closed_at: currentIssue.closed_at || null,
+      author_association: currentIssue.author_association || 'NONE',
+      active_lock_reason: currentIssue.active_lock_reason || null,
+      user: currentIssue.user,
+      html_url: currentIssue.html_url,
+      url:
+        currentIssue.url || `https://api.github.com/repos/owner/repo/issues/${currentIssue.number}`,
+      repository_url: currentIssue.repository_url || 'https://api.github.com/repos/owner/repo',
+      labels_url:
+        currentIssue.labels_url ||
+        `https://api.github.com/repos/owner/repo/issues/${currentIssue.number}/labels{/name}`,
+      comments_url:
+        currentIssue.comments_url ||
+        `https://api.github.com/repos/owner/repo/issues/${currentIssue.number}/comments`,
+      events_url:
+        currentIssue.events_url ||
+        `https://api.github.com/repos/owner/repo/issues/${currentIssue.number}/events`,
     },
-    classifications: [
-      {
-        category: category,
-        confidence: 0.75,
-        ruleName: 'Simple Heuristic Classification',
-        reasons: [
-          `Title suggests ${category} type`,
-          `Priority determined as ${priority}`,
-          hasLabels ? 'Issue has labels' : 'No labels present',
-        ],
-        keywords: [category, priority],
-      },
-    ],
-    processingTimeMs: 15,
-    algorithmVersion: '1.0.0',
-    configVersion: '1.0.0',
-    profileId: 'default',
-    // createdAt: new Date().toISOString(), // TODO: Add to schema
-    cacheHit: false,
-    metadata: {
-      titleLength: currentIssue.title.length,
-      bodyLength: currentIssue.body?.length || 0,
-      hasCodeBlocks: (currentIssue.body || '').includes('```'),
-      hasStepsToReproduce: (currentIssue.body || '').toLowerCase().includes('steps to reproduce'),
-      hasExpectedBehavior: (currentIssue.body || '').toLowerCase().includes('expected'),
-      labelCount: currentIssue.labels.length,
-      existingLabels: currentIssue.labels.map(l => l.name),
-    },
-  };
+    { owner: 'owner', repo: 'repo' } // TODO: Get from repository context
+  );
 } catch (error) {
   console.error('Classification generation failed:', error);
   // Use fallback classification data
@@ -151,7 +139,6 @@ try {
     algorithmVersion: '2.1.0',
     configVersion: '1.0.0',
     profileId: 'default',
-    // createdAt: new Date().toISOString(), // TODO: Add to schema
     cacheHit: false,
     metadata: {
       titleLength: currentIssue.title.length,

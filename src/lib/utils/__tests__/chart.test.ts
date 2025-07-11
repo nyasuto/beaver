@@ -7,26 +7,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { ChartType } from 'chart.js';
-// import type { TimeSeriesPoint, PerformanceMetrics } from '../../analytics/engine';
-
-// Temporary type definitions for tests
-type TimeSeriesPoint = {
-  timestamp: Date;
-  value: number;
-};
-
-type PerformanceMetrics = {
-  resolutionRate: number;
-  throughput: number;
-  averageResolutionTime: number;
-  medianResolutionTime: number;
-  responseTime: number;
-  backlogSize: number;
-  burndownRate: number;
-};
 import type { IssueClassification } from '../../schemas/classification';
 import type { EnhancedIssueClassification } from '../../schemas/enhanced-classification';
 import {
+  type PerformanceMetrics,
   convertTimeSeriesData,
   convertCategoryData,
   convertPieData,
@@ -45,6 +29,12 @@ import {
   CHART_COLORS,
   type ChartTheme,
 } from '../chart';
+
+// Type definitions for tests
+type TimeSeriesPoint = {
+  timestamp: Date;
+  value: number;
+};
 
 describe('Chart Utilities', () => {
   beforeEach(() => {
@@ -948,22 +938,26 @@ describe('Chart Utilities', () => {
   describe('convertPerformanceData', () => {
     const mockPerformanceMetrics: PerformanceMetrics[] = [
       {
+        averageResponseTime: 2,
         averageResolutionTime: 24,
         medianResolutionTime: 18,
-        resolutionRate: 80,
-        responseTime: 2,
+        totalRequests: 100,
+        errorRate: 0.05,
+        cacheHitRate: 0.8,
         throughput: 5,
         backlogSize: 50,
-        burndownRate: 5,
+        timestamp: '2023-01-01T00:00:00Z',
       },
       {
+        averageResponseTime: 3,
         averageResolutionTime: 36,
         medianResolutionTime: 30,
-        resolutionRate: 70,
-        responseTime: 3,
+        totalRequests: 80,
+        errorRate: 0.1,
+        cacheHitRate: 0.7,
         throughput: 3,
         backlogSize: 60,
-        burndownRate: 3,
+        timestamp: '2023-01-02T00:00:00Z',
       },
     ];
 
@@ -1029,13 +1023,15 @@ describe('Chart Utilities', () => {
     it('単一メトリクスを処理できること', () => {
       const singleMetric: PerformanceMetrics[] = [
         {
+          averageResponseTime: 1,
           averageResolutionTime: 12,
           medianResolutionTime: 10,
-          resolutionRate: 90,
-          responseTime: 1,
+          totalRequests: 120,
+          errorRate: 0.02,
+          cacheHitRate: 0.9,
           throughput: 8,
           backlogSize: 25,
-          burndownRate: 8,
+          timestamp: '2023-01-01T00:00:00Z',
         },
       ];
 
