@@ -18,7 +18,7 @@ import { resolveUrl } from '../../lib/utils/url';
 // Generate static paths for all modules
 export async function getStaticPaths() {
   const service = getModuleAnalysisService();
-  
+
   try {
     const analysisResult = await service.generateAnalysisReport({
       includeFileDetails: false,
@@ -29,7 +29,7 @@ export async function getStaticPaths() {
 
     if (analysisResult.success) {
       return analysisResult.data.modules.map(module => ({
-        params: { module: encodeURIComponent(module.name) }
+        params: { module: encodeURIComponent(module.name) },
       }));
     }
   } catch (error) {
