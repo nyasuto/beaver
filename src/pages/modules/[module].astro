@@ -15,6 +15,31 @@ import PageHeader from '../../components/ui/PageHeader.astro';
 import { getModuleAnalysisService } from '../../lib/services/ModuleAnalysisService';
 import { resolveUrl } from '../../lib/utils/url';
 
+// Generate static paths for all modules
+export async function getStaticPaths() {
+  const service = getModuleAnalysisService();
+  
+  try {
+    const analysisResult = await service.generateAnalysisReport({
+      includeFileDetails: false,
+      includeCodeSmells: false,
+      includeHotspots: false,
+      maxModules: 50,
+    });
+
+    if (analysisResult.success) {
+      return analysisResult.data.modules.map(module => ({
+        params: { module: encodeURIComponent(module.name) }
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to generate static paths for modules:', error);
+  }
+
+  // Return empty array as fallback
+  return [];
+}
+
 // Get module name from URL parameters
 const { module } = Astro.params;
 const moduleName = decodeURIComponent(module || '');
