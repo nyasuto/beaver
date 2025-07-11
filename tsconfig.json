@@ -36,26 +36,6 @@
       "@/config/*": ["src/lib/config/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "*.astro",
-    "*.ts",
-    "*.tsx",
-    "*.js",
-    "*.jsx",
-    ".astro/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    ".astro",
-    "src/components/charts/AreaChart.tsx",
-    "src/components/charts/BarChart.tsx", 
-    "src/components/charts/LineChart.tsx",
-    "src/components/charts/PieChart.tsx",
-    "src/components/charts/QualityCharts.tsx",
-    "src/components/charts/__tests__/**/*",
-    "src/components/charts/**/*.bak",
-    "src/components/charts/__tests__.bak/**/*"
-  ]
+  "include": ["src/**/*", "*.astro", "*.ts", "*.tsx", "*.js", "*.jsx", ".astro/**/*"],
+  "exclude": ["node_modules", "dist", ".astro"]
 }

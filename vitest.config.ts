@@ -6,7 +6,10 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    ],
     exclude: [
       'node_modules',
       'dist',
@@ -28,14 +31,6 @@ export default defineConfig({
         '**/coverage/**',
         '**/dist/**',
         '**/.astro/**',
-        'src/components/charts/__tests__.bak/**/*',
-        '**/*.bak',
-        '**/*.bak/**/*',
-        'src/components/charts/AreaChart.tsx',
-        'src/components/charts/BarChart.tsx',
-        'src/components/charts/LineChart.tsx',
-        'src/components/charts/PieChart.tsx',
-        'src/components/charts/QualityCharts.tsx',
       ],
       thresholds: {
         global: {
