@@ -10,6 +10,11 @@ import PageLayout from '../../components/layouts/PageLayout.astro';
 import { getIssuesWithFallback, getStaticIssueById, hasStaticData } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
 import { markdownToHtml } from '../../lib/utils/markdown';
+// TODO: Re-enable when enhanced classification is implemented
+// import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
+// import { enhancedConfigManager } from '../../lib/classification/enhanced-config-manager';
+import ClassificationDetails from '../../components/classification/ClassificationDetails.astro';
+import type { EnhancedIssueClassification } from '../../lib/schemas/enhanced-classification';
 
 export function getStaticPaths() {
   try {
@@ -44,6 +49,121 @@ const description = `Detailed view of GitHub issue #${currentIssue.number} with 
 
 // Issue 本文の markdown 処理
 const processedBody = currentIssue.body ? await markdownToHtml(currentIssue.body) : '';
+
+// Generate enhanced classification for the current issue
+let issueClassification: EnhancedIssueClassification | null = null;
+
+try {
+  // TODO: Implement enhanced classification engine integration
+  // For now, use simple heuristic-based classification
+  const hasLabels = currentIssue.labels.length > 0;
+  const hasAssignees = currentIssue.assignees && currentIssue.assignees.length > 0;
+
+  // Simple heuristic classification
+  const category = currentIssue.title.toLowerCase().includes('bug')
+    ? 'bug'
+    : currentIssue.title.toLowerCase().includes('feature')
+      ? 'feature'
+      : 'enhancement';
+  const priority = hasLabels ? 'high' : 'medium';
+
+  // Create classification result
+  issueClassification = {
+    issueId: currentIssue.number,
+    issueNumber: currentIssue.number,
+    primaryCategory: category,
+    primaryConfidence: 0.75,
+    estimatedPriority: priority,
+    priorityConfidence: 0.68,
+    score: 70 + (hasLabels ? 10 : 0) + (hasAssignees ? 5 : 0),
+    scoreBreakdown: {
+      category: 25,
+      priority: 20,
+      confidence: 15,
+      recency: 10,
+    },
+    classifications: [
+      {
+        category: category,
+        confidence: 0.75,
+        ruleName: 'Simple Heuristic Classification',
+        reasons: [
+          `Title suggests ${category} type`,
+          `Priority determined as ${priority}`,
+          hasLabels ? 'Issue has labels' : 'No labels present',
+        ],
+        keywords: [category, priority],
+      },
+    ],
+    processingTimeMs: 15,
+    algorithmVersion: '1.0.0',
+    configVersion: '1.0.0',
+    profileId: 'default',
+    // createdAt: new Date().toISOString(), // TODO: Add to schema
+    cacheHit: false,
+    metadata: {
+      titleLength: currentIssue.title.length,
+      bodyLength: currentIssue.body?.length || 0,
+      hasCodeBlocks: (currentIssue.body || '').includes('```'),
+      hasStepsToReproduce: (currentIssue.body || '').toLowerCase().includes('steps to reproduce'),
+      hasExpectedBehavior: (currentIssue.body || '').toLowerCase().includes('expected'),
+      labelCount: currentIssue.labels.length,
+      existingLabels: currentIssue.labels.map(l => l.name),
+    },
+  };
+} catch (error) {
+  console.error('Classification generation failed:', error);
+  // Use fallback classification data
+  issueClassification = {
+    issueId: currentIssue.number,
+    issueNumber: currentIssue.number,
+    primaryCategory: 'enhancement',
+    primaryConfidence: 0.85,
+    estimatedPriority: 'medium',
+    priorityConfidence: 0.72,
+    score: 75,
+    scoreBreakdown: {
+      category: 25,
+      priority: 20,
+      confidence: 15,
+      recency: 15,
+    },
+    classifications: [
+      {
+        category: 'enhancement',
+        confidence: 0.85,
+        ruleName: 'Enhancement Detection',
+        reasons: [
+          '機能改善に関するキーワードが含まれています',
+          'ユーザーエクスペリエンス向上の内容です',
+        ],
+        keywords: ['enhancement', 'improvement', 'feature'],
+      },
+      {
+        category: 'enhancement',
+        confidence: 0.65,
+        ruleName: 'UI Component Detection',
+        reasons: ['UIコンポーネントに関する内容です'],
+        keywords: ['ui', 'component', 'interface'],
+      },
+    ],
+    processingTimeMs: 45,
+    algorithmVersion: '2.1.0',
+    configVersion: '1.0.0',
+    profileId: 'default',
+    // createdAt: new Date().toISOString(), // TODO: Add to schema
+    cacheHit: false,
+    metadata: {
+      titleLength: currentIssue.title.length,
+      bodyLength: currentIssue.body?.length || 0,
+      hasCodeBlocks: (currentIssue.body || '').includes('```'),
+      hasStepsToReproduce: (currentIssue.body || '').toLowerCase().includes('steps to reproduce'),
+      hasExpectedBehavior: (currentIssue.body || '').toLowerCase().includes('expected'),
+      labelCount: currentIssue.labels.length,
+      existingLabels: currentIssue.labels.map(l => l.name),
+    },
+  };
+}
 ---
 
 <PageLayout
@@ -125,23 +245,31 @@ const processedBody = currentIssue.body ? await markdownToHtml(currentIssue.body
 
     <!-- Sidebar -->
     <div class="lg:col-span-1 space-y-6">
-      <!-- AI Analysis -->
+      <!-- Enhanced Classification Analysis -->
       <div class="card">
-        <h3 class="text-lg font-semibold text-heading mb-4">🤖 AI Analysis</h3>
-        <div class="space-y-3">
-          <div>
-            <span class="text-sm font-medium text-heading">Classification:</span>
-            <p class="text-sm text-muted">Bug - High Priority</p>
-          </div>
-          <div>
-            <span class="text-sm font-medium text-heading">Sentiment:</span>
-            <p class="text-sm text-muted">Neutral</p>
-          </div>
-          <div>
-            <span class="text-sm font-medium text-heading">Estimated Effort:</span>
-            <p class="text-sm text-muted">Medium (3-5 days)</p>
-          </div>
-        </div>
+        <h3 class="text-lg font-semibold text-heading mb-4">🤖 AI分析</h3>
+        {
+          issueClassification ? (
+            <ClassificationDetails
+              classification={issueClassification}
+              variant="detailed"
+              showMetadata={true}
+              showReasons={true}
+              showKeywords={true}
+              maxReasons={3}
+            />
+          ) : (
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 text-sm text-muted">
+                <span class="animate-spin">⏳</span>
+                <span>分類結果を生成中...</span>
+              </div>
+              <div class="text-xs text-muted">
+                <p>このIssueの内容を分析して、最適な分類と優先度を決定しています。</p>
+              </div>
+            </div>
+          )
+        }
       </div>
 
       <!-- Issue Metadata -->

@@ -1,0 +1,420 @@
+---
+/**
+ * ScoreBreakdown Component
+ *
+ * Displays detailed breakdown of classification scores with visual indicators
+ * Shows category, priority, confidence, recency, and custom score components
+ */
+export interface Props {
+  score: number;
+  scoreBreakdown: {
+    category: number;
+    priority: number;
+    confidence: number;
+    recency: number;
+    custom?: number;
+  };
+  totalScore?: number;
+  variant?: 'default' | 'compact' | 'detailed';
+  showTotal?: boolean;
+  showPercentages?: boolean;
+  className?: string;
+}
+
+const {
+  score,
+  scoreBreakdown,
+  totalScore = 100,
+  variant = 'default',
+  showTotal = true,
+  showPercentages = false,
+  className = '',
+} = Astro.props;
+
+// Calculate percentages for each component
+const getPercentage = (value: number, total: number) => {
+  return Math.round((value / total) * 100);
+};
+
+const categoryPercent = getPercentage(scoreBreakdown.category, totalScore);
+const priorityPercent = getPercentage(scoreBreakdown.priority, totalScore);
+const confidencePercent = getPercentage(scoreBreakdown.confidence, totalScore);
+const recencyPercent = getPercentage(scoreBreakdown.recency, totalScore);
+const customPercent = scoreBreakdown.custom ? getPercentage(scoreBreakdown.custom, totalScore) : 0;
+
+// Score breakdown items with metadata
+const breakdownItems = [
+  {
+    key: 'category',
+    label: 'カテゴリ',
+    value: scoreBreakdown.category,
+    percentage: categoryPercent,
+    color: 'var(--color-category)',
+    icon: '🏷️',
+  },
+  {
+    key: 'priority',
+    label: '優先度',
+    value: scoreBreakdown.priority,
+    percentage: priorityPercent,
+    color: 'var(--color-priority)',
+    icon: '🔥',
+  },
+  {
+    key: 'confidence',
+    label: '信頼度',
+    value: scoreBreakdown.confidence,
+    percentage: confidencePercent,
+    color: 'var(--color-confidence)',
+    icon: '✅',
+  },
+  {
+    key: 'recency',
+    label: '最新性',
+    value: scoreBreakdown.recency,
+    percentage: recencyPercent,
+    color: 'var(--color-recency)',
+    icon: '🕒',
+  },
+  ...(scoreBreakdown.custom
+    ? [
+        {
+          key: 'custom',
+          label: 'カスタム',
+          value: scoreBreakdown.custom,
+          percentage: customPercent,
+          color: 'var(--color-custom)',
+          icon: '⚙️',
+        },
+      ]
+    : []),
+];
+
+// Calculate total for validation
+const calculatedTotal = breakdownItems.reduce((sum, item) => sum + item.value, 0);
+const isValid = Math.abs(calculatedTotal - score) < 0.01;
+---
+
+<div
+  class={`score-breakdown score-breakdown--${variant} ${className}`}
+  aria-label={`スコア内訳: 合計 ${score}点`}
+>
+  {
+    showTotal && (
+      <div class="score-breakdown__header">
+        <h4 class="score-breakdown__title">スコア内訳</h4>
+        <div class="score-breakdown__total">
+          <span class="score-breakdown__total-value">{score}</span>
+          <span class="score-breakdown__total-label">/ {totalScore}</span>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    variant === 'detailed' && (
+      <div class="score-breakdown__summary">
+        <div class="score-breakdown__chart">
+          {breakdownItems.map(item => (
+            <div
+              class="score-breakdown__chart-segment"
+              style={`width: ${item.percentage}%; background-color: ${item.color}`}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  <div class="score-breakdown__items">
+    {
+      breakdownItems.map(item => (
+        <div class="score-breakdown__item">
+          {variant !== 'compact' && <div class="score-breakdown__item-icon">{item.icon}</div>}
+
+          <div class="score-breakdown__item-content">
+            <div class="score-breakdown__item-header">
+              <span class="score-breakdown__item-label">{item.label}</span>
+              <span class="score-breakdown__item-value">
+                {item.value}
+                {showPercentages && (
+                  <span class="score-breakdown__item-percentage">({item.percentage}%)</span>
+                )}
+              </span>
+            </div>
+
+            {variant !== 'compact' && (
+              <div class="score-breakdown__item-bar">
+                <div
+                  class="score-breakdown__item-fill"
+                  style={`width: ${item.percentage}%; background-color: ${item.color}`}
+                  aria-hidden="true"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  {
+    !isValid && (
+      <div class="score-breakdown__warning">
+        <span class="score-breakdown__warning-icon">⚠️</span>
+        <span class="score-breakdown__warning-text">
+          スコア合計が一致しません (計算値: {calculatedTotal})
+        </span>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .score-breakdown {
+    --color-category: #3b82f6;
+    --color-priority: #ef4444;
+    --color-confidence: #10b981;
+    --color-recency: #f59e0b;
+    --color-custom: #8b5cf6;
+    --color-bg: #f9fafb;
+    --color-border: #e5e7eb;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-family: var(--font-sans);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+
+  .score-breakdown--compact {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .score-breakdown--detailed {
+    padding: 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .score-breakdown__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .score-breakdown__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  .score-breakdown__total {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .score-breakdown__total-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .score-breakdown__total-label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+
+  .score-breakdown__summary {
+    margin-bottom: 0.5rem;
+  }
+
+  .score-breakdown__chart {
+    display: flex;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    background-color: var(--color-border);
+  }
+
+  .score-breakdown__chart-segment {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+  }
+
+  .score-breakdown__items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .score-breakdown--compact .score-breakdown__items {
+    gap: 0.5rem;
+  }
+
+  .score-breakdown__item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .score-breakdown__item-icon {
+    font-size: 1.25rem;
+    width: 2rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .score-breakdown__item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .score-breakdown__item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .score-breakdown__item-label {
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .score-breakdown__item-value {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .score-breakdown__item-percentage {
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    font-size: 0.875em;
+  }
+
+  .score-breakdown__item-bar {
+    height: 0.375rem;
+    background-color: var(--color-border);
+    border-radius: 0.25rem;
+    overflow: hidden;
+  }
+
+  .score-breakdown__item-fill {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+    border-radius: 0.25rem;
+  }
+
+  .score-breakdown__warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background-color: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 0.375rem;
+    margin-top: 0.5rem;
+  }
+
+  .score-breakdown__warning-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .score-breakdown__warning-text {
+    font-size: 0.875rem;
+    color: #92400e;
+  }
+
+  /* Dark mode support */
+  :global(.dark) .score-breakdown {
+    --color-bg: #1f2937;
+    --color-border: #374151;
+  }
+
+  :global(.dark) .score-breakdown__warning {
+    background-color: #451a03;
+    border-color: #f59e0b;
+  }
+
+  :global(.dark) .score-breakdown__warning-text {
+    color: #fbbf24;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .score-breakdown {
+      padding: 0.75rem;
+    }
+
+    .score-breakdown__item {
+      gap: 0.5rem;
+    }
+
+    .score-breakdown__item-icon {
+      font-size: 1rem;
+      width: 1.5rem;
+    }
+
+    .score-breakdown__title {
+      font-size: 0.875rem;
+    }
+
+    .score-breakdown__total-value {
+      font-size: 1.125rem;
+    }
+  }
+
+  /* Animation for loading states */
+  .score-breakdown--loading .score-breakdown__item-fill {
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 0%,
+      #e5e7eb 50%,
+      var(--color-border) 100%
+    );
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+  }
+
+  @keyframes loading-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .score-breakdown {
+      --color-category: #1e40af;
+      --color-priority: #dc2626;
+      --color-confidence: #059669;
+      --color-recency: #d97706;
+      --color-custom: #7c3aed;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .score-breakdown__item-fill,
+    .score-breakdown__chart-segment {
+      transition: none;
+    }
+
+    .score-breakdown--loading .score-breakdown__item-fill {
+      animation: none;
+    }
+  }
+</style>
