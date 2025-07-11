@@ -1,0 +1,527 @@
+---
+/**
+ * Module Comparison Page
+ *
+ * Allows users to compare multiple modules side-by-side:
+ * - Select modules to compare
+ * - Visual comparison charts
+ * - Ranking and recommendations
+ * - Export comparison results
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import { getModuleAnalysisService } from '../../lib/services/ModuleAnalysisService';
+import { resolveUrl } from '../../lib/utils/url';
+
+const title = 'モジュール比較分析';
+const description = 'モジュール間の品質メトリクスを比較分析';
+
+// Get available modules and comparison data
+let availableModules = [];
+let comparisonData = null;
+let isDataAvailable = false;
+let errorMessage = null;
+
+try {
+  const service = getModuleAnalysisService();
+
+  // Get all modules for selection
+  const analysisResult = await service.generateAnalysisReport({
+    includeFileDetails: false,
+    includeCodeSmells: false,
+    includeHotspots: false,
+    maxModules: 20,
+  });
+
+  if (analysisResult.success) {
+    availableModules = analysisResult.data.modules;
+
+    // For demo purposes, compare the first 4 modules
+    const modulesToCompare = availableModules.slice(0, 4).map(m => m.name);
+
+    if (modulesToCompare.length > 0) {
+      const comparisonResult = await service.compareModules(modulesToCompare);
+      if (comparisonResult.success) {
+        comparisonData = comparisonResult.data;
+        isDataAvailable = true;
+      }
+    }
+  } else {
+    errorMessage = analysisResult.error?.message || 'モジュールデータの取得に失敗しました';
+  }
+} catch (error) {
+  console.error('Module comparison failed:', error);
+  errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+}
+
+// Prepare comparison data for display
+const comparisonStats = comparisonData
+  ? {
+      totalModules: comparisonData.modules.length,
+      bestCoverage: comparisonData.comparison.coverage.best,
+      worstCoverage: comparisonData.comparison.coverage.worst,
+      averageCoverage: comparisonData.comparison.coverage.average,
+      bestQuality: comparisonData.comparison.qualityScore.best,
+      worstQuality: comparisonData.comparison.qualityScore.worst,
+      averageQuality: comparisonData.comparison.qualityScore.average,
+      totalTechnicalDebt: comparisonData.comparison.technicalDebt.total,
+      highestDebt: comparisonData.comparison.technicalDebt.highest,
+      lowestDebt: comparisonData.comparison.technicalDebt.lowest,
+    }
+  : null;
+
+// Get ranking information
+const rankings = comparisonData
+  ? {
+      coverage: comparisonData.rankings.byCoverage,
+      complexity: comparisonData.rankings.byComplexity,
+      technicalDebt: comparisonData.rankings.byTechnicalDebt,
+      qualityScore: comparisonData.rankings.byQualityScore,
+    }
+  : null;
+
+// Helper function to get rank suffix
+const getRankSuffix = (rank: number) => {
+  if (rank === 1) return '1st';
+  if (rank === 2) return '2nd';
+  if (rank === 3) return '3rd';
+  return `${rank}th`;
+};
+
+// Helper function to get metric color
+const getMetricColor = (value: number, metricType: string) => {
+  if (metricType === 'coverage' || metricType === 'quality') {
+    return value >= 80
+      ? 'text-green-600'
+      : value >= 60
+        ? 'text-blue-600'
+        : value >= 40
+          ? 'text-yellow-600'
+          : 'text-red-600';
+  } else if (metricType === 'complexity' || metricType === 'debt') {
+    return value <= 5
+      ? 'text-green-600'
+      : value <= 10
+        ? 'text-blue-600'
+        : value <= 15
+          ? 'text-yellow-600'
+          : 'text-red-600';
+  }
+  return 'text-gray-600';
+};
+
+// Get comparison insights
+const insights = comparisonData
+  ? [
+      {
+        title: 'カバレッジチャンピオン',
+        description: `${comparisonData.comparison.coverage.best} が最高のカバレッジ率を記録`,
+        icon: '🏆',
+        color: 'green',
+      },
+      {
+        title: '複雑度改善機会',
+        description: `${comparisonData.comparison.complexity.highest} の複雑度が最も高く、リファクタリングが必要`,
+        icon: '🔧',
+        color: 'orange',
+      },
+      {
+        title: '技術的負債',
+        description: `${comparisonData.comparison.technicalDebt.highest} が最も高い技術的負債を抱えている`,
+        icon: '⚠️',
+        color: 'red',
+      },
+      {
+        title: '品質リーダー',
+        description: `${comparisonData.comparison.qualityScore.best} が総合品質で最も優秀`,
+        icon: '⭐',
+        color: 'blue',
+      },
+    ]
+  : [];
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  showHeader={true}
+  showFooter={true}
+  showSearch={false}
+  maxWidth="7xl"
+  padding="lg"
+  class="page-background"
+>
+  <div class="space-y-8">
+    <PageHeader
+      title="モジュール比較分析"
+      description="複数のモジュールを横断的に比較し、改善優先度を特定"
+      icon="📊"
+      metaInfo={{
+        dataSource: comparisonStats
+          ? `${comparisonStats.totalModules} modules compared`
+          : 'No comparison data available',
+        lastUpdated: comparisonData ? new Date(comparisonData.generatedAt) : new Date(),
+        isDataAvailable: isDataAvailable,
+      }}
+      warningMessage={errorMessage
+        ? `比較エラー: ${errorMessage}`
+        : !isDataAvailable
+          ? 'モジュール比較データが利用できません'
+          : undefined}
+    />
+
+    {
+      comparisonData && comparisonStats ? (
+        <div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-3">📈 カバレッジ</h3>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">最高:</span>
+                  <span class="text-sm font-medium text-green-600">
+                    {comparisonStats.averageCoverage.toFixed(1)}%
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">平均:</span>
+                  <span class="text-sm font-medium">
+                    {comparisonStats.averageCoverage.toFixed(1)}%
+                  </span>
+                </div>
+                <div class="text-xs text-muted">
+                  Best: {comparisonStats.bestCoverage.split('/').pop()}
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-3">⭐ 品質スコア</h3>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">最高:</span>
+                  <span class="text-sm font-medium text-blue-600">
+                    {comparisonStats.averageQuality.toFixed(1)}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">平均:</span>
+                  <span class="text-sm font-medium">
+                    {comparisonStats.averageQuality.toFixed(1)}
+                  </span>
+                </div>
+                <div class="text-xs text-muted">
+                  Best: {comparisonStats.bestQuality.split('/').pop()}
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-3">⚠️ 技術的負債</h3>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">合計:</span>
+                  <span class="text-sm font-medium text-red-600">
+                    {comparisonStats.totalTechnicalDebt.toFixed(0)}h
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">最大:</span>
+                  <span class="text-sm font-medium text-red-600">
+                    {comparisonStats.highestDebt.split('/').pop()}
+                  </span>
+                </div>
+                <div class="text-xs text-muted">
+                  Best: {comparisonStats.lowestDebt.split('/').pop()}
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="text-lg font-semibold text-heading mb-3">📊 比較対象</h3>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">モジュール数:</span>
+                  <span class="text-sm font-medium">{comparisonStats.totalModules}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-muted">分析完了:</span>
+                  <span class="text-sm font-medium text-green-600">✓</span>
+                </div>
+                <div class="text-xs text-muted">
+                  Generated: {new Date(comparisonData.generatedAt).toLocaleDateString('ja-JP')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="text-lg font-semibold text-heading mb-4">💡 比較インサイト</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {insights.map(insight => (
+                <div
+                  class={`p-4 rounded-lg border ${
+                    insight.color === 'green'
+                      ? 'bg-green-50 border-green-200'
+                      : insight.color === 'orange'
+                        ? 'bg-orange-50 border-orange-200'
+                        : insight.color === 'red'
+                          ? 'bg-red-50 border-red-200'
+                          : 'bg-blue-50 border-blue-200'
+                  }`}
+                >
+                  <div class="flex items-start gap-3">
+                    <span class="text-2xl">{insight.icon}</span>
+                    <div>
+                      <h4
+                        class={`font-medium ${
+                          insight.color === 'green'
+                            ? 'text-green-900'
+                            : insight.color === 'orange'
+                              ? 'text-orange-900'
+                              : insight.color === 'red'
+                                ? 'text-red-900'
+                                : 'text-blue-900'
+                        }`}
+                      >
+                        {insight.title}
+                      </h4>
+                      <p
+                        class={`text-sm ${
+                          insight.color === 'green'
+                            ? 'text-green-700'
+                            : insight.color === 'orange'
+                              ? 'text-orange-700'
+                              : insight.color === 'red'
+                                ? 'text-red-700'
+                                : 'text-blue-700'
+                        }`}
+                      >
+                        {insight.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="text-lg font-semibold text-heading mb-4">📋 詳細比較</h2>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      モジュール
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      カバレッジ
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      品質スコア
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      複雑度
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      技術的負債
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      優先度
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {comparisonData.modules.map(module => (
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <div>
+                            <div class="text-sm font-medium text-gray-900">
+                              {module.displayName}
+                            </div>
+                            <div class="text-xs text-gray-500">{module.name.split('/').pop()}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <span
+                            class={`text-sm font-medium ${getMetricColor(module.coverage, 'coverage')}`}
+                          >
+                            {module.coverage.toFixed(1)}%
+                          </span>
+                          <span class="ml-2 text-xs text-gray-500">
+                            #{(rankings?.coverage?.indexOf(module.name) ?? -1) + 1}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <span
+                            class={`text-sm font-medium ${getMetricColor(module.qualityScore, 'quality')}`}
+                          >
+                            {module.qualityScore.toFixed(1)}
+                          </span>
+                          <span class="ml-2 text-xs text-gray-500">
+                            #{(rankings?.qualityScore?.indexOf(module.name) ?? -1) + 1}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <span
+                            class={`text-sm font-medium ${getMetricColor(module.averageComplexity, 'complexity')}`}
+                          >
+                            {module.averageComplexity.toFixed(1)}
+                          </span>
+                          <span class="ml-2 text-xs text-gray-500">
+                            #{(rankings?.complexity?.indexOf(module.name) ?? -1) + 1}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <span
+                            class={`text-sm font-medium ${getMetricColor(module.technicalDebt, 'debt')}`}
+                          >
+                            {module.technicalDebt.toFixed(0)}h
+                          </span>
+                          <span class="ml-2 text-xs text-gray-500">
+                            #{(rankings?.technicalDebt?.indexOf(module.name) ?? -1) + 1}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span
+                          class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            module.priority === 'critical'
+                              ? 'bg-red-100 text-red-800'
+                              : module.priority === 'high'
+                                ? 'bg-orange-100 text-orange-800'
+                                : module.priority === 'medium'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-green-100 text-green-800'
+                          }`}
+                        >
+                          {module.priority}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {rankings &&
+              Object.entries(rankings).map(([metricName, ranking]) => (
+                <div class="card">
+                  <h3 class="text-lg font-medium text-heading mb-3 capitalize">
+                    {metricName === 'coverage'
+                      ? '📈 カバレッジ'
+                      : metricName === 'complexity'
+                        ? '🔧 複雑度'
+                        : metricName === 'technicalDebt'
+                          ? '⚠️ 技術的負債'
+                          : '⭐ 品質スコア'}{' '}
+                    ランキング
+                  </h3>
+                  <div class="space-y-2">
+                    {ranking.slice(0, 4).map((moduleName, index) => (
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-900">{moduleName.split('/').pop()}</span>
+                        <span
+                          class={`text-xs px-2 py-1 rounded ${
+                            index === 0
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : index === 1
+                                ? 'bg-gray-100 text-gray-800'
+                                : index === 2
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {getRankSuffix(index + 1)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          <div class="card">
+            <h2 class="text-lg font-semibold text-heading mb-4">🎯 改善推奨事項</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <h4 class="font-medium text-red-900 mb-2">最優先改善対象</h4>
+                <p class="text-sm text-red-700">
+                  {comparisonStats.worstCoverage.split('/').pop()} のカバレッジが最も低く、
+                  テストの追加が急務です。
+                </p>
+              </div>
+              <div class="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <h4 class="font-medium text-orange-900 mb-2">技術的負債</h4>
+                <p class="text-sm text-orange-700">
+                  {comparisonStats.highestDebt.split('/').pop()} が最も高い技術的負債を抱えており、
+                  リファクタリングが必要です。
+                </p>
+              </div>
+              <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h4 class="font-medium text-green-900 mb-2">ベストプラクティス</h4>
+                <p class="text-sm text-green-700">
+                  {comparisonStats.bestCoverage.split('/').pop()} のテスト戦略を
+                  他のモジュールでも参考にしてください。
+                </p>
+              </div>
+              <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 class="font-medium text-blue-900 mb-2">継続的改善</h4>
+                <p class="text-sm text-blue-700">
+                  全体的な品質向上のため、定期的なコードレビューと
+                  継続的リファクタリングを実施してください。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div class="card text-center py-12">
+          <div class="text-6xl mb-4">📊</div>
+          <h2 class="text-xl font-semibold text-heading mb-2">比較データがありません</h2>
+          <p class="text-muted mb-6">
+            モジュール分析データを取得できませんでした。
+            {errorMessage ? `エラー: ${errorMessage}` : ''}
+          </p>
+          <a href={resolveUrl('/modules')} class="btn btn-primary">
+            モジュール一覧に戻る
+          </a>
+        </div>
+      )
+    }
+
+    <!-- Action Links -->
+    <div class="flex justify-center space-x-4">
+      <a href={resolveUrl('/modules')} class="btn btn-secondary"> ← モジュール一覧 </a>
+      <a href={resolveUrl('/quality')} class="btn btn-secondary"> 品質ダッシュボード </a>
+      {
+        comparisonData && (
+          <button class="btn btn-primary" onclick="window.print()">
+            レポート印刷
+          </button>
+        )
+      }
+    </div>
+  </div>
+</PageLayout>
+
+<style>
+  @media print {
+    .btn {
+      display: none;
+    }
+  }
+</style>

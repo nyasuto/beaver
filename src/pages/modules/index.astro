@@ -1,0 +1,504 @@
+---
+/**
+ * Module Analysis Dashboard Page
+ *
+ * Provides comprehensive module-level analysis with:
+ * - Module overview with hierarchical display
+ * - Quality metrics visualization
+ * - Hotspot identification
+ * - Code smell detection
+ * - Comparison capabilities
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
+import { getModuleAnalysisService } from '../../lib/services/ModuleAnalysisService';
+import { resolveUrl } from '../../lib/utils/url';
+
+const title = 'モジュール詳細分析';
+const description = 'コードベースの詳細なモジュール分析とホットスポット検出';
+
+// Generate module analysis report
+let analysisReport = null;
+let isDataAvailable = false;
+let errorMessage = null;
+
+try {
+  const service = getModuleAnalysisService();
+  const result = await service.generateAnalysisReport({
+    includeFileDetails: true,
+    includeCodeSmells: true,
+    includeHotspots: true,
+    maxModules: 20,
+    coverageThreshold: 50,
+    complexityThreshold: 10,
+  });
+
+  if (result.success) {
+    analysisReport = result.data;
+    isDataAvailable = true;
+  } else {
+    errorMessage = result.error?.message || '分析レポートの生成に失敗しました';
+  }
+} catch (error) {
+  console.error('Module analysis failed:', error);
+  errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+}
+
+// If analysis failed, show error state
+if (!analysisReport) {
+  analysisReport = {
+    project: {
+      name: 'Beaver Astro',
+      totalModules: 0,
+      totalFiles: 0,
+      totalLines: 0,
+    },
+    overview: {
+      totalCoverage: 0,
+      averageComplexity: 0,
+      totalTechnicalDebt: 0,
+      overallQualityScore: 0,
+      maintainabilityIndex: 0,
+    },
+    modules: [],
+    hotspots: [],
+    codeSmells: [],
+    recommendations: [],
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      analysisType: 'failed',
+      dataSource: 'none',
+      version: '1.0.0',
+    },
+  };
+}
+
+// Process modules for display
+const modulesByPriority = {
+  critical: analysisReport.modules.filter(m => m.priority === 'critical'),
+  high: analysisReport.modules.filter(m => m.priority === 'high'),
+  medium: analysisReport.modules.filter(m => m.priority === 'medium'),
+  low: analysisReport.modules.filter(m => m.priority === 'low'),
+};
+
+// Get top hotspots
+const topHotspots = analysisReport.hotspots.slice(0, 5);
+
+// Get critical code smells
+const criticalCodeSmells = analysisReport.codeSmells
+  .filter(s => s.severity === 'critical' || s.severity === 'major')
+  .slice(0, 10);
+
+// Calculate priority stats
+const priorityStats = {
+  total: analysisReport.modules.length,
+  critical: modulesByPriority.critical.length,
+  high: modulesByPriority.high.length,
+  medium: modulesByPriority.medium.length,
+  low: modulesByPriority.low.length,
+};
+
+// Get quality distribution
+const qualityDistribution = {
+  excellent: analysisReport.modules.filter(m => m.qualityScore >= 90).length,
+  good: analysisReport.modules.filter(m => m.qualityScore >= 70 && m.qualityScore < 90).length,
+  fair: analysisReport.modules.filter(m => m.qualityScore >= 50 && m.qualityScore < 70).length,
+  poor: analysisReport.modules.filter(m => m.qualityScore < 50).length,
+};
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  showHeader={true}
+  showFooter={true}
+  showSearch={false}
+  maxWidth="7xl"
+  padding="lg"
+  class="page-background"
+>
+  <div class="space-y-8">
+    <PageHeader
+      title="モジュール詳細分析"
+      description="コードベースの包括的なモジュール分析とホットスポット検出"
+      icon="🔍"
+      metaInfo={{
+        dataSource: `${analysisReport.project.totalModules} modules, ${analysisReport.project.totalFiles} files`,
+        lastUpdated: new Date(analysisReport.metadata.generatedAt),
+        isDataAvailable: isDataAvailable,
+      }}
+      warningMessage={errorMessage
+        ? `分析エラー: ${errorMessage} - 分析機能は現在利用できません`
+        : !isDataAvailable
+          ? 'モジュール分析は現在利用できません'
+          : undefined}
+    />
+
+    <!-- Project Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Overall Quality Metrics -->
+      <div class="lg:col-span-2">
+        <div class="card">
+          <h2 class="text-lg font-semibold text-heading mb-4">🎯 プロジェクト全体品質</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-blue-600">
+                {analysisReport.overview.totalCoverage.toFixed(1)}%
+              </div>
+              <div class="text-sm text-muted">総合カバレッジ</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-green-600">
+                {analysisReport.overview.overallQualityScore.toFixed(1)}
+              </div>
+              <div class="text-sm text-muted">品質スコア</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-orange-600">
+                {analysisReport.overview.averageComplexity.toFixed(1)}
+              </div>
+              <div class="text-sm text-muted">平均複雑度</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-red-600">
+                {analysisReport.overview.totalTechnicalDebt.toFixed(0)}h
+              </div>
+              <div class="text-sm text-muted">技術的負債</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Distribution -->
+      <div class="card">
+        <h2 class="text-lg font-semibold text-heading mb-4">📊 優先度別分布</h2>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-red-600">Critical</span>
+            <span class="text-sm font-medium">{priorityStats.critical}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-orange-600">High</span>
+            <span class="text-sm font-medium">{priorityStats.high}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-yellow-600">Medium</span>
+            <span class="text-sm font-medium">{priorityStats.medium}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-green-600">Low</span>
+            <span class="text-sm font-medium">{priorityStats.low}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module List by Priority -->
+    <div class="space-y-6">
+      <h2 class="text-xl font-semibold text-heading">🏗️ モジュール一覧（優先度別）</h2>
+
+      {
+        Object.entries(modulesByPriority).map(
+          ([priority, modules]) =>
+            modules.length > 0 && (
+              <div class="card">
+                <h3 class="text-lg font-medium text-heading mb-4 flex items-center gap-2">
+                  <span
+                    class={`inline-block w-3 h-3 rounded-full ${
+                      priority === 'critical'
+                        ? 'bg-red-500'
+                        : priority === 'high'
+                          ? 'bg-orange-500'
+                          : priority === 'medium'
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                    }`}
+                  />
+                  {priority === 'critical'
+                    ? 'Critical Priority'
+                    : priority === 'high'
+                      ? 'High Priority'
+                      : priority === 'medium'
+                        ? 'Medium Priority'
+                        : 'Low Priority'}{' '}
+                  ({modules.length})
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {modules.map(module => (
+                    <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div class="flex items-start justify-between mb-2">
+                        <h4 class="font-medium text-heading truncate">{module.displayName}</h4>
+                        <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+                          {module.type}
+                        </span>
+                      </div>
+                      <p class="text-sm text-muted mb-3 line-clamp-2">{module.description}</p>
+
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span class="text-muted">カバレッジ: </span>
+                          <span
+                            class={`font-medium ${
+                              module.coverage >= 80
+                                ? 'text-green-600'
+                                : module.coverage >= 50
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                            }`}
+                          >
+                            {module.coverage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-muted">複雑度: </span>
+                          <span
+                            class={`font-medium ${
+                              module.averageComplexity <= 5
+                                ? 'text-green-600'
+                                : module.averageComplexity <= 10
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                            }`}
+                          >
+                            {module.averageComplexity.toFixed(1)}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-muted">品質: </span>
+                          <span
+                            class={`font-medium ${
+                              module.qualityScore >= 80
+                                ? 'text-green-600'
+                                : module.qualityScore >= 60
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                            }`}
+                          >
+                            {module.qualityScore.toFixed(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-muted">負債: </span>
+                          <span class="font-medium text-red-600">
+                            {module.technicalDebt.toFixed(0)}h
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="flex justify-between items-center mt-3">
+                        <span class="text-xs text-muted">
+                          {module.files.length} files • {module.totalLines.toLocaleString()} lines
+                        </span>
+                        <a
+                          href={resolveUrl(`/modules/${encodeURIComponent(module.name)}`)}
+                          class="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          詳細 →
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+        )
+      }
+    </div>
+
+    <!-- Hotspots and Code Smells -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <!-- Top Hotspots -->
+      <div class="card">
+        <h2 class="text-lg font-semibold text-heading mb-4">🔥 ホットスポット（要注意）</h2>
+        {
+          topHotspots.length > 0 ? (
+            <div class="space-y-3">
+              {topHotspots.map(hotspot => (
+                <div class="p-3 border rounded-lg bg-red-50 border-red-200">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium text-red-900">{hotspot.fileName}</h4>
+                      <p class="text-xs text-red-700 mt-1">{hotspot.moduleName}</p>
+                      <p class="text-xs text-red-600 mt-1">{hotspot.recommendation}</p>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                        Risk: {hotspot.riskScore.toFixed(0)}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4 mt-2 text-xs text-red-600">
+                    <span>Coverage: {hotspot.coverage.toFixed(1)}%</span>
+                    <span>Complexity: {hotspot.complexityScore.toFixed(1)}</span>
+                    <span>Changes: {hotspot.changeFrequency}/month</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="text-muted text-center py-8">ホットスポットが検出されませんでした 🎉</p>
+          )
+        }
+      </div>
+
+      <!-- Critical Code Smells -->
+      <div class="card">
+        <h2 class="text-lg font-semibold text-heading mb-4">⚠️ 重要なコードスメル</h2>
+        {
+          criticalCodeSmells.length > 0 ? (
+            <div class="space-y-3">
+              {criticalCodeSmells.map(smell => (
+                <div class="p-3 border rounded-lg bg-orange-50 border-orange-200">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium text-orange-900 capitalize">
+                        {smell.type.replace(/_/g, ' ')}
+                      </h4>
+                      <p class="text-xs text-orange-700 mt-1">{smell.description}</p>
+                      <p class="text-xs text-orange-600 mt-1">{smell.suggestion}</p>
+                    </div>
+                    <div class="text-right">
+                      <span
+                        class={`text-xs px-2 py-1 rounded ${
+                          smell.severity === 'critical'
+                            ? 'bg-red-100 text-red-800'
+                            : smell.severity === 'major'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {smell.severity}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4 mt-2 text-xs text-orange-600">
+                    <span>File: {smell.filePath.split('/').pop()}</span>
+                    {smell.lineNumber && <span>Line: {smell.lineNumber}</span>}
+                    <span>Fix: {smell.estimatedFixTime}h</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="text-muted text-center py-8">重要なコードスメルが検出されませんでした 🎉</p>
+          )
+        }
+      </div>
+    </div>
+
+    <!-- Quality Distribution -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-heading mb-4">📈 品質分布</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <div class="text-2xl font-bold text-green-600">{qualityDistribution.excellent}</div>
+          <div class="text-sm text-green-700">Excellent (90+)</div>
+        </div>
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">{qualityDistribution.good}</div>
+          <div class="text-sm text-blue-700">Good (70-89)</div>
+        </div>
+        <div class="text-center p-4 bg-yellow-50 rounded-lg">
+          <div class="text-2xl font-bold text-yellow-600">{qualityDistribution.fair}</div>
+          <div class="text-sm text-yellow-700">Fair (50-69)</div>
+        </div>
+        <div class="text-center p-4 bg-red-50 rounded-lg">
+          <div class="text-2xl font-bold text-red-600">{qualityDistribution.poor}</div>
+          <div class="text-sm text-red-700">Poor (&lt;50)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    {
+      analysisReport.recommendations.length > 0 && (
+        <div class="card">
+          <h2 class="text-lg font-semibold text-heading mb-4">💡 推奨事項</h2>
+          <div class="space-y-4">
+            {analysisReport.recommendations.map(rec => (
+              <div class="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h4 class="font-medium text-blue-900">{rec.title}</h4>
+                    <p class="text-sm text-blue-700 mt-1">{rec.description}</p>
+                    <p class="text-xs text-blue-600 mt-2">Impact: {rec.impact}</p>
+                  </div>
+                  <div class="text-right">
+                    <span
+                      class={`text-xs px-2 py-1 rounded ${
+                        rec.priority === 'critical'
+                          ? 'bg-red-100 text-red-800'
+                          : rec.priority === 'high'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {rec.priority}
+                    </span>
+                    <div class="text-xs text-blue-600 mt-1">Effort: {rec.effort}</div>
+                  </div>
+                </div>
+                {rec.modules.length > 0 && (
+                  <div class="mt-3">
+                    <p class="text-xs text-blue-600 mb-1">Affected modules:</p>
+                    <div class="flex flex-wrap gap-1">
+                      {rec.modules.slice(0, 3).map(moduleName => (
+                        <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                          {moduleName.split('/').pop()}
+                        </span>
+                      ))}
+                      {rec.modules.length > 3 && (
+                        <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                          +{rec.modules.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Analysis Metadata -->
+    <div class="card">
+      <h2 class="text-lg font-semibold text-heading mb-4">📋 分析情報</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <h3 class="font-medium text-heading mb-2">データソース</h3>
+          <p class="text-sm text-muted">
+            {
+              analysisReport.metadata.dataSource === 'mock'
+                ? 'サンプルデータ'
+                : analysisReport.metadata.dataSource === 'cached'
+                  ? 'キャッシュデータ'
+                  : '実際のデータ'
+            }
+          </p>
+          <p class="text-xs text-muted mt-1">
+            Type: {analysisReport.metadata.analysisType}
+          </p>
+        </div>
+        <div>
+          <h3 class="font-medium text-heading mb-2">分析完了時刻</h3>
+          <p class="text-sm text-muted">
+            {new Date(analysisReport.metadata.generatedAt).toLocaleString('ja-JP')}
+          </p>
+        </div>
+        <div>
+          <h3 class="font-medium text-heading mb-2">バージョン</h3>
+          <p class="text-sm text-muted">{analysisReport.metadata.version}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Links -->
+    <div class="flex justify-center space-x-4">
+      <a href={resolveUrl('/modules/compare')} class="btn btn-primary"> モジュール比較 </a>
+      <a href={resolveUrl('/quality')} class="btn btn-secondary"> 品質ダッシュボード </a>
+    </div>
+  </div>
+</PageLayout>
