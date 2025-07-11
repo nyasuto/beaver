@@ -76,6 +76,24 @@ export class IssueClassificationEngine {
       topClassifications
     );
 
+    // Add priority label information to classifications if present
+    const existingLabels = issue.labels.map(label => label.name.toLowerCase());
+    const priorityLabelFound = existingLabels.find(label => label.includes('priority:'));
+    if (priorityLabelFound) {
+      const priorityReason = `Has priority label: "${priorityLabelFound}"`;
+      if (topClassifications.length > 0 && topClassifications[0]) {
+        topClassifications[0].reasons.push(priorityReason);
+      } else {
+        // Create a synthetic classification for priority label
+        topClassifications.push({
+          category: 'question',
+          confidence: 0.8,
+          reasons: [priorityReason],
+          keywords: [],
+        });
+      }
+    }
+
     const processingTime = Date.now() - startTime;
 
     return {
@@ -271,12 +289,42 @@ export class IssueClassificationEngine {
   }
 
   /**
-   * Estimate priority based on classifications
+   * Estimate priority based on classifications and existing labels
    */
-  private estimatePriority(
-    _issue: Issue,
-    classifications: CategoryClassification[]
-  ): PriorityLevel {
+  private estimatePriority(issue: Issue, classifications: CategoryClassification[]): PriorityLevel {
+    // First, check existing priority labels (highest priority)
+    const existingLabels = issue.labels.map(label => label.name.toLowerCase());
+
+    if (
+      existingLabels.some(
+        label => label.includes('priority: critical') || label.includes('priority:critical')
+      )
+    ) {
+      return 'critical';
+    }
+    if (
+      existingLabels.some(
+        label => label.includes('priority: high') || label.includes('priority:high')
+      )
+    ) {
+      return 'high';
+    }
+    if (
+      existingLabels.some(
+        label => label.includes('priority: medium') || label.includes('priority:medium')
+      )
+    ) {
+      return 'medium';
+    }
+    if (
+      existingLabels.some(
+        label => label.includes('priority: low') || label.includes('priority:low')
+      )
+    ) {
+      return 'low';
+    }
+
+    // Fallback to classification-based priority estimation
     if (classifications.length === 0) return 'low';
 
     // Check for security or critical bugs
