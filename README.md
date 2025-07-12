@@ -438,42 +438,6 @@ env:
    # owner/repositoryは自動取得されるため設定不要
    ```
 
-### 🔗 動的リンク生成機能
-
-Beaver v2では、Codecovへのリンクが動的に生成されます：
-
-- **自動URL生成**: `src/data/github/metadata.json` からリポジトリ情報を読み取り
-- **設定不要**: 手動でowner/repository名を設定する必要なし  
-- **環境対応**: 開発・本番環境で自動的に適切なURLを生成
-
-### 🛠️ 技術的改善点
-
-**最近の実装改善 (Issue #234対応):**
-
-1. **TypeScript JSON モジュール対応**
-   ```typescript
-   // src/env.d.ts で JSON インポートを型安全に
-   declare module '*.json' {
-     const value: any;
-     export default value;
-   }
-   ```
-
-2. **CI/CD最適化**
-   ```makefile
-   # Makefile: CI環境での適切なフォーマットチェック
-   quality: npm run format:check  # ファイル変更を防止
-   ```
-
-3. **動的URL生成パターン**
-   ```typescript
-   // 設定に依存しない柔軟な URL 生成
-   const generateCodecovUrl = () => {
-     const { owner, name } = githubMetadata.repository;
-     return `https://codecov.io/gh/${owner}/${name}`;
-   };
-   ```
-
 ## 📄 ライセンス
 
 MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
