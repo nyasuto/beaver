@@ -291,48 +291,6 @@ export class StatsService {
   }
 
   /**
-   * ラベルから優先度を抽出
-   * @deprecated Use Enhanced Classification Engine instead
-   * @see getClassificationEngine()
-   */
-  private extractPriorityFromLabels(
-    labels: Array<{ name: string }>
-  ): keyof UnifiedStats['priority'] {
-    const labelNames = labels.map(label => label.name.toLowerCase());
-
-    if (
-      labelNames.some(
-        name =>
-          name.includes('priority: critical') ||
-          name.includes('critical') ||
-          name.includes('urgent')
-      )
-    ) {
-      return 'critical';
-    }
-    if (
-      labelNames.some(
-        name =>
-          name.includes('priority: high') || name.includes('high') || name.includes('important')
-      )
-    ) {
-      return 'high';
-    }
-    if (
-      labelNames.some(
-        name =>
-          name.includes('priority: medium') || name.includes('medium') || name.includes('normal')
-      )
-    ) {
-      return 'medium';
-    }
-    if (labelNames.some(name => name.includes('priority: low') || name.includes('low'))) {
-      return 'low';
-    }
-    return 'low';
-  }
-
-  /**
    * ラベル統計を計算
    */
   private calculateLabelStats(issues: Issue[]): UnifiedStats['labels'] {
@@ -534,28 +492,6 @@ export class StatsService {
       dependencies: '📦 依存関係',
     };
     return categoryMap[category] || '📋 その他';
-  }
-
-  /**
-   * ラベルからカテゴリを抽出
-   * @deprecated Use Enhanced Classification Engine instead
-   * @see getClassificationEngine()
-   */
-  private extractCategoryFromLabels(labels: Array<{ name: string }>): string {
-    const labelNames = labels.map(label => label.name.toLowerCase());
-
-    if (labelNames.some(name => name.includes('bug') || name.includes('error'))) return 'bug';
-    if (labelNames.some(name => name.includes('security'))) return 'security';
-    if (labelNames.some(name => name.includes('feature'))) return 'feature';
-    if (labelNames.some(name => name.includes('enhancement'))) return 'enhancement';
-    if (labelNames.some(name => name.includes('performance'))) return 'performance';
-    if (labelNames.some(name => name.includes('documentation') || name.includes('docs')))
-      return 'documentation';
-    if (labelNames.some(name => name.includes('question'))) return 'question';
-    if (labelNames.some(name => name.includes('test'))) return 'test';
-    if (labelNames.some(name => name.includes('refactor'))) return 'refactor';
-
-    return 'enhancement';
   }
 
   /**
