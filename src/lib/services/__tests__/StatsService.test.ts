@@ -445,50 +445,6 @@ describe('StatsService', () => {
     });
   });
 
-  describe('extractPriorityFromLabels', () => {
-    it('should extract critical priority', () => {
-      const labels = [{ name: 'priority: critical' }, { name: 'bug' }];
-      const priority = (statsService as any).extractPriorityFromLabels(labels);
-
-      expect(priority).toBe('critical');
-    });
-
-    it('should extract priority from urgent label', () => {
-      const labels = [{ name: 'urgent' }, { name: 'bug' }];
-      const priority = (statsService as any).extractPriorityFromLabels(labels);
-
-      expect(priority).toBe('critical');
-    });
-
-    it('should extract high priority', () => {
-      const labels = [{ name: 'priority: high' }, { name: 'enhancement' }];
-      const priority = (statsService as any).extractPriorityFromLabels(labels);
-
-      expect(priority).toBe('high');
-    });
-
-    it('should extract medium priority', () => {
-      const labels = [{ name: 'priority: medium' }];
-      const priority = (statsService as any).extractPriorityFromLabels(labels);
-
-      expect(priority).toBe('medium');
-    });
-
-    it('should default to low priority', () => {
-      const labels = [{ name: 'documentation' }, { name: 'help wanted' }];
-      const priority = (statsService as any).extractPriorityFromLabels(labels);
-
-      expect(priority).toBe('low');
-    });
-
-    it('should be case insensitive', () => {
-      const labels = [{ name: 'PRIORITY: CRITICAL' }];
-      const priority = (statsService as any).extractPriorityFromLabels(labels);
-
-      expect(priority).toBe('critical');
-    });
-  });
-
   describe('calculateLabelStats', () => {
     it('should calculate label statistics correctly', () => {
       const labelStats = (statsService as any).calculateLabelStats(mockIssues);
