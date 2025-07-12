@@ -7,6 +7,7 @@
 
 import type { Issue } from '../schemas/github';
 import { createClassificationEngine } from '../classification/engine';
+import { enhancedConfigManager } from '../classification/enhanced-config-manager';
 
 /**
  * 優先度統計の型定義
@@ -358,6 +359,18 @@ export class StatsCalculations {
       return 100;
     }
 
+    // Get configurable health scoring parameters
+    const configResult = await enhancedConfigManager.loadConfig();
+    const config = configResult.config;
+    const healthScoring = config.healthScoring;
+
+    const openIssueThreshold = healthScoring?.openIssueThreshold ?? 0.7;
+    const openIssueWeight = healthScoring?.openIssueWeight ?? 100;
+    const criticalIssueWeight = healthScoring?.criticalIssueWeight ?? 20;
+    const inactivityPenalty = healthScoring?.inactivityPenalty ?? 15;
+    const resolutionTimeThreshold = healthScoring?.resolutionTimeThreshold ?? 168;
+    const resolutionTimeWeight = healthScoring?.resolutionTimeWeight ?? 20;
+
     const total = issues.length;
     const open = issues.filter(issue => issue.state === 'open').length;
     const priorityStats = await this.calculatePriorityStats(issues);
@@ -370,22 +383,21 @@ export class StatsCalculations {
 
     // オープンな Issue の割合（多すぎると減点）
     const openRatio = open / total;
-    if (openRatio > 0.7) {
-      score -= (openRatio - 0.7) * 100; // 70%を超えると減点
+    if (openRatio > openIssueThreshold) {
+      score -= (openRatio - openIssueThreshold) * openIssueWeight;
     }
 
     // クリティカルな Issue の存在（大幅減点）
-    score -= critical * 20;
+    score -= critical * criticalIssueWeight;
 
     // 最近の活動がない場合（減点）
     if (recentActivity === 0 && open > 0) {
-      score -= 15;
+      score -= inactivityPenalty;
     }
 
     // 平均解決時間が長い場合（減点）
-    if (avgResolutionTime > 168) {
-      // 1週間以上
-      score -= Math.min((avgResolutionTime - 168) / 24, 20); // 最大20点減点
+    if (avgResolutionTime > resolutionTimeThreshold) {
+      score -= Math.min((avgResolutionTime - resolutionTimeThreshold) / 24, resolutionTimeWeight);
     }
 
     return Math.max(0, Math.min(100, Math.round(score)));

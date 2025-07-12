@@ -13,6 +13,7 @@ import type {
   SafeChartOptions,
   TimeSeriesPoint,
 } from '../../components/charts/types/safe-chart';
+import { enhancedConfigManager } from '../classification/enhanced-config-manager';
 /**
  * Performance metrics interface (standalone to replace analytics dependency)
  */
@@ -205,18 +206,23 @@ export function convertPieData(
 /**
  * Convert classification data to chart format (supports both legacy and enhanced)
  */
-export function convertClassificationData(classifications: IssueClassification[]): {
+export async function convertClassificationData(classifications: IssueClassification[]): Promise<{
   categoryDistribution: SafeChartData<'pie'>;
   priorityDistribution: SafeChartData<'bar'>;
   confidenceDistribution: SafeChartData<'bar'>;
-} {
+}> {
+  // Get configurable display ranges
+  const configResult = await enhancedConfigManager.loadConfig();
+  const config = configResult.config;
+  const displayRanges = config.displayRanges;
+
   // Calculate category distribution
   const categoryCount: Record<string, number> = {};
   const priorityCount: Record<string, number> = {};
   const confidenceRanges: Record<string, number> = {
-    'Low (0-0.3)': 0,
-    'Medium (0.3-0.7)': 0,
-    'High (0.7-1.0)': 0,
+    [displayRanges?.confidence?.low?.label ?? 'Low (0-0.3)']: 0,
+    [displayRanges?.confidence?.medium?.label ?? 'Medium (0.3-0.7)']: 0,
+    [displayRanges?.confidence?.high?.label ?? 'High (0.7-1.0)']: 0,
   };
 
   classifications.forEach(classification => {
@@ -228,14 +234,20 @@ export function convertClassificationData(classifications: IssueClassification[]
     priorityCount[classification.estimatedPriority] =
       (priorityCount[classification.estimatedPriority] || 0) + 1;
 
-    // Count confidence ranges
+    // Count confidence ranges using configurable thresholds
     const confidence = classification.primaryConfidence;
-    if (confidence < 0.3) {
-      confidenceRanges['Low (0-0.3)'] = (confidenceRanges['Low (0-0.3)'] || 0) + 1;
-    } else if (confidence < 0.7) {
-      confidenceRanges['Medium (0.3-0.7)'] = (confidenceRanges['Medium (0.3-0.7)'] || 0) + 1;
+    const lowMax = displayRanges?.confidence?.low?.max ?? 0.3;
+    const mediumMax = displayRanges?.confidence?.medium?.max ?? 0.7;
+    const lowLabel = displayRanges?.confidence?.low?.label ?? 'Low (0-0.3)';
+    const mediumLabel = displayRanges?.confidence?.medium?.label ?? 'Medium (0.3-0.7)';
+    const highLabel = displayRanges?.confidence?.high?.label ?? 'High (0.7-1.0)';
+
+    if (confidence < lowMax) {
+      confidenceRanges[lowLabel] = (confidenceRanges[lowLabel] || 0) + 1;
+    } else if (confidence < mediumMax) {
+      confidenceRanges[mediumLabel] = (confidenceRanges[mediumLabel] || 0) + 1;
     } else {
-      confidenceRanges['High (0.7-1.0)'] = (confidenceRanges['High (0.7-1.0)'] || 0) + 1;
+      confidenceRanges[highLabel] = (confidenceRanges[highLabel] || 0) + 1;
     }
   });
 
@@ -249,26 +261,33 @@ export function convertClassificationData(classifications: IssueClassification[]
 /**
  * Convert enhanced classification data to chart format
  */
-export function convertEnhancedClassificationData(classifications: EnhancedIssueClassification[]): {
+export async function convertEnhancedClassificationData(
+  classifications: EnhancedIssueClassification[]
+): Promise<{
   categoryDistribution: SafeChartData<'pie'>;
   priorityDistribution: SafeChartData<'bar'>;
   confidenceDistribution: SafeChartData<'bar'>;
   scoreDistribution: SafeChartData<'bar'>;
   scoreBreakdownChart: SafeChartData<'bar'>;
-} {
+}> {
+  // Get configurable display ranges
+  const configResult = await enhancedConfigManager.loadConfig();
+  const config = configResult.config;
+  const displayRanges = config.displayRanges;
+
   // Calculate category distribution
   const categoryCount: Record<string, number> = {};
   const priorityCount: Record<string, number> = {};
   const confidenceRanges: Record<string, number> = {
-    'Low (0-0.3)': 0,
-    'Medium (0.3-0.7)': 0,
-    'High (0.7-1.0)': 0,
+    [displayRanges?.confidence?.low?.label ?? 'Low (0-0.3)']: 0,
+    [displayRanges?.confidence?.medium?.label ?? 'Medium (0.3-0.7)']: 0,
+    [displayRanges?.confidence?.high?.label ?? 'High (0.7-1.0)']: 0,
   };
   const scoreRanges: Record<string, number> = {
-    'Low (0-25)': 0,
-    'Medium (25-50)': 0,
-    'High (50-75)': 0,
-    'Very High (75-100)': 0,
+    [displayRanges?.score?.low?.label ?? 'Low (0-25)']: 0,
+    [displayRanges?.score?.medium?.label ?? 'Medium (25-50)']: 0,
+    [displayRanges?.score?.high?.label ?? 'High (50-75)']: 0,
+    [displayRanges?.score?.veryHigh?.label ?? 'Very High (75-100)']: 0,
   };
 
   // Score breakdown accumulator
@@ -288,26 +307,40 @@ export function convertEnhancedClassificationData(classifications: EnhancedIssue
     priorityCount[classification.estimatedPriority] =
       (priorityCount[classification.estimatedPriority] || 0) + 1;
 
-    // Count confidence ranges
+    // Count confidence ranges using configurable thresholds
     const confidence = classification.primaryConfidence;
-    if (confidence < 0.3) {
-      confidenceRanges['Low (0-0.3)'] = (confidenceRanges['Low (0-0.3)'] || 0) + 1;
-    } else if (confidence < 0.7) {
-      confidenceRanges['Medium (0.3-0.7)'] = (confidenceRanges['Medium (0.3-0.7)'] || 0) + 1;
+    const confLowMax = displayRanges?.confidence?.low?.max ?? 0.3;
+    const confMediumMax = displayRanges?.confidence?.medium?.max ?? 0.7;
+    const confLowLabel = displayRanges?.confidence?.low?.label ?? 'Low (0-0.3)';
+    const confMediumLabel = displayRanges?.confidence?.medium?.label ?? 'Medium (0.3-0.7)';
+    const confHighLabel = displayRanges?.confidence?.high?.label ?? 'High (0.7-1.0)';
+
+    if (confidence < confLowMax) {
+      confidenceRanges[confLowLabel] = (confidenceRanges[confLowLabel] || 0) + 1;
+    } else if (confidence < confMediumMax) {
+      confidenceRanges[confMediumLabel] = (confidenceRanges[confMediumLabel] || 0) + 1;
     } else {
-      confidenceRanges['High (0.7-1.0)'] = (confidenceRanges['High (0.7-1.0)'] || 0) + 1;
+      confidenceRanges[confHighLabel] = (confidenceRanges[confHighLabel] || 0) + 1;
     }
 
-    // Count score ranges
+    // Count score ranges using configurable thresholds
     const score = classification.score;
-    if (score < 25) {
-      scoreRanges['Low (0-25)'] = (scoreRanges['Low (0-25)'] || 0) + 1;
-    } else if (score < 50) {
-      scoreRanges['Medium (25-50)'] = (scoreRanges['Medium (25-50)'] || 0) + 1;
-    } else if (score < 75) {
-      scoreRanges['High (50-75)'] = (scoreRanges['High (50-75)'] || 0) + 1;
+    const scoreLowMax = displayRanges?.score?.low?.max ?? 25;
+    const scoreMediumMax = displayRanges?.score?.medium?.max ?? 50;
+    const scoreHighMax = displayRanges?.score?.high?.max ?? 75;
+    const scoreLowLabel = displayRanges?.score?.low?.label ?? 'Low (0-25)';
+    const scoreMediumLabel = displayRanges?.score?.medium?.label ?? 'Medium (25-50)';
+    const scoreHighLabel = displayRanges?.score?.high?.label ?? 'High (50-75)';
+    const scoreVeryHighLabel = displayRanges?.score?.veryHigh?.label ?? 'Very High (75-100)';
+
+    if (score < scoreLowMax) {
+      scoreRanges[scoreLowLabel] = (scoreRanges[scoreLowLabel] || 0) + 1;
+    } else if (score < scoreMediumMax) {
+      scoreRanges[scoreMediumLabel] = (scoreRanges[scoreMediumLabel] || 0) + 1;
+    } else if (score < scoreHighMax) {
+      scoreRanges[scoreHighLabel] = (scoreRanges[scoreHighLabel] || 0) + 1;
     } else {
-      scoreRanges['Very High (75-100)'] = (scoreRanges['Very High (75-100)'] || 0) + 1;
+      scoreRanges[scoreVeryHighLabel] = (scoreRanges[scoreVeryHighLabel] || 0) + 1;
     }
 
     // Accumulate score breakdown
@@ -351,19 +384,19 @@ export function isEnhancedClassificationArray(
 /**
  * Universal classification data converter (auto-detects type)
  */
-export function convertClassificationDataUniversal(
+export async function convertClassificationDataUniversal(
   classifications: IssueClassification[] | EnhancedIssueClassification[]
-): {
+): Promise<{
   categoryDistribution: SafeChartData<'pie'>;
   priorityDistribution: SafeChartData<'bar'>;
   confidenceDistribution: SafeChartData<'bar'>;
   scoreDistribution?: SafeChartData<'bar'>;
   scoreBreakdownChart?: SafeChartData<'bar'>;
-} {
+}> {
   if (isEnhancedClassificationArray(classifications)) {
-    return convertEnhancedClassificationData(classifications);
+    return await convertEnhancedClassificationData(classifications);
   } else {
-    return convertClassificationData(classifications);
+    return await convertClassificationData(classifications);
   }
 }
 

@@ -324,6 +324,141 @@ export type PerformanceConfig = z.infer<typeof PerformanceConfigSchema>;
 /**
  * Enhanced classification configuration
  */
+/**
+ * Scoring thresholds configuration for hardcoded values
+ */
+export const ScoringThresholdsSchema = z.object({
+  keywordScores: z.object({
+    titleKeyword: z.number().min(0).max(1).default(0.3),
+    bodyKeyword: z.number().min(0).max(1).default(0.2),
+    labelMatch: z.number().min(0).max(1).default(0.4),
+    titlePattern: z.number().min(0).max(1).default(0.25),
+    bodyPattern: z.number().min(0).max(1).default(0.2),
+  }),
+  confidenceThresholds: z.object({
+    securityMinConfidence: z.number().min(0).max(1).default(0.7),
+    bugMinConfidence: z.number().min(0).max(1).default(0.7),
+    priorityConfidenceMultiplier: z.number().min(0).max(5).default(1.2),
+  }),
+  fallbackScoring: z.object({
+    baseScore: z.number().min(0).max(100).default(50),
+    categoryScore: z.number().min(0).max(100).default(20),
+    priorityScore: z.number().min(0).max(100).default(15),
+    confidenceScore: z.number().min(0).max(100).default(10),
+    recencyScore: z.number().min(0).max(100).default(5),
+  }),
+});
+
+export type ScoringThresholds = z.infer<typeof ScoringThresholdsSchema>;
+
+/**
+ * Priority scoring configuration
+ */
+export const PriorityScoringSchema = z.object({
+  critical: z.number().min(0).max(100).default(30),
+  high: z.number().min(0).max(100).default(20),
+  medium: z.number().min(0).max(100).default(10),
+  low: z.number().min(0).max(100).default(5),
+  default: z.number().min(0).max(100).default(10),
+});
+
+export type PriorityScoring = z.infer<typeof PriorityScoringSchema>;
+
+/**
+ * Category scoring configuration
+ */
+export const CategoryScoringSchema = z.object({
+  security: z.number().min(0).max(100).default(25),
+  bug: z.number().min(0).max(100).default(15),
+  performance: z.number().min(0).max(100).default(10),
+  feature: z.number().min(0).max(100).default(8),
+  enhancement: z.number().min(0).max(100).default(5),
+  default: z.number().min(0).max(100).default(5),
+});
+
+export type CategoryScoring = z.infer<typeof CategoryScoringSchema>;
+
+/**
+ * Task recommendation configuration
+ */
+export const TaskRecommendationConfigSchema = z.object({
+  fallbackScore: z.object({
+    baseScore: z.number().min(0).max(100).default(50),
+    scoreDecrement: z.number().min(0).max(20).default(5),
+  }),
+  scoreBreakdown: z.object({
+    categoryWeight: z.number().min(0).max(1).default(0.5),
+  }),
+  labelBonus: z.object({
+    labelWeight: z.number().min(0).max(10).default(2),
+    maxBonus: z.number().min(0).max(50).default(10),
+  }),
+});
+
+export type TaskRecommendationConfig = z.infer<typeof TaskRecommendationConfigSchema>;
+
+/**
+ * Health scoring configuration
+ */
+export const HealthScoringSchema = z.object({
+  openIssueThreshold: z.number().min(0).max(1).default(0.7),
+  openIssueWeight: z.number().min(0).max(200).default(100),
+  criticalIssueWeight: z.number().min(0).max(50).default(20),
+  inactivityPenalty: z.number().min(0).max(50).default(15),
+  resolutionTimeThreshold: z.number().min(0).max(1000).default(168),
+  resolutionTimeWeight: z.number().min(0).max(50).default(20),
+  trendStabilityThreshold: z.number().min(0).max(50).default(10),
+});
+
+export type HealthScoring = z.infer<typeof HealthScoringSchema>;
+
+/**
+ * Display ranges configuration
+ */
+export const DisplayRangesSchema = z.object({
+  confidence: z.object({
+    low: z.object({
+      min: z.number().min(0).max(1).default(0),
+      max: z.number().min(0).max(1).default(0.3),
+      label: z.string().default('Low (0-0.3)'),
+    }),
+    medium: z.object({
+      min: z.number().min(0).max(1).default(0.3),
+      max: z.number().min(0).max(1).default(0.7),
+      label: z.string().default('Medium (0.3-0.7)'),
+    }),
+    high: z.object({
+      min: z.number().min(0).max(1).default(0.7),
+      max: z.number().min(0).max(1).default(1.0),
+      label: z.string().default('High (0.7-1.0)'),
+    }),
+  }),
+  score: z.object({
+    low: z.object({
+      min: z.number().min(0).max(100).default(0),
+      max: z.number().min(0).max(100).default(25),
+      label: z.string().default('Low (0-25)'),
+    }),
+    medium: z.object({
+      min: z.number().min(0).max(100).default(25),
+      max: z.number().min(0).max(100).default(50),
+      label: z.string().default('Medium (25-50)'),
+    }),
+    high: z.object({
+      min: z.number().min(0).max(100).default(50),
+      max: z.number().min(0).max(100).default(75),
+      label: z.string().default('High (50-75)'),
+    }),
+    veryHigh: z.object({
+      min: z.number().min(0).max(100).default(75),
+      max: z.number().min(0).max(100).default(100),
+      label: z.string().default('Very High (75-100)'),
+    }),
+  }),
+});
+
+export type DisplayRanges = z.infer<typeof DisplayRangesSchema>;
+
 export const EnhancedClassificationConfigSchema = ClassificationConfigSchema.extend({
   // Repository-specific configurations
   repositories: z
@@ -356,6 +491,16 @@ export const EnhancedClassificationConfigSchema = ClassificationConfigSchema.ext
     .record(z.string(), z.unknown())
     .optional()
     .describe('Environment-specific configuration overrides'),
+
+  // New sections for hardcoded values
+  scoringThresholds: ScoringThresholdsSchema.optional().describe('Scoring threshold configuration'),
+  priorityScoring: PriorityScoringSchema.optional().describe('Priority scoring weights'),
+  categoryScoring: CategoryScoringSchema.optional().describe('Category scoring weights'),
+  taskRecommendation: TaskRecommendationConfigSchema.optional().describe(
+    'Task recommendation configuration'
+  ),
+  healthScoring: HealthScoringSchema.optional().describe('Health score calculation parameters'),
+  displayRanges: DisplayRangesSchema.optional().describe('Display range configuration for charts'),
 
   // Metadata
   metadata: z
@@ -597,6 +742,83 @@ export const DEFAULT_ENHANCED_CONFIG: EnhancedClassificationConfig = {
     },
     precomputation: {
       enabled: false,
+    },
+  },
+  // Default scoring thresholds
+  scoringThresholds: {
+    keywordScores: {
+      titleKeyword: 0.3,
+      bodyKeyword: 0.2,
+      labelMatch: 0.4,
+      titlePattern: 0.25,
+      bodyPattern: 0.2,
+    },
+    confidenceThresholds: {
+      securityMinConfidence: 0.7,
+      bugMinConfidence: 0.7,
+      priorityConfidenceMultiplier: 1.2,
+    },
+    fallbackScoring: {
+      baseScore: 50,
+      categoryScore: 20,
+      priorityScore: 15,
+      confidenceScore: 10,
+      recencyScore: 5,
+    },
+  },
+  // Default priority scoring
+  priorityScoring: {
+    critical: 30,
+    high: 20,
+    medium: 10,
+    low: 5,
+    default: 10,
+  },
+  // Default category scoring
+  categoryScoring: {
+    security: 25,
+    bug: 15,
+    performance: 10,
+    feature: 8,
+    enhancement: 5,
+    default: 5,
+  },
+  // Default task recommendation config
+  taskRecommendation: {
+    fallbackScore: {
+      baseScore: 50,
+      scoreDecrement: 5,
+    },
+    scoreBreakdown: {
+      categoryWeight: 0.5,
+    },
+    labelBonus: {
+      labelWeight: 2,
+      maxBonus: 10,
+    },
+  },
+  // Default health scoring
+  healthScoring: {
+    openIssueThreshold: 0.7,
+    openIssueWeight: 100,
+    criticalIssueWeight: 20,
+    inactivityPenalty: 15,
+    resolutionTimeThreshold: 168,
+    resolutionTimeWeight: 20,
+    trendStabilityThreshold: 10,
+  },
+  // Default display ranges
+  displayRanges: {
+    confidence: {
+      low: { min: 0, max: 0.3, label: 'Low (0-0.3)' },
+      medium: { min: 0.3, max: 0.7, label: 'Medium (0.3-0.7)' },
+      high: { min: 0.7, max: 1.0, label: 'High (0.7-1.0)' },
+    },
+    score: {
+      low: { min: 0, max: 25, label: 'Low (0-25)' },
+      medium: { min: 25, max: 50, label: 'Medium (25-50)' },
+      high: { min: 50, max: 75, label: 'High (50-75)' },
+      veryHigh: { min: 75, max: 100, label: 'Very High (75-100)' },
     },
   },
   metadata: {
