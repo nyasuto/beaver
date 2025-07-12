@@ -20,6 +20,9 @@ import {
   CodecovApiError,
 } from '../../lib/quality/codecov';
 
+// リポジトリメタデータの読み込み
+import githubMetadata from '../../data/github/metadata.json';
+
 const title = '品質分析ダッシュボード';
 const description = 'Codecov APIを使用してコードカバレッジの品質分析を表示';
 
@@ -99,6 +102,14 @@ const coverageHistoryData = qualityData.history.map(entry => ({
   coverage: entry.coverage,
   // Only add branch coverage if we have actual data, don't fabricate it
 }));
+
+// 動的Codecov URL生成
+const generateCodecovUrl = () => {
+  const { owner, name } = githubMetadata.repository;
+  return `https://codecov.io/gh/${owner}/${name}`;
+};
+
+const codecovUrl = generateCodecovUrl();
 ---
 
 <PageLayout
@@ -256,7 +267,24 @@ const coverageHistoryData = qualityData.history.map(entry => ({
 
     <!-- API Status -->
     <div class="card">
-      <h2 class="text-lg font-semibold text-heading mb-4">🔗 API接続状況</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-heading">🔗 API接続状況</h2>
+        {isDataAvailable && (
+          <a
+            href={codecovUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+            aria-label="Codecovでプロジェクトを確認 (新しいタブで開きます)"
+            title="Codecovでプロジェクトを確認"
+          >
+            <span>Codecovで確認</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+          </a>
+        )}
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h3 class="font-medium text-heading mb-2">データソース</h3>
