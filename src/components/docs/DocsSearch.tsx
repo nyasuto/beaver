@@ -24,12 +24,41 @@ interface SearchResponse {
   error?: string;
 }
 
-export default function DocsSearch() {
+interface DocsSearchProps {
+  placeholder?: string;
+  maxResults?: number;
+  language?: 'en' | 'ja';
+  baseUrl?: string;
+}
+
+const DEFAULT_TRANSLATIONS = {
+  en: {
+    placeholder: 'Search documentation...',
+    noResults: 'No results found',
+    searching: 'Searching...',
+  },
+  ja: {
+    placeholder: 'ドキュメントを検索...',
+    noResults: '結果が見つかりません',
+    searching: '検索中...',
+  },
+};
+
+export default function DocsSearch({
+  placeholder,
+  maxResults: _maxResults = 10,
+  language = 'ja',
+  baseUrl = '/docs',
+}: DocsSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  // Get translations
+  const translations = DEFAULT_TRANSLATIONS[language] || DEFAULT_TRANSLATIONS.en;
+  const searchPlaceholder = placeholder || translations.placeholder;
 
   const searchRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -117,7 +146,7 @@ export default function DocsSearch() {
   };
 
   const navigateToResult = (result: SearchResult) => {
-    window.location.href = `/docs/${result.slug}`;
+    window.location.href = `${baseUrl}/${result.slug}`;
   };
 
   const highlightQuery = (text: string, query: string) => {
@@ -147,7 +176,7 @@ export default function DocsSearch() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setIsOpen(true)}
-          placeholder="ドキュメントを検索..."
+          placeholder={searchPlaceholder}
           className="w-full px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
         />
 
@@ -226,7 +255,7 @@ export default function DocsSearch() {
             </div>
           ) : query.length >= 2 && !isLoading ? (
             <div className="px-4 py-6 text-center text-gray-500 text-sm">
-              「{query}」に関する結果が見つかりませんでした
+              {translations.noResults}
             </div>
           ) : null}
 

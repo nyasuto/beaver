@@ -5,19 +5,27 @@
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import { DocsService } from '../../lib/services/DocsService.js';
+import { getTranslator, getProjectInfo, getNavigationConfig } from '../../lib/config/docs.js';
+
+// Load configuration and translations
+const t = await getTranslator();
+const projectInfo = await getProjectInfo();
+const navConfig = await getNavigationConfig();
 
 // Collect all documentation
 const docsService = new DocsService();
 const docsCollection = await docsService.collectDocs();
 
-const pageTitle = 'ドキュメント';
-const pageDescription = 'Beaverの完全なドキュメント集 - セットアップから高度な機能まで';
+const pageTitle = t('docs.title');
+const pageDescription =
+  projectInfo.description ||
+  `${projectInfo.name}の完全なドキュメント集 - セットアップから高度な機能まで`;
 
-// Prepare category data for rendering
-const categoryTitles: Record<string, string> = {
-  documentation: '📖 ドキュメント',
-  general: '📄 一般',
-  overview: '🦫 概要',
+// Prepare category data for rendering using configuration
+const categoryTitles = navConfig.categories || {
+  documentation: t('category.documentation'),
+  general: t('category.general'),
+  overview: t('category.overview'),
 };
 
 const categoriesArray = Object.entries(docsCollection.categories).map(([categoryKey, docs]) => ({
@@ -25,53 +33,85 @@ const categoriesArray = Object.entries(docsCollection.categories).map(([category
   title: categoryTitles[categoryKey] || categoryKey,
   docs,
 }));
+
+// Use configured quick links or defaults
+const quickLinks = navConfig.quickLinks || [
+  {
+    title: t('docs.quickStart'),
+    href: '/docs/readme',
+    icon: '🚀',
+    description: t('quickStart.github.description'),
+    color: 'blue' as const,
+  },
+  {
+    title: t('docs.developerGuide'),
+    href: '/docs/local-development',
+    icon: '🛠️',
+    description: t('quickStart.development.description'),
+    color: 'green' as const,
+  },
+  {
+    title: t('docs.configuration'),
+    href: '/docs/configuration',
+    icon: '🔧',
+    description: t('quickStart.configuration.description'),
+    color: 'purple' as const,
+  },
+];
 ---
 
 <PageLayout title={pageTitle} description={pageDescription}>
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-4">📚 {pageTitle}</h1>
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{projectInfo.emoji || '📚'} {pageTitle}</h1>
       <p class="text-xl text-gray-600 max-w-3xl">
         {pageDescription}
       </p>
     </div>
 
     <!-- Quick Links -->
-    <div class="grid md:grid-cols-3 gap-6 mb-12">
-      <div class="border border-blue-200 bg-blue-50 rounded-lg">
-        <div class="p-6">
-          <div class="text-blue-600 text-2xl mb-2">🚀</div>
-          <h3 class="font-semibold text-lg mb-2">クイックスタート</h3>
-          <p class="text-gray-600 mb-4">GitHub Actionとして数分で導入</p>
-          <a href="/docs/readme" class="text-blue-600 hover:text-blue-800 font-medium">
-            始める →
-          </a>
-        </div>
-      </div>
+    {
+      navConfig.showQuickLinks && quickLinks && quickLinks.length > 0 && (
+        <div class="grid md:grid-cols-3 gap-6 mb-12">
+          {quickLinks.slice(0, 3).map((link: any) => {
+            const colorClasses = {
+              blue: 'border-blue-200 bg-blue-50',
+              green: 'border-green-200 bg-green-50',
+              purple: 'border-purple-200 bg-purple-50',
+              red: 'border-red-200 bg-red-50',
+              yellow: 'border-yellow-200 bg-yellow-50',
+              gray: 'border-gray-200 bg-gray-50',
+            } as const;
+            const textColorClasses = {
+              blue: 'text-blue-600 hover:text-blue-800',
+              green: 'text-green-600 hover:text-green-800',
+              purple: 'text-purple-600 hover:text-purple-800',
+              red: 'text-red-600 hover:text-red-800',
+              yellow: 'text-yellow-600 hover:text-yellow-800',
+              gray: 'text-gray-600 hover:text-gray-800',
+            } as const;
+            const color = link.color || 'blue';
+            const borderBg = colorClasses[color as keyof typeof colorClasses] || colorClasses.blue;
+            const textColor =
+              textColorClasses[color as keyof typeof textColorClasses] || textColorClasses.blue;
 
-      <div class="border border-green-200 bg-green-50 rounded-lg">
-        <div class="p-6">
-          <div class="text-green-600 text-2xl mb-2">🛠️</div>
-          <h3 class="font-semibold text-lg mb-2">開発者ガイド</h3>
-          <p class="text-gray-600 mb-4">ローカル開発とカスタマイズ</p>
-          <a href="/docs/local-development" class="text-green-600 hover:text-green-800 font-medium">
-            開発開始 →
-          </a>
+            return (
+              <div class={`border rounded-lg ${borderBg}`}>
+                <div class="p-6">
+                  <div class={`text-2xl mb-2 ${textColor.split(' ')[0]}`}>{link.icon || '📄'}</div>
+                  <h3 class="font-semibold text-lg mb-2">{link.title}</h3>
+                  <p class="text-gray-600 mb-4">{link.description}</p>
+                  <a href={link.href} class={`font-medium ${textColor}`}>
+                    {t('action.getStarted')}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
-
-      <div class="border border-purple-200 bg-purple-50 rounded-lg">
-        <div class="p-6">
-          <div class="text-purple-600 text-2xl mb-2">🔧</div>
-          <h3 class="font-semibold text-lg mb-2">詳細設定</h3>
-          <p class="text-gray-600 mb-4">高度な機能とセキュリティ</p>
-          <a href="/docs/configuration" class="text-purple-600 hover:text-purple-800 font-medium">
-            設定する →
-          </a>
-        </div>
-      </div>
-    </div>
+      )
+    }
 
     {
       categoriesArray.map(category => (
@@ -116,10 +156,9 @@ const categoriesArray = Object.entries(docsCollection.categories).map(([category
     }
 
     <div class="mt-12 p-6 bg-gray-50 rounded-lg">
-      <h3 class="font-semibold text-lg mb-2">🔍 ドキュメント検索</h3>
+      <h3 class="font-semibold text-lg mb-2">🔍 {t('docs.search.placeholder')}</h3>
       <p class="text-gray-600">
-        特定の情報をお探しの場合は、各ページでブラウザの検索機能（Ctrl+F / Cmd+F）をご利用ください。
-        高度な検索機能も今後追加予定です。
+        {t('docs.search.hint')}
       </p>
     </div>
   </div>

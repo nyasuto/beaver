@@ -6,6 +6,13 @@
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import DocsLayout from '../../components/docs/DocsLayout.astro';
 import { DocsService } from '../../lib/services/DocsService.js';
+import {
+  getTranslator,
+  getProjectInfo,
+  getUIConfig,
+  buildEditUrl,
+  buildNavUrl,
+} from '../../lib/config/docs.js';
 
 export async function getStaticPaths() {
   const docsService = new DocsService();
@@ -19,11 +26,17 @@ export async function getStaticPaths() {
 
 const { doc, navigation } = Astro.props;
 
+// Load configuration and translations
+const t = await getTranslator();
+const projectInfo = await getProjectInfo();
+const uiConfig = await getUIConfig();
+
 if (!doc) {
-  return Astro.redirect('/docs');
+  const docsBaseUrl = await buildNavUrl('');
+  return Astro.redirect(docsBaseUrl);
 }
 
-const pageTitle = `${doc.metadata.title} - Beaver Documentation`;
+const pageTitle = `${doc.metadata.title} - ${projectInfo.name} ${t('docs.title')}`;
 const pageDescription = doc.metadata.description || `${doc.metadata.title}に関するドキュメント`;
 ---
 
@@ -32,7 +45,7 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
     <!-- Breadcrumbs -->
     <nav class="mb-6 text-sm">
       <ol class="flex items-center space-x-2 text-gray-500">
-        <li><a href="/docs" class="hover:text-blue-600">ドキュメント</a></li>
+        <li><a href={await buildNavUrl('')} class="hover:text-blue-600">{t('docs.title')}</a></li>
         {
           doc.breadcrumbs.slice(1).map((crumb, _index) => (
             <li class="flex items-center space-x-2">
@@ -61,9 +74,32 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
 
       <!-- Document Meta -->
       <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
-        <span>📖 {doc.readingTime}分で読める</span>
-        <span>📝 {doc.wordCount}語</span>
-        <span>📅 {doc.metadata.lastModified.toLocaleDateString('ja-JP')}</span>
+        {
+          uiConfig.showReadingTime && (
+            <span>
+              📖 {doc.readingTime}
+              {t('docs.readingTime')}
+            </span>
+          )
+        }
+        {
+          uiConfig.showWordCount && (
+            <span>
+              📝 {doc.wordCount}
+              {t('docs.wordCount')}
+            </span>
+          )
+        }
+        {
+          uiConfig.showLastModified && (
+            <span>
+              📅{' '}
+              {doc.metadata.lastModified.toLocaleDateString(
+                uiConfig.language === 'ja' ? 'ja-JP' : 'en-US'
+              )}
+            </span>
+          )
+        }
       </div>
 
       <!-- Tags -->
@@ -80,9 +116,9 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
 
     <!-- Table of Contents (if sections exist) -->
     {
-      doc.sections.length > 0 && (
+      uiConfig.showTableOfContents && doc.sections.length > 0 && (
         <div class="mb-8 p-4 bg-gray-50 rounded-lg">
-          <h2 class="font-semibold text-lg mb-3">📋 目次</h2>
+          <h2 class="font-semibold text-lg mb-3">📋 {t('docs.tableOfContents')}</h2>
           <nav>
             <ul class="space-y-1">
               {doc.sections.map(section => (
@@ -106,27 +142,37 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
     <!-- Document Footer -->
     <footer class="mt-12 pt-8 border-t border-gray-200">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="text-sm text-gray-500">
-          最終更新: {
-            doc.metadata.lastModified.toLocaleDateString('ja-JP', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })
-          }
-        </div>
+        {
+          uiConfig.showLastModified && (
+            <div class="text-sm text-gray-500">
+              {t('docs.lastModified')}:{' '}
+              {doc.metadata.lastModified.toLocaleDateString(
+                uiConfig.language === 'ja' ? 'ja-JP' : 'en-US',
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                }
+              )}
+            </div>
+          )
+        }
 
         <div class="flex items-center gap-4">
-          <a
-            href={`https://github.com/nyasuto/beaver/edit/main/${doc.path.replace(process.cwd() + '/', '')}`}
-            class="text-sm text-blue-600 hover:text-blue-800"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            📝 このページを編集
-          </a>
-          <a href="/docs" class="text-sm text-gray-600 hover:text-gray-800">
-            📚 ドキュメント一覧に戻る
+          {
+            uiConfig.showEditLink && projectInfo.editBaseUrl && (
+              <a
+                href={await buildEditUrl(doc.path)}
+                class="text-sm text-blue-600 hover:text-blue-800"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                📝 {t('docs.editPage')}
+              </a>
+            )
+          }
+          <a href={await buildNavUrl('')} class="text-sm text-gray-600 hover:text-gray-800">
+            📚 {t('docs.backToList')}
           </a>
         </div>
       </div>

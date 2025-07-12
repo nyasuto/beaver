@@ -1,9 +1,18 @@
 ---
 /**
  * Layout component for documentation pages with sidebar navigation
+ * Now fully configurable via docs.config.ts
  */
 
 import type { ProcessedDoc, DocNavigation } from '../../lib/types/docs.js';
+import {
+  getDocsConfig,
+  getTranslator,
+  getProjectInfo,
+  getUIConfig,
+  getPathConfig,
+  buildNavUrl,
+} from '../../lib/config/docs.js';
 
 interface Props {
   doc: ProcessedDoc;
@@ -11,9 +20,34 @@ interface Props {
 }
 
 const { doc, navigation } = Astro.props;
+
+// Load configuration and translations
+const config = await getDocsConfig();
+const t = await getTranslator();
+const projectInfo = await getProjectInfo();
+const uiConfig = await getUIConfig();
+const pathConfig = await getPathConfig();
+
+// Build project title
+const projectTitle = `${projectInfo.emoji || ''} ${projectInfo.name} ${t('docs.title')}`.trim();
+const docsBaseUrl = await buildNavUrl('');
+
+// Prepare search configuration for client-side
+const searchConfig = {
+  placeholder: config.search?.placeholder || t('docs.search.placeholder'),
+  maxResults: config.search?.maxResults || 10,
+  language: uiConfig.language || 'ja',
+  baseUrl: pathConfig.baseUrl,
+};
 ---
 
-<div class="flex min-h-screen bg-white">
+<div
+  class="flex min-h-screen bg-white"
+  data-search-placeholder={searchConfig.placeholder}
+  data-search-max-results={searchConfig.maxResults.toString()}
+  data-search-language={searchConfig.language}
+  data-docs-base-url={searchConfig.baseUrl}
+>
   <!-- Sidebar Navigation -->
   <aside
     class="hidden lg:block w-64 bg-gray-50 border-r border-gray-200 fixed h-full overflow-y-auto"
@@ -21,8 +55,8 @@ const { doc, navigation } = Astro.props;
     <div class="p-6">
       <!-- Logo/Header -->
       <div class="mb-8">
-        <a href="/docs" class="flex items-center text-xl font-bold text-gray-900">
-          🦫 Beaver Docs
+        <a href={docsBaseUrl} class="flex items-center text-xl font-bold text-gray-900">
+          {projectTitle}
         </a>
       </div>
 
@@ -79,26 +113,32 @@ const { doc, navigation } = Astro.props;
 
       <!-- Quick Links -->
       <div class="mt-8 pt-8 border-t border-gray-200">
-        <div class="text-sm font-medium text-gray-900 mb-3">クイックリンク</div>
+        <div class="text-sm font-medium text-gray-900 mb-3">{t('nav.quickLinks')}</div>
         <ul class="space-y-1 text-sm">
           <li>
-            <a href="/" class="text-gray-600 hover:text-gray-900"> 🏠 ホーム </a>
-          </li>
-          <li>
-            <a href="/issues" class="text-gray-600 hover:text-gray-900"> 📋 Issues </a>
-          </li>
-          <li>
-            <a href="/quality" class="text-gray-600 hover:text-gray-900"> 📊 品質ダッシュボード </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/nyasuto/beaver"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-gray-600 hover:text-gray-900"
-            >
-              🔗 GitHub
+            <a href={projectInfo.homeUrl || '/'} class="text-gray-600 hover:text-gray-900">
+              🏠 {t('nav.home')}
             </a>
+          </li>
+          <li>
+            <a href="/issues" class="text-gray-600 hover:text-gray-900"> 📋 {t('nav.issues')} </a>
+          </li>
+          <li>
+            <a href="/quality" class="text-gray-600 hover:text-gray-900"> 📊 {t('nav.quality')} </a>
+          </li>
+          <li>
+            {
+              projectInfo.githubUrl && (
+                <a
+                  href={projectInfo.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-600 hover:text-gray-900"
+                >
+                  🔗 {t('nav.github')}
+                </a>
+              )
+            }
           </li>
         </ul>
       </div>
@@ -110,7 +150,7 @@ const { doc, navigation } = Astro.props;
     <button
       id="mobile-menu-button"
       class="p-2 bg-white border border-gray-300 rounded-md shadow-sm"
-      aria-label="メニューを開く"
+      aria-label={t('mobile.openMenu')}
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -127,13 +167,13 @@ const { doc, navigation } = Astro.props;
     <aside class="w-64 bg-white h-full shadow-lg overflow-y-auto">
       <div class="p-6">
         <div class="flex items-center justify-between mb-8">
-          <a href="/docs" class="flex items-center text-xl font-bold text-gray-900">
-            🦫 Beaver Docs
+          <a href={docsBaseUrl} class="flex items-center text-xl font-bold text-gray-900">
+            {projectTitle}
           </a>
           <button
             id="mobile-menu-close"
             class="p-1 text-gray-400 hover:text-gray-600"
-            aria-label="メニューを閉じる"
+            aria-label={t('mobile.closeMenu')}
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -246,29 +286,41 @@ const { doc, navigation } = Astro.props;
       // Dynamic import of React and DocsSearch component
       const { createElement } = await import('react');
       const { createRoot } = await import('react-dom/client');
-      const { default: DocsSearch } = await import('./DocsSearch.tsx');
+      const { default: DocsSearch } = await import('./DocsSearch.js');
+
+      // Get search configuration from data attributes or defaults
+      const container = document.querySelector('[data-search-placeholder]') as HTMLElement;
+      const searchConfig = {
+        placeholder: container?.dataset?.['searchPlaceholder'] || 'ドキュメントを検索...',
+        maxResults: parseInt(container?.dataset?.['searchMaxResults'] || '10'),
+        language: (container?.dataset?.['searchLanguage'] as 'en' | 'ja') || 'ja',
+        baseUrl: container?.dataset?.['docsBaseUrl'] || '/docs',
+      };
 
       // Initialize desktop search
       const desktopContainer = document.getElementById('docs-search-container');
       if (desktopContainer) {
         const root = createRoot(desktopContainer);
-        root.render(createElement(DocsSearch));
+        root.render(createElement(DocsSearch, searchConfig));
       }
 
       // Initialize mobile search
       const mobileContainer = document.getElementById('mobile-docs-search-container');
       if (mobileContainer) {
         const root = createRoot(mobileContainer);
-        root.render(createElement(DocsSearch));
+        root.render(createElement(DocsSearch, searchConfig));
       }
     } catch (error) {
       console.warn('Failed to initialize search:', error);
 
-      // Fallback: simple search input
+      // Fallback: simple search input with configurable text
+      const container = document.querySelector('[data-search-placeholder]') as HTMLElement;
+      const fallbackPlaceholder =
+        (container?.dataset?.['searchPlaceholder'] || 'ドキュメント検索') + ' (近日公開)';
       const fallbackHTML = `
         <input 
           type="text" 
-          placeholder="ドキュメント検索（近日公開）"
+          placeholder="${fallbackPlaceholder}"
           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50"
           disabled
         />
