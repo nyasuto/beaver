@@ -488,11 +488,11 @@ export class ClassificationEngine {
    * Calculate enhanced score with customizable algorithm
    */
   private async calculateEnhancedScore(
-    issue: Issue,
-    classifications: CategoryClassification[],
-    primaryCategory: ClassificationCategory,
-    primaryConfidence: number,
-    estimatedPriority: PriorityLevel,
+    _issue: Issue,
+    _classifications: CategoryClassification[],
+    _primaryCategory: ClassificationCategory,
+    _primaryConfidence: number,
+    _estimatedPriority: PriorityLevel,
     scoringAlgorithm?: ScoringAlgorithm
   ): Promise<{ score: number; breakdown: any }> {
     const algorithm = scoringAlgorithm || this.config.scoringAlgorithm;
@@ -527,11 +527,11 @@ export class ClassificationEngine {
     };
 
     // Category score
-    const categoryWeight = this.config.categoryWeights?.[primaryCategory] ?? 0.5;
+    const categoryWeight = this.config.categoryWeights?.[_primaryCategory] ?? 0.5;
     breakdown.category = categoryWeight * weights.category;
 
     // Priority score
-    const priorityWeight = this.config.priorityWeights?.[estimatedPriority] ?? 0.5;
+    const priorityWeight = this.config.priorityWeights?.[_estimatedPriority] ?? 0.5;
     breakdown.priority = priorityWeight * weights.priority;
 
     // Confidence score removed - no longer part of scoreBreakdown
@@ -746,7 +746,7 @@ export class ClassificationEngine {
    * Calculate priority confidence
    */
   private async calculatePriorityConfidence(
-    priority: PriorityLevel,
+    _priority: PriorityLevel,
     classifications: CategoryClassification[]
   ): Promise<number> {
     if (classifications.length === 0) return 0.0;
@@ -827,5 +827,16 @@ export async function createClassificationEngine(repositoryContext?: {
   const config = await enhancedConfigManager.getEffectiveConfig(
     repositoryContext || { owner: '', repo: '' }
   );
+  return new ClassificationEngine(config);
+}
+
+/**
+ * Create classification engine for testing with forced config loading
+ */
+export async function createTestClassificationEngine(_repositoryContext?: {
+  owner: string;
+  repo: string;
+}): Promise<ClassificationEngine> {
+  const config = await enhancedConfigManager.forceLoadConfigFromFile();
   return new ClassificationEngine(config);
 }

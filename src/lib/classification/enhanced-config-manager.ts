@@ -12,7 +12,8 @@
 let fs: any, path: any;
 
 try {
-  if (typeof window === 'undefined') {
+  // Check for Node.js environment (including test environment)
+  if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions?.node) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     fs = require('fs');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -151,13 +152,40 @@ export class EnhancedConfigManager {
   }
 
   /**
+   * Force load configuration from file (for testing)
+   */
+  public async forceLoadConfigFromFile(): Promise<EnhancedClassificationConfig> {
+    try {
+      // Dynamic import for test environment
+      const { readFileSync } = await import('fs');
+      const { join } = await import('path');
+
+      const configPath = join(process.cwd(), 'src/data/config/default-classification.json');
+      const rawConfig = readFileSync(configPath, 'utf8');
+      const parsedConfig = JSON.parse(rawConfig);
+
+      if (this.isEnhancedConfig(parsedConfig)) {
+        return validateEnhancedConfig(parsedConfig);
+      } else {
+        return this.convertLegacyConfig(parsedConfig);
+      }
+    } catch (error) {
+      console.warn('Force load failed:', error);
+      return DEFAULT_ENHANCED_CONFIG;
+    }
+  }
+
+  /**
    * Load base configuration from file
    */
   private async loadBaseConfig(): Promise<EnhancedClassificationConfig> {
     // Browser environment - return default config
     if (!fs || !path) {
+      console.warn('Enhanced Config Manager: Running in browser environment, using default config');
       return DEFAULT_ENHANCED_CONFIG;
     }
+
+    console.log('Enhanced Config Manager: Running in Node.js environment, loading config files');
 
     for (const configPath of this.configPaths) {
       try {
