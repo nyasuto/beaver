@@ -6,6 +6,16 @@ BeaverはGitHub Issues・コミット・AI実験記録を自動的に構造化�
 
 ## 🚀 クイックスタート
 
+### ⚠️ 重要: 事前設定が必要です
+
+**必須: GitHub Pages設定**
+1. リポジトリの **Settings** タブに移動
+2. 左サイドバーで **Pages** をクリック
+3. **Source** を **Deploy from a branch** から **GitHub Actions** に変更
+4. **Save** をクリック
+
+⚠️ **この設定を忘れるとサイトが表示されません！**
+
 ### 最低限の設定
 
 ```yaml
@@ -47,7 +57,7 @@ jobs:
         uses: nyasuto/beaver@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}  # オプション
+          codecov-token: ${{ secrets.CODECOV_API_TOKEN }}  # オプション
           enable-quality-dashboard: true
           deploy-to-pages: true
 ```
@@ -59,16 +69,12 @@ jobs:
 - 📈 **品質ダッシュボード**: コードカバレッジ・モジュール分析
 - 🔍 **検索可能Wiki**: 構造化された開発知識
 
-### ⚠️ 重要な設定
-
-**GitHub Pages設定:**
-1. Repository Settings → Pages
-2. Source: **GitHub Actions** を選択
+### 🔧 追加設定
 
 **品質分析を使用する場合:**
 ```bash
 # Repository Settings → Secrets and variables → Actions
-CODECOV_TOKEN=your_codecov_token_here
+CODECOV_API_TOKEN=your_codecov_api_token_here
 ```
 
 ### 📋 設定オプション
@@ -76,7 +82,7 @@ CODECOV_TOKEN=your_codecov_token_here
 | パラメータ | 必須 | デフォルト | 説明 |
 |-----------|------|-----------|------|
 | `github-token` | ❌ | `${{ github.token }}` | GitHub API アクセス用トークン |
-| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用） |
+| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用、CODECOV_API_TOKEN） |
 | `enable-quality-dashboard` | ❌ | `true` | 品質ダッシュボードの有効化 |
 | `deploy-to-pages` | ❌ | `true` | GitHub Pages への自動デプロイ |
 
