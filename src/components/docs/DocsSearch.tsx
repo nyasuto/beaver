@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { resolveUrl } from '../../lib/utils/url.js';
 
 interface SearchResult {
   slug: string;
@@ -125,7 +126,9 @@ export default function DocsSearch({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(
+        resolveUrl(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`)
+      );
       const data: SearchResponse = await response.json();
 
       if (data.success && data.data) {

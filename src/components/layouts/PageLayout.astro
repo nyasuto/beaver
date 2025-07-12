@@ -94,7 +94,8 @@ const paddingClasses = {
 };
 
 // SEO and meta configuration
-const siteUrl = 'https://nyasuto.github.io/beaver';
+const baseUrl = import.meta.env.BASE_URL || '/beaver';
+const siteUrl = `https://nyasuto.github.io${baseUrl}`;
 const fullTitle = title.includes('Beaver') ? title : `${title} | Beaver Astro Edition`;
 const canonicalUrl = canonical || new URL(Astro.url.pathname, Astro.site).href;
 const ogImageUrl = ogImage || `${siteUrl}/og-image.png`;
@@ -177,14 +178,14 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
         "@type": "WebSite",
         "name": "Beaver Astro Edition",
         "description": "AI-first knowledge management system that transforms GitHub development activities into structured, persistent knowledge bases",
-        "url": "https://nyasuto.github.io/beaver",
+        "url": "${siteUrl}",
         "author": {
           "@type": "Organization",
           "name": "Beaver Team"
         },
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://nyasuto.github.io/beaver/search?q={search_term_string}",
+          "target": "${siteUrl}/search?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       }

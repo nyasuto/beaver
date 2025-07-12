@@ -10,7 +10,7 @@ import { createTestClassificationEngine } from '../src/lib/classification/engine
 import { z } from 'zod';
 
 // Load environment variables from .env file (GitHub Actions環境では不要)
-if (process.env.CI !== 'true') {
+if (process.env['CI'] !== 'true') {
   config();
 }
 
@@ -38,9 +38,9 @@ const EnvSchema = z.object({
  */
 function validateEnvironment() {
   const env = {
-    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-    GITHUB_OWNER: process.env.GITHUB_OWNER,
-    GITHUB_REPO: process.env.GITHUB_REPO,
+    GITHUB_TOKEN: process.env['GITHUB_TOKEN'],
+    GITHUB_OWNER: process.env['GITHUB_OWNER'],
+    GITHUB_REPO: process.env['GITHUB_REPO'],
   };
 
   try {

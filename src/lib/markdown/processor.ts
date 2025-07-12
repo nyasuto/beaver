@@ -130,11 +130,14 @@ export function calculateWordCount(content: string): number {
  * Resolve relative links in markdown content
  */
 export function resolveRelativeLinks(content: string, _basePath: string): string {
+  // Get base URL from environment variable (for dynamic deployment paths)
+  const baseUrl = process.env['BASE_URL'] ? process.env['BASE_URL'] : '/beaver';
+
   return content.replace(/\[([^\]]*)\]\((?!https?:\/\/)([^)]+\.md)\)/g, (match, text, link) => {
     // Convert relative markdown links to docs routes
     const resolvedLink = link
-      .replace(/^\.\//, '/docs/')
-      .replace(/^docs\//, '/docs/')
+      .replace(/^\.\//, `${baseUrl}/docs/`)
+      .replace(/^docs\//, `${baseUrl}/docs/`)
       .replace(/\.md$/, '');
 
     return `[${text}](${resolvedLink})`;

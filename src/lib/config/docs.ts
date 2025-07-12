@@ -167,6 +167,19 @@ export async function buildEditUrl(filePath: string): Promise<string | null> {
  * Utility to build navigation URLs
  */
 export async function buildNavUrl(path: string): Promise<string> {
+  // Use BASE_URL environment variable first (for GitHub Actions deployment)
+  const envBaseUrl = process.env['BASE_URL'];
+
+  if (envBaseUrl && envBaseUrl.trim() !== '') {
+    // Handle absolute paths by prepending BASE_URL
+    if (path.startsWith('/')) {
+      return `${envBaseUrl}${path}`;
+    }
+    // Handle relative paths by building from base + docs
+    return `${envBaseUrl}/docs/${path}`;
+  }
+
+  // Fallback to configuration
   const config = await getDocsConfig();
   const { baseUrl } = config.paths || {};
 
