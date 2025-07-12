@@ -12,6 +12,14 @@ on:
   issue_comment:
     types: [created, edited, deleted]
 
+# Global environment variables for all jobs
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_OWNER: ${{ github.repository_owner }}
+  GITHUB_REPO: ${{ github.event.repository.name }}
+  CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
 jobs:
   build-and-deploy:
     name: Build and Deploy to GitHub Pages
@@ -57,11 +65,6 @@ jobs:
       
       - name: Fetch GitHub data and build
         run: npm run build:full
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_OWNER: ${{ github.repository_owner }}
-          GITHUB_REPO: ${{ github.event.repository.name }}
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: false
       
       - name: Setup Pages
