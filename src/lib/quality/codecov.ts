@@ -63,6 +63,16 @@ function getCodecovConfig(): CodecovConfig {
     baseUrl: 'https://api.codecov.io',
   };
 
+  console.log('Environment variables for Codecov:', {
+    CODECOV_TOKEN: !!import.meta.env['CODECOV_TOKEN'],
+    CODECOV_OWNER: import.meta.env['CODECOV_OWNER'],
+    CODECOV_REPO: import.meta.env['CODECOV_REPO'],
+    GITHUB_OWNER: import.meta.env['GITHUB_OWNER'],
+    GITHUB_REPO: import.meta.env['GITHUB_REPO'],
+    finalOwner: config.owner,
+    finalRepo: config.repo,
+  });
+
   return CodecovConfigSchema.parse(config);
 }
 
@@ -77,13 +87,13 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
 
     const url = `${config.baseUrl}/api/v2/${config.service}/${config.owner}/${endpoint}`;
 
-    console.log('Making Codecov API request:', { 
-      url, 
-      endpoint, 
-      owner: config.owner, 
+    console.log('Making Codecov API request:', {
+      url,
+      endpoint,
+      owner: config.owner,
       repo: config.repo,
       tokenLength: config.token?.length || 0,
-      tokenPrefix: config.token?.substring(0, 8) + '...' || 'none'
+      tokenPrefix: config.token?.substring(0, 8) + '...' || 'none',
     });
 
     const response = await fetch(url, {
@@ -102,7 +112,9 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
     if (!response.ok) {
       const responseText = await response.text();
       console.error('Codecov API error response:', responseText);
-      throw new Error(`Codecov API error: ${response.status} ${response.statusText} - ${responseText}`);
+      throw new Error(
+        `Codecov API error: ${response.status} ${response.statusText} - ${responseText}`
+      );
     }
 
     const data = await response.json();
