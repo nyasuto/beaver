@@ -34,30 +34,7 @@ const categoriesArray = Object.entries(docsCollection.categories).map(([category
   docs,
 }));
 
-// Use configured quick links or defaults
-const quickLinks = navConfig.quickLinks || [
-  {
-    title: t('docs.quickStart'),
-    href: '/docs/readme',
-    icon: '🚀',
-    description: t('quickStart.github.description'),
-    color: 'blue' as const,
-  },
-  {
-    title: t('docs.developerGuide'),
-    href: '/docs/local-development',
-    icon: '🛠️',
-    description: t('quickStart.development.description'),
-    color: 'green' as const,
-  },
-  {
-    title: t('docs.configuration'),
-    href: '/docs/configuration',
-    icon: '🔧',
-    description: t('quickStart.configuration.description'),
-    color: 'purple' as const,
-  },
-];
+// Quick links removed as per user feedback
 ---
 
 <PageLayout title={pageTitle} description={pageDescription}>
@@ -70,48 +47,7 @@ const quickLinks = navConfig.quickLinks || [
       </p>
     </div>
 
-    <!-- Quick Links -->
-    {
-      navConfig.showQuickLinks && quickLinks && quickLinks.length > 0 && (
-        <div class="grid md:grid-cols-3 gap-6 mb-12">
-          {quickLinks.slice(0, 3).map((link: any) => {
-            const colorClasses = {
-              blue: 'border-blue-200 bg-blue-50',
-              green: 'border-green-200 bg-green-50',
-              purple: 'border-purple-200 bg-purple-50',
-              red: 'border-red-200 bg-red-50',
-              yellow: 'border-yellow-200 bg-yellow-50',
-              gray: 'border-gray-200 bg-gray-50',
-            } as const;
-            const textColorClasses = {
-              blue: 'text-blue-600 hover:text-blue-800',
-              green: 'text-green-600 hover:text-green-800',
-              purple: 'text-purple-600 hover:text-purple-800',
-              red: 'text-red-600 hover:text-red-800',
-              yellow: 'text-yellow-600 hover:text-yellow-800',
-              gray: 'text-gray-600 hover:text-gray-800',
-            } as const;
-            const color = link.color || 'blue';
-            const borderBg = colorClasses[color as keyof typeof colorClasses] || colorClasses.blue;
-            const textColor =
-              textColorClasses[color as keyof typeof textColorClasses] || textColorClasses.blue;
-
-            return (
-              <div class={`border rounded-lg ${borderBg}`}>
-                <div class="p-6">
-                  <div class={`text-2xl mb-2 ${textColor.split(' ')[0]}`}>{link.icon || '📄'}</div>
-                  <h3 class="font-semibold text-lg mb-2">{link.title}</h3>
-                  <p class="text-gray-600 mb-4">{link.description}</p>
-                  <a href={link.href} class={`font-medium ${textColor}`}>
-                    {t('action.getStarted')}
-                  </a>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )
-    }
+    <!-- Quick Links section removed as per user feedback -->
 
     {
       categoriesArray.map(category => (
