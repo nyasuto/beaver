@@ -151,13 +151,45 @@ async function getRepositoryCoverage(
 }
 
 /**
- * Get coverage trends over time
+ * Get coverage trends over time with explicit date range
  */
 async function getCoverageTrends(
   config: CodecovConfig,
-  interval: '1d' | '7d' | '30d' = '30d'
+  options: {
+    interval?: '1d' | '7d' | '30d';
+    daysBack?: number;
+    startDate?: string;
+    endDate?: string;
+  } = {}
 ): Promise<Result<unknown>> {
-  const endpoint = `repos/${config.repo}/coverage/?interval=${interval}`;
+  const { interval = '1d', daysBack = 30 } = options;
+
+  // Calculate date range if not provided
+  let { startDate, endDate } = options;
+  if (!startDate || !endDate) {
+    const now = new Date();
+    endDate = now.toISOString().split('T')[0];
+
+    const start = new Date(now);
+    start.setDate(start.getDate() - daysBack);
+    startDate = start.toISOString().split('T')[0];
+  }
+
+  const queryParams = new URLSearchParams();
+  queryParams.append('interval', interval);
+  if (startDate) queryParams.append('start_date', startDate);
+  if (endDate) queryParams.append('end_date', endDate);
+
+  const endpoint = `repos/${config.repo}/coverage/?${queryParams.toString()}`;
+
+  console.log('Getting coverage trends:', {
+    endpoint,
+    interval,
+    startDate,
+    endDate,
+    daysBack,
+  });
+
   return makeCodecovRequest(endpoint, config);
 }
 
@@ -364,16 +396,20 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
       return generateSampleData();
     }
 
-    // Get coverage trends - try multiple intervals for more data
-    let trendsResult = await getCoverageTrends(config, '30d');
-    let trendsInterval = '30d';
+    // Get coverage trends with explicit date range for better data
+    let trendsResult = await getCoverageTrends(config, {
+      interval: '1d',
+      daysBack: 30,
+    });
 
     if (!trendsResult.success || ((trendsResult.data as any)?.results || []).length < 7) {
-      console.log('Insufficient 30d data, trying 7d interval');
-      const weeklyTrends = await getCoverageTrends(config, '7d');
+      console.log('Insufficient 30-day data, trying 7-day range');
+      const weeklyTrends = await getCoverageTrends(config, {
+        interval: '1d',
+        daysBack: 7,
+      });
       if (weeklyTrends.success && ((weeklyTrends.data as any)?.results || []).length > 0) {
         trendsResult = weeklyTrends;
-        trendsInterval = '7d';
       }
     }
 
@@ -381,7 +417,7 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
       console.warn('Failed to fetch trends data:', trendsResult.error);
     } else {
       const resultsCount = ((trendsResult.data as any)?.results || []).length;
-      console.log(`Trends data retrieved successfully (${trendsInterval}):`, {
+      console.log('Trends data retrieved successfully:', {
         hasResults: !!(trendsResult.data as any)?.results,
         resultsCount,
         sampleData: JSON.stringify((trendsResult.data as any)?.results?.[0] || {}, null, 2),
