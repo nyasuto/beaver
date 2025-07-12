@@ -31,6 +31,22 @@ const t = await getTranslator();
 const projectInfo = await getProjectInfo();
 const uiConfig = await getUIConfig();
 
+// Pre-build breadcrumb URLs
+const breadcrumbsWithUrls = await Promise.all(
+  doc.breadcrumbs.slice(1).map(async crumb => ({
+    ...crumb,
+    href: await buildNavUrl(crumb.slug),
+  }))
+);
+
+// Pre-build related docs URLs
+const relatedDocsWithUrls = await Promise.all(
+  doc.relatedDocs.map(async relatedSlug => ({
+    slug: relatedSlug,
+    href: await buildNavUrl(relatedSlug),
+  }))
+);
+
 if (!doc) {
   const docsBaseUrl = await buildNavUrl('');
   return Astro.redirect(docsBaseUrl);
@@ -47,10 +63,10 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
       <ol class="flex items-center space-x-2 text-gray-500">
         <li><a href={await buildNavUrl('')} class="hover:text-blue-600">{t('docs.title')}</a></li>
         {
-          doc.breadcrumbs.slice(1).map((crumb, _index) => (
+          breadcrumbsWithUrls.map((crumb, _index) => (
             <li class="flex items-center space-x-2">
               <span>/</span>
-              <a href={`/docs/${crumb.slug}`} class="hover:text-blue-600">
+              <a href={crumb.href} class="hover:text-blue-600">
                 {crumb.title}
               </a>
             </li>
@@ -184,14 +200,14 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
         <section class="mt-12">
           <h2 class="text-2xl font-semibold text-gray-900 mb-4">関連ドキュメント</h2>
           <div class="grid md:grid-cols-2 gap-4">
-            {doc.relatedDocs.slice(0, 4).map(relatedSlug => {
+            {relatedDocsWithUrls.slice(0, 4).map(relatedDoc => {
               // This would need to be enhanced to fetch related doc metadata
               return (
                 <a
-                  href={`/docs/${relatedSlug}`}
+                  href={relatedDoc.href}
                   class="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
                 >
-                  <div class="font-medium text-gray-900">{relatedSlug}</div>
+                  <div class="font-medium text-gray-900">{relatedDoc.slug}</div>
                 </a>
               );
             })}

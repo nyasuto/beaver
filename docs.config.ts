@@ -31,21 +31,21 @@ export const docsConfig: DocsConfig = {
     quickLinks: [
       {
         title: 'クイックスタート',
-        href: '/docs/readme',
+        href: '/beaver/docs/readme',
         icon: '🚀',
         description: 'GitHub Actionとして数分で導入',
         color: 'blue',
       },
       {
         title: '開発者ガイド',
-        href: '/docs/local-development',
+        href: '/beaver/docs/local-development',
         icon: '🛠️',
         description: 'ローカル開発とカスタマイズ',
         color: 'green',
       },
       {
         title: '詳細設定',
-        href: '/docs/configuration',
+        href: '/beaver/docs/configuration',
         icon: '🔧',
         description: '高度な機能とセキュリティ',
         color: 'purple',
@@ -62,7 +62,7 @@ export const docsConfig: DocsConfig = {
   
   paths: {
     docsDir: 'docs',
-    baseUrl: '/docs',
+    baseUrl: '/beaver/docs',
   },
   
   search: {

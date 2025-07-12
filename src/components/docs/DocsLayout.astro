@@ -32,6 +32,22 @@ const pathConfig = await getPathConfig();
 const projectTitle = `${projectInfo.emoji || ''} ${projectInfo.name} ${t('docs.title')}`.trim();
 const docsBaseUrl = await buildNavUrl('');
 
+// Pre-build navigation URLs
+const navigationWithUrls = await Promise.all(
+  navigation.map(async navItem => ({
+    ...navItem,
+    href: navItem.slug ? await buildNavUrl(navItem.slug) : undefined,
+    children: navItem.children
+      ? await Promise.all(
+          navItem.children.map(async child => ({
+            ...child,
+            href: await buildNavUrl(child.slug),
+          }))
+        )
+      : undefined,
+  }))
+);
+
 // Prepare search configuration for client-side
 const searchConfig = {
   placeholder: config.search?.placeholder || t('docs.search.placeholder'),
@@ -69,7 +85,7 @@ const searchConfig = {
       <nav>
         <ul class="space-y-1">
           {
-            navigation.map(navItem => (
+            navigationWithUrls.map(navItem => (
               <li>
                 {navItem.children ? (
                   /* Category with children */
@@ -79,7 +95,7 @@ const searchConfig = {
                       {navItem.children.map(child => (
                         <li>
                           <a
-                            href={`/docs/${child.slug}`}
+                            href={child.href}
                             class={`block px-3 py-1 text-sm rounded-md transition-colors ${
                               doc.slug === child.slug
                                 ? 'bg-blue-100 text-blue-700 font-medium'
@@ -95,7 +111,7 @@ const searchConfig = {
                 ) : (
                   /* Single navigation item */
                   <a
-                    href={`/docs/${navItem.slug}`}
+                    href={navItem.href}
                     class={`block px-3 py-2 text-sm rounded-md transition-colors ${
                       doc.slug === navItem.slug
                         ? 'bg-blue-100 text-blue-700 font-medium'
@@ -194,7 +210,7 @@ const searchConfig = {
         <nav>
           <ul class="space-y-1">
             {
-              navigation.map(navItem => (
+              navigationWithUrls.map(navItem => (
                 <li>
                   {navItem.children ? (
                     <div>
@@ -203,7 +219,7 @@ const searchConfig = {
                         {navItem.children.map(child => (
                           <li>
                             <a
-                              href={`/docs/${child.slug}`}
+                              href={child.href}
                               class={`block px-3 py-1 text-sm rounded-md transition-colors ${
                                 doc.slug === child.slug
                                   ? 'bg-blue-100 text-blue-700 font-medium'
@@ -218,7 +234,7 @@ const searchConfig = {
                     </div>
                   ) : (
                     <a
-                      href={`/docs/${navItem.slug}`}
+                      href={navItem.href}
                       class={`block px-3 py-2 text-sm rounded-md transition-colors ${
                         doc.slug === navItem.slug
                           ? 'bg-blue-100 text-blue-700 font-medium'

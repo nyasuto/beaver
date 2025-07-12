@@ -5,7 +5,12 @@
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import { DocsService } from '../../lib/services/DocsService.js';
-import { getTranslator, getProjectInfo, getNavigationConfig } from '../../lib/config/docs.js';
+import {
+  getTranslator,
+  getProjectInfo,
+  getNavigationConfig,
+  buildNavUrl,
+} from '../../lib/config/docs.js';
 
 // Load configuration and translations
 const t = await getTranslator();
@@ -28,11 +33,18 @@ const categoryTitles = navConfig.categories || {
   overview: t('category.overview'),
 };
 
-const categoriesArray = Object.entries(docsCollection.categories).map(([categoryKey, docs]) => ({
-  key: categoryKey,
-  title: categoryTitles[categoryKey] || categoryKey,
-  docs,
-}));
+const categoriesArray = await Promise.all(
+  Object.entries(docsCollection.categories).map(async ([categoryKey, docs]) => ({
+    key: categoryKey,
+    title: categoryTitles[categoryKey] || categoryKey,
+    docs: await Promise.all(
+      docs.map(async doc => ({
+        ...doc,
+        href: await buildNavUrl(doc.slug),
+      }))
+    ),
+  }))
+);
 
 // Quick links removed as per user feedback
 ---
@@ -62,7 +74,7 @@ const categoriesArray = Object.entries(docsCollection.categories).map(([category
                 <div class="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow bg-white">
                   <div class="p-6">
                     <h3 class="font-semibold text-lg mb-2 text-gray-900">
-                      <a href={`/docs/${doc.slug}`} class="hover:text-blue-600 transition-colors">
+                      <a href={doc.href} class="hover:text-blue-600 transition-colors">
                         {doc.title}
                       </a>
                     </h3>
