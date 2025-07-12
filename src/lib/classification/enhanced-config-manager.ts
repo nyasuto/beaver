@@ -11,16 +11,22 @@
 // Server-side only - these will be undefined in browser
 let fs: any, path: any;
 
-try {
-  // Check for Node.js environment (including test environment)
-  if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions?.node) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    fs = require('fs');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    path = require('path');
+// Initialize fs and path modules for Node.js environment
+async function initializeNodeModules() {
+  try {
+    // Check for Node.js environment (including test environment)
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions?.node) {
+      // Use dynamic imports for better compatibility with build systems
+      const fsModule = await import('fs');
+      const pathModule = await import('path');
+      fs = fsModule;
+      path = pathModule;
+      return true;
+    }
+  } catch (error) {
+    console.warn('Failed to load Node.js modules:', error);
   }
-} catch {
-  // Browser environment - fs and path will remain undefined
+  return false;
 }
 import {
   type EnhancedClassificationConfig,
@@ -71,11 +77,11 @@ export class EnhancedConfigManager {
     this.configPaths =
       configPaths.length > 0
         ? configPaths
-        : path
+        : typeof process !== 'undefined' && process.cwd
           ? [
-              path.join(process.cwd(), 'src/data/config/default-classification.json'),
-              path.join(process.cwd(), 'src/data/config/classification-rules.json'),
-              path.join(process.cwd(), 'classification-config.json'),
+              process.cwd() + '/src/data/config/default-classification.json',
+              process.cwd() + '/src/data/config/classification-rules.json',
+              process.cwd() + '/classification-config.json',
             ]
           : [];
   }
@@ -179,10 +185,13 @@ export class EnhancedConfigManager {
    * Load base configuration from file
    */
   private async loadBaseConfig(): Promise<EnhancedClassificationConfig> {
-    // Browser environment - return default config
+    // Try to initialize Node.js modules if not already loaded
     if (!fs || !path) {
-      console.warn('Enhanced Config Manager: Running in browser environment, using default config');
-      return DEFAULT_ENHANCED_CONFIG;
+      const modulesLoaded = await initializeNodeModules();
+      if (!modulesLoaded) {
+        console.warn('Enhanced Config Manager: Running in browser environment, using default config');
+        return DEFAULT_ENHANCED_CONFIG;
+      }
     }
 
     console.log('Enhanced Config Manager: Running in Node.js environment, loading config files');

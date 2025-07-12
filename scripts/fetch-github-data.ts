@@ -1,11 +1,12 @@
 #!/usr/bin/env tsx
 
 import { config } from 'dotenv';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { createGitHubClient } from '../src/lib/github/client.js';
 import { GitHubIssuesService } from '../src/lib/github/issues.js';
 import { GitHubConfigSchema } from '../src/lib/schemas/config.js';
+import { createTestClassificationEngine } from '../src/lib/classification/engine.js';
 import { z } from 'zod';
 
 // Load environment variables from .env file
@@ -136,18 +137,59 @@ async function fetchAndSaveGitHubData() {
     const issues = openIssuesResult.data;
     console.log(`✅ ${issues.length} 件のオープン Issue を取得しました`);
 
-    // Issues データの保存
-    saveJsonFile(
-      join(dataDir, 'issues.json'),
-      issues,
-      'Issues データ'
-    );
+    // Issue分類処理を実行
+    console.log('🤖 Issue分類エンジンを開始...');
+    try {
+      const classificationEngine = await createTestClassificationEngine();
+      
+      console.log(`📋 ${issues.length} 件のIssueを分類中...`);
+      const batchResult = await classificationEngine.classifyIssuesBatch(issues, {
+        owner: config.owner,
+        repo: config.repo
+      });
 
-    // 個別 Issue ファイルの保存
+      console.log(`✅ Issue分類完了:`);
+      console.log(`   - 分析済み: ${batchResult.totalAnalyzed} 件`);
+      console.log(`   - 平均スコア: ${batchResult.averageScore.toFixed(2)}`);
+      console.log(`   - 処理時間: ${batchResult.processingTimeMs}ms`);
+      console.log(`   - キャッシュヒット率: ${(batchResult.cacheHitRate * 100).toFixed(1)}%`);
+
+      // 分類結果を含むデータを保存
+      const classifiedIssues = issues.map((issue, index) => ({
+        ...issue,
+        classification: batchResult.tasks[index]
+      }));
+
+      saveJsonFile(
+        join(dataDir, 'issues.json'),
+        classifiedIssues,
+        'Issues データ (分類済み)'
+      );
+
+    } catch (classificationError) {
+      console.warn('⚠️ Issue分類でエラーが発生しましたが、処理を続行します:', classificationError);
+      
+      // 分類に失敗した場合は元のデータを保存
+      saveJsonFile(
+        join(dataDir, 'issues.json'),
+        issues,
+        'Issues データ'
+      );
+    }
+
+    // 個別 Issue ファイルの保存（分類結果を含む）
     const issuesDir = join(dataDir, 'issues');
     ensureDirectoryExists(issuesDir);
 
-    for (const issue of issues) {
+    // issues.jsonから分類済みデータを読み込み
+    let classifiedIssuesData: any[];
+    try {
+      classifiedIssuesData = JSON.parse(readFileSync(join(dataDir, 'issues.json'), 'utf-8'));
+    } catch {
+      classifiedIssuesData = issues; // フォールバック
+    }
+
+    for (const issue of classifiedIssuesData) {
       saveJsonFile(
         join(issuesDir, `${issue.number}.json`),
         issue,
