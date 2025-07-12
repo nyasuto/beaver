@@ -12,7 +12,7 @@ export const docsConfig: DocsConfig = {
     description: 'Beaverの完全なドキュメント集 - セットアップから高度な機能まで',
     githubUrl: 'https://github.com/nyasuto/beaver',
     editBaseUrl: 'https://github.com/nyasuto/beaver/edit/main',
-    homeUrl: '/',
+    homeUrl: '/beaver/',
   },
   
   ui: {

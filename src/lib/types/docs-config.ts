@@ -14,7 +14,7 @@ export const ProjectConfigSchema = z.object({
   description: z.string().optional(),
   githubUrl: z.string().url().optional(),
   editBaseUrl: z.string().url().optional(),
-  homeUrl: z.string().url().optional(),
+  homeUrl: z.string().optional(),
 });
 
 /**
