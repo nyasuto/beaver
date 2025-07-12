@@ -57,16 +57,14 @@ export type Result<T, E = Error> = { success: true; data: T } | { success: false
 function getCodecovConfig(): CodecovConfig {
   const config = {
     token: import.meta.env['CODECOV_TOKEN'],
-    owner: import.meta.env['CODECOV_OWNER'] || import.meta.env['GITHUB_OWNER'] || 'nyasuto',
-    repo: import.meta.env['CODECOV_REPO'] || import.meta.env['GITHUB_REPO'] || 'beaver',
+    owner: import.meta.env['GITHUB_OWNER'] || 'nyasuto',
+    repo: import.meta.env['GITHUB_REPO'] || 'beaver',
     service: 'github' as const,
     baseUrl: 'https://api.codecov.io',
   };
 
   console.log('Environment variables for Codecov:', {
     CODECOV_TOKEN: !!import.meta.env['CODECOV_TOKEN'],
-    CODECOV_OWNER: import.meta.env['CODECOV_OWNER'],
-    CODECOV_REPO: import.meta.env['CODECOV_REPO'],
     GITHUB_OWNER: import.meta.env['GITHUB_OWNER'],
     GITHUB_REPO: import.meta.env['GITHUB_REPO'],
     finalOwner: config.owner,
