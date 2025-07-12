@@ -601,10 +601,8 @@ export class TaskRecommendationService {
 
     try {
       // Use Enhanced Classification Engine for proper classification
-      const { createEnhancedClassificationEngine } = await import(
-        '../classification/enhanced-engine'
-      );
-      const engine = await createEnhancedClassificationEngine({
+      const { createClassificationEngine } = await import('../classification/engine');
+      const engine = await createClassificationEngine({
         owner: 'nyasuto',
         repo: 'beaver',
       });

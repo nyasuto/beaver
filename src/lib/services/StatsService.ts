@@ -9,10 +9,7 @@ import { z } from 'zod';
 import type { Issue } from '../schemas/github';
 import type { Result } from '../types';
 import { getIssuesWithFallback, hasStaticData } from '../data/github';
-import {
-  createEnhancedClassificationEngine,
-  type EnhancedClassificationEngine,
-} from '../classification/enhanced-engine';
+import { createClassificationEngine, type ClassificationEngine } from '../classification/engine';
 
 // 統計データの型定義
 export const UnifiedStatsSchema = z.object({
@@ -99,16 +96,16 @@ export class StatsService {
   private static instance: StatsService;
   private cache: Map<string, CacheEntry> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5分
-  private classificationEngine: EnhancedClassificationEngine | null = null;
+  private classificationEngine: ClassificationEngine | null = null;
 
   private constructor() {}
 
   /**
    * Enhanced Classification Engine を初期化または取得
    */
-  private async getClassificationEngine(): Promise<EnhancedClassificationEngine> {
+  private async getClassificationEngine(): Promise<ClassificationEngine> {
     if (!this.classificationEngine) {
-      this.classificationEngine = await createEnhancedClassificationEngine({
+      this.classificationEngine = await createClassificationEngine({
         owner: 'nyasuto',
         repo: 'beaver',
       });

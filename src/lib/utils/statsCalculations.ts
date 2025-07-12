@@ -6,7 +6,7 @@
  */
 
 import type { Issue } from '../schemas/github';
-import { createEnhancedClassificationEngine } from '../classification/enhanced-engine';
+import { createClassificationEngine } from '../classification/engine';
 
 /**
  * 優先度統計の型定義
@@ -62,7 +62,7 @@ export class StatsCalculations {
     };
 
     try {
-      const engine = await createEnhancedClassificationEngine({
+      const engine = await createClassificationEngine({
         owner: 'nyasuto',
         repo: 'beaver',
       });

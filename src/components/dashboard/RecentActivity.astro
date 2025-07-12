@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getStatsService } from '../../lib/services/StatsService';
 import { resolveUrl } from '../../lib/utils/url';
-import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
+import { createClassificationEngine } from '../../lib/classification/engine';
 
 // Type for recent issue data from StatsService with Enhanced Classification
 type RecentIssue = {
@@ -93,7 +93,7 @@ if (rawRecentIssues.length > 0) {
       .filter(Boolean);
 
     if (recentFullIssues.length > 0) {
-      const engine = await createEnhancedClassificationEngine({
+      const engine = await createClassificationEngine({
         owner: 'nyasuto',
         repo: 'beaver',
       });

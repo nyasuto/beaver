@@ -56,7 +56,31 @@ export type {
 } from './config';
 
 // Classification schemas
-export * from './classification';
+export {
+  ClassificationCategorySchema,
+  PriorityLevelSchema,
+  ConfidenceScoreSchema,
+  CategoryClassificationSchema,
+  IssueClassificationSchema,
+  ClassificationRuleSchema,
+  BatchClassificationResultSchema,
+  ClassificationConfigSchema,
+  ClassificationMetricsSchema,
+  RepositoryConfigSchema,
+  ScoringAlgorithmSchema,
+  ConfidenceThresholdSchema,
+  PriorityEstimationConfigSchema,
+  EnhancedClassificationConfigSchema,
+  EnhancedIssueClassificationSchema,
+  ConfigurationProfileSchema,
+  ConfigurationUpdateSchema,
+  ABTestConfigSchema,
+  PerformanceConfigSchema as EnhancedPerformanceConfigSchema,
+  validateEnhancedConfig,
+  validateConfigurationProfile,
+  validateConfigurationUpdate,
+  DEFAULT_ENHANCED_CONFIG,
+} from './classification';
 export type {
   ClassificationCategory,
   PriorityLevel,
@@ -68,19 +92,7 @@ export type {
   BatchClassificationResult,
 } from './classification';
 
-// Enhanced Classification schemas
-export {
-  EnhancedClassificationConfigSchema,
-  EnhancedIssueClassificationSchema,
-  RepositoryConfigSchema,
-  ScoringAlgorithmSchema,
-  ConfidenceThresholdSchema,
-  PriorityEstimationConfigSchema,
-  PerformanceConfigSchema as EnhancedPerformanceConfigSchema,
-  ABTestConfigSchema,
-  ConfigurationProfileSchema,
-  ConfigurationUpdateSchema,
-} from './enhanced-classification';
+// Enhanced Classification types (already exported above with schemas)
 export type {
   EnhancedClassificationConfig,
   EnhancedIssueClassification,
@@ -92,7 +104,7 @@ export type {
   ABTestConfig,
   ConfigurationProfile,
   ConfigurationUpdate,
-} from './enhanced-classification';
+} from './classification';
 
 // UI component schemas
 export * from './ui';

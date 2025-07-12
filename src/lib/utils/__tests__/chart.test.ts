@@ -7,8 +7,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { ChartType } from 'chart.js';
-import type { IssueClassification } from '../../schemas/classification';
-import type { EnhancedIssueClassification } from '../../schemas/enhanced-classification';
+import type {
+  IssueClassification,
+  EnhancedIssueClassification,
+} from '../../schemas/classification';
 import {
   type PerformanceMetrics,
   convertTimeSeriesData,

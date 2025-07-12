@@ -27,8 +27,7 @@ export interface PerformanceMetrics {
   backlogSize: number;
   timestamp: string;
 }
-import type { IssueClassification } from '../schemas/classification';
-import type { EnhancedIssueClassification } from '../schemas/enhanced-classification';
+import type { IssueClassification, EnhancedIssueClassification } from '../schemas/classification';
 
 /**
  * Chart theme configuration

@@ -4,8 +4,11 @@
  * Extended types for the enhanced classification system with backward compatibility
  */
 
-import type { EnhancedIssueClassification } from '../schemas/enhanced-classification';
-import type { ClassificationCategory, PriorityLevel } from '../schemas/classification';
+import type {
+  EnhancedIssueClassification,
+  ClassificationCategory,
+  PriorityLevel,
+} from '../schemas/classification';
 import type { TaskRecommendation } from '../services/TaskRecommendationService';
 
 /**
