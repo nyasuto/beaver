@@ -57,7 +57,7 @@ jobs:
         uses: nyasuto/beaver@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}  # オプション
+          codecov-token: ${{ secrets.CODECOV_API_TOKEN }}  # オプション
           enable-quality-dashboard: true
           deploy-to-pages: true
 ```
@@ -74,7 +74,7 @@ jobs:
 **品質分析を使用する場合:**
 ```bash
 # Repository Settings → Secrets and variables → Actions
-CODECOV_TOKEN=your_codecov_token_here
+CODECOV_API_TOKEN=your_codecov_api_token_here
 ```
 
 ### 📋 設定オプション
@@ -82,7 +82,7 @@ CODECOV_TOKEN=your_codecov_token_here
 | パラメータ | 必須 | デフォルト | 説明 |
 |-----------|------|-----------|------|
 | `github-token` | ❌ | `${{ github.token }}` | GitHub API アクセス用トークン |
-| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用） |
+| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用、CODECOV_API_TOKEN） |
 | `enable-quality-dashboard` | ❌ | `true` | 品質ダッシュボードの有効化 |
 | `deploy-to-pages` | ❌ | `true` | GitHub Pages への自動デプロイ |
 
