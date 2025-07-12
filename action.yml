@@ -65,16 +65,14 @@ runs:
         
         # Auto-detect repository name for GitHub Pages
         REPO_NAME="${{ github.event.repository.name }}"
-        echo "🔍 Auto-detected repository name: $REPO_NAME"
+        echo "🔧 Auto-detected repository: $REPO_NAME, setting BASE_URL=/$REPO_NAME"
         
         # Public site URL for GitHub Pages  
         echo "PUBLIC_SITE_URL=https://${{ github.repository_owner }}.github.io/$REPO_NAME" >> $GITHUB_ENV
         echo "PUBLIC_REPOSITORY=${{ github.repository }}" >> $GITHUB_ENV
         
         # Set BASE_URL for Astro
-        echo "🔧 Setting BASE_URL=/$REPO_NAME (auto-detected from repository)"
         echo "BASE_URL=/$REPO_NAME" >> $GITHUB_ENV
-        echo "✅ BASE_URL environment variable set to: /$REPO_NAME"
     
     - name: Create Beaver workspace
       shell: bash
@@ -95,6 +93,22 @@ runs:
         # Copy scripts
         mkdir -p scripts
         cp "${{ github.action_path }}/scripts/fetch-github-data.ts" scripts/
+        
+        # Copy target repository documentation files
+        echo "📄 Copying target repository documentation..."
+        if [ -f "${{ github.workspace }}/README.md" ]; then
+          cp "${{ github.workspace }}/README.md" .
+          echo "✅ Copied README.md from target repository"
+        else
+          echo "ℹ️ No README.md found in target repository"
+        fi
+        
+        if [ -d "${{ github.workspace }}/docs" ]; then
+          cp -r "${{ github.workspace }}/docs" .
+          echo "✅ Copied docs/ directory from target repository"
+        else
+          echo "ℹ️ No docs/ directory found in target repository"
+        fi
         
         echo "BEAVER_WORKSPACE=${{ github.workspace }}/beaver-workspace" >> $GITHUB_ENV
     
@@ -130,12 +144,7 @@ runs:
       shell: bash
       working-directory: beaver-workspace
       run: |
-        echo "🏗️ Building knowledge base..."
-        
-        # Check environment variables before build
-        echo "🔍 Environment variables check:"
-        echo "  BASE_URL = '$BASE_URL'"
-        echo "  NODE_ENV = '$NODE_ENV'"
+        echo "🏗️ Building knowledge base with BASE_URL=$BASE_URL..."
         
         # Build the Astro site
         npm run build
