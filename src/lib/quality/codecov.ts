@@ -57,8 +57,8 @@ export type Result<T, E = Error> = { success: true; data: T } | { success: false
 function getCodecovConfig(): CodecovConfig {
   const config = {
     token: import.meta.env['CODECOV_TOKEN'],
-    owner: import.meta.env['CODECOV_OWNER'] || 'yast',
-    repo: import.meta.env['CODECOV_REPO'] || 'beaver',
+    owner: import.meta.env['CODECOV_OWNER'] || import.meta.env['GITHUB_OWNER'] || 'nyasuto',
+    repo: import.meta.env['CODECOV_REPO'] || import.meta.env['GITHUB_REPO'] || 'beaver',
     service: 'github' as const,
     baseUrl: 'https://api.codecov.io',
   };
@@ -77,7 +77,14 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
 
     const url = `${config.baseUrl}/api/v2/${config.service}/${config.owner}/${endpoint}`;
 
-    console.log('Making Codecov API request:', { url, endpoint });
+    console.log('Making Codecov API request:', { 
+      url, 
+      endpoint, 
+      owner: config.owner, 
+      repo: config.repo,
+      tokenLength: config.token?.length || 0,
+      tokenPrefix: config.token?.substring(0, 8) + '...' || 'none'
+    });
 
     const response = await fetch(url, {
       headers: {
@@ -86,13 +93,22 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
       },
     });
 
+    console.log('Codecov API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+    });
+
     if (!response.ok) {
-      throw new Error(`Codecov API error: ${response.status} ${response.statusText}`);
+      const responseText = await response.text();
+      console.error('Codecov API error response:', responseText);
+      throw new Error(`Codecov API error: ${response.status} ${response.statusText} - ${responseText}`);
     }
 
     const data = await response.json();
     return { success: true, data };
   } catch (error) {
+    console.error('Codecov request failed:', error);
     return {
       success: false,
       error: error instanceof Error ? error : new Error(String(error)),
