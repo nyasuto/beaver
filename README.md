@@ -1,12 +1,12 @@
-# 🦫 Beaver - AI知識ダム (Astro + TypeScript Edition)
+# 🦫 Beaver - AI知識ダム
 
-**あなたのAI学習を永続的な知識に変換 - 流れ去る学びを堰き止めよう**
+**あなたのAI学習を永続的な知識に変換する GitHub Action**
 
-BeaverはAIエージェント開発の軌跡を自動的に整理された永続的な知識に変換します。散在するGitHub Issues、コミットログ、AI実験記録を構造化されたGitHub Pagesドキュメントに変換し、コード品質分析とチーム協働を支援します。
+BeaverはGitHub Issues・コミット・AI実験記録を自動的に構造化されたGitHub Pagesドキュメントに変換し、コード品質分析とチーム協働を支援するGitHub Actionです。
 
-## 🚀 クイックスタート - GitHub Actionとして使用
+## 🚀 クイックスタート
 
-### 最低限の設定（推奨）
+### 最低限の設定
 
 ```yaml
 # .github/workflows/beaver.yml
@@ -40,7 +40,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### 完全版設定（品質分析付き）
+### 品質分析付き設定
 
 ```yaml
       - name: Generate Beaver Knowledge Base
@@ -54,25 +54,16 @@ jobs:
 
 ### 🎯 生成される成果物
 
-- 📊 **知識ベースサイト**: `https://username.github.io/beaver/`
+- 📊 **知識ベースサイト**: `https://username.github.io/repository-name/`
 - 📋 **AI Issues分析**: 自動分類・優先度付け・感情分析
 - 📈 **品質ダッシュボード**: コードカバレッジ・モジュール分析
 - 🔍 **検索可能Wiki**: 構造化された開発知識
 
-### ⚠️ 重要な注意点
-
-**必須権限設定:**
-```yaml
-permissions:
-  contents: read      # リポジトリ読み取り（必須）
-  pages: write        # GitHub Pages デプロイ（必須）
-  id-token: write     # GitHub Pages 認証（必須）
-```
+### ⚠️ 重要な設定
 
 **GitHub Pages設定:**
 1. Repository Settings → Pages
-2. Source: GitHub Actions
-3. Build and deployment: GitHub Actions を選択
+2. Source: **GitHub Actions** を選択
 
 **品質分析を使用する場合:**
 ```bash
@@ -80,7 +71,7 @@ permissions:
 CODECOV_TOKEN=your_codecov_token_here
 ```
 
-### 📋 設定オプション一覧
+### 📋 設定オプション
 
 | パラメータ | 必須 | デフォルト | 説明 |
 |-----------|------|-----------|------|
@@ -88,355 +79,38 @@ CODECOV_TOKEN=your_codecov_token_here
 | `codecov-token` | ❌ | - | Codecov API トークン（品質分析用） |
 | `enable-quality-dashboard` | ❌ | `true` | 品質ダッシュボードの有効化 |
 | `deploy-to-pages` | ❌ | `true` | GitHub Pages への自動デプロイ |
-| `site-subdirectory` | ❌ | `beaver` | サイトのサブディレクトリ名 |
 
-## 🎯 解決する課題
+## ✨ 主な機能
 
-**エンジニアリングマネージャの日々の苦悩:**
-- 📊 **ステークホルダー報告**: 技術的進捗をビジネス言語で説明するのが困難
-- 🔍 **情報の散在**: 重要な議論や決定がIssueやコメントに埋もれて見つからない
-- 👥 **知識の属人化**: 開発者が退職すると貴重な知見や経験が組織から失われる
-- ⏰ **工数と価値のバランス**: ドキュメント整備は重要だが、開発時間とのトレードオフが課題
+- **AI Issues分析**: 自動分類・優先度付け・感情分析
+- **品質ダッシュボード**: Codecov統合による品質分析
+- **構造化Wiki**: 検索可能な開発知識ベース
+- **自動デプロイ**: GitHub Pagesへの自動デプロイ
+- **リアルタイム更新**: Issues変更時の自動更新
 
-**AIエージェント開発特有の課題:**
-- ✅ AIエージェントは高速で反復・学習する
-- ✅ 開発はIssuesやPRで進行する
-- ❌ **知識が流れの中で失われる**
-- ❌ **学習の永続的記録がない**
-- ❌ **チームの知識が断片化している**
+## 🤖 メタドキュメンテーション
 
-**従来のアプローチの限界:**
-```
-🚫 従来の方法                        🤔 課題
-技術ツール (Codecov, Jenkins)    → 非エンジニアには理解困難
-GitHub Issues/PRコメント        → 議論が散在、検索・整理困難  
-開発者個人の知識                 → 属人化、退職時に失われる
-手作業のドキュメント作成          → 工数が重く、維持困難
-```
+> **BeaverはBeaverプロジェクト自身の開発・運営にBeaverを活用しています**
 
-**Beaverのソリューション - ステークホルダー別最適化:**
-```
-🔄 多層アプローチ                    👥 対象者
-技術詳細 (CLI、ログ、デバッグ情報)   → 開発者
-視覚的サマリー (スプレッドシート等)   → マネージャ・PM・QA
-構造化Wiki (分類済み、検索可能)      → チーム全体・新規メンバー
+## 📚 詳細ドキュメント
 
-Issues + Commits + AIログ → 🦫 Beaver → 各ステークホルダーに最適化された知識
-```
-## 🦫 Beaverによる自己プロジェクト運営
+- **[docs/](./docs/)** - 完全なドキュメント集
+- **[local-development.md](./docs/local-development.md)** - ローカル開発環境セットアップ
+- **[configuration.md](./docs/configuration.md)** - 設定・カスタマイズガイド
+- **[deployment.md](./docs/deployment.md)** - デプロイメント方法
+- **[features.md](./docs/features.md)** - 機能詳細
+- **[security.md](./docs/security.md)** - セキュリティガイド
 
-> **メタドキュメンテーション**: BeaverはBeaverプロジェクト自身の開発・運営にBeaverを活用しています
+## 💬 FAQ
 
-## 🚀 特徴
+**Q: GitHub Pages が表示されない**  
+A: Repository Settings → Pages → Source を "GitHub Actions" に設定してください
 
-### ✨ AI-First Architecture
-- **AI Agent 主導開発**: Claude Code による自動コード生成・最適化
-- **スマート分類**: GitHub Issues の自動カテゴライゼーション
-- **インテリジェント分析**: 開発パターンとトレンドの自動検出
+**Q: 品質ダッシュボードが表示されない**  
+A: Repository Secrets に `CODECOV_TOKEN` を設定してください
 
-### 🎯 Modern Tech Stack
-- **Astro 5.11**: 静的サイト生成 + Island Architecture
-- **TypeScript 5.6**: 型安全なコード品質
-- **React 19.1**: インタラクティブコンポーネント
-- **Octokit**: GitHub API 統合
-- **Zod**: ランタイム型検証
-- **Tailwind CSS**: ユーティリティファーストスタイリング
-- **Chart.js**: データ可視化
-- **Vitest**: 包括的テストフレームワーク
-
-### 🔧 Core Features
-- **Knowledge Base Generation**: Issues → 構造化 Wiki
-- **Code Quality Dashboard**: Codecov API統合による品質分析
-- **Interactive Visualization**: Chart.js による動的グラフ
-- **GitHub Pages Deployment**: 自動デプロイメント
-- **Real-time Updates**: インクリメンタル更新
-- **Team Collaboration**: 共有知識ベース
-
-## 📦 インストール
-
-### 前提条件
-- Node.js 18+
-- npm or pnpm
-- GitHub Personal Access Token
-
-### セットアップ
-
-```bash
-# リポジトリクローン
-git clone https://github.com/your-org/beaver-astro
-cd beaver-astro
-
-# 依存関係インストール
-npm install
-
-# 環境変数設定
-cp .env.example .env
-# .env ファイルを編集してGitHub tokenを設定
-
-# 開発サーバー起動
-npm run dev
-```
-
-### 環境変数
-
-```bash
-# .env
-GITHUB_TOKEN=ghp_your_github_token_here
-PUBLIC_SITE_URL=https://your-org.github.io/beaver
-PUBLIC_REPOSITORY=your-org/your-repo
-
-# 品質分析ダッシュボード (オプション)
-CODECOV_API_TOKEN=your_codecov_api_token_here  # Codecov API token (新版)
-CODECOV_TOKEN=your_codecov_token_here          # Codecov token (レガシー対応)
-
-# 注意: Codecovリンクはsrc/data/github/metadata.jsonから自動生成されます
-# 手動設定は不要です（owner/repositoryは自動取得）
-```
-
-## 🏗️ プロジェクト構造
-
-```
-beaver-astro/
-├── src/
-│   ├── components/          # Astro/React components
-│   │   ├── ui/             # Base UI components (Button, Card, Modal, etc.)
-│   │   ├── charts/         # Data visualization (Chart.js wrappers)
-│   │   ├── navigation/     # Navigation components (Header, Footer)
-│   │   ├── layouts/        # Page layouts (Base, Page, Dashboard)
-│   │   └── dashboard/      # Dashboard-specific components
-│   ├── pages/              # Astro pages (routes)
-│   │   ├── index.astro     # Homepage (日本語ローカライズ済み)
-│   │   ├── issues/         # Issues pages
-│   │   │   ├── index.astro # Issues list with filters
-│   │   │   └── [id].astro  # Individual issue details
-│   │   ├── quality/        # Code quality dashboard (Codecov統合 + 動的リンク)
-│   │   └── api/            # API endpoints
-│   │       ├── github/     # GitHub API endpoints
-│   │       └── config/     # Configuration endpoints
-│   ├── lib/                # Core libraries
-│   │   ├── github/         # GitHub API integration
-│   │   ├── schemas/        # Zod validation schemas
-│   │   ├── quality/        # Code quality integration (Codecov)
-│   │   ├── data/           # Static data management
-│   │   ├── config/         # Environment configuration
-│   │   ├── services/       # Business logic services
-│   │   └── utils/          # Utility functions
-│   ├── styles/             # Global styles
-│   └── data/               # Static data files
-│       ├── github/         # GitHub data cache
-│       ├── config/         # Configuration files
-│       └── fixtures/       # Sample data
-├── public/                 # Static assets
-├── scripts/                # Build and deployment scripts
-├── Makefile               # Development workflow automation
-└── docs/                   # Documentation
-```
-
-## 🚀 使用方法
-
-### 基本的なワークフロー
-
-1. **初期設定**
-```bash
-npm install
-cp .env.example .env
-# .env を編集してGitHub tokenを設定
-```
-
-2. **GitHub Issues 取得**
-```bash
-npm run fetch-data
-```
-
-3. **開発サーバー起動**
-```bash
-npm run dev
-```
-
-4. **品質チェック**
-```bash
-make quality  # または npm run lint && npm run type-check && npm run test
-```
-
-5. **本番ビルド & デプロイ**
-```bash
-npm run build
-npm run deploy
-```
-
-### 開発コマンド
-
-```bash
-# 開発サーバー (ホットリロード)
-npm run dev
-
-# データ取得
-npm run fetch-data
-
-# 品質チェック
-npm run lint
-npm run format        # コード自動修正
-npm run format:check  # フォーマットチェックのみ (CI用)
-npm run type-check
-npm run test
-
-# ビルド (本番用)
-npm run build
-
-# プレビュー (ビルド後)
-npm run preview
-
-# デプロイ
-npm run deploy
-```
-
-### Makefile コマンド (推奨)
-
-```bash
-# 開発環境セットアップ
-make setup
-
-# 品質チェック (lint + format + type-check + test)
-make quality
-
-# 品質チェック + 自動修正
-make quality-fix
-
-# 開発サーバー
-make dev
-
-# すべてのチェック
-make all
-```
-
-## 🔧 設定
-
-### GitHub Issues 分類設定
-
-**`config/classification-rules.yaml`**
-```yaml
-categories:
-  bug:
-    labels: ['bug', 'issue', 'problem']
-    keywords: ['error', 'fail', 'broken', 'not working']
-    priority: high
-    
-  feature:
-    labels: ['enhancement', 'feature', 'new']
-    keywords: ['add', 'implement', 'create', 'need']
-    priority: medium
-    
-  docs:
-    labels: ['documentation', 'docs']
-    keywords: ['document', 'readme', 'guide', 'tutorial']
-    priority: low
-
-urgency_scoring:
-  high_priority_labels: ['critical', 'urgent', 'blocker']
-  age_weight: 0.3
-  label_weight: 0.7
-```
-
-## 📊 機能と洞察
-
-Beaver は以下の機能を提供します:
-
-### 🔍 品質分析ダッシュボード (`/quality`)
-- **Overall Coverage**: 全体的なコードカバレッジメトリクス
-- **Module Analysis**: モジュール単位のカバレッジ詳細
-- **Top 5 Modules**: 対処が必要な上位5モジュール
-- **Coverage History**: カバレッジ履歴とトレンド
-- **Quality Recommendations**: AI搭載の改善提案
-- **Dynamic Codecov Links**: リポジトリメタデータから自動生成されるCodecovへの直接リンク
-- **Interactive Settings**: 閾値設定とフィルタリング機能
-
-### 📋 Issue管理 (`/issues`)
-- **Issue Listing**: フィルタリング・検索機能付き一覧
-- **Label Management**: ラベル別の分類と統計
-- **Status Tracking**: オープン/クローズ状態の追跡
-- **Detail View**: 個別Issue詳細とメタデータ
-
-### 🤖 AI分析機能
-- **Smart Classification**: 自動カテゴライゼーション
-- **Sentiment Analysis**: Issue感情分析
-- **Effort Estimation**: 作業見積もり
-- **Pattern Recognition**: 開発パターン認識
-
-## 🤖 AI Agent Integration
-
-このプロジェクトは AI Agent (Claude Code) による開発を前提として設計されています:
-
-### AI-Friendly Architecture
-- **明確な型定義**: Zod スキーマによる厳密な型チェック
-- **モジュラー設計**: 独立したコンポーネント・関数
-- **包括的テスト**: 自動テスト生成に最適化
-- **詳細なドキュメント**: AI による理解・修正が容易
-
-### 開発ガイドライン
-詳細な AI Agent 開発ガイドラインは `CLAUDE.md` を参照してください。
-
-## 🚢 デプロイメント
-
-### GitHub Pages (推奨)
-
-```bash
-# GitHub Pages 自動デプロイ設定
-npm run deploy:github
-
-# 手動デプロイ
-npm run build
-npm run deploy:manual
-```
-
-### その他のプラットフォーム
-
-- **Vercel**: `vercel deploy`
-- **Netlify**: `netlify deploy`
-- **Cloudflare Pages**: 自動 Git 連携
-
-## 🔐 セキュリティ
-
-- GitHub Token は環境変数で管理
-- Codecov Token は Secrets で管理 (API認証用)
-- Zod による入力値検証
-- セキュアなデフォルト設定
-- 定期的な依存関係更新
-
-### GitHub Actions での環境変数設定
-
-```yaml
-# .github/workflows/deploy.yml
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}  # Repository Secrets で設定 (推奨)
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}          # Repository Secrets で設定 (レガシー対応)
-  
-  # 注意: CODECOV_OWNER/CODECOV_REPOの手動設定は不要
-  # リポジトリメタデータから自動取得されます
-```
-
-### 設定手順
-
-1. **GitHub Repository Settings**
-   - Settings → Secrets and variables → Actions
-   - **Secrets** (機密情報):
-     - `CODECOV_API_TOKEN`: Codecov API token (推奨)
-     - `CODECOV_TOKEN`: Codecov token (レガシー対応)
-
-2. **Codecov Token 取得**
-   - [Codecov](https://codecov.io) にログイン
-   - Settings → Access → Generate Token
-   - 取得したトークンを GitHub Secrets に設定
-
-3. **ローカル開発**
-   ```bash
-   # .env ファイルに設定
-   CODECOV_API_TOKEN=your_codecov_api_token_here
-   # または
-   CODECOV_TOKEN=your_codecov_token_here
-   
-   # owner/repositoryは自動取得されるため設定不要
-   ```
+**Q: カスタマイズしたい**  
+A: [configuration.md](./docs/configuration.md) を参照してください
 
 ## 📄 ライセンス
 
