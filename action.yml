@@ -72,7 +72,9 @@ runs:
         echo "PUBLIC_REPOSITORY=${{ github.repository }}" >> $GITHUB_ENV
         
         # Set BASE_URL for Astro
+        echo "🔧 Setting BASE_URL=/${{ inputs.site-subdirectory }}"
         echo "BASE_URL=/${{ inputs.site-subdirectory }}" >> $GITHUB_ENV
+        echo "✅ BASE_URL environment variable set to: /${{ inputs.site-subdirectory }}"
     
     - name: Create Beaver workspace
       shell: bash
@@ -129,6 +131,11 @@ runs:
       working-directory: beaver-workspace
       run: |
         echo "🏗️ Building knowledge base..."
+        
+        # Check environment variables before build
+        echo "🔍 Environment variables check:"
+        echo "  BASE_URL = '$BASE_URL'"
+        echo "  NODE_ENV = '$NODE_ENV'"
         
         # Build the Astro site
         npm run build

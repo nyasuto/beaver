@@ -16,9 +16,9 @@ Beaver Astro + TypeScript project guidance for Claude Code (claude.ai/code)
 1. **Pull Requestのマージ** - ユーザーのみが判断・実行する
 2. **Issueのクローズ** - ユーザーのみが判断・実行する  
 3. **ブランチの削除** - ユーザーのみが判断・実行する
-4. **リリースの作成** - ユーザーのみが判断・実行する
 
 ### ✅ Claude Codeが実行可能な操作
+- リリースの作成
 - Pull Requestの作成
 - Issueの作成
 - ブランチの作成
