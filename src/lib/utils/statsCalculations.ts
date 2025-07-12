@@ -6,6 +6,7 @@
  */
 
 import type { Issue } from '../schemas/github';
+import { createEnhancedClassificationEngine } from '../classification/enhanced-engine';
 
 /**
  * 優先度統計の型定義
@@ -50,9 +51,9 @@ export interface LabelStats {
  */
 export class StatsCalculations {
   /**
-   * 優先度別統計を計算
+   * 優先度別統計を計算（Enhanced Classification Engine 使用）
    */
-  static calculatePriorityStats(issues: Issue[]): PriorityStats {
+  static async calculatePriorityStats(issues: Issue[]): Promise<PriorityStats> {
     const priorities: PriorityStats = {
       critical: 0,
       high: 0,
@@ -60,16 +61,41 @@ export class StatsCalculations {
       low: 0,
     };
 
-    issues.forEach(issue => {
-      const priority = this.extractPriorityFromLabels(issue.labels || []);
-      priorities[priority]++;
-    });
+    try {
+      const engine = await createEnhancedClassificationEngine({
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
 
-    return priorities;
+      const batchResult = await engine.classifyIssuesBatch(issues, {
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
+
+      batchResult.tasks.forEach(task => {
+        // Enhanced Classification Engine は 'backlog' も返す可能性があるため、マッピングする
+        const mappedPriority = task.priority === 'backlog' ? 'low' : task.priority;
+        if (mappedPriority in priorities) {
+          priorities[mappedPriority as keyof PriorityStats]++;
+        }
+      });
+
+      return priorities;
+    } catch (error) {
+      console.error('Failed to calculate priority stats with Enhanced Classification:', error);
+      // フォールバック: 直接ラベル解析
+      issues.forEach(issue => {
+        const priority = this.extractPriorityFromLabels(issue.labels || []);
+        priorities[priority]++;
+      });
+      return priorities;
+    }
   }
 
   /**
    * ラベルから優先度を抽出
+   * @deprecated Use Enhanced Classification Engine instead via calculatePriorityStats()
+   * @see createEnhancedClassificationEngine()
    */
   static extractPriorityFromLabels(labels: Array<{ name: string }>): keyof PriorityStats {
     const labelNames = labels.map(label => label.name.toLowerCase());
@@ -327,14 +353,15 @@ export class StatsCalculations {
   /**
    * 健康度スコアを計算
    */
-  static calculateHealthScore(issues: Issue[]): number {
+  static async calculateHealthScore(issues: Issue[]): Promise<number> {
     if (issues.length === 0) {
       return 100;
     }
 
     const total = issues.length;
     const open = issues.filter(issue => issue.state === 'open').length;
-    const critical = this.calculatePriorityStats(issues).critical;
+    const priorityStats = await this.calculatePriorityStats(issues);
+    const critical = priorityStats.critical;
     const recentActivity = this.calculateRecentActivity(issues, 7);
     const avgResolutionTime = this.calculateAverageResolutionTime(issues);
 
@@ -424,14 +451,14 @@ export class StatsCalculations {
 /**
  * 便利関数：基本統計を一度に計算
  */
-export function calculateBasicStats(issues: Issue[]) {
+export async function calculateBasicStats(issues: Issue[]) {
   return {
     total: issues.length,
     open: issues.filter(issue => issue.state === 'open').length,
     closed: issues.filter(issue => issue.state === 'closed').length,
-    priority: StatsCalculations.calculatePriorityStats(issues),
+    priority: await StatsCalculations.calculatePriorityStats(issues),
     recentActivity: StatsCalculations.calculateRecentActivity(issues),
-    healthScore: StatsCalculations.calculateHealthScore(issues),
+    healthScore: await StatsCalculations.calculateHealthScore(issues),
     trend: StatsCalculations.calculateTrend(issues),
   };
 }
@@ -439,9 +466,9 @@ export function calculateBasicStats(issues: Issue[]) {
 /**
  * 便利関数：詳細統計を一度に計算
  */
-export function calculateDetailedStats(issues: Issue[]) {
+export async function calculateDetailedStats(issues: Issue[]) {
   return {
-    ...calculateBasicStats(issues),
+    ...(await calculateBasicStats(issues)),
     labels: StatsCalculations.calculateLabelStats(issues),
     timeSeries: StatsCalculations.calculateTimeSeriesStats(issues),
     assignees: StatsCalculations.calculateAssigneeStats(issues),

@@ -10,8 +10,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getStatsService } from '../../lib/services/StatsService';
 import { resolveUrl } from '../../lib/utils/url';
+import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
 
-// Type for recent issue data from StatsService
+// Type for recent issue data from StatsService with Enhanced Classification
 type RecentIssue = {
   id: number;
   title: string;
@@ -20,6 +21,11 @@ type RecentIssue = {
   state: 'open' | 'closed';
   labels?: Array<{ name: string; color: string }>;
   pull_request?: any;
+  classification?: {
+    priority: 'critical' | 'high' | 'medium' | 'low' | 'backlog';
+    category: string;
+    confidence: number;
+  };
 };
 
 // Get unified statistics using the StatsService
@@ -69,14 +75,82 @@ const fetchRepositoryData = async () => {
 
 const repoResult = await fetchRepositoryData();
 
+// Get recent issues from unified stats and enhance with classification
+const rawRecentIssues = stats?.recentActivity.recentlyUpdated || [];
+
+// Enhanced Classification for recent issues
+let enhancedRecentIssues: RecentIssue[] = rawRecentIssues;
+
+if (rawRecentIssues.length > 0) {
+  try {
+    // Get issue data directly for classification
+    const { getIssuesOnlyWithFallback } = await import('../../lib/data/github');
+    const allIssues = getIssuesOnlyWithFallback();
+
+    // Find the full issue objects for the recent issues
+    const recentFullIssues = rawRecentIssues
+      .map(recentIssue => allIssues.find(fullIssue => fullIssue.number === recentIssue.number))
+      .filter(Boolean);
+
+    if (recentFullIssues.length > 0) {
+      const engine = await createEnhancedClassificationEngine({
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
+
+      const classificationResult = await engine.classifyIssuesBatch(recentFullIssues as any, {
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
+
+      // Map classification results to recent issues
+      enhancedRecentIssues = rawRecentIssues.map(recentIssue => {
+        const classification = classificationResult.tasks.find(
+          task => task.issueNumber === recentIssue.number
+        );
+
+        return {
+          ...recentIssue,
+          classification: classification
+            ? {
+                priority: classification.priority,
+                category: classification.category,
+                confidence: classification.confidence,
+              }
+            : undefined,
+        };
+      });
+    }
+  } catch (error) {
+    console.warn('Enhanced Classification failed for recent issues, using fallback:', error);
+    // Keep original data if classification fails
+  }
+}
+
 // Helper function to get issue icon based on state and enhanced classification
-// Enhanced classification is now handled by StatsService internally
 const getIssueIcon = (issue: RecentIssue) => {
   if (issue.state === 'closed') return '✅';
   if (issue.pull_request) return '🔄';
 
-  // Check for priority labels using existing label structure
-  // Note: Enhanced classification results are already integrated into the data flow via StatsService
+  // Use Enhanced Classification priority if available
+  if (issue.classification) {
+    const priority =
+      issue.classification.priority === 'backlog' ? 'low' : issue.classification.priority;
+    switch (priority) {
+      case 'critical':
+        return '🚨';
+      case 'high':
+        return '🔴';
+      case 'medium':
+        return '🟡';
+      case 'low':
+        return '🟢';
+      default:
+        return '📄';
+    }
+  }
+
+  // Fallback to direct label parsing if Enhanced Classification is unavailable
   const labels = issue.labels || [];
   const priorityLabel = labels.find(label => label.name && label.name.startsWith('priority:'));
 
@@ -120,8 +194,8 @@ const getIssueStateJa = (state: string) => {
   }
 };
 
-// Get recent issues from unified stats
-const recentIssues = stats?.recentActivity.recentlyUpdated || [];
+// Use the enhanced issues with classification data
+const recentIssues = enhancedRecentIssues;
 
 // Export interface for type checking
 export interface Props {
