@@ -70,6 +70,9 @@ runs:
         # Public site URL for GitHub Pages
         echo "PUBLIC_SITE_URL=https://${{ github.repository_owner }}.github.io/${{ inputs.site-subdirectory }}" >> $GITHUB_ENV
         echo "PUBLIC_REPOSITORY=${{ github.repository }}" >> $GITHUB_ENV
+        
+        # Set BASE_URL for Astro
+        echo "BASE_URL=/${{ inputs.site-subdirectory }}" >> $GITHUB_ENV
     
     - name: Create Beaver workspace
       shell: bash
