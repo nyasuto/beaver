@@ -11,7 +11,7 @@ export default defineConfig({
   ],
   output: 'static',
   site: 'https://nyasuto.github.io',
-  base: '/beaver',
+  base: process.env.BASE_URL || '/beaver',
   build: {
     assets: 'assets',
     // Performance optimizations
