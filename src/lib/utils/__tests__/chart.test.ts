@@ -331,8 +331,8 @@ describe('Chart Utilities', () => {
       },
     ];
 
-    it('分類データを適切に変換できること', () => {
-      const result = convertClassificationData(mockClassifications);
+    it('分類データを適切に変換できること', async () => {
+      const result = await convertClassificationData(mockClassifications);
 
       expect(result).toBeDefined();
       expect(result.categoryDistribution).toBeDefined();
@@ -340,8 +340,8 @@ describe('Chart Utilities', () => {
       expect(result.confidenceDistribution).toBeDefined();
     });
 
-    it('カテゴリ分布が正しく計算されること', () => {
-      const result = convertClassificationData(mockClassifications);
+    it('カテゴリ分布が正しく計算されること', async () => {
+      const result = await convertClassificationData(mockClassifications);
       const categoryData = result.categoryDistribution;
 
       expect(categoryData.labels).toContain('bug');
@@ -354,8 +354,8 @@ describe('Chart Utilities', () => {
       expect(categoryData.datasets[0]!.data[featureIndex]).toBe(1);
     });
 
-    it('優先度分布が正しく計算されること', () => {
-      const result = convertClassificationData(mockClassifications);
+    it('優先度分布が正しく計算されること', async () => {
+      const result = await convertClassificationData(mockClassifications);
       const priorityData = result.priorityDistribution;
 
       expect(priorityData.labels).toContain('high');
@@ -363,8 +363,8 @@ describe('Chart Utilities', () => {
       expect(priorityData.labels).toContain('low');
     });
 
-    it('信頼度範囲が正しく計算されること', () => {
-      const result = convertClassificationData(mockClassifications);
+    it('信頼度範囲が正しく計算されること', async () => {
+      const result = await convertClassificationData(mockClassifications);
       const confidenceData = result.confidenceDistribution;
 
       expect(confidenceData.labels).toContain('Low (0-0.3)');
@@ -381,8 +381,8 @@ describe('Chart Utilities', () => {
       expect(confidenceData.datasets[0]!.data[highIndex]).toBe(1);
     });
 
-    it('空の分類配列を処理できること', () => {
-      const result = convertClassificationData([]);
+    it('空の分類配列を処理できること', async () => {
+      const result = await convertClassificationData([]);
 
       expect(result.categoryDistribution.labels).toHaveLength(0);
       expect(result.priorityDistribution.labels).toHaveLength(0);
@@ -394,7 +394,7 @@ describe('Chart Utilities', () => {
       expect(result.confidenceDistribution.datasets[0]!.data).toEqual([0, 0, 0]);
     });
 
-    it('信頼度境界値が正しく処理されること', () => {
+    it('信頼度境界値が正しく処理されること', async () => {
       const boundaryClassifications: IssueClassification[] = [
         {
           issueId: 1,
@@ -442,7 +442,7 @@ describe('Chart Utilities', () => {
         },
       ];
 
-      const result = convertClassificationData(boundaryClassifications);
+      const result = await convertClassificationData(boundaryClassifications);
       const confidenceData = result.confidenceDistribution;
 
       const mediumIndex = confidenceData.labels!.indexOf('Medium (0.3-0.7)');
@@ -589,8 +589,8 @@ describe('Chart Utilities', () => {
       },
     ];
 
-    it('拡張分類データを適切に変換できること', () => {
-      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+    it('拡張分類データを適切に変換できること', async () => {
+      const result = await convertEnhancedClassificationData(mockEnhancedClassifications);
 
       expect(result).toBeDefined();
       expect(result.categoryDistribution).toBeDefined();
@@ -600,8 +600,8 @@ describe('Chart Utilities', () => {
       expect(result.scoreBreakdownChart).toBeDefined();
     });
 
-    it('スコア分布が正しく計算されること', () => {
-      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+    it('スコア分布が正しく計算されること', async () => {
+      const result = await convertEnhancedClassificationData(mockEnhancedClassifications);
       const scoreData = result.scoreDistribution;
 
       expect(scoreData.labels).toContain('Low (0-25)');
@@ -621,8 +621,8 @@ describe('Chart Utilities', () => {
       expect(scoreData.datasets[0]!.data[veryHighIndex]).toBe(1);
     });
 
-    it('スコア内訳チャートが正しく計算されること', () => {
-      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+    it('スコア内訳チャートが正しく計算されること', async () => {
+      const result = await convertEnhancedClassificationData(mockEnhancedClassifications);
       const scoreBreakdownData = result.scoreBreakdownChart;
 
       expect(scoreBreakdownData.labels).toContain('Category');
@@ -642,8 +642,8 @@ describe('Chart Utilities', () => {
       expect(scoreBreakdownData.datasets[0]!.data[customIndex]).toBe(0); // (0+0+0)/3
     });
 
-    it('信頼度分布が正しく計算されること', () => {
-      const result = convertEnhancedClassificationData(mockEnhancedClassifications);
+    it('信頼度分布が正しく計算されること', async () => {
+      const result = await convertEnhancedClassificationData(mockEnhancedClassifications);
       const confidenceData = result.confidenceDistribution;
 
       // confidence: 0.95 (High), 0.7 (High), 0.4 (Medium)
@@ -656,8 +656,8 @@ describe('Chart Utilities', () => {
       expect(confidenceData.datasets[0]!.data[highIndex]).toBe(2); // 0.95, 0.7
     });
 
-    it('空の拡張分類配列を処理できること', () => {
-      const result = convertEnhancedClassificationData([]);
+    it('空の拡張分類配列を処理できること', async () => {
+      const result = await convertEnhancedClassificationData([]);
 
       expect(result.categoryDistribution.labels).toHaveLength(0);
       expect(result.priorityDistribution.labels).toHaveLength(0);
@@ -665,7 +665,7 @@ describe('Chart Utilities', () => {
       expect(result.scoreBreakdownChart.datasets[0]!.data).toEqual([0, 0, 0, 0]);
     });
 
-    it('スコア境界値が正しく処理されること', () => {
+    it('スコア境界値が正しく処理されること', async () => {
       const boundaryClassifications: EnhancedIssueClassification[] = [
         {
           issueId: 4,
@@ -759,7 +759,7 @@ describe('Chart Utilities', () => {
         },
       ];
 
-      const result = convertEnhancedClassificationData(boundaryClassifications);
+      const result = await convertEnhancedClassificationData(boundaryClassifications);
       const scoreData = result.scoreDistribution;
 
       const lowIndex = scoreData.labels!.indexOf('Low (0-25)');
@@ -847,7 +847,7 @@ describe('Chart Utilities', () => {
   });
 
   describe('convertClassificationDataUniversal', () => {
-    it('拡張分類データを自動検出して変換できること', () => {
+    it('拡張分類データを自動検出して変換できること', async () => {
       const enhanced: EnhancedIssueClassification[] = [
         {
           issueId: 8,
@@ -881,14 +881,14 @@ describe('Chart Utilities', () => {
         },
       ];
 
-      const result = convertClassificationDataUniversal(enhanced);
+      const result = await convertClassificationDataUniversal(enhanced);
 
       expect(result).toBeDefined();
       expect(result.scoreDistribution).toBeDefined();
       expect(result.scoreBreakdownChart).toBeDefined();
     });
 
-    it('通常の分類データを自動検出して変換できること', () => {
+    it('通常の分類データを自動検出して変換できること', async () => {
       const normal: IssueClassification[] = [
         {
           issueId: 1,
@@ -914,15 +914,15 @@ describe('Chart Utilities', () => {
         },
       ];
 
-      const result = convertClassificationDataUniversal(normal);
+      const result = await convertClassificationDataUniversal(normal);
 
       expect(result).toBeDefined();
       expect(result.scoreDistribution).toBeUndefined();
       expect(result.scoreBreakdownChart).toBeUndefined();
     });
 
-    it('空の配列を正しく処理できること', () => {
-      const result = convertClassificationDataUniversal([]);
+    it('空の配列を正しく処理できること', async () => {
+      const result = await convertClassificationDataUniversal([]);
 
       expect(result).toBeDefined();
       expect(result.categoryDistribution).toBeDefined();

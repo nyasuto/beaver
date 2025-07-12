@@ -7,9 +7,9 @@
 
 import type { Issue } from '../schemas/github';
 import type { ClassificationCategory, PriorityLevel } from '../schemas/classification';
+import { enhancedConfigManager } from '../classification/enhanced-config-manager';
 // Enhanced classification imports available when needed
 // import { createEnhancedClassificationEngine } from '../classification/enhanced-engine';
-// import { enhancedConfigManager } from '../classification/enhanced-config-manager';
 import { markdownToHtml, markdownToPlainText, truncateMarkdown } from '../utils/markdown';
 import type {
   EnhancedTaskScore,
@@ -110,7 +110,7 @@ export class TaskRecommendationService {
       const enhancedTasks = legacyResult.topTasks.map(task => ({
         ...task,
         scoreBreakdown: {
-          category: Math.ceil(task.score * 0.5),
+          category: Math.ceil(task.score * 0.5), // TODO: Make configurable
           priority: task.score - Math.ceil(task.score * 0.5), // Ensure total equals task.score
           custom: 0,
         },
@@ -541,6 +541,13 @@ export class TaskRecommendationService {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, limit);
 
+    // Get configurable fallback values
+    const configResult = await enhancedConfigManager.loadConfig();
+    const config = configResult.config;
+    const taskRecommendationConfig = config.taskRecommendation;
+    const fallbackBaseScore = taskRecommendationConfig?.fallbackScore?.baseScore ?? 50;
+    const scoreDecrement = taskRecommendationConfig?.fallbackScore?.scoreDecrement ?? 5;
+
     const fallbackTasks: TaskRecommendation[] = await Promise.all(
       recentIssues.map(async (issue, index) => {
         const plainText = markdownToPlainText(issue.body || '');
@@ -553,7 +560,7 @@ export class TaskRecommendationService {
           title: this.cleanTitle(issue.title),
           description: description || 'No description available',
           descriptionHtml,
-          score: 50 - index * 5, // Decreasing score
+          score: fallbackBaseScore - index * scoreDecrement, // Configurable decreasing score
           priority: '🟡 中',
           category: '📋 その他',
           confidence: 50,
@@ -613,18 +620,19 @@ export class TaskRecommendationService {
       });
 
       // Convert Enhanced Classification results to TaskScore format
-      const scoredTasks = batchResult.tasks.map(task => {
+      const scoredTasks: TaskScore[] = [];
+      for (const task of batchResult.tasks) {
         // Calculate score from Enhanced Classification results
         let score = 50; // Base score
 
         // Map 'backlog' priority to 'low' for consistency
         const mappedPriority = task.priority === 'backlog' ? 'low' : task.priority;
 
-        score += this.getPriorityScore(mappedPriority as PriorityLevel);
-        score += this.getCategoryScore(task.category);
+        score += await this.getPriorityScore(mappedPriority as PriorityLevel);
+        score += await this.getCategoryScore(task.category);
         score += Math.min(task.labels.length * 2, 10);
 
-        return {
+        scoredTasks.push({
           issueNumber: task.issueNumber,
           issueId: task.issueId || 0,
           title: task.title,
@@ -639,8 +647,8 @@ export class TaskRecommendationService {
           createdAt: task.createdAt || new Date().toISOString(),
           updatedAt: task.updatedAt || new Date().toISOString(),
           url: task.url || `/issues/${task.issueNumber}`,
-        } as TaskScore;
-      });
+        } as TaskScore);
+      }
 
       // Sort by score and return top results
       return scoredTasks.sort((a, b) => b.score - a.score).slice(0, limit);
@@ -714,36 +722,44 @@ export class TaskRecommendationService {
   // These methods performed direct GitHub label parsing which violates separation of concerns
   // The enhanced classification engine should handle all label parsing and classification
 
-  private static getPriorityScore(priority: PriorityLevel): number {
+  private static async getPriorityScore(priority: PriorityLevel): Promise<number> {
+    const configResult = await enhancedConfigManager.loadConfig();
+    const config = configResult.config;
+    const priorityScoring = config.priorityScoring;
+
     switch (priority) {
       case 'critical':
-        return 30;
+        return priorityScoring?.critical ?? 30;
       case 'high':
-        return 20;
+        return priorityScoring?.high ?? 20;
       case 'medium':
-        return 10;
+        return priorityScoring?.medium ?? 10;
       case 'low':
-        return 5;
+        return priorityScoring?.low ?? 5;
       default:
-        return 10;
+        return priorityScoring?.default ?? 10;
     }
   }
 
-  private static getCategoryScore(category: ClassificationCategory): number {
+  private static async getCategoryScore(category: ClassificationCategory): Promise<number> {
+    const configResult = await enhancedConfigManager.loadConfig();
+    const config = configResult.config;
+    const categoryScoring = config.categoryScoring;
+
     // Some categories might be more urgent
     switch (category) {
       case 'bug':
-        return 15;
+        return categoryScoring?.bug ?? 15;
       case 'security':
-        return 25;
+        return categoryScoring?.security ?? 25;
       case 'performance':
-        return 10;
+        return categoryScoring?.performance ?? 10;
       case 'feature':
-        return 8;
+        return categoryScoring?.feature ?? 8;
       case 'enhancement':
-        return 5;
+        return categoryScoring?.enhancement ?? 5;
       default:
-        return 5;
+        return categoryScoring?.default ?? 5;
     }
   }
 }

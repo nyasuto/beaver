@@ -439,8 +439,8 @@ describe('StatsService', () => {
       expect(priority).toEqual({
         critical: 0,
         high: 0,
-        medium: 3, // Enhanced classification engine assigns default 'medium' priority
-        low: 0,
+        medium: 0,
+        low: 3, // Enhanced classification engine assigns default 'low' priority when no classifications match
       });
     });
   });

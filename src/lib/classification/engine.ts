@@ -151,15 +151,16 @@ export class ClassificationEngine {
     const estimatedPriority = this.estimatePriorityEnhanced(
       issue,
       topClassifications,
-      effectiveConfig.priorityEstimation
+      effectiveConfig.priorityEstimation,
+      effectiveConfig
     );
-    const priorityConfidence = this.calculatePriorityConfidence(
+    const priorityConfidence = await this.calculatePriorityConfidence(
       estimatedPriority,
       topClassifications
     );
 
     // Calculate enhanced score
-    const scoreResult = this.calculateEnhancedScore(
+    const scoreResult = await this.calculateEnhancedScore(
       issue,
       topClassifications,
       primaryCategory,
@@ -297,12 +298,13 @@ export class ClassificationEngine {
     config: EnhancedClassificationConfig
   ): Promise<CategoryClassification[]> {
     const classifications: CategoryClassification[] = [];
+    const scoringThresholds = config.scoringThresholds;
 
     // Apply standard rules
     for (const rule of config.rules) {
       if (!rule.enabled) continue;
 
-      const result = this.applyRule(issue, rule);
+      const result = this.applyRule(issue, rule, scoringThresholds);
       if (result.confidence >= config.minConfidence) {
         classifications.push({
           ...result,
@@ -316,7 +318,7 @@ export class ClassificationEngine {
     for (const rule of config.customRules || []) {
       if (!rule.enabled) continue;
 
-      const result = this.applyRule(issue, rule);
+      const result = this.applyRule(issue, rule, scoringThresholds);
       if (result.confidence >= config.minConfidence) {
         classifications.push({
           ...result,
@@ -365,14 +367,15 @@ export class ClassificationEngine {
   private estimatePriorityEnhanced(
     issue: Issue,
     classifications: CategoryClassification[],
-    priorityConfig?: PriorityEstimationConfig
+    priorityConfig?: PriorityEstimationConfig,
+    config?: EnhancedClassificationConfig
   ): PriorityLevel {
     if (!priorityConfig || priorityConfig.algorithm === 'rule-based') {
-      return this.estimatePriorityRuleBased(issue, classifications, priorityConfig);
+      return this.estimatePriorityRuleBased(issue, classifications, priorityConfig, config);
     }
 
     // Add support for other algorithms here
-    return this.estimatePriorityRuleBased(issue, classifications, priorityConfig);
+    return this.estimatePriorityRuleBased(issue, classifications, priorityConfig, config);
   }
 
   /**
@@ -381,7 +384,8 @@ export class ClassificationEngine {
   private estimatePriorityRuleBased(
     issue: Issue,
     classifications: CategoryClassification[],
-    priorityConfig?: PriorityEstimationConfig
+    priorityConfig?: PriorityEstimationConfig,
+    config?: EnhancedClassificationConfig
   ): PriorityLevel {
     // Check existing priority labels first
     const existingLabels = issue.labels.map(label => label.name.toLowerCase());
@@ -413,14 +417,19 @@ export class ClassificationEngine {
       return priorityConfig?.fallbackPriority || 'low';
     }
 
-    // Enhanced priority logic based on classifications
+    // Enhanced priority logic based on classifications with configurable thresholds
+    const scoringThresholds = config?.scoringThresholds;
+    const securityMinConfidence =
+      scoringThresholds?.confidenceThresholds?.securityMinConfidence ?? 0.7;
+    const bugMinConfidence = scoringThresholds?.confidenceThresholds?.bugMinConfidence ?? 0.7;
+
     const hasSecurityOrCritical = classifications.some(
-      c => c.category === 'security' && c.confidence > 0.7
+      c => c.category === 'security' && c.confidence > securityMinConfidence
     );
     if (hasSecurityOrCritical) return 'critical';
 
     const hasHighPriority = classifications.some(
-      c => (c.category === 'bug' && c.confidence > 0.7) || c.category === 'performance'
+      c => (c.category === 'bug' && c.confidence > bugMinConfidence) || c.category === 'performance'
     );
     if (hasHighPriority) return 'high';
 
@@ -478,20 +487,34 @@ export class ClassificationEngine {
   /**
    * Calculate enhanced score with customizable algorithm
    */
-  private calculateEnhancedScore(
+  private async calculateEnhancedScore(
     issue: Issue,
     classifications: CategoryClassification[],
     primaryCategory: ClassificationCategory,
     primaryConfidence: number,
     estimatedPriority: PriorityLevel,
     scoringAlgorithm?: ScoringAlgorithm
-  ): { score: number; breakdown: any } {
+  ): Promise<{ score: number; breakdown: any }> {
     const algorithm = scoringAlgorithm || this.config.scoringAlgorithm;
     if (!algorithm) {
-      // Fallback to simple scoring
+      // Fallback to simple scoring with configurable values
+      const configResult = await enhancedConfigManager.loadConfig();
+      const config = configResult.config;
+      const scoringThresholds = config.scoringThresholds;
+      const fallbackBaseScore = scoringThresholds?.fallbackScoring?.baseScore ?? 50;
+      const fallbackCategoryScore = scoringThresholds?.fallbackScoring?.categoryScore ?? 20;
+      const fallbackPriorityScore = scoringThresholds?.fallbackScoring?.priorityScore ?? 15;
+      const fallbackConfidenceScore = scoringThresholds?.fallbackScoring?.confidenceScore ?? 10;
+      const fallbackRecencyScore = scoringThresholds?.fallbackScoring?.recencyScore ?? 5;
+
       return {
-        score: 50,
-        breakdown: { category: 20, priority: 15, confidence: 10, recency: 5 },
+        score: fallbackBaseScore,
+        breakdown: {
+          category: fallbackCategoryScore,
+          priority: fallbackPriorityScore,
+          confidence: fallbackConfidenceScore,
+          recency: fallbackRecencyScore,
+        },
       };
     }
 
@@ -610,7 +633,8 @@ export class ClassificationEngine {
    */
   private applyRule(
     issue: Issue,
-    rule: ClassificationRule
+    rule: ClassificationRule,
+    scoringThresholds?: any
   ): CategoryClassification & { ruleName?: string; ruleId?: string } {
     let score = 0;
     const reasons: string[] = [];
@@ -640,7 +664,8 @@ export class ClassificationEngine {
     if (rule.conditions.titleKeywords) {
       for (const keyword of rule.conditions.titleKeywords) {
         if (title.includes(keyword.toLowerCase())) {
-          score += 0.3;
+          const titleKeywordWeight = scoringThresholds?.keywordScores?.titleKeyword ?? 0.3;
+          score += titleKeywordWeight;
           matchedKeywords.push(keyword);
           reasons.push(`Title contains keyword: "${keyword}"`);
         }
@@ -651,7 +676,8 @@ export class ClassificationEngine {
     if (rule.conditions.bodyKeywords) {
       for (const keyword of rule.conditions.bodyKeywords) {
         if (body.includes(keyword.toLowerCase())) {
-          score += 0.2;
+          const bodyKeywordWeight = scoringThresholds?.keywordScores?.bodyKeyword ?? 0.2;
+          score += bodyKeywordWeight;
           matchedKeywords.push(keyword);
           reasons.push(`Body contains keyword: "${keyword}"`);
         }
@@ -662,7 +688,8 @@ export class ClassificationEngine {
     if (rule.conditions.labels) {
       for (const labelPattern of rule.conditions.labels) {
         if (existingLabels.some(label => label.includes(labelPattern.toLowerCase()))) {
-          score += 0.4;
+          const labelMatchWeight = scoringThresholds?.keywordScores?.labelMatch ?? 0.4;
+          score += labelMatchWeight;
           reasons.push(`Has matching label: "${labelPattern}"`);
         }
       }
@@ -675,7 +702,8 @@ export class ClassificationEngine {
           const cleanPattern = pattern.replace(/^\/|\/[gimuy]*$/g, '');
           const regex = new RegExp(cleanPattern, 'i');
           if (regex.test(title)) {
-            score += 0.25;
+            const titlePatternWeight = scoringThresholds?.keywordScores?.titlePattern ?? 0.25;
+            score += titlePatternWeight;
             reasons.push(`Title matches pattern: ${pattern}`);
           }
         } catch {
@@ -691,7 +719,8 @@ export class ClassificationEngine {
           const cleanPattern = pattern.replace(/^\/|\/[gimuy]*$/g, '');
           const regex = new RegExp(cleanPattern, 'i');
           if (regex.test(body)) {
-            score += 0.2;
+            const bodyPatternWeight = scoringThresholds?.keywordScores?.bodyPattern ?? 0.2;
+            score += bodyPatternWeight;
             reasons.push(`Body matches pattern: ${pattern}`);
           }
         } catch {
@@ -716,15 +745,20 @@ export class ClassificationEngine {
   /**
    * Calculate priority confidence
    */
-  private calculatePriorityConfidence(
+  private async calculatePriorityConfidence(
     priority: PriorityLevel,
     classifications: CategoryClassification[]
-  ): number {
+  ): Promise<number> {
     if (classifications.length === 0) return 0.0;
+
+    const configResult = await enhancedConfigManager.loadConfig();
+    const config = configResult.config;
+    const priorityConfidenceMultiplier =
+      config.scoringThresholds?.confidenceThresholds?.priorityConfidenceMultiplier ?? 1.2;
 
     const avgConfidence =
       classifications.reduce((sum, c) => sum + c.confidence, 0) / classifications.length;
-    return Math.min(1.0, avgConfidence * 1.2);
+    return Math.min(1.0, avgConfidence * priorityConfidenceMultiplier);
   }
 
   /**

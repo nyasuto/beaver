@@ -66,6 +66,38 @@ vi.mock('../../classification/enhanced-config-manager', () => ({
         },
       })
     ),
+    loadConfig: vi.fn(() =>
+      Promise.resolve({
+        config: {
+          taskRecommendation: {
+            fallbackScore: {
+              baseScore: 50,
+              scoreDecrement: 5,
+            },
+          },
+          priorityScoring: {
+            critical: 30,
+            high: 20,
+            medium: 10,
+            low: 5,
+            default: 10,
+          },
+          categoryScoring: {
+            bug: 15,
+            security: 25,
+            performance: 10,
+            feature: 8,
+            enhancement: 5,
+            default: 5,
+          },
+        },
+        source: 'memory',
+        loadTime: 1,
+        fromCache: true,
+        errors: [],
+        warnings: [],
+      })
+    ),
   },
 }));
 

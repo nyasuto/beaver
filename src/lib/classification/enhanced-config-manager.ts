@@ -8,8 +8,19 @@
  * @module EnhancedConfigManager
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
+// Server-side only - these will be undefined in browser
+let fs: any, path: any;
+
+try {
+  if (typeof window === 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    fs = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    path = require('path');
+  }
+} catch {
+  // Browser environment - fs and path will remain undefined
+}
 import {
   type EnhancedClassificationConfig,
   type ConfigurationProfile,
@@ -59,11 +70,13 @@ export class EnhancedConfigManager {
     this.configPaths =
       configPaths.length > 0
         ? configPaths
-        : [
-            join(process.cwd(), 'src/data/config/default-classification.json'),
-            join(process.cwd(), 'src/data/config/classification-rules.json'),
-            join(process.cwd(), 'classification-config.json'),
-          ];
+        : path
+          ? [
+              path.join(process.cwd(), 'src/data/config/default-classification.json'),
+              path.join(process.cwd(), 'src/data/config/classification-rules.json'),
+              path.join(process.cwd(), 'classification-config.json'),
+            ]
+          : [];
   }
 
   /**
@@ -141,10 +154,15 @@ export class EnhancedConfigManager {
    * Load base configuration from file
    */
   private async loadBaseConfig(): Promise<EnhancedClassificationConfig> {
+    // Browser environment - return default config
+    if (!fs || !path) {
+      return DEFAULT_ENHANCED_CONFIG;
+    }
+
     for (const configPath of this.configPaths) {
       try {
-        if (existsSync(configPath)) {
-          const rawConfig = readFileSync(configPath, 'utf8');
+        if (fs.existsSync(configPath)) {
+          const rawConfig = fs.readFileSync(configPath, 'utf8');
           const parsedConfig = JSON.parse(rawConfig);
 
           // Validate and enhance the configuration
@@ -173,11 +191,16 @@ export class EnhancedConfigManager {
       return cached;
     }
 
-    const profilePath = join(process.cwd(), 'src/data/config/profiles', `${profileId}.json`);
+    // Browser environment - return null
+    if (!fs || !path) {
+      return null;
+    }
+
+    const profilePath = path.join(process.cwd(), 'src/data/config/profiles', `${profileId}.json`);
 
     try {
-      if (existsSync(profilePath)) {
-        const rawProfile = readFileSync(profilePath, 'utf8');
+      if (fs.existsSync(profilePath)) {
+        const rawProfile = fs.readFileSync(profilePath, 'utf8');
         const parsedProfile = JSON.parse(rawProfile);
         const profile = validateConfigurationProfile(parsedProfile);
 
@@ -315,10 +338,17 @@ export class EnhancedConfigManager {
    */
   async saveConfig(
     config: EnhancedClassificationConfig,
-    path?: string
+    pathParam?: string
   ): Promise<{ success: boolean; errors: string[] }> {
     const result: { success: boolean; errors: string[] } = { success: false, errors: [] };
-    const configPath = path || this.configPaths[0];
+
+    // Browser environment - return error
+    if (!fs || !path) {
+      result.errors.push('File system operations not available in browser environment');
+      return result;
+    }
+
+    const configPath = pathParam || this.configPaths[0];
 
     if (!configPath) {
       result.errors.push('No configuration path available');
@@ -330,13 +360,13 @@ export class EnhancedConfigManager {
       const validatedConfig = validateEnhancedConfig(config);
 
       // Ensure directory exists
-      const dir = dirname(configPath);
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
+      const dir = path.dirname(configPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
       }
 
       // Save configuration
-      writeFileSync(configPath, JSON.stringify(validatedConfig, null, 2));
+      fs.writeFileSync(configPath, JSON.stringify(validatedConfig, null, 2));
 
       // Clear cache to force reload
       this.configCache.clear();
