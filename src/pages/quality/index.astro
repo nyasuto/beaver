@@ -13,7 +13,12 @@ import PageHeader from '../../components/ui/PageHeader.astro';
 import ModuleCoverageChart from '../../components/charts/ModuleCoverageChart.tsx';
 import CoverageHistoryChart from '../../components/charts/CoverageHistoryChart.tsx';
 import QualityDashboardWithSettings from '../../components/quality/QualityDashboardWithSettings.tsx';
-import { getQualityMetrics } from '../../lib/quality/codecov';
+import {
+  getQualityMetrics,
+  CodecovAuthenticationError,
+  CodecovRateLimitError,
+  CodecovApiError,
+} from '../../lib/quality/codecov';
 
 const title = '品質分析ダッシュボード';
 const description = 'Codecov APIを使用してコードカバレッジの品質分析を表示';
@@ -22,13 +27,28 @@ const description = 'Codecov APIを使用してコードカバレッジの品質
 let qualityData = null;
 let isDataAvailable = false;
 let errorMessage = null;
+let errorType = 'unknown';
 
 try {
   qualityData = await getQualityMetrics();
   isDataAvailable = true;
 } catch (error) {
   console.error('品質データの取得に失敗しました:', error);
-  errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+
+  if (error instanceof CodecovAuthenticationError) {
+    errorType = 'authentication';
+    errorMessage =
+      'Codecov APIトークンの設定に問題があります。CODECOV_API_TOKENの設定を確認してください。';
+  } else if (error instanceof CodecovRateLimitError) {
+    errorType = 'rate_limit';
+    errorMessage = 'API利用制限に達しました。しばらく時間を置いてから再度お試しください。';
+  } else if (error instanceof CodecovApiError) {
+    errorType = 'api_error';
+    errorMessage = `Codecov APIエラー: ${error.message}`;
+  } else {
+    errorType = 'unknown';
+    errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+  }
 
   // フォールバック用のサンプルデータ
   qualityData = {
@@ -250,11 +270,49 @@ const coverageHistoryData = qualityData.history.map(entry => ({
         <div>
           <h3 class="font-medium text-heading mb-2">API設定</h3>
           <p class="text-sm text-muted">
-            {isDataAvailable ? '✅ 接続正常' : '⚠️ 設定が必要'}
+            {
+              isDataAvailable
+                ? '✅ 接続正常'
+                : errorType === 'authentication'
+                  ? '🔐 認証エラー'
+                  : errorType === 'rate_limit'
+                    ? '⏱️ 利用制限'
+                    : errorType === 'api_error'
+                      ? '🚫 APIエラー'
+                      : '⚠️ 設定が必要'
+            }
           </p>
           {
             !isDataAvailable && (
-              <p class="text-xs text-muted mt-1">環境変数 CODECOV_TOKEN の設定が必要です</p>
+              <div class="text-xs text-muted mt-1">
+                {errorType === 'authentication' && (
+                  <div>
+                    <p>
+                      🔧 <strong>設定手順:</strong>
+                    </p>
+                    <p>
+                      環境変数 <code>CODECOV_API_TOKEN</code> を設定してください
+                    </p>
+                    <p>(Codecov → Settings → Access → Personal Access Token)</p>
+                  </div>
+                )}
+                {errorType === 'rate_limit' && (
+                  <p>API利用制限に達しました。しばらく時間を置いてから再度アクセスしてください。</p>
+                )}
+                {errorType === 'api_error' && (
+                  <p>
+                    Codecov APIでエラーが発生しました。リポジトリアクセス権限を確認してください。
+                  </p>
+                )}
+                {(errorType === 'unknown' || !errorType) && (
+                  <div>
+                    <p>環境変数の設定が必要です:</p>
+                    <p>
+                      • <code>CODECOV_API_TOKEN</code> - 品質ダッシュボード用
+                    </p>
+                  </div>
+                )}
+              </div>
             )
           }
         </div>

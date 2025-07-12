@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 // Zod schemas for type safety
 export const CodecovConfigSchema = z.object({
-  token: z.string().optional(),
+  apiToken: z.string().optional(),
   owner: z.string().optional(),
   repo: z.string().optional(),
   service: z.enum(['github', 'gitlab', 'bitbucket']).default('github'),
@@ -48,6 +48,38 @@ export type ModuleCoverage = z.infer<typeof ModuleCoverageSchema>;
 export type CoverageHistory = z.infer<typeof CoverageHistorySchema>;
 export type QualityMetrics = z.infer<typeof QualityMetricsSchema>;
 
+// Enhanced error types for better error handling
+export class CodecovAuthenticationError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number
+  ) {
+    super(message);
+    this.name = 'CodecovAuthenticationError';
+  }
+}
+
+export class CodecovRateLimitError extends Error {
+  constructor(
+    message: string,
+    public retryAfter?: number
+  ) {
+    super(message);
+    this.name = 'CodecovRateLimitError';
+  }
+}
+
+export class CodecovApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public response?: string
+  ) {
+    super(message);
+    this.name = 'CodecovApiError';
+  }
+}
+
 // Result type for error handling
 export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
@@ -55,16 +87,29 @@ export type Result<T, E = Error> = { success: true; data: T } | { success: false
  * Get configuration from environment variables
  */
 function getCodecovConfig(): CodecovConfig {
+  // For API calls, we need CODECOV_API_TOKEN (not upload token)
+  const apiToken = import.meta.env['CODECOV_API_TOKEN'] || undefined;
+
+  if (!apiToken) {
+    console.warn(
+      'CODECOV_API_TOKEN is not configured. ' +
+        'This token is required for reading coverage data from Codecov API. ' +
+        'Generate one at: https://codecov.io → Settings → Access → Personal Access Token'
+    );
+  } else {
+    console.log('Using CODECOV_API_TOKEN for API calls');
+  }
+
   const config = {
-    token: import.meta.env['CODECOV_TOKEN'],
+    apiToken: apiToken,
     owner: import.meta.env['GITHUB_OWNER'] || 'nyasuto',
     repo: import.meta.env['GITHUB_REPO'] || 'beaver',
     service: 'github' as const,
     baseUrl: 'https://api.codecov.io',
   };
 
-  console.log('Environment variables for Codecov:', {
-    CODECOV_TOKEN: !!import.meta.env['CODECOV_TOKEN'],
+  console.log('Codecov API configuration:', {
+    CODECOV_API_TOKEN: !!apiToken,
     GITHUB_OWNER: import.meta.env['GITHUB_OWNER'],
     GITHUB_REPO: import.meta.env['GITHUB_REPO'],
     finalOwner: config.owner,
@@ -75,12 +120,19 @@ function getCodecovConfig(): CodecovConfig {
 }
 
 /**
- * Make authenticated request to Codecov API
+ * Make authenticated request to Codecov API with enhanced error handling
  */
-async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): Promise<Result<T>> {
+async function makeCodecovRequest<T>(
+  endpoint: string,
+  config: CodecovConfig,
+  retryCount: number = 0
+): Promise<Result<T>> {
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second base delay
+
   try {
-    if (!config.token) {
-      throw new Error('Codecov token not configured');
+    if (!config.apiToken) {
+      throw new CodecovAuthenticationError('Codecov API token not configured', 401);
     }
 
     const url = `${config.baseUrl}/api/v2/${config.service}/${config.owner}/${endpoint}`;
@@ -90,14 +142,16 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
       endpoint,
       owner: config.owner,
       repo: config.repo,
-      tokenLength: config.token?.length || 0,
-      tokenPrefix: config.token?.substring(0, 8) + '...' || 'none',
+      tokenLength: config.apiToken?.length || 0,
+      tokenPrefix: config.apiToken?.substring(0, 8) + '...' || 'none',
+      retryCount,
     });
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${config.token}`,
+        Authorization: `Bearer ${config.apiToken}`,
         'Content-Type': 'application/json',
+        'User-Agent': 'Beaver-Astro/1.0 (Quality Dashboard)',
       },
     });
 
@@ -107,18 +161,84 @@ async function makeCodecovRequest<T>(endpoint: string, config: CodecovConfig): P
       headers: Object.fromEntries(response.headers.entries()),
     });
 
+    // Handle specific HTTP status codes
     if (!response.ok) {
       const responseText = await response.text();
       console.error('Codecov API error response:', responseText);
-      throw new Error(
-        `Codecov API error: ${response.status} ${response.statusText} - ${responseText}`
-      );
+
+      switch (response.status) {
+        case 401:
+          throw new CodecovAuthenticationError(
+            'Invalid or expired Codecov API token. Please check your CODECOV_API_TOKEN configuration.',
+            response.status
+          );
+        case 403:
+          throw new CodecovAuthenticationError(
+            'Codecov API access forbidden. The token may not have sufficient permissions.',
+            response.status
+          );
+        case 429: {
+          const retryAfter = response.headers.get('retry-after');
+          const retryAfterSeconds = retryAfter ? parseInt(retryAfter) : 60;
+
+          if (retryCount < maxRetries) {
+            const delay = Math.min(baseDelay * Math.pow(2, retryCount), retryAfterSeconds * 1000);
+            console.log(
+              `Rate limited. Retrying after ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`
+            );
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return makeCodecovRequest(endpoint, config, retryCount + 1);
+          } else {
+            throw new CodecovRateLimitError(
+              `Rate limit exceeded. Please try again after ${retryAfterSeconds} seconds.`,
+              retryAfterSeconds
+            );
+          }
+        }
+        case 404:
+          throw new CodecovApiError(
+            `Repository not found or not accessible. Check owner/repo configuration: ${config.owner}/${config.repo}`,
+            response.status,
+            responseText
+          );
+        default:
+          throw new CodecovApiError(
+            `Codecov API error: ${response.status} ${response.statusText}`,
+            response.status,
+            responseText
+          );
+      }
     }
 
     const data = await response.json();
     return { success: true, data };
   } catch (error) {
     console.error('Codecov request failed:', error);
+
+    // Don't retry on authentication errors or client errors
+    if (
+      error instanceof CodecovAuthenticationError ||
+      error instanceof CodecovApiError ||
+      retryCount >= maxRetries
+    ) {
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      };
+    }
+
+    // Retry on network errors or other failures
+    if (retryCount < maxRetries) {
+      const delay = baseDelay * Math.pow(2, retryCount);
+      console.log(
+        `Network error. Retrying after ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`
+      );
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return makeCodecovRequest(endpoint, config, retryCount + 1);
+    }
+
     return {
       success: false,
       error: error instanceof Error ? error : new Error(String(error)),
@@ -340,9 +460,9 @@ function generateSampleData(): QualityMetrics {
 export async function getQualityMetrics(): Promise<QualityMetrics> {
   const config = getCodecovConfig();
 
-  // If no token is configured, return sample data
-  if (!config.token) {
-    console.warn('Codecov token not configured, using sample data');
+  // If no API token is configured, return sample data
+  if (!config.apiToken) {
+    console.warn('Codecov API token not configured, using sample data');
     return generateSampleData();
   }
 
@@ -351,7 +471,7 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
     service: config.service,
     owner: config.owner,
     repo: config.repo,
-    tokenConfigured: !!config.token,
+    apiTokenConfigured: !!config.apiToken,
   });
 
   try {
