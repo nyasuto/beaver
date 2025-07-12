@@ -174,7 +174,8 @@
           "/error message/i",
           "/stack trace/i"
         ],
-        "excludeKeywords": ["feature request", "enhancement", "improvement", "documentation"]
+        "excludeKeywords": ["feature request", "enhancement", "improvement", "documentation"],
+        "labels": ["bug", "type: bug", "error", "issue", "defect"]
       }
     },
     {
@@ -212,7 +213,8 @@
           "new feature"
         ],
         "titlePatterns": ["/\\b(add|implement|support|create|build)\\b/i", "/\\b(feature|request|proposal)\\b/i"],
-        "excludeKeywords": ["bug", "error", "broken", "fix", "crash"]
+        "excludeKeywords": ["bug", "error", "broken", "fix", "crash"],
+        "labels": ["feature", "type: feature", "enhancement", "type: enhancement", "request"]
       }
     },
     {
@@ -258,7 +260,8 @@
           "/\\b(xss|csrf|sql injection|rce)\\b/i",
           "/\\bcve-\\d{4}-\\d{4,}/i"
         ],
-        "bodyPatterns": ["/\\bCVE-\\d{4}-\\d{4,}/i", "/\\b(privilege escalation|code injection|buffer overflow)\\b/i"]
+        "bodyPatterns": ["/\\bCVE-\\d{4}-\\d{4,}/i", "/\\b(privilege escalation|code injection|buffer overflow)\\b/i"],
+        "labels": ["security", "type: security", "vulnerability", "exploit"]
       }
     },
     {
@@ -302,7 +305,48 @@
           "/\\b(memory|cpu|latency|bottleneck)\\b/i",
           "/\\d+ms|\\d+s|\\d+%/i"
         ],
-        "bodyPatterns": ["/\\b(memory leak|cpu usage|response time)\\b/i", "/\\b(\\d+ms|\\d+s|\\d+%)/i"]
+        "bodyPatterns": ["/\\b(memory leak|cpu usage|response time)\\b/i", "/\\b(\\d+ms|\\d+s|\\d+%)/i"],
+        "labels": ["performance", "type: performance", "optimization", "slow", "speed"]
+      }
+    },
+    {
+      "id": "documentation-enhanced",
+      "name": "Documentation Detection",
+      "description": "Documentation and guide related issues",
+      "category": "documentation",
+      "priority": "medium",
+      "weight": 0.7,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": [
+          "documentation",
+          "docs",
+          "readme",
+          "guide",
+          "manual",
+          "tutorial",
+          "wiki",
+          "spec",
+          "specification"
+        ],
+        "bodyKeywords": ["documentation", "docs", "readme", "guide", "manual", "tutorial", "specification", "api docs"],
+        "titlePatterns": ["/\\b(docs?|documentation|readme|guide)\\b/i"],
+        "labels": ["documentation", "type: docs", "docs", "guide", "readme"]
+      }
+    },
+    {
+      "id": "question-enhanced",
+      "name": "Question Detection",
+      "description": "Questions and help requests",
+      "category": "question",
+      "priority": "low",
+      "weight": 0.6,
+      "enabled": true,
+      "conditions": {
+        "titleKeywords": ["question", "help", "how to", "how do", "what is", "why", "when", "where"],
+        "bodyKeywords": ["question", "help", "how to", "how do", "what is", "please help", "need help"],
+        "titlePatterns": ["/\\?$/", "/how\\s+to/i", "/what\\s+is/i", "/why\\s+/i"],
+        "labels": ["question", "help wanted", "help", "support"]
       }
     }
   ],
