@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { fetchAndSaveGitHubData } from '../fetch-github-data.js';
 import { createGitHubClient } from '../../src/lib/github/client.js';
 import { GitHubIssuesService } from '../../src/lib/github/issues.js';
+import { createTestClassificationEngine } from '../../src/lib/classification/engine.js';
 import { z } from 'zod';
 
 // Node.js モジュールのモック
@@ -13,14 +14,17 @@ vi.mock('path');
 // アプリケーションモジュールのモック
 vi.mock('../../src/lib/github/client.js');
 vi.mock('../../src/lib/github/issues.js');
+vi.mock('../../src/lib/classification/engine.js');
 
 // 型安全なモック
 const mockWriteFileSync = vi.mocked(writeFileSync);
 const mockMkdirSync = vi.mocked(mkdirSync);
 const mockExistsSync = vi.mocked(existsSync);
+const mockReadFileSync = vi.mocked(readFileSync);
 const mockJoin = vi.mocked(join);
 const mockCreateGitHubClient = vi.mocked(createGitHubClient);
 const mockGitHubIssuesService = vi.mocked(GitHubIssuesService);
+const mockCreateTestClassificationEngine = vi.mocked(createTestClassificationEngine);
 
 describe('fetch-github-data スクリプト', () => {
   const originalEnv = process.env;
@@ -307,31 +311,134 @@ describe('fetch-github-data スクリプト', () => {
         }),
       };
       mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+
+      // Classification engine mock
+      const mockClassificationEngine = {
+        classifyIssuesBatch: vi.fn().mockResolvedValue({
+          totalAnalyzed: sampleIssues.length,
+          averageScore: 67,
+          processingTimeMs: 12,
+          cacheHitRate: 0,
+          tasks: sampleIssues.map((issue, index) => ({
+            issueNumber: issue.number,
+            issueId: issue.id,
+            title: issue.title,
+            body: issue.body,
+            score: 67,
+            scoreBreakdown: {
+              category: 40,
+              priority: 27,
+              recency: 0,
+              custom: 0
+            },
+            priority: 'medium',
+            category: index === 0 ? 'bug' : 'feature',
+            confidence: 1,
+            reasons: ['Test classification'],
+            labels: issue.labels.map(l => l.name),
+            state: issue.state,
+            createdAt: issue.created_at,
+            updatedAt: issue.updated_at,
+            url: `https://github.com/test-owner/test-repo/issues/${issue.number}`,
+            metadata: {
+              processingTimeMs: 10,
+              cacheHit: false,
+              rulesApplied: 6,
+              rulesMatched: 1,
+              algorithmVersion: '2.0.0'
+            }
+          }))
+        }),
+      };
+      mockCreateTestClassificationEngine.mockResolvedValue(mockClassificationEngine as any);
+
+      // Mock readFileSync to return classified issues data
+      const classifiedIssues = sampleIssues.map((issue, index) => ({
+        ...issue,
+        classification: {
+          issueNumber: issue.number,
+          issueId: issue.id,
+          title: issue.title,
+          body: issue.body,
+          score: 67,
+          scoreBreakdown: {
+            category: 40,
+            priority: 27,
+            recency: 0,
+            custom: 0
+          },
+          priority: 'medium',
+          category: index === 0 ? 'bug' : 'feature',
+          confidence: 1,
+          reasons: ['Test classification'],
+          labels: issue.labels.map(l => l.name),
+          state: issue.state,
+          createdAt: issue.created_at,
+          updatedAt: issue.updated_at,
+          url: `https://github.com/test-owner/test-repo/issues/${issue.number}`,
+          metadata: {
+            processingTimeMs: 10,
+            cacheHit: false,
+            rulesApplied: 6,
+            rulesMatched: 1,
+            algorithmVersion: '2.0.0'
+          }
+        }
+      }));
+      
+      mockReadFileSync.mockReturnValue(JSON.stringify(classifiedIssues));
     });
 
     it('Issues データを正しく保存する', async () => {
       await fetchAndSaveGitHubData();
 
-      expect(mockWriteFileSync).toHaveBeenCalledWith(
-        expect.stringContaining('issues.json'),
-        JSON.stringify(sampleIssues, null, 2),
-        'utf8'
+      // Check that issues.json is saved with classification data
+      const issuesCall = mockWriteFileSync.mock.calls.find(call => 
+        call[0].toString().includes('issues.json')
       );
+      expect(issuesCall).toBeDefined();
+
+      if (issuesCall) {
+        const issuesContent = JSON.parse(issuesCall[1] as string);
+        expect(Array.isArray(issuesContent)).toBe(true);
+        expect(issuesContent).toHaveLength(2);
+        
+        // Verify that issues have classification data
+        issuesContent.forEach((issue: any) => {
+          expect(issue).toHaveProperty('classification');
+          expect(issue.classification).toHaveProperty('category');
+          expect(issue.classification).toHaveProperty('confidence');
+        });
+      }
     });
 
     it('個別 Issue ファイルを正しく保存する', async () => {
       await fetchAndSaveGitHubData();
 
-      expect(mockWriteFileSync).toHaveBeenCalledWith(
-        expect.stringContaining('1.json'),
-        JSON.stringify(sampleIssues[0], null, 2),
-        'utf8'
+      // Check individual issue files are saved with classification data
+      const issue1Call = mockWriteFileSync.mock.calls.find(call => 
+        call[0].toString().includes('1.json')
       );
-      expect(mockWriteFileSync).toHaveBeenCalledWith(
-        expect.stringContaining('2.json'),
-        JSON.stringify(sampleIssues[1], null, 2),
-        'utf8'
+      const issue2Call = mockWriteFileSync.mock.calls.find(call => 
+        call[0].toString().includes('2.json')
       );
+      
+      expect(issue1Call).toBeDefined();
+      expect(issue2Call).toBeDefined();
+
+      if (issue1Call) {
+        const issue1Content = JSON.parse(issue1Call[1] as string);
+        expect(issue1Content).toHaveProperty('classification');
+        expect(issue1Content.classification).toHaveProperty('category');
+        expect(issue1Content.classification).toHaveProperty('confidence');
+      }
+
+      if (issue2Call) {
+        const issue2Content = JSON.parse(issue2Call[1] as string);
+        expect(issue2Content).toHaveProperty('classification');
+        expect(issue2Content.classification).toHaveProperty('category');
+        expect(issue2Content.classification).toHaveProperty('confidence');
+      }
     });
 
     it('メタデータを正しく計算して保存する', async () => {
