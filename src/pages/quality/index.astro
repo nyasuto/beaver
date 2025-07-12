@@ -19,6 +19,7 @@ import {
   CodecovRateLimitError,
   CodecovApiError,
 } from '../../lib/quality/codecov';
+import { getExternalLinksConfig, ExternalLinksGenerator } from '../../config/external-links';
 
 const title = '品質分析ダッシュボード';
 const description = 'Codecov APIを使用してコードカバレッジの品質分析を表示';
@@ -85,6 +86,10 @@ try {
 const DEFAULT_ATTENTION_THRESHOLD = 80; // デフォルト閾値を80%に設定
 const DEFAULT_DISPLAY_COUNT = 5;
 
+// External links configuration
+const externalLinksConfig = getExternalLinksConfig();
+const codecovLinks = ExternalLinksGenerator.generateCodecovUrls(externalLinksConfig);
+
 // モジュール別カバレッジチャート用データの準備
 const moduleCoverageData = qualityData.modules.map(module => ({
   name: module.name,
@@ -126,11 +131,51 @@ const coverageHistoryData = qualityData.history.map(entry => ({
         : !isDataAvailable
           ? 'サンプルデータを使用中 - 実際の分析にはCodecov APIの設定が必要です'
           : undefined}
+      actions={(
+        <div class="flex items-center gap-3">
+          <a
+            href={codecovLinks.trends}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="Codecovでカバレッジの傾向を確認 (新しいタブで開きます)"
+            title="Codecovでカバレッジの傾向を確認"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              ></path>
+            </svg>
+            詳細分析
+          </a>
+          <a
+            href={codecovLinks.project}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="Codecovでプロジェクトの詳細を確認 (新しいタブで開きます)"
+            title="Codecovでプロジェクトの詳細を確認"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              ></path>
+            </svg>
+            Codecov
+          </a>
+        </div>
+      )}
     />
 
     <!-- Key Quality Metrics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="card">
+      <div class="card group relative">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-muted">総合カバレッジ</p>
@@ -140,6 +185,23 @@ const coverageHistoryData = qualityData.history.map(entry => ({
             <span class="text-blue-600 text-xl">📊</span>
           </div>
         </div>
+        <a
+          href={codecovLinks.project}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-blue-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Codecovで総合カバレッジの詳細を確認 (新しいタブで開きます)"
+          title="Codecovで詳細を確認"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            ></path>
+          </svg>
+        </a>
       </div>
 
       <div class="card">
@@ -256,7 +318,31 @@ const coverageHistoryData = qualityData.history.map(entry => ({
 
     <!-- API Status -->
     <div class="card">
-      <h2 class="text-lg font-semibold text-heading mb-4">🔗 API接続状況</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-heading">🔗 API接続状況</h2>
+        {
+          isDataAvailable && (
+            <a
+              href={codecovLinks.project}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+              aria-label="Codecovプロジェクトを開く (新しいタブで開きます)"
+              title="Codecovプロジェクトを開く"
+            >
+              <span>Codecovで確認</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
+          )
+        }
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h3 class="font-medium text-heading mb-2">データソース</h3>

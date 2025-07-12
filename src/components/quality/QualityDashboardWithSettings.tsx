@@ -9,6 +9,7 @@
 
 import React, { useState, useMemo } from 'react';
 import QualitySettings, { useQualitySettings } from '../ui/QualitySettings.tsx';
+import { useModuleExternalLinks } from '../../hooks/useExternalLinks';
 
 /**
  * Module coverage data structure
@@ -32,6 +33,107 @@ export interface QualityDashboardWithSettingsProps {
   defaultDisplayCount?: number;
   /** CSS class name */
   className?: string;
+}
+
+/**
+ * Module Card Component with External Links
+ */
+interface ModuleCardProps {
+  module: ModuleCoverageData;
+  type: 'attention' | 'healthy';
+  priorityIndex?: number;
+}
+
+function ModuleCard({ module, type, priorityIndex }: ModuleCardProps) {
+  const moduleLinks = useModuleExternalLinks(module.name);
+
+  const cardStyles = {
+    attention: {
+      bg: 'bg-red-50 dark:bg-red-900/20',
+      border: 'border-red-200 dark:border-red-800',
+      textPrimary: 'text-red-900 dark:text-red-200',
+      textSecondary: 'text-red-700 dark:text-red-300',
+      progressBg: 'bg-red-200 dark:bg-red-800',
+      progressFill: 'bg-red-600 dark:bg-red-500',
+      badge: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+      icon: '⚠️',
+    },
+    healthy: {
+      bg: 'bg-green-50 dark:bg-green-900/20',
+      border: 'border-green-200 dark:border-green-800',
+      textPrimary: 'text-green-900 dark:text-green-200',
+      textSecondary: 'text-green-700 dark:text-green-300',
+      progressBg: 'bg-green-200 dark:bg-green-800',
+      progressFill: 'bg-green-600 dark:bg-green-500',
+      badge: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+      icon: module.coverage >= 90 ? '🌟' : '✅',
+    },
+  };
+
+  const style = cardStyles[type];
+
+  return (
+    <div className={`p-4 ${style.bg} ${style.border} border rounded-lg group relative`}>
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <h3 className={`font-medium ${style.textPrimary}`}>{module.name}</h3>
+          <p className={`text-sm ${style.textSecondary} mt-1`}>
+            カバレッジ: {module.coverage.toFixed(1)}% •{' '}
+            {type === 'attention' ? '未カバー' : 'カバー済み'}:{' '}
+            {type === 'attention'
+              ? module.missedLines.toLocaleString()
+              : (module.lines - module.missedLines).toLocaleString()}
+            行 / {module.lines.toLocaleString()}行
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {priorityIndex !== undefined && (
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${style.badge}`}
+            >
+              優先度{priorityIndex + 1}
+            </span>
+          )}
+          {type === 'healthy' && (
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${style.badge}`}
+            >
+              {module.coverage >= 90 ? '🌟優秀' : '✅良好'}
+            </span>
+          )}
+          <span className="text-2xl">{style.icon}</span>
+        </div>
+      </div>
+
+      {/* External link button */}
+      <a
+        href={moduleLinks.codecov.module}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-blue-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-label={`Codecovで${module.name}モジュールの詳細を確認 (新しいタブで開きます)`}
+        title="Codecovで詳細を確認"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+          />
+        </svg>
+      </a>
+
+      <div className="mt-3">
+        <div className={`w-full ${style.progressBg} rounded-full h-2`}>
+          <div
+            className={`${style.progressFill} h-2 rounded-full`}
+            style={{ width: `${module.coverage}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -130,34 +232,12 @@ export function QualityDashboardWithSettings({
           ) : (
             <div className="space-y-4">
               {processedData.modulesNeedingAttention.map((module, index) => (
-                <div
+                <ModuleCard
                   key={module.name}
-                  className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-red-900 dark:text-red-200">{module.name}</h3>
-                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                        カバレッジ: {module.coverage.toFixed(1)}% • 未カバー:{' '}
-                        {module.missedLines.toLocaleString()}行 / {module.lines.toLocaleString()}行
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">
-                        優先度{index + 1}
-                      </span>
-                      <span className="text-2xl">⚠️</span>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <div className="w-full bg-red-200 dark:bg-red-800 rounded-full h-2">
-                      <div
-                        className="bg-red-600 dark:bg-red-500 h-2 rounded-full"
-                        style={{ width: `${module.coverage}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                  module={module}
+                  type="attention"
+                  priorityIndex={index}
+                />
               ))}
 
               {modules.filter(m => m.coverage < settings.attentionThreshold).length >
@@ -217,37 +297,7 @@ export function QualityDashboardWithSettings({
             ) : (
               <div className="space-y-4">
                 {processedData.healthyModules.map(module => (
-                  <div
-                    key={module.name}
-                    className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-green-900 dark:text-green-200">
-                          {module.name}
-                        </h3>
-                        <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                          カバレッジ: {module.coverage.toFixed(1)}% • カバー済み:{' '}
-                          {(module.lines - module.missedLines).toLocaleString()}行 /{' '}
-                          {module.lines.toLocaleString()}行
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                          {module.coverage >= 90 ? '🌟優秀' : '✅良好'}
-                        </span>
-                        <span className="text-2xl">{module.coverage >= 90 ? '🌟' : '✅'}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="w-full bg-green-200 dark:bg-green-800 rounded-full h-2">
-                        <div
-                          className="bg-green-600 dark:bg-green-500 h-2 rounded-full"
-                          style={{ width: `${module.coverage}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <ModuleCard key={module.name} module={module} type="healthy" />
                 ))}
 
                 {processedData.healthyModules.length > settings.displayCount && (
