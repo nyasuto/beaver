@@ -474,78 +474,9 @@ Beaver v2では、Codecovへのリンクが動的に生成されます：
    };
    ```
 
-## 📈 パフォーマンス & 品質
-
-### ⚡ パフォーマンス最適化
-- **静的サイト生成**: 高速な初期ロード
-- **Island Architecture**: 必要最小限の JavaScript
-- **画像最適化**: 自動リサイズ・フォーマット変換
-- **CDN 配信**: GitHub Pages / Vercel Edge
-
-### 🧪 品質保証
-- **包括的テスト**: 1843テスト (50テストファイル)
-- **コードカバレッジ**: 57.85% (継続的改善中)
-- **型安全性**: TypeScript 5.6 strict mode
-- **コード品質**: ESLint + Prettier + Zod validation
-- **CI/CD**: GitHub Actions自動化
-
-## 🤝 コントリビューション
-
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-### AI Agent コントリビューション
-AI Agent による開発では、`CLAUDE.md` のガイドラインに従ってください。
-
 ## 📄 ライセンス
 
 MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
-
-## 🆘 サポート
-
-- **Issues**: GitHub Issues で報告
-- **Discussions**: GitHub Discussions で質問
-- **Documentation**: `docs/` ディレクトリ
-- **AI Agent Guide**: `CLAUDE.md`
-
-## 🎯 ロードマップ
-
-### Phase 1: Core Features ✅ (完了)
-- [x] GitHub Issues 取得・分類
-- [x] 基本的な知識ベース生成
-- [x] Astro + TypeScript セットアップ
-- [x] 日本語ローカライゼーション
-- [x] インタラクティブ品質ダッシュボード
-- [x] Codecov API統合による品質分析
-- [x] 包括的テストフレームワーク
-
-### Phase 2: Advanced Quality Features ⚡ (進行中)
-- [x] コード品質分析ダッシュボード
-- [x] インタラクティブ可視化 (Chart.js)
-- [x] 動的Codecovリンク生成
-- [x] TypeScript JSON モジュール対応
-- [x] GitHub Actions CI/CD最適化
-- [ ] 高度な分類アルゴリズム
-- [ ] パフォーマンス最適化
-- [ ] セキュリティ分析
-
-### Phase 3: GitHub Action & OSS Distribution 🚀 (完了)
-- [x] GitHub Action 配布対応
-- [x] 最小設定での簡単導入
-- [x] クロスプラットフォーム対応
-- [x] 自動リポジトリ情報取得
-- [ ] GitHub Marketplace 公開
-- [ ] マルチリポジトリ対応
-- [ ] チーム分析機能
-
-### Phase 4: Enterprise Features 🌟 (将来)
-- [ ] API 提供
-- [ ] プラグインシステム
-- [ ] エンタープライズ認証
-- [ ] 大規模データ対応
 
 ---
 
