@@ -17,6 +17,7 @@ import {
 import { resolveUrl } from '../../lib/utils/url';
 import { getFilterOptions } from '../../lib/utils/search';
 import { markdownToPlainText, truncateMarkdown } from '../../lib/utils/markdown';
+import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
 
 const title = 'Issue';
 const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
@@ -49,46 +50,75 @@ const closedIssues = issues.filter(issue => issue.state === 'closed');
 // 表示用のissues（デフォルトはopenのみ）
 const displayIssues = openIssues;
 
-// ラベルの集計関数（フィルター状態に応じて動的に計算）
-function calculateLabelCounts(issueList: typeof issues) {
-  return issueList.reduce(
-    (acc, issue) => {
-      issue.labels.forEach(label => {
-        acc[label.name] = (acc[label.name] || 0) + 1;
-      });
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-}
+// Enhanced Classification Engine を使用してラベル統計を計算
+const calculateEnhancedLabelStats = async (issueList: typeof issues) => {
+  const engine = await createEnhancedClassificationEngine({
+    owner: 'nyasuto',
+    repo: 'beaver',
+  });
 
-// 初期表示用のラベルカウント（オープンIssueのみ）
-const initialLabelCounts = calculateLabelCounts(openIssues);
+  // バッチで分類処理を実行
+  const batchResult = await engine.classifyIssuesBatch(issueList, {
+    owner: 'nyasuto',
+    repo: 'beaver',
+  });
 
-// デフォルト表示用
-const labelCounts = initialLabelCounts;
+  // 分類結果から統計を生成
+  const priorityStats = { critical: 0, high: 0, medium: 0, low: 0 };
+  const categoryStats: Record<string, number> = {};
+  const labelCounts: Record<string, number> = {};
 
-// ラベルをカテゴリ別にグループ化
-const labelCategories = {
-  priority: [] as [string, number][],
-  type: [] as [string, number][],
-  other: [] as [string, number][],
+  batchResult.tasks.forEach(task => {
+    // 優先度統計（Enhanced Classification Engine は 'backlog' も返す可能性があるため、マッピングする）
+    const mappedPriority = task.priority === 'backlog' ? 'low' : task.priority;
+    if (mappedPriority in priorityStats) {
+      priorityStats[mappedPriority as keyof typeof priorityStats]++;
+    }
+
+    // カテゴリ統計
+    categoryStats[task.category] = (categoryStats[task.category] || 0) + 1;
+
+    // 元のラベル統計（後方互換性のため）
+    task.labels.forEach(label => {
+      labelCounts[label] = (labelCounts[label] || 0) + 1;
+    });
+  });
+
+  return {
+    priorityStats,
+    categoryStats,
+    labelCounts,
+    classificationResults: batchResult.tasks,
+  };
 };
 
-Object.entries(labelCounts).forEach(([labelName, count]) => {
-  if (labelName.startsWith('priority:')) {
-    labelCategories.priority.push([labelName, count]);
-  } else if (labelName.startsWith('type:')) {
-    labelCategories.type.push([labelName, count]);
-  } else {
-    labelCategories.other.push([labelName, count]);
-  }
+// Enhanced Classification を使用してラベル統計を計算
+const enhancedStats = await calculateEnhancedLabelStats(openIssues);
+
+// Issue を分類結果にマッピング
+const issueClassificationMap = new Map();
+enhancedStats.classificationResults.forEach(result => {
+  issueClassificationMap.set(result.issueNumber, result);
 });
 
-// 各カテゴリ内でカウント順にソート
-labelCategories.priority.sort(([, a], [, b]) => b - a);
-labelCategories.type.sort(([, a], [, b]) => b - a);
-labelCategories.other.sort(([, a], [, b]) => b - a);
+// 後方互換性のためのラベルカテゴリ
+const labelCategories = {
+  priority: Object.entries(enhancedStats.priorityStats)
+    .filter(([, count]) => count > 0)
+    .map(([priority, count]) => [`priority: ${priority}`, count] as [string, number])
+    .sort(([, a], [, b]) => b - a),
+  type: Object.entries(enhancedStats.categoryStats)
+    .filter(([, count]) => count > 0)
+    .map(([category, count]) => [`type: ${category}`, count] as [string, number])
+    .sort(([, a], [, b]) => b - a),
+  other: Object.entries(enhancedStats.labelCounts)
+    .filter(([labelName]) => !labelName.startsWith('priority:') && !labelName.startsWith('type:'))
+    .sort(([, a], [, b]) => b - a),
+};
+
+// デフォルト表示用（後方互換性）
+// Note: labelCounts は将来のフィルタリング機能で使用予定
+// const labelCounts = enhancedStats.labelCounts;
 
 // フィルターオプションの取得
 const filterOptions = getFilterOptions(issues);
@@ -300,74 +330,80 @@ const filterOptions = getFilterOptions(issues);
           }
 
           {
-            displayIssues.map(issue => (
-              <div
-                class="p-4 border rounded-md issue-card"
-                data-state={issue.state}
-                data-labels={issue.labels.map(l => l.name).join(',')}
-                data-author={issue.user?.login || ''}
-                data-assignees={issue.assignees?.map(a => a.login).join(',') || ''}
-                data-number={issue.number}
-                data-created={issue.created_at}
-                data-updated={issue.updated_at}
-                data-title={issue.title.toLowerCase()}
-                data-body={(issue.body || '').toLowerCase()}
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex-1">
-                    <h3 class="font-medium text-heading">
-                      <a
-                        href={resolveUrl(`/issues/${issue.number}`)}
-                        class="hover:text-blue-600 issue-title"
-                      >
-                        {issue.title}
-                      </a>
-                    </h3>
-                    <p class="text-sm text-muted">
-                      #{issue.number} • {issue.state === 'open' ? '🟢' : '🔴'}{' '}
-                      {issue.state === 'open' ? 'オープン' : 'クローズ'} •
-                      {issue.user?.login || 'Unknown'} •
-                      {new Date(issue.created_at).toLocaleDateString('ja-JP')}
-                    </p>
-                  </div>
-                  <div class="ml-4">
-                    <span
-                      class={`px-2 py-1 text-xs rounded font-medium ${
-                        issue.state === 'open'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {issue.state === 'open' ? 'オープン' : 'クローズ'}
-                    </span>
-                  </div>
-                </div>
-
-                {issue.body && (
-                  <p class="text-sm text-muted mt-2 line-clamp-3 issue-body">
-                    {truncateMarkdown(markdownToPlainText(issue.body), 200)}
-                  </p>
-                )}
-
-                {issue.labels.length > 0 && (
-                  <div class="flex flex-wrap gap-1 mt-3">
-                    {issue.labels.map(label => (
+            displayIssues.map(issue => {
+              const classification = issueClassificationMap.get(issue.number);
+              return (
+                <div
+                  class="p-4 border rounded-md issue-card"
+                  data-state={issue.state}
+                  data-labels={issue.labels.map(l => l.name).join(',')}
+                  data-author={issue.user?.login || ''}
+                  data-assignees={issue.assignees?.map(a => a.login).join(',') || ''}
+                  data-number={issue.number}
+                  data-created={issue.created_at}
+                  data-updated={issue.updated_at}
+                  data-title={issue.title.toLowerCase()}
+                  data-body={(issue.body || '').toLowerCase()}
+                  data-priority={classification?.priority || 'low'}
+                  data-category={classification?.category || 'other'}
+                  data-confidence={classification?.confidence || 0}
+                >
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                      <h3 class="font-medium text-heading">
+                        <a
+                          href={resolveUrl(`/issues/${issue.number}`)}
+                          class="hover:text-blue-600 issue-title"
+                        >
+                          {issue.title}
+                        </a>
+                      </h3>
+                      <p class="text-sm text-muted">
+                        #{issue.number} • {issue.state === 'open' ? '🟢' : '🔴'}{' '}
+                        {issue.state === 'open' ? 'オープン' : 'クローズ'} •
+                        {issue.user?.login || 'Unknown'} •
+                        {new Date(issue.created_at).toLocaleDateString('ja-JP')}
+                      </p>
+                    </div>
+                    <div class="ml-4">
                       <span
-                        class="px-2 py-1 text-xs rounded"
-                        style={`background-color: #${label.color}20; color: #${label.color}`}
+                        class={`px-2 py-1 text-xs rounded font-medium ${
+                          issue.state === 'open'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
                       >
-                        {label.name}
+                        {issue.state === 'open' ? 'オープン' : 'クローズ'}
                       </span>
-                    ))}
+                    </div>
                   </div>
-                )}
 
-                <div class="flex justify-between items-center mt-3 pt-3 border-t text-xs text-muted">
-                  <span>作成: {new Date(issue.created_at).toLocaleDateString('ja-JP')}</span>
-                  <span>更新: {new Date(issue.updated_at).toLocaleDateString('ja-JP')}</span>
+                  {issue.body && (
+                    <p class="text-sm text-muted mt-2 line-clamp-3 issue-body">
+                      {truncateMarkdown(markdownToPlainText(issue.body), 200)}
+                    </p>
+                  )}
+
+                  {issue.labels.length > 0 && (
+                    <div class="flex flex-wrap gap-1 mt-3">
+                      {issue.labels.map(label => (
+                        <span
+                          class="px-2 py-1 text-xs rounded"
+                          style={`background-color: #${label.color}20; color: #${label.color}`}
+                        >
+                          {label.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div class="flex justify-between items-center mt-3 pt-3 border-t text-xs text-muted">
+                    <span>作成: {new Date(issue.created_at).toLocaleDateString('ja-JP')}</span>
+                    <span>更新: {new Date(issue.updated_at).toLocaleDateString('ja-JP')}</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           }
         </div>
 
@@ -733,12 +769,20 @@ const filterOptions = getFilterOptions(issues);
     }
 
     private getPriorityValue(issue: HTMLElement): number {
-      const labels = (issue.getAttribute('data-labels') || '').toLowerCase();
-      if (labels.includes('priority: critical')) return 4;
-      if (labels.includes('priority: high')) return 3;
-      if (labels.includes('priority: medium')) return 2;
-      if (labels.includes('priority: low')) return 1;
-      return 0;
+      // Enhanced Classification で算出された優先度を使用
+      const priority = issue.getAttribute('data-priority') || '';
+      switch (priority) {
+        case 'critical':
+          return 4;
+        case 'high':
+          return 3;
+        case 'medium':
+          return 2;
+        case 'low':
+          return 1;
+        default:
+          return 0;
+      }
     }
 
     private updateIssueDisplay(filteredIssues: HTMLElement[]) {

@@ -354,7 +354,7 @@ describe('StatsService', () => {
   });
 
   describe('calculateStats', () => {
-    it('should calculate statistics correctly', () => {
+    it('should calculate statistics correctly', async () => {
       const options = {
         includeRecentActivity: true,
         includePriorityBreakdown: true,
@@ -362,7 +362,7 @@ describe('StatsService', () => {
         recentDays: 7,
         maxRecentItems: 10,
       };
-      const stats = (statsService as any).calculateStats(mockIssues, options, 'static_data');
+      const stats = await (statsService as any).calculateStats(mockIssues, options, 'static_data');
 
       expect(stats.total).toBe(4);
       expect(stats.open).toBe(3);
@@ -377,7 +377,7 @@ describe('StatsService', () => {
       expect(stats.meta.source).toBe('static_data');
     });
 
-    it('should handle empty issues array', () => {
+    it('should handle empty issues array', async () => {
       const options = {
         includeRecentActivity: true,
         includePriorityBreakdown: true,
@@ -385,7 +385,7 @@ describe('StatsService', () => {
         recentDays: 7,
         maxRecentItems: 10,
       };
-      const stats = (statsService as any).calculateStats([], options, 'static_data');
+      const stats = await (statsService as any).calculateStats([], options, 'static_data');
 
       expect(stats.total).toBe(0);
       expect(stats.open).toBe(0);
@@ -393,7 +393,7 @@ describe('StatsService', () => {
       expect(stats.recentActivity.recentlyUpdated).toHaveLength(0);
     });
 
-    it('should respect maxRecentItems option', () => {
+    it('should respect maxRecentItems option', async () => {
       const options = {
         includeRecentActivity: true,
         includePriorityBreakdown: true,
@@ -401,12 +401,12 @@ describe('StatsService', () => {
         recentDays: 7,
         maxRecentItems: 2,
       };
-      const stats = (statsService as any).calculateStats(mockIssues, options, 'static_data');
+      const stats = await (statsService as any).calculateStats(mockIssues, options, 'static_data');
 
       expect(stats.recentActivity.recentlyUpdated.length).toBeLessThanOrEqual(2);
     });
 
-    it('should exclude labels when option is false', () => {
+    it('should exclude labels when option is false', async () => {
       const options = {
         includeRecentActivity: true,
         includePriorityBreakdown: true,
@@ -414,15 +414,15 @@ describe('StatsService', () => {
         recentDays: 7,
         maxRecentItems: 10,
       };
-      const stats = (statsService as any).calculateStats(mockIssues, options, 'static_data');
+      const stats = await (statsService as any).calculateStats(mockIssues, options, 'static_data');
 
       expect(stats.labels).toHaveLength(0);
     });
   });
 
   describe('calculatePriorityStats', () => {
-    it('should calculate priority statistics correctly', () => {
-      const priority = (statsService as any).calculatePriorityStats(mockIssues);
+    it('should calculate priority statistics correctly', async () => {
+      const priority = await (statsService as any).calculatePriorityStats(mockIssues);
 
       expect(priority).toEqual({
         critical: 1,
@@ -432,15 +432,15 @@ describe('StatsService', () => {
       });
     });
 
-    it('should handle issues without labels', () => {
+    it('should handle issues without labels', async () => {
       const issuesWithoutLabels = mockIssues.map(issue => ({ ...issue, labels: [] }));
-      const priority = (statsService as any).calculatePriorityStats(issuesWithoutLabels);
+      const priority = await (statsService as any).calculatePriorityStats(issuesWithoutLabels);
 
       expect(priority).toEqual({
         critical: 0,
         high: 0,
-        medium: 0,
-        low: 3, // open issues のみ（3個）がlowに分類される
+        medium: 3, // Enhanced classification engine assigns default 'medium' priority
+        low: 0,
       });
     });
   });

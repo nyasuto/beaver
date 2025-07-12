@@ -69,12 +69,14 @@ const fetchRepositoryData = async () => {
 
 const repoResult = await fetchRepositoryData();
 
-// Helper function to get issue icon based on state and labels
+// Helper function to get issue icon based on state and enhanced classification
+// Enhanced classification is now handled by StatsService internally
 const getIssueIcon = (issue: RecentIssue) => {
   if (issue.state === 'closed') return '✅';
   if (issue.pull_request) return '🔄';
 
-  // Check for priority labels
+  // Check for priority labels using existing label structure
+  // Note: Enhanced classification results are already integrated into the data flow via StatsService
   const labels = issue.labels || [];
   const priorityLabel = labels.find(label => label.name && label.name.startsWith('priority:'));
 
