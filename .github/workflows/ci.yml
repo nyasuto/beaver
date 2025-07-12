@@ -26,6 +26,11 @@ jobs:
         
       - name: Run quality checks
         run: make quality
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
         
       - name: Build project
         run: make build
@@ -33,6 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.event.repository.name }}
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         
       - name: Upload build artifacts
@@ -62,10 +68,20 @@ jobs:
       - name: Run tests
         run: npm run test
         continue-on-error: true  # Tests may not exist yet
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
         
       - name: Generate test coverage
         run: npm run test:coverage
         continue-on-error: true  # Tests may not exist yet
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
         
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
