@@ -309,39 +309,6 @@ function generateModulesFromFiles(files: Array<any>): ModuleCoverage[] {
 }
 
 /**
- * Generate realistic sample coverage history data that gradually improves
- */
-function generateRealisticCoverageHistory(currentCoverage: number): CoverageHistory[] {
-  const history: CoverageHistory[] = [];
-  const now = new Date();
-  const daysToGenerate = 30;
-
-  // Generate a realistic upward trend that ends at current coverage
-  const startCoverage = Math.max(currentCoverage - 15, 40); // Start 15% lower, minimum 40%
-  const coverageIncrement = (currentCoverage - startCoverage) / daysToGenerate;
-
-  for (let i = daysToGenerate; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-
-    // Calculate coverage with slight random variation for realism
-    const baseCoverage = startCoverage + (daysToGenerate - i) * coverageIncrement;
-    const variation = (Math.random() - 0.5) * 4; // ±2% variation
-    const coverage = Math.max(0, Math.min(100, baseCoverage + variation));
-
-    const dateString = date.toISOString().split('T')[0];
-    if (dateString) {
-      history.push({
-        date: dateString,
-        coverage: Math.round(coverage * 100) / 100,
-      });
-    }
-  }
-
-  return history;
-}
-
-/**
  * Generate sample data for development/testing
  */
 function generateSampleData(): QualityMetrics {
@@ -363,7 +330,7 @@ function generateSampleData(): QualityMetrics {
       { name: 'src/components/charts', coverage: 67.2, lines: 789, missedLines: 259 },
       { name: 'src/lib/data', coverage: 78.6, lines: 345, missedLines: 74 },
     ],
-    history: generateRealisticCoverageHistory(75.5),
+    history: [], // No fake history data in sample data either
   };
 }
 
@@ -487,35 +454,20 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
           });
         } catch (error) {
           console.warn('Failed to parse trends data:', error);
-          qualityMetrics.history = generateRealisticCoverageHistory(qualityMetrics.overallCoverage);
+          qualityMetrics.history = []; // Use empty array instead of fake data
         }
       }
     }
 
-    // Ensure history has sufficient data for trending
-    if (qualityMetrics.history.length < 7) {
+    // Log history data status without generating fake data
+    if (qualityMetrics.history.length === 0) {
+      console.log('No history data available from Codecov API');
+    } else if (qualityMetrics.history.length < 7) {
       console.log(
-        `Insufficient history data (${qualityMetrics.history.length} points), generating realistic trend data`
+        `Limited history data (${qualityMetrics.history.length} points) - showing actual data only`
       );
-
-      // If we have some real data, preserve it and extend with realistic data
-      if (qualityMetrics.history.length > 0) {
-        const lastRealPoint = qualityMetrics.history[qualityMetrics.history.length - 1];
-        const extendedHistory = generateRealisticCoverageHistory(
-          lastRealPoint?.coverage || qualityMetrics.overallCoverage
-        );
-
-        // Keep the real data points and add the generated ones for earlier dates
-        const realDates = new Set(qualityMetrics.history.map(h => h.date));
-        const syntheticData = extendedHistory.filter(h => !realDates.has(h.date));
-
-        qualityMetrics.history = [...syntheticData, ...qualityMetrics.history]
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(-30); // Keep last 30 days
-      } else {
-        // No real data, use completely generated data
-        qualityMetrics.history = generateRealisticCoverageHistory(qualityMetrics.overallCoverage);
-      }
+    } else {
+      console.log(`Good history data available (${qualityMetrics.history.length} points)`);
     }
 
     // If still no modules, use sample data for visualization

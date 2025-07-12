@@ -73,12 +73,11 @@ const moduleCoverageData = qualityData.modules.map(module => ({
   missedLines: module.missedLines,
 }));
 
-// 履歴チャート用データの準備
+// 履歴チャート用データの準備（実データのみ使用）
 const coverageHistoryData = qualityData.history.map(entry => ({
   date: entry.date,
   coverage: entry.coverage,
-  // Add some sample branch coverage data for demonstration
-  branchCoverage: entry.coverage * 0.9, // Typically slightly lower than line coverage
+  // Only add branch coverage if we have actual data, don't fabricate it
 }));
 ---
 
@@ -166,19 +165,47 @@ const coverageHistoryData = qualityData.history.map(entry => ({
 
     <!-- Coverage History Chart (Full Width) -->
     <div class="mb-8">
-      <CoverageHistoryChart
-        data={coverageHistoryData}
-        title="カバレッジ履歴チャート"
-        description="時系列でのカバレッジ変化を可視化"
-        height={400}
-        showMultipleMetrics={true}
-        showTrend={true}
-        goalPercentage={80}
-        defaultPeriod="1m"
-        loading={false}
-        error={errorMessage || undefined}
-        client:load
-      />
+      {
+        coverageHistoryData.length === 0 ? (
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <div class="text-yellow-600 mb-2">
+              <svg
+                class="w-12 h-12 mx-auto mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-yellow-800 mb-2">履歴データなし</h3>
+            <p class="text-yellow-700">
+              Codecov APIから履歴データを取得できませんでした。
+              <br />
+              データが蓄積されるとここにカバレッジの推移が表示されます。
+            </p>
+          </div>
+        ) : (
+          <CoverageHistoryChart
+            data={coverageHistoryData}
+            title="カバレッジ履歴チャート"
+            description="時系列でのカバレッジ変化を可視化"
+            height={400}
+            showMultipleMetrics={true}
+            showTrend={true}
+            goalPercentage={80}
+            defaultPeriod="1m"
+            loading={false}
+            error={errorMessage || undefined}
+            client:load
+          />
+        )
+      }
     </div>
 
     <!-- Module Coverage Analysis -->
