@@ -100,9 +100,11 @@ PUBLIC_SITE_URL=https://your-org.github.io/beaver
 PUBLIC_REPOSITORY=your-org/your-repo
 
 # 品質分析ダッシュボード (オプション)
-CODECOV_TOKEN=your_codecov_token_here  # Codecov API token (Secret)
-CODECOV_OWNER=your_github_username      # GitHub username
-CODECOV_REPO=your_repository_name       # Repository name
+CODECOV_API_TOKEN=your_codecov_api_token_here  # Codecov API token (新版)
+CODECOV_TOKEN=your_codecov_token_here          # Codecov token (レガシー対応)
+
+# 注意: Codecovリンクはsrc/data/github/metadata.jsonから自動生成されます
+# 手動設定は不要です（owner/repositoryは自動取得）
 ```
 
 ## 🏗️ プロジェクト構造
@@ -121,7 +123,7 @@ beaver-astro/
 │   │   ├── issues/         # Issues pages
 │   │   │   ├── index.astro # Issues list with filters
 │   │   │   └── [id].astro  # Individual issue details
-│   │   ├── quality/        # Code quality dashboard (Codecov統合)
+│   │   ├── quality/        # Code quality dashboard (Codecov統合 + 動的リンク)
 │   │   └── api/            # API endpoints
 │   │       ├── github/     # GitHub API endpoints
 │   │       └── config/     # Configuration endpoints
@@ -187,7 +189,8 @@ npm run fetch-data
 
 # 品質チェック
 npm run lint
-npm run format
+npm run format        # コード自動修正
+npm run format:check  # フォーマットチェックのみ (CI用)
 npm run type-check
 npm run test
 
@@ -258,6 +261,8 @@ Beaver は以下の機能を提供します:
 - **Top 5 Modules**: 対処が必要な上位5モジュール
 - **Coverage History**: カバレッジ履歴とトレンド
 - **Quality Recommendations**: AI搭載の改善提案
+- **Dynamic Codecov Links**: リポジトリメタデータから自動生成されるCodecovへの直接リンク
+- **Interactive Settings**: 閾値設定とフィルタリング機能
 
 ### 📋 Issue管理 (`/issues`)
 - **Issue Listing**: フィルタリング・検索機能付き一覧
@@ -317,9 +322,11 @@ npm run deploy:manual
 # .github/workflows/deploy.yml
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Repository Secrets で設定
-  CODECOV_OWNER: ${{ vars.CODECOV_OWNER }}     # Repository Variables で設定
-  CODECOV_REPO: ${{ vars.CODECOV_REPO }}       # Repository Variables で設定
+  CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}  # Repository Secrets で設定 (推奨)
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}          # Repository Secrets で設定 (レガシー対応)
+  
+  # 注意: CODECOV_OWNER/CODECOV_REPOの手動設定は不要
+  # リポジトリメタデータから自動取得されます
 ```
 
 ### 設定手順
@@ -327,10 +334,8 @@ env:
 1. **GitHub Repository Settings**
    - Settings → Secrets and variables → Actions
    - **Secrets** (機密情報):
-     - `CODECOV_TOKEN`: Codecov API token
-   - **Variables** (非機密情報):
-     - `CODECOV_OWNER`: GitHub ユーザー名
-     - `CODECOV_REPO`: リポジトリ名
+     - `CODECOV_API_TOKEN`: Codecov API token (推奨)
+     - `CODECOV_TOKEN`: Codecov token (レガシー対応)
 
 2. **Codecov Token 取得**
    - [Codecov](https://codecov.io) にログイン
@@ -340,9 +345,47 @@ env:
 3. **ローカル開発**
    ```bash
    # .env ファイルに設定
+   CODECOV_API_TOKEN=your_codecov_api_token_here
+   # または
    CODECOV_TOKEN=your_codecov_token_here
-   CODECOV_OWNER=your_github_username
-   CODECOV_REPO=your_repository_name
+   
+   # owner/repositoryは自動取得されるため設定不要
+   ```
+
+### 🔗 動的リンク生成機能
+
+Beaver v2では、Codecovへのリンクが動的に生成されます：
+
+- **自動URL生成**: `src/data/github/metadata.json` からリポジトリ情報を読み取り
+- **設定不要**: 手動でowner/repository名を設定する必要なし  
+- **環境対応**: 開発・本番環境で自動的に適切なURLを生成
+
+### 🛠️ 技術的改善点
+
+**最近の実装改善 (Issue #234対応):**
+
+1. **TypeScript JSON モジュール対応**
+   ```typescript
+   // src/env.d.ts で JSON インポートを型安全に
+   declare module '*.json' {
+     const value: any;
+     export default value;
+   }
+   ```
+
+2. **CI/CD最適化**
+   ```makefile
+   # Makefile: CI環境での適切なフォーマットチェック
+   quality: npm run format:check  # ファイル変更を防止
+   ```
+
+3. **動的URL生成パターン**
+   ```typescript
+   // 設定に依存しない柔軟な URL 生成
+   const generateCodecovUrl = () => {
+     const { owner, name } = githubMetadata.repository;
+     return `https://codecov.io/gh/${owner}/${name}`;
+   };
    ```
 
 ## 📈 パフォーマンス & 品質
@@ -396,6 +439,9 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 ### Phase 2: Advanced Quality Features ⚡ (進行中)
 - [x] コード品質分析ダッシュボード
 - [x] インタラクティブ可視化 (Chart.js)
+- [x] 動的Codecovリンク生成
+- [x] TypeScript JSON モジュール対応
+- [x] GitHub Actions CI/CD最適化
 - [ ] 高度な分類アルゴリズム
 - [ ] パフォーマンス最適化
 - [ ] セキュリティ分析
