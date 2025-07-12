@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 
-const baseUrl = process.env.BASE_URL || '/beaver';
+const baseUrl = process.env['BASE_URL'] || '/beaver';
 
 export default defineConfig({
   integrations: [
