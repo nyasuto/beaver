@@ -189,7 +189,9 @@ export class EnhancedConfigManager {
     if (!fs || !path) {
       const modulesLoaded = await initializeNodeModules();
       if (!modulesLoaded) {
-        console.warn('Enhanced Config Manager: Running in browser environment, using default config');
+        console.warn(
+          'Enhanced Config Manager: Running in browser environment, using default config'
+        );
         return DEFAULT_ENHANCED_CONFIG;
       }
     }

@@ -29,6 +29,11 @@ jobs:
         
       - name: Build project
         run: make build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
