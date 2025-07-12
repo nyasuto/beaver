@@ -37,12 +37,19 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Checkout target repository
+      uses: actions/checkout@v4
+      with:
+        path: target-repo
+        fetch-depth: 0
+    
     - name: Setup workspace
       shell: bash
       run: |
         echo "🦫 Setting up Beaver Knowledge Management System..."
         echo "Repository: ${{ github.repository }}"
         echo "Working directory: ${{ github.workspace }}"
+        echo "Target repository path: ${{ github.workspace }}/target-repo"
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -96,19 +103,29 @@ runs:
         
         # Copy target repository documentation files
         echo "📄 Copying target repository documentation..."
-        if [ -f "${{ github.workspace }}/README.md" ]; then
-          cp "${{ github.workspace }}/README.md" .
+        TARGET_REPO_PATH="${{ github.workspace }}/target-repo"
+        
+        if [ -f "$TARGET_REPO_PATH/README.md" ]; then
+          cp "$TARGET_REPO_PATH/README.md" .
           echo "✅ Copied README.md from target repository"
         else
           echo "ℹ️ No README.md found in target repository"
         fi
         
-        if [ -d "${{ github.workspace }}/docs" ]; then
-          cp -r "${{ github.workspace }}/docs" .
+        if [ -d "$TARGET_REPO_PATH/docs" ]; then
+          cp -r "$TARGET_REPO_PATH/docs" .
           echo "✅ Copied docs/ directory from target repository"
         else
           echo "ℹ️ No docs/ directory found in target repository"
         fi
+        
+        # Copy additional common documentation files
+        for doc_file in CHANGELOG.md CONTRIBUTING.md LICENSE; do
+          if [ -f "$TARGET_REPO_PATH/$doc_file" ]; then
+            cp "$TARGET_REPO_PATH/$doc_file" .
+            echo "✅ Copied $doc_file from target repository"
+          fi
+        done
         
         echo "BEAVER_WORKSPACE=${{ github.workspace }}/beaver-workspace" >> $GITHUB_ENV
     

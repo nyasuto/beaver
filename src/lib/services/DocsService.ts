@@ -100,32 +100,36 @@ export class DocsService {
    * Process a single documentation file
    */
   private async processDocFile(filePath: string, slug: string): Promise<ProcessedDoc> {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const resolvedContent = resolveRelativeLinks(content, filePath);
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const resolvedContent = resolveRelativeLinks(content, filePath);
 
-    const { metadata, htmlContent, sections } = await processMarkdown(resolvedContent, filePath);
+      const { metadata, htmlContent, sections } = await processMarkdown(resolvedContent, filePath);
 
-    const wordCount = calculateWordCount(content);
-    const readingTime = calculateReadingTime(content);
+      const wordCount = calculateWordCount(content);
+      const readingTime = calculateReadingTime(content);
 
-    // Generate related docs (simplified - could be enhanced with similarity)
-    const relatedDocs: string[] = [];
+      // Generate related docs (simplified - could be enhanced with similarity)
+      const relatedDocs: string[] = [];
 
-    // Generate breadcrumbs
-    const breadcrumbs = this.generateBreadcrumbs(slug, metadata.category);
+      // Generate breadcrumbs
+      const breadcrumbs = this.generateBreadcrumbs(slug, metadata.category);
 
-    return {
-      slug,
-      path: filePath,
-      metadata,
-      content: resolvedContent,
-      htmlContent,
-      wordCount,
-      readingTime,
-      sections,
-      relatedDocs,
-      breadcrumbs,
-    };
+      return {
+        slug,
+        path: filePath,
+        metadata,
+        content: resolvedContent,
+        htmlContent,
+        wordCount,
+        readingTime,
+        sections,
+        relatedDocs,
+        breadcrumbs,
+      };
+    } catch (error) {
+      throw new Error(`Failed to process document file ${filePath}: ${error}`);
+    }
   }
 
   /**
