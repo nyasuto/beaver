@@ -27,18 +27,12 @@ vi.mock('../../classification/enhanced-config-manager', () => ({
   },
 }));
 
+// Mock for Enhanced Classification Engine
+const mockClassifyIssuesBatch = vi.fn();
+
 vi.mock('../../classification/enhanced-engine', () => ({
   createEnhancedClassificationEngine: vi.fn(() => ({
-    classifyIssuesBatch: vi.fn(() =>
-      Promise.resolve({
-        tasks: [],
-        totalAnalyzed: 0,
-        averageScore: 0,
-        processingTimeMs: 0,
-        algorithmVersion: '2.0.0',
-        configVersion: '2.0.0',
-      })
-    ),
+    classifyIssuesBatch: mockClassifyIssuesBatch,
     getPerformanceMetrics: vi.fn(() => ({
       cacheHitRate: 0.75,
       totalCacheHits: 15,
@@ -377,6 +371,43 @@ describe('TaskRecommendationService', () => {
 
   describe('Priority Ranking Logic', () => {
     it('should prioritize critical issues over medium issues', async () => {
+      // Setup mock for Enhanced Classification Engine
+      mockClassifyIssuesBatch.mockResolvedValue({
+        tasks: [
+          {
+            issueNumber: 204,
+            issueId: 204,
+            title: '🔒 セキュリティ: 環境変数の不適切な露出の修正',
+            body: '環境変数が誤って露出している可能性があります',
+            priority: 'critical',
+            category: 'security',
+            confidence: 0.95,
+            labels: ['security', 'priority: critical'],
+            url: '/issues/204',
+            createdAt: '2024-01-01T10:00:00Z',
+            updatedAt: '2024-01-01T10:00:00Z',
+          },
+          {
+            issueNumber: 208,
+            issueId: 208,
+            title: '📄 ドキュメント更新: APIリファレンスの修正',
+            body: 'APIドキュメントに不正確な情報があります',
+            priority: 'medium',
+            category: 'documentation',
+            confidence: 0.85,
+            labels: ['documentation', 'priority: medium'],
+            url: '/issues/208',
+            createdAt: '2024-01-01T12:00:00Z',
+            updatedAt: '2024-01-01T12:00:00Z',
+          },
+        ],
+        totalAnalyzed: 2,
+        averageScore: 75,
+        processingTimeMs: 10,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+      });
+
       const mockIssues: Issue[] = [
         {
           id: 204,
@@ -482,6 +513,43 @@ describe('TaskRecommendationService', () => {
     });
 
     it('should prioritize high issues over medium issues', async () => {
+      // Setup mock for Enhanced Classification Engine
+      mockClassifyIssuesBatch.mockResolvedValue({
+        tasks: [
+          {
+            issueNumber: 205,
+            issueId: 205,
+            title: '🐛 バグ: カバレッジチャートの描画エラー',
+            body: 'High priority bug',
+            priority: 'high',
+            category: 'bug',
+            confidence: 0.9,
+            labels: ['bug', 'priority: high'],
+            url: '/issues/205',
+            createdAt: '2024-01-01T15:00:00Z',
+            updatedAt: '2024-01-01T15:00:00Z',
+          },
+          {
+            issueNumber: 208,
+            issueId: 208,
+            title: '📄 ドキュメント更新: APIリファレンスの修正',
+            body: 'APIドキュメントに不正確な情報があります',
+            priority: 'medium',
+            category: 'documentation',
+            confidence: 0.85,
+            labels: ['documentation', 'priority: medium'],
+            url: '/issues/208',
+            createdAt: '2024-01-01T12:00:00Z',
+            updatedAt: '2024-01-01T12:00:00Z',
+          },
+        ],
+        totalAnalyzed: 2,
+        averageScore: 75,
+        processingTimeMs: 10,
+        algorithmVersion: '2.0.0',
+        configVersion: '2.0.0',
+      });
+
       const mockIssues: Issue[] = [
         {
           id: 205,
