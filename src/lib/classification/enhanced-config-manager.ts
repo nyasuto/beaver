@@ -18,7 +18,7 @@ import {
   validateConfigurationProfile,
   validateConfigurationUpdate,
   DEFAULT_ENHANCED_CONFIG,
-} from '../schemas/enhanced-classification';
+} from '../schemas/classification';
 
 /**
  * Configuration cache entry

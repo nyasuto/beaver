@@ -17,7 +17,7 @@ import {
 import { resolveUrl } from '../../lib/utils/url';
 import { getFilterOptions } from '../../lib/utils/search';
 import { markdownToPlainText, truncateMarkdown } from '../../lib/utils/markdown';
-import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
+import { createClassificationEngine } from '../../lib/classification/engine';
 
 const title = 'Issue';
 const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
@@ -52,7 +52,7 @@ const displayIssues = openIssues;
 
 // Enhanced Classification Engine を使用してラベル統計を計算
 const calculateEnhancedLabelStats = async (issueList: typeof issues) => {
-  const engine = await createEnhancedClassificationEngine({
+  const engine = await createClassificationEngine({
     owner: 'nyasuto',
     repo: 'beaver',
   });

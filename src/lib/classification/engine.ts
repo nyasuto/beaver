@@ -1,11 +1,11 @@
 /**
- * Enhanced Classification Engine
+ * Classification Engine
  *
- * This module provides an enhanced classification engine with customizable
+ * This module provides a classification engine with customizable
  * scoring algorithms, repository-specific configurations, and performance
  * optimizations including caching and batch processing.
  *
- * @module EnhancedClassificationEngine
+ * @module ClassificationEngine
  */
 
 import type { Issue } from '../schemas/github';
@@ -15,8 +15,6 @@ import type {
   ScoringAlgorithm,
   ConfidenceThreshold,
   PriorityEstimationConfig,
-} from '../schemas/enhanced-classification';
-import type {
   ClassificationRule,
   CategoryClassification,
   ClassificationCategory,
@@ -25,9 +23,9 @@ import type {
 import { enhancedConfigManager } from './enhanced-config-manager';
 
 /**
- * Enhanced task score with detailed breakdown
+ * Task score with detailed breakdown
  */
-export interface EnhancedTaskScore {
+export interface TaskScore {
   issueNumber: number;
   issueId: number;
   title: string;
@@ -58,10 +56,10 @@ export interface EnhancedTaskScore {
 }
 
 /**
- * Enhanced batch processing result
+ * Batch processing result
  */
-export interface EnhancedBatchResult {
-  tasks: EnhancedTaskScore[];
+export interface BatchResult {
+  tasks: TaskScore[];
   totalAnalyzed: number;
   averageScore: number;
   processingTimeMs: number;
@@ -89,9 +87,9 @@ interface ClassificationCacheEntry {
 }
 
 /**
- * Enhanced Issue Classification Engine
+ * Issue Classification Engine
  */
-export class EnhancedClassificationEngine {
+export class ClassificationEngine {
   private config: EnhancedClassificationConfig;
   private cache = new Map<string, ClassificationCacheEntry>();
   private performanceMetrics = {
@@ -231,9 +229,9 @@ export class EnhancedClassificationEngine {
       parallelism?: number;
       onProgress?: (processed: number, total: number) => void;
     }
-  ): Promise<EnhancedBatchResult> {
+  ): Promise<BatchResult> {
     const startTime = Date.now();
-    const results: EnhancedTaskScore[] = [];
+    const results: TaskScore[] = [];
 
     const batchSize =
       options?.batchSize || this.config.performance?.batchProcessing?.batchSize || 100;
@@ -547,10 +545,10 @@ export class EnhancedClassificationEngine {
   private async processBatch(
     issues: Issue[],
     repositoryContext?: { owner: string; repo: string }
-  ): Promise<EnhancedTaskScore[]> {
+  ): Promise<TaskScore[]> {
     const promises = issues.map(async issue => {
       const classification = await this.classifyIssue(issue, repositoryContext);
-      return this.createEnhancedTaskScore(issue, classification);
+      return this.createTaskScore(issue, classification);
     });
 
     return Promise.all(promises);
@@ -559,10 +557,7 @@ export class EnhancedClassificationEngine {
   /**
    * Create enhanced task score from classification
    */
-  private createEnhancedTaskScore(
-    issue: Issue,
-    classification: EnhancedIssueClassification
-  ): EnhancedTaskScore {
+  private createTaskScore(issue: Issue, classification: EnhancedIssueClassification): TaskScore {
     return {
       issueNumber: issue.number,
       issueId: issue.id,
@@ -592,7 +587,7 @@ export class EnhancedClassificationEngine {
   /**
    * Calculate quality metrics
    */
-  private calculateQualityMetrics(results: EnhancedTaskScore[]): any {
+  private calculateQualityMetrics(results: TaskScore[]): any {
     const categoryDistribution: Record<string, number> = {};
     const priorityDistribution: Record<string, number> = {};
     let totalConfidence = 0;
@@ -791,12 +786,12 @@ export class EnhancedClassificationEngine {
 /**
  * Create enhanced classification engine
  */
-export async function createEnhancedClassificationEngine(repositoryContext?: {
+export async function createClassificationEngine(repositoryContext?: {
   owner: string;
   repo: string;
-}): Promise<EnhancedClassificationEngine> {
+}): Promise<ClassificationEngine> {
   const config = await enhancedConfigManager.getEffectiveConfig(
     repositoryContext || { owner: '', repo: '' }
   );
-  return new EnhancedClassificationEngine(config);
+  return new ClassificationEngine(config);
 }

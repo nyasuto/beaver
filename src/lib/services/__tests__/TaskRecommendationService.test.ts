@@ -30,8 +30,8 @@ vi.mock('../../classification/enhanced-config-manager', () => ({
 // Mock for Enhanced Classification Engine
 const mockClassifyIssuesBatch = vi.fn();
 
-vi.mock('../../classification/enhanced-engine', () => ({
-  createEnhancedClassificationEngine: vi.fn(() => ({
+vi.mock('../../classification/engine', () => ({
+  createClassificationEngine: vi.fn(() => ({
     classifyIssuesBatch: mockClassifyIssuesBatch,
     getPerformanceMetrics: vi.fn(() => ({
       cacheHitRate: 0.75,

@@ -1,19 +1,16 @@
 /**
- * Enhanced Classification Engine Tests
+ * Classification Engine Tests
  *
- * Comprehensive test suite for the enhanced classification engine with
+ * Comprehensive test suite for the classification engine with
  * customizable scoring, repository-specific configurations, and performance optimizations.
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import {
-  EnhancedClassificationEngine,
-  createEnhancedClassificationEngine,
-} from '../enhanced-engine';
+import { ClassificationEngine, createClassificationEngine } from '../engine';
 import {
   DEFAULT_ENHANCED_CONFIG,
   type EnhancedClassificationConfig,
-} from '../../schemas/enhanced-classification';
+} from '../../schemas/classification';
 import type { Issue } from '../../schemas/github';
 
 // Mock data
@@ -259,11 +256,11 @@ const mockEnhancedConfig: EnhancedClassificationConfig = {
   },
 };
 
-describe('EnhancedClassificationEngine', () => {
-  let engine: EnhancedClassificationEngine;
+describe('ClassificationEngine', () => {
+  let engine: ClassificationEngine;
 
   beforeEach(() => {
-    engine = new EnhancedClassificationEngine(mockEnhancedConfig);
+    engine = new ClassificationEngine(mockEnhancedConfig);
   });
 
   afterEach(() => {
@@ -428,7 +425,7 @@ describe('EnhancedClassificationEngine', () => {
         },
       };
 
-      const customEngine = new EnhancedClassificationEngine(customConfig);
+      const customEngine = new ClassificationEngine(customConfig);
       const result = await customEngine.classifyIssue(mockIssue);
 
       expect(result.scoreBreakdown.category).toBeGreaterThan(result.scoreBreakdown.priority);
@@ -462,7 +459,7 @@ describe('EnhancedClassificationEngine', () => {
         },
       };
 
-      const customEngine = new EnhancedClassificationEngine(customConfig);
+      const customEngine = new ClassificationEngine(customConfig);
       const result = await customEngine.classifyIssue(mockIssue);
 
       expect(result.scoreBreakdown.custom).toBeGreaterThan(0);
@@ -483,7 +480,7 @@ describe('EnhancedClassificationEngine', () => {
         ],
       };
 
-      const thresholdEngine = new EnhancedClassificationEngine(configWithThresholds);
+      const thresholdEngine = new ClassificationEngine(configWithThresholds);
       const result = await thresholdEngine.classifyIssue(mockIssue);
 
       // Should have high confidence for security issues
@@ -506,7 +503,7 @@ describe('EnhancedClassificationEngine', () => {
         ],
       };
 
-      const thresholdEngine = new EnhancedClassificationEngine(configWithHighThresholds);
+      const thresholdEngine = new ClassificationEngine(configWithHighThresholds);
       const result = await thresholdEngine.classifyIssue(mockBugIssue);
 
       // Should filter out classifications below threshold
@@ -557,7 +554,7 @@ describe('EnhancedClassificationEngine', () => {
         },
       };
 
-      const priorityEngine = new EnhancedClassificationEngine(configWithPriorityRules);
+      const priorityEngine = new ClassificationEngine(configWithPriorityRules);
       const result = await priorityEngine.classifyIssue(mockIssue);
 
       expect(result.estimatedPriority).toBe('high');
@@ -585,7 +582,7 @@ describe('EnhancedClassificationEngine', () => {
         ],
       };
 
-      const invalidEngine = new EnhancedClassificationEngine(configWithInvalidRegex);
+      const invalidEngine = new ClassificationEngine(configWithInvalidRegex);
 
       // Should not throw error
       expect(async () => {
@@ -660,7 +657,7 @@ describe('EnhancedClassificationEngine', () => {
         ],
       };
 
-      const exclusionEngine = new EnhancedClassificationEngine(configWithExclusions);
+      const exclusionEngine = new ClassificationEngine(configWithExclusions);
       const result = await exclusionEngine.classifyIssue(mockIssue);
 
       // Should not classify as bug due to security exclusion
@@ -669,24 +666,24 @@ describe('EnhancedClassificationEngine', () => {
   });
 });
 
-describe('createEnhancedClassificationEngine', () => {
+describe('createClassificationEngine', () => {
   it('should create engine with effective configuration', async () => {
-    const engine = await createEnhancedClassificationEngine();
+    const engine = await createClassificationEngine();
 
-    expect(engine).toBeInstanceOf(EnhancedClassificationEngine);
+    expect(engine).toBeInstanceOf(ClassificationEngine);
   });
 
   it('should create engine with repository context', async () => {
     const repositoryContext = { owner: 'test', repo: 'repo' };
-    const engine = await createEnhancedClassificationEngine(repositoryContext);
+    const engine = await createClassificationEngine(repositoryContext);
 
-    expect(engine).toBeInstanceOf(EnhancedClassificationEngine);
+    expect(engine).toBeInstanceOf(ClassificationEngine);
   });
 });
 
 describe('Integration Tests', () => {
   it('should handle real-world classification scenarios', async () => {
-    const engine = await createEnhancedClassificationEngine();
+    const engine = await createClassificationEngine();
 
     const realWorldIssues: Issue[] = [
       {

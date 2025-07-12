@@ -10,10 +10,10 @@ import PageLayout from '../../components/layouts/PageLayout.astro';
 import { getIssuesWithFallback, getStaticIssueById, hasStaticData } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
 import { markdownToHtml } from '../../lib/utils/markdown';
-import { createEnhancedClassificationEngine } from '../../lib/classification/enhanced-engine';
+import { createClassificationEngine } from '../../lib/classification/engine';
 // import { enhancedConfigManager } from '../../lib/classification/enhanced-config-manager';
 import ClassificationDetails from '../../components/classification/ClassificationDetails.astro';
-import type { EnhancedIssueClassification } from '../../lib/schemas/enhanced-classification';
+import type { EnhancedIssueClassification } from '../../lib/schemas/classification';
 
 export function getStaticPaths() {
   try {
@@ -54,7 +54,7 @@ let issueClassification: EnhancedIssueClassification | null = null;
 
 try {
   // Use enhanced classification engine
-  const enhancedEngine = await createEnhancedClassificationEngine();
+  const enhancedEngine = await createClassificationEngine();
   // Get configuration (currently unused but available for future enhancements)
   // const config = await enhancedConfigManager.getEffectiveConfig(
   //   { owner: 'owner', repo: 'repo' }, // TODO: Get from repository context
