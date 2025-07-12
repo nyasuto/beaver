@@ -591,7 +591,7 @@ export class TaskRecommendationService {
   }
 
   /**
-   * Get enhanced tasks with fallback to basic scoring if enhanced classification fails
+   * Get enhanced tasks using Enhanced Classification Engine
    */
   private static async getEnhancedTasksWithFallbackToSimple(
     issues: Issue[],
@@ -599,101 +599,117 @@ export class TaskRecommendationService {
   ): Promise<TaskScore[]> {
     const openIssues = issues.filter(issue => issue.state === 'open');
 
-    const scoredTasks = openIssues.map(issue => {
-      // Basic scoring without direct label parsing
-      let score = 50; // Base score
+    try {
+      // Use Enhanced Classification Engine for proper classification
+      const { createEnhancedClassificationEngine } = await import(
+        '../classification/enhanced-engine'
+      );
+      const engine = await createEnhancedClassificationEngine({
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
 
-      // Use fallback priority and category determination
-      // Enhanced classification should handle the actual classification
-      const priority = this.inferPriorityFromContext(issue);
-      const category = this.inferCategoryFromContext(issue);
+      const batchResult = await engine.classifyIssuesBatch(openIssues, {
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
 
-      score += this.getPriorityScore(priority);
-      score += this.getCategoryScore(category);
+      // Convert Enhanced Classification results to TaskScore format
+      const scoredTasks = batchResult.tasks.map(task => {
+        // Calculate score from Enhanced Classification results
+        let score = 50; // Base score
 
-      // Label count scoring (general activity indicator)
-      score += Math.min(issue.labels.length * 2, 10);
+        // Map 'backlog' priority to 'low' for consistency
+        const mappedPriority = task.priority === 'backlog' ? 'low' : task.priority;
 
-      return {
-        issueNumber: issue.number,
-        issueId: issue.id,
-        title: issue.title,
-        body: issue.body,
-        score: Math.round(score),
-        priority,
-        category,
-        confidence: 0.7, // Restored for backward compatibility
-        reasons: this.getSimpleReasons(issue, priority, category),
-        labels: issue.labels.map(l => l.name),
-        state: issue.state,
-        createdAt: issue.created_at,
-        updatedAt: issue.updated_at,
-        url: issue.html_url || `/issues/${issue.number}`,
-      } as TaskScore;
-    });
+        score += this.getPriorityScore(mappedPriority as PriorityLevel);
+        score += this.getCategoryScore(task.category);
+        score += Math.min(task.labels.length * 2, 10);
 
-    // Sort by score and return top results
-    return scoredTasks.sort((a, b) => b.score - a.score).slice(0, limit);
+        return {
+          issueNumber: task.issueNumber,
+          issueId: task.issueId || 0,
+          title: task.title,
+          body: task.body,
+          score: Math.round(score),
+          priority: mappedPriority as PriorityLevel,
+          category: task.category,
+          confidence: task.confidence,
+          reasons: this.getEnhancedReasons(task),
+          labels: task.labels,
+          state: 'open' as const,
+          createdAt: task.createdAt || new Date().toISOString(),
+          updatedAt: task.updatedAt || new Date().toISOString(),
+          url: task.url || `/issues/${task.issueNumber}`,
+        } as TaskScore;
+      });
+
+      // Sort by score and return top results
+      return scoredTasks.sort((a, b) => b.score - a.score).slice(0, limit);
+    } catch (error) {
+      console.warn('Enhanced Classification Engine failed, using basic fallback:', error);
+
+      // Fallback to basic scoring without infer functions
+      const scoredTasks = openIssues.map(issue => {
+        const score = 50 + Math.min(issue.labels.length * 2, 10);
+
+        return {
+          issueNumber: issue.number,
+          issueId: issue.id,
+          title: issue.title,
+          body: issue.body,
+          score: Math.round(score),
+          priority: 'medium' as PriorityLevel, // Default fallback priority
+          category: 'enhancement' as ClassificationCategory, // Default fallback category
+          confidence: 0.5,
+          reasons: ['基本スコアリングによる推奨'],
+          labels: issue.labels.map(l => l.name),
+          state: issue.state,
+          createdAt: issue.created_at,
+          updatedAt: issue.updated_at,
+          url: issue.html_url || `/issues/${issue.number}`,
+        } as TaskScore;
+      });
+
+      return scoredTasks.sort((a, b) => b.score - a.score).slice(0, limit);
+    }
   }
 
   /**
-   * Infer priority from issue context without direct label parsing
-   * Enhanced classification engine should be used instead for proper classification
+   * Generate reasons from Enhanced Classification Engine results
    */
-  private static inferPriorityFromContext(issue: Issue): PriorityLevel {
-    const title = issue.title.toLowerCase();
-    const body = (issue.body || '').toLowerCase();
+  private static getEnhancedReasons(task: any): string[] {
+    const reasons = [];
 
-    // Use content-based inference instead of label parsing
-    if (title.includes('critical') || title.includes('urgent') || title.includes('security')) {
-      return 'critical';
-    }
-    if (
-      title.includes('high') ||
-      title.includes('important') ||
-      body.includes('urgent') ||
-      title.includes('バグ') ||
-      title.includes('bug') ||
-      title.includes('error')
-    ) {
-      return 'high'; // Bugs are generally high priority
-    }
-    if (title.includes('low') || title.includes('minor') || title.includes('doc')) {
-      return 'low';
+    // Priority-based reasons
+    if (task.priority === 'critical') {
+      reasons.push('緊急優先度のIssueです');
+    } else if (task.priority === 'high') {
+      reasons.push('高優先度のIssueです');
     }
 
-    return 'medium';
-  }
-
-  /**
-   * Infer category from issue context without direct label parsing
-   * Enhanced classification engine should be used instead for proper classification
-   */
-  private static inferCategoryFromContext(issue: Issue): ClassificationCategory {
-    const title = issue.title.toLowerCase();
-    const body = (issue.body || '').toLowerCase();
-
-    // Use content-based inference instead of label parsing
-    if (title.includes('bug') || title.includes('error') || title.includes('fix')) {
-      return 'bug';
-    }
-    if (title.includes('security') || body.includes('security')) {
-      return 'security';
-    }
-    if (title.includes('performance') || title.includes('slow') || title.includes('optimize')) {
-      return 'performance';
-    }
-    if (title.includes('test') || title.includes('testing')) {
-      return 'test';
-    }
-    if (title.includes('doc') || title.includes('readme')) {
-      return 'documentation';
-    }
-    if (title.includes('feature') || title.includes('add')) {
-      return 'feature';
+    // Category-based reasons
+    if (task.category === 'bug') {
+      reasons.push('バグ修正が必要です');
+    } else if (task.category === 'security') {
+      reasons.push('セキュリティの問題があります');
+    } else if (task.category === 'feature') {
+      reasons.push('新機能の実装です');
+    } else if (task.category === 'performance') {
+      reasons.push('パフォーマンス改善が必要です');
     }
 
-    return 'enhancement';
+    // Confidence-based reasons
+    if (task.confidence > 0.8) {
+      reasons.push('高精度で分析されました');
+    }
+
+    // Label-based reasons
+    if (task.labels.length > 3) {
+      reasons.push('複数のラベルが付いています');
+    }
+
+    return reasons.slice(0, 3); // Return max 3 reasons
   }
 
   // Removed: getSimplePriority and getSimpleCategory methods
@@ -731,34 +747,6 @@ export class TaskRecommendationService {
       default:
         return 5;
     }
-  }
-
-  private static getSimpleReasons(
-    issue: Issue,
-    priority: PriorityLevel,
-    category: ClassificationCategory
-  ): string[] {
-    const reasons = [];
-
-    if (priority === 'critical' || priority === 'high') {
-      reasons.push(`${priority}優先度のIssueです`);
-    }
-
-    if (category === 'bug') {
-      reasons.push('バグ修正が必要です');
-    } else if (category === 'security') {
-      reasons.push('セキュリティの問題があります');
-    } else if (category === 'feature') {
-      reasons.push('新機能の実装です');
-    }
-
-    if (issue.labels.length > 3) {
-      reasons.push('複数のラベルが付いています');
-    }
-
-    // Age-based reasoning removed - recency evaluation is unnecessary
-
-    return reasons.slice(0, 3); // Return max 3 reasons
   }
 }
 
