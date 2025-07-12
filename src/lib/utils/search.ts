@@ -6,6 +6,7 @@
  */
 
 import type { Issue } from '../schemas/github';
+import { createEnhancedClassificationEngine } from '../classification/enhanced-engine';
 
 export interface SearchFilters {
   state?: 'open' | 'closed' | 'all';
@@ -25,6 +26,10 @@ export interface SearchOptions {
   filters: SearchFilters;
   sortBy?: 'created' | 'updated' | 'priority' | 'number';
   sortOrder?: 'asc' | 'desc';
+  classificationData?: Record<
+    number,
+    { priority: 'critical' | 'high' | 'medium' | 'low' | 'backlog' }
+  >;
 }
 
 export interface SearchResult {
@@ -139,9 +144,14 @@ export function searchIssues(issues: Issue[], options: SearchOptions): SearchRes
           bValue = b.number;
           break;
         case 'priority':
-          // Priority based on labels (high, medium, low)
-          aValue = getPriorityValue(a);
-          bValue = getPriorityValue(b);
+          // Use Enhanced Classification data if available, otherwise fallback to label parsing
+          if (options.classificationData) {
+            aValue = getEnhancedPriorityValue(a, options.classificationData);
+            bValue = getEnhancedPriorityValue(b, options.classificationData);
+          } else {
+            aValue = getPriorityValue(a);
+            bValue = getPriorityValue(b);
+          }
           break;
         default:
           return 0;
@@ -165,6 +175,8 @@ export function searchIssues(issues: Issue[], options: SearchOptions): SearchRes
 
 /**
  * Get priority value from issue labels for sorting
+ * @deprecated This function uses direct label parsing. Use Enhanced Classification results instead.
+ * Consider passing pre-computed classification data for better performance.
  */
 function getPriorityValue(issue: Issue): number {
   const priorityLabels = issue.labels.map(label => label.name.toLowerCase());
@@ -174,6 +186,51 @@ function getPriorityValue(issue: Issue): number {
   if (priorityLabels.includes('priority: medium')) return 2;
   if (priorityLabels.includes('priority: low')) return 1;
   return 0;
+}
+
+/**
+ * Get priority value from Enhanced Classification result for sorting
+ * @param priority - Priority from Enhanced Classification Engine
+ * @returns Numeric value for sorting (higher = more urgent)
+ */
+function getClassificationPriorityValue(
+  priority: 'critical' | 'high' | 'medium' | 'low' | 'backlog'
+): number {
+  switch (priority) {
+    case 'critical':
+      return 4;
+    case 'high':
+      return 3;
+    case 'medium':
+      return 2;
+    case 'low':
+      return 1;
+    case 'backlog':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Get priority value from Enhanced Classification data for issue sorting
+ * @param issue - Issue to get priority for
+ * @param classificationData - Pre-computed classification results
+ * @returns Numeric value for sorting (higher = more urgent)
+ */
+function getEnhancedPriorityValue(
+  issue: Issue,
+  classificationData: Record<
+    number,
+    { priority: 'critical' | 'high' | 'medium' | 'low' | 'backlog' }
+  >
+): number {
+  const classification = classificationData[issue.number];
+  if (classification) {
+    return getClassificationPriorityValue(classification.priority);
+  }
+  // Fallback to direct label parsing if no classification data available
+  return getPriorityValue(issue);
 }
 
 /**
@@ -268,4 +325,48 @@ export function parseSearchQuery(searchParams: URLSearchParams): {
   };
 
   return { query, filters };
+}
+
+/**
+ * Enhanced search with automatic classification
+ * Uses Enhanced Classification Engine for better priority sorting
+ *
+ * @param issues - Array of issues to search through
+ * @param options - Search options (classificationData will be computed if not provided)
+ * @returns Search results with Enhanced Classification integration
+ */
+export async function searchIssuesWithClassification(
+  issues: Issue[],
+  options: Omit<SearchOptions, 'classificationData'>
+): Promise<SearchResult> {
+  try {
+    // If priority sorting is requested, compute classification data
+    let classificationData:
+      | Record<number, { priority: 'critical' | 'high' | 'medium' | 'low' | 'backlog' }>
+      | undefined;
+
+    if (options.sortBy === 'priority') {
+      const engine = await createEnhancedClassificationEngine({
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
+
+      const batchResult = await engine.classifyIssuesBatch(issues, {
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
+
+      classificationData = {};
+      batchResult.tasks.forEach(task => {
+        classificationData![task.issueNumber] = { priority: task.priority };
+      });
+    }
+
+    // Use regular search with classification data
+    return searchIssues(issues, { ...options, classificationData });
+  } catch (error) {
+    console.warn('Enhanced Classification failed, falling back to regular search:', error);
+    // Fallback to regular search without classification
+    return searchIssues(issues, options);
+  }
 }

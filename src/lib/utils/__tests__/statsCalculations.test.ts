@@ -138,8 +138,8 @@ afterEach(() => {
 // ====================
 
 describe('StatsCalculations.calculatePriorityStats', () => {
-  it('should calculate priority statistics correctly', () => {
-    const stats = StatsCalculations.calculatePriorityStats(basicIssues);
+  it('should calculate priority statistics correctly', async () => {
+    const stats = await StatsCalculations.calculatePriorityStats(basicIssues);
 
     expect(stats.critical).toBe(1);
     expect(stats.high).toBe(1);
@@ -147,8 +147,8 @@ describe('StatsCalculations.calculatePriorityStats', () => {
     expect(stats.low).toBe(1); // Issue without priority labels defaults to low
   });
 
-  it('should handle empty issues array', () => {
-    const stats = StatsCalculations.calculatePriorityStats([]);
+  it('should handle empty issues array', async () => {
+    const stats = await StatsCalculations.calculatePriorityStats([]);
 
     expect(stats.critical).toBe(0);
     expect(stats.high).toBe(0);
@@ -156,7 +156,7 @@ describe('StatsCalculations.calculatePriorityStats', () => {
     expect(stats.low).toBe(0);
   });
 
-  it('should default to low priority when no priority labels exist', () => {
+  it('should default to low priority when no priority labels exist', async () => {
     const issuesWithoutPriority = [
       createMockIssue({
         labels: [createMockLabel('bug', 'ff0000', 101)],
@@ -166,19 +166,19 @@ describe('StatsCalculations.calculatePriorityStats', () => {
       }),
     ];
 
-    const stats = StatsCalculations.calculatePriorityStats(issuesWithoutPriority);
+    const stats = await StatsCalculations.calculatePriorityStats(issuesWithoutPriority);
 
     expect(stats.low).toBe(2);
     expect(stats.critical + stats.high + stats.medium).toBe(0);
   });
 
-  it('should handle issues without labels', () => {
+  it('should handle issues without labels', async () => {
     const issuesWithoutLabels = [
       createMockIssue({ labels: [] }),
       createMockIssue({ labels: undefined as any }),
     ];
 
-    const stats = StatsCalculations.calculatePriorityStats(issuesWithoutLabels);
+    const stats = await StatsCalculations.calculatePriorityStats(issuesWithoutLabels);
 
     expect(stats.low).toBe(2);
   });
@@ -816,12 +816,12 @@ describe('StatsCalculations.calculateAssigneeStats', () => {
 // ====================
 
 describe('StatsCalculations.calculateHealthScore', () => {
-  it('should return 100 for empty issues array', () => {
-    const healthScore = StatsCalculations.calculateHealthScore([]);
+  it('should return 100 for empty issues array', async () => {
+    const healthScore = await StatsCalculations.calculateHealthScore([]);
     expect(healthScore).toBe(100);
   });
 
-  it('should calculate basic health score correctly', () => {
+  it('should calculate basic health score correctly', async () => {
     const healthyIssues = [
       createMockIssue({
         state: 'closed',
@@ -843,13 +843,13 @@ describe('StatsCalculations.calculateHealthScore', () => {
       }),
     ];
 
-    const healthScore = StatsCalculations.calculateHealthScore(healthyIssues);
+    const healthScore = await StatsCalculations.calculateHealthScore(healthyIssues);
 
     expect(healthScore).toBeGreaterThan(50);
     expect(healthScore).toBeLessThanOrEqual(100);
   });
 
-  it('should penalize high open issue ratio', () => {
+  it('should penalize high open issue ratio', async () => {
     const highOpenRatioIssues = [
       createMockIssue({ state: 'open' }),
       createMockIssue({ state: 'open' }),
@@ -863,12 +863,12 @@ describe('StatsCalculations.calculateHealthScore', () => {
       createMockIssue({ state: 'closed' }), // 2 closed = 80% open ratio
     ];
 
-    const healthScore = StatsCalculations.calculateHealthScore(highOpenRatioIssues);
+    const healthScore = await StatsCalculations.calculateHealthScore(highOpenRatioIssues);
 
     expect(healthScore).toBeLessThan(100); // Should be penalized
   });
 
-  it('should heavily penalize critical issues', () => {
+  it('should heavily penalize critical issues', async () => {
     const criticalIssues = [
       createMockIssue({
         state: 'open',
@@ -884,7 +884,7 @@ describe('StatsCalculations.calculateHealthScore', () => {
       }),
     ];
 
-    const criticalScore = StatsCalculations.calculateHealthScore(criticalIssues);
+    const criticalScore = await StatsCalculations.calculateHealthScore(criticalIssues);
 
     const noCriticalIssues = [
       createMockIssue({
@@ -897,12 +897,12 @@ describe('StatsCalculations.calculateHealthScore', () => {
       }),
     ];
 
-    const noCriticalScore = StatsCalculations.calculateHealthScore(noCriticalIssues);
+    const noCriticalScore = await StatsCalculations.calculateHealthScore(noCriticalIssues);
 
     expect(criticalScore).toBeLessThan(noCriticalScore);
   });
 
-  it('should penalize lack of recent activity on open issues', () => {
+  it('should penalize lack of recent activity on open issues', async () => {
     const noRecentActivityIssues = [
       createMockIssue({
         state: 'open',
@@ -925,13 +925,13 @@ describe('StatsCalculations.calculateHealthScore', () => {
       }),
     ];
 
-    const noActivityScore = StatsCalculations.calculateHealthScore(noRecentActivityIssues);
-    const withActivityScore = StatsCalculations.calculateHealthScore(recentActivityIssues);
+    const noActivityScore = await StatsCalculations.calculateHealthScore(noRecentActivityIssues);
+    const withActivityScore = await StatsCalculations.calculateHealthScore(recentActivityIssues);
 
     expect(noActivityScore).toBeLessThan(withActivityScore);
   });
 
-  it('should penalize long average resolution time', () => {
+  it('should penalize long average resolution time', async () => {
     const slowResolutionIssues = [
       createMockIssue({
         state: 'closed',
@@ -958,13 +958,13 @@ describe('StatsCalculations.calculateHealthScore', () => {
       }),
     ];
 
-    const slowScore = StatsCalculations.calculateHealthScore(slowResolutionIssues);
-    const fastScore = StatsCalculations.calculateHealthScore(fastResolutionIssues);
+    const slowScore = await StatsCalculations.calculateHealthScore(slowResolutionIssues);
+    const fastScore = await StatsCalculations.calculateHealthScore(fastResolutionIssues);
 
     expect(slowScore).toBeLessThan(fastScore);
   });
 
-  it('should return score between 0 and 100', () => {
+  it('should return score between 0 and 100', async () => {
     const terribleIssues = [
       ...Array.from({ length: 10 }, (_, i) =>
         createMockIssue({
@@ -976,7 +976,7 @@ describe('StatsCalculations.calculateHealthScore', () => {
       ),
     ];
 
-    const healthScore = StatsCalculations.calculateHealthScore(terribleIssues);
+    const healthScore = await StatsCalculations.calculateHealthScore(terribleIssues);
 
     expect(healthScore).toBeGreaterThanOrEqual(0);
     expect(healthScore).toBeLessThanOrEqual(100);
@@ -1119,8 +1119,8 @@ describe('StatsCalculations.calculateTrend', () => {
 // ====================
 
 describe('calculateBasicStats', () => {
-  it('should calculate all basic statistics', () => {
-    const stats = calculateBasicStats(basicIssues);
+  it('should calculate all basic statistics', async () => {
+    const stats = await calculateBasicStats(basicIssues);
 
     expect(stats).toHaveProperty('total');
     expect(stats).toHaveProperty('open');
@@ -1139,8 +1139,8 @@ describe('calculateBasicStats', () => {
     expect(typeof stats.trend).toBe('object');
   });
 
-  it('should handle empty issues array', () => {
-    const stats = calculateBasicStats([]);
+  it('should handle empty issues array', async () => {
+    const stats = await calculateBasicStats([]);
 
     expect(stats.total).toBe(0);
     expect(stats.open).toBe(0);
@@ -1150,8 +1150,8 @@ describe('calculateBasicStats', () => {
 });
 
 describe('calculateDetailedStats', () => {
-  it('should calculate all detailed statistics', () => {
-    const stats = calculateDetailedStats(basicIssues);
+  it('should calculate all detailed statistics', async () => {
+    const stats = await calculateDetailedStats(basicIssues);
 
     // Should include all basic stats
     expect(stats).toHaveProperty('total');
@@ -1178,8 +1178,8 @@ describe('calculateDetailedStats', () => {
     expect(typeof stats.closedThisWeek).toBe('number');
   });
 
-  it('should handle empty issues array', () => {
-    const stats = calculateDetailedStats([]);
+  it('should handle empty issues array', async () => {
+    const stats = await calculateDetailedStats([]);
 
     expect(stats.total).toBe(0);
     expect(stats.labels).toEqual([]);
@@ -1262,7 +1262,7 @@ describe('StatsCalculations Edge Cases', () => {
     }).not.toThrow();
   });
 
-  it('should handle very large datasets efficiently', () => {
+  it('should handle very large datasets efficiently', async () => {
     const largeDataset = Array.from({ length: 10000 }, (_, i) =>
       createMockIssue({
         id: i,
@@ -1275,7 +1275,7 @@ describe('StatsCalculations Edge Cases', () => {
 
     const startTime = Date.now();
 
-    const stats = calculateDetailedStats(largeDataset);
+    const stats = await calculateDetailedStats(largeDataset);
 
     const endTime = Date.now();
     const executionTime = endTime - startTime;
@@ -1284,10 +1284,10 @@ describe('StatsCalculations Edge Cases', () => {
     expect(executionTime).toBeLessThan(5000); // Should complete within 5 seconds
   });
 
-  it('should handle zero division scenarios', () => {
+  it('should handle zero division scenarios', async () => {
     const emptyIssues: Issue[] = [];
 
-    const healthScore = StatsCalculations.calculateHealthScore(emptyIssues);
+    const healthScore = await StatsCalculations.calculateHealthScore(emptyIssues);
     const trend = StatsCalculations.calculateTrend(emptyIssues);
     const resolutionTime = StatsCalculations.calculateAverageResolutionTime(emptyIssues);
 
