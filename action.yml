@@ -22,10 +22,6 @@ inputs:
     description: 'Deploy the generated site to GitHub Pages'
     required: false
     default: 'true'
-  site-subdirectory:
-    description: 'Subdirectory path for the site (e.g., "beaver" for /beaver/ path)'
-    required: false
-    default: 'beaver'
 
 outputs:
   site-url:
@@ -67,14 +63,18 @@ runs:
           echo "CODECOV_TOKEN=${{ inputs.codecov-token }}" >> $GITHUB_ENV
         fi
         
-        # Public site URL for GitHub Pages
-        echo "PUBLIC_SITE_URL=https://${{ github.repository_owner }}.github.io/${{ inputs.site-subdirectory }}" >> $GITHUB_ENV
+        # Auto-detect repository name for GitHub Pages
+        REPO_NAME="${{ github.event.repository.name }}"
+        echo "🔍 Auto-detected repository name: $REPO_NAME"
+        
+        # Public site URL for GitHub Pages  
+        echo "PUBLIC_SITE_URL=https://${{ github.repository_owner }}.github.io/$REPO_NAME" >> $GITHUB_ENV
         echo "PUBLIC_REPOSITORY=${{ github.repository }}" >> $GITHUB_ENV
         
         # Set BASE_URL for Astro
-        echo "🔧 Setting BASE_URL=/${{ inputs.site-subdirectory }}"
-        echo "BASE_URL=/${{ inputs.site-subdirectory }}" >> $GITHUB_ENV
-        echo "✅ BASE_URL environment variable set to: /${{ inputs.site-subdirectory }}"
+        echo "🔧 Setting BASE_URL=/$REPO_NAME (auto-detected from repository)"
+        echo "BASE_URL=/$REPO_NAME" >> $GITHUB_ENV
+        echo "✅ BASE_URL environment variable set to: /$REPO_NAME"
     
     - name: Create Beaver workspace
       shell: bash
