@@ -13,9 +13,9 @@ coverage/
 playwright-report/
 test-results/
 
-# Documentation
-docs/
-*.md
+# Documentation (keep docs/ for Beaver docs feature)
+# docs/ - commented out to preserve documentation functionality
+# *.md - commented out to preserve documentation functionality
 !README.md
 !action.yml
 
