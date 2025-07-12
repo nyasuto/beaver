@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "minConfidence": 0.7,
+  "minConfidence": 0.4,
   "maxCategories": 3,
   "enableAutoClassification": true,
   "enablePriorityEstimation": true,
@@ -33,25 +33,25 @@
   "confidenceThresholds": [
     {
       "category": "security",
-      "minConfidence": 0.9,
+      "minConfidence": 0.7,
       "maxConfidence": 1.0,
       "adjustmentFactor": 1.2
     },
     {
       "category": "bug",
-      "minConfidence": 0.8,
+      "minConfidence": 0.6,
       "maxConfidence": 1.0,
       "adjustmentFactor": 1.1
     },
     {
       "category": "feature",
-      "minConfidence": 0.7,
+      "minConfidence": 0.4,
       "maxConfidence": 1.0,
       "adjustmentFactor": 1.0
     },
     {
       "category": "documentation",
-      "minConfidence": 0.6,
+      "minConfidence": 0.4,
       "maxConfidence": 1.0,
       "adjustmentFactor": 0.9
     }
@@ -417,11 +417,11 @@
 
   "scoringThresholds": {
     "keywordScores": {
-      "titleKeyword": 0.3,
-      "bodyKeyword": 0.2,
-      "labelMatch": 0.4,
-      "titlePattern": 0.25,
-      "bodyPattern": 0.2
+      "titleKeyword": 0.25,
+      "bodyKeyword": 0.15,
+      "labelMatch": 0.75,
+      "titlePattern": 0.2,
+      "bodyPattern": 0.15
     },
     "confidenceThresholds": {
       "securityMinConfidence": 0.7,

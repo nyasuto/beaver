@@ -838,7 +838,5 @@ export async function createTestClassificationEngine(_repositoryContext?: {
   repo: string;
 }): Promise<ClassificationEngine> {
   const config = await enhancedConfigManager.forceLoadConfigFromFile();
-  // Lower minConfidence for testing to ensure label-based classification works
-  config.minConfidence = 0.4;
   return new ClassificationEngine(config);
 }
