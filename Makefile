@@ -94,7 +94,7 @@ quality: ## Run all quality checks (lint + format + type-check + test)
 	@echo "$(BLUE)1/4 Linting...$(NC)"
 	@npm run lint
 	@echo "$(BLUE)2/4 Format checking...$(NC)"
-	@npm run format
+	@npm run format:check
 	@echo "$(BLUE)3/4 Type checking...$(NC)"
 	@npm run type-check
 	@echo "$(BLUE)4/4 Testing...$(NC)"
