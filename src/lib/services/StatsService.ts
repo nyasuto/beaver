@@ -9,6 +9,10 @@ import { z } from 'zod';
 import type { Issue } from '../schemas/github';
 import type { Result } from '../types';
 import { getIssuesWithFallback, hasStaticData } from '../data/github';
+import {
+  createEnhancedClassificationEngine,
+  type EnhancedClassificationEngine,
+} from '../classification/enhanced-engine';
 
 // 統計データの型定義
 export const UnifiedStatsSchema = z.object({
@@ -95,8 +99,22 @@ export class StatsService {
   private static instance: StatsService;
   private cache: Map<string, CacheEntry> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5分
+  private classificationEngine: EnhancedClassificationEngine | null = null;
 
   private constructor() {}
+
+  /**
+   * Enhanced Classification Engine を初期化または取得
+   */
+  private async getClassificationEngine(): Promise<EnhancedClassificationEngine> {
+    if (!this.classificationEngine) {
+      this.classificationEngine = await createEnhancedClassificationEngine({
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
+    }
+    return this.classificationEngine;
+  }
 
   /**
    * シングルトンインスタンスを取得
@@ -149,7 +167,7 @@ export class StatsService {
       // まず静的データを試行
       if (hasStaticData()) {
         const issues = getIssuesWithFallback();
-        const stats = this.calculateStats(issues, options, 'static_data');
+        const stats = await this.calculateStats(issues, options, 'static_data');
         return { success: true, data: stats };
       }
 
@@ -171,7 +189,7 @@ export class StatsService {
         }
 
         const issues: Issue[] = data.data?.issues || [];
-        const stats = this.calculateStats(issues, options, 'github_api');
+        const stats = await this.calculateStats(issues, options, 'github_api');
         return { success: true, data: stats };
       }
 
@@ -186,13 +204,13 @@ export class StatsService {
   }
 
   /**
-   * 統計データを計算
+   * 統計データを計算（Enhanced Classification Engine 使用）
    */
-  private calculateStats(
+  private async calculateStats(
     issues: Issue[],
     options: StatsOptions,
     source: 'github_api' | 'static_data' = 'github_api'
-  ): UnifiedStats {
+  ): Promise<UnifiedStats> {
     const now = new Date();
     const recentCutoff = new Date(now.getTime() - options.recentDays * 24 * 60 * 60 * 1000);
     const monthCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -202,8 +220,8 @@ export class StatsService {
     const open = issues.filter(issue => issue.state === 'open').length;
     const closed = issues.filter(issue => issue.state === 'closed').length;
 
-    // 優先度統計
-    const priority = this.calculatePriorityStats(issues);
+    // 優先度統計（Enhanced Classification Engine 使用）
+    const priority = await this.calculatePriorityStats(issues);
 
     // 最近の活動
     const recentlyUpdated = issues
@@ -245,24 +263,37 @@ export class StatsService {
   }
 
   /**
-   * 優先度統計を計算
+   * 優先度統計を計算（Enhanced Classification Engine 使用）
    */
-  private calculatePriorityStats(issues: Issue[]): UnifiedStats['priority'] {
+  private async calculatePriorityStats(issues: Issue[]): Promise<UnifiedStats['priority']> {
     const priority = { critical: 0, high: 0, medium: 0, low: 0 };
+    const engine = await this.getClassificationEngine();
 
     // オープンな issue のみを対象にする
-    issues
-      .filter(issue => issue.state === 'open')
-      .forEach(issue => {
-        const priorityLevel = this.extractPriorityFromLabels(issue.labels || []);
-        priority[priorityLevel]++;
-      });
+    const openIssues = issues.filter(issue => issue.state === 'open');
+
+    // バッチで分類処理を実行（高速化のため）
+    const batchResult = await engine.classifyIssuesBatch(openIssues, {
+      owner: 'nyasuto',
+      repo: 'beaver',
+    });
+
+    // 分類結果から優先度統計を計算
+    batchResult.tasks.forEach(task => {
+      // Enhanced Classification Engine は 'backlog' も返す可能性があるため、マッピングする
+      const mappedPriority = task.priority === 'backlog' ? 'low' : task.priority;
+      if (mappedPriority in priority) {
+        priority[mappedPriority as keyof typeof priority]++;
+      }
+    });
 
     return priority;
   }
 
   /**
    * ラベルから優先度を抽出
+   * @deprecated Use Enhanced Classification Engine instead
+   * @see getClassificationEngine()
    */
   private extractPriorityFromLabels(
     labels: Array<{ name: string }>
@@ -410,33 +441,30 @@ export class StatsService {
   }
 
   /**
-   * 緊急Issue（Critical + High Priority）の詳細サマリーを取得
+   * 緊急Issue（Critical + High Priority）の詳細サマリーを取得（Enhanced Classification Engine 使用）
    */
   async getUrgentIssuesSummary(): Promise<Result<UrgentIssueSummary, Error>> {
     try {
       const issues = getIssuesWithFallback();
       const openIssues = issues.filter(issue => issue.state === 'open');
+      const engine = await this.getClassificationEngine();
 
-      const urgentIssues = openIssues
-        .map(issue => {
-          const priority = this.extractPriorityFromLabels(issue.labels);
-          const category = this.extractCategoryFromLabels(issue.labels);
+      // Enhanced Classification Engine でバッチ分類処理
+      const batchResult = await engine.classifyIssuesBatch(openIssues, {
+        owner: 'nyasuto',
+        repo: 'beaver',
+      });
 
-          return {
-            ...issue,
-            priority,
-            category,
-          };
-        })
-        .filter(issue => issue.priority === 'critical' || issue.priority === 'high')
-        .map(issue => ({
-          number: issue.number,
-          title: issue.title,
-          priority: issue.priority as 'critical' | 'high',
-          category: this.formatCategory(issue.category),
-          url: issue.html_url || `https://github.com/nyasuto/beaver/issues/${issue.number}`,
-          labels: issue.labels.map(label => label.name),
-          description: this.extractDescription(issue.body),
+      const urgentIssues = batchResult.tasks
+        .filter(task => task.priority === 'critical' || task.priority === 'high')
+        .map(task => ({
+          number: task.issueNumber,
+          title: task.title,
+          priority: task.priority as 'critical' | 'high',
+          category: this.formatCategory(task.category),
+          url: task.url || `https://github.com/nyasuto/beaver/issues/${task.issueNumber}`,
+          labels: task.labels,
+          description: this.extractDescription(task.body || null),
         }))
         .sort((a, b) => {
           // Critical を High より先にソート
@@ -510,6 +538,8 @@ export class StatsService {
 
   /**
    * ラベルからカテゴリを抽出
+   * @deprecated Use Enhanced Classification Engine instead
+   * @see getClassificationEngine()
    */
   private extractCategoryFromLabels(labels: Array<{ name: string }>): string {
     const labelNames = labels.map(label => label.name.toLowerCase());

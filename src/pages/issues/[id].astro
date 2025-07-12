@@ -148,6 +148,7 @@ try {
       hasExpectedBehavior: (currentIssue.body || '').toLowerCase().includes('expected'),
       labelCount: currentIssue.labels.length,
       existingLabels: currentIssue.labels.map(l => l.name),
+      // Enhanced classification is handled separately via issueClassification
     },
   };
 }
