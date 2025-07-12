@@ -4,6 +4,92 @@
 
 BeaverはAIエージェント開発の軌跡を自動的に整理された永続的な知識に変換します。散在するGitHub Issues、コミットログ、AI実験記録を構造化されたGitHub Pagesドキュメントに変換し、コード品質分析とチーム協働を支援します。
 
+## 🚀 クイックスタート - GitHub Actionとして使用
+
+### 最低限の設定（推奨）
+
+```yaml
+# .github/workflows/beaver.yml
+name: Generate Knowledge Base with Beaver
+
+on:
+  push:
+    branches: [ main ]
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  schedule:
+    - cron: '0 6 * * *'  # 毎日午前6時に実行
+
+jobs:
+  knowledge-base:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.beaver.outputs.site-url }}
+    
+    steps:
+      - name: Generate Beaver Knowledge Base
+        id: beaver
+        uses: nyasuto/beaver@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### 完全版設定（品質分析付き）
+
+```yaml
+      - name: Generate Beaver Knowledge Base
+        uses: nyasuto/beaver@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}  # オプション
+          enable-quality-dashboard: true
+          deploy-to-pages: true
+```
+
+### 🎯 生成される成果物
+
+- 📊 **知識ベースサイト**: `https://username.github.io/beaver/`
+- 📋 **AI Issues分析**: 自動分類・優先度付け・感情分析
+- 📈 **品質ダッシュボード**: コードカバレッジ・モジュール分析
+- 🔍 **検索可能Wiki**: 構造化された開発知識
+
+### ⚠️ 重要な注意点
+
+**必須権限設定:**
+```yaml
+permissions:
+  contents: read      # リポジトリ読み取り（必須）
+  pages: write        # GitHub Pages デプロイ（必須）
+  id-token: write     # GitHub Pages 認証（必須）
+```
+
+**GitHub Pages設定:**
+1. Repository Settings → Pages
+2. Source: GitHub Actions
+3. Build and deployment: GitHub Actions を選択
+
+**品質分析を使用する場合:**
+```bash
+# Repository Settings → Secrets and variables → Actions
+CODECOV_TOKEN=your_codecov_token_here
+```
+
+### 📋 設定オプション一覧
+
+| パラメータ | 必須 | デフォルト | 説明 |
+|-----------|------|-----------|------|
+| `github-token` | ❌ | `${{ github.token }}` | GitHub API アクセス用トークン |
+| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用） |
+| `enable-quality-dashboard` | ❌ | `true` | 品質ダッシュボードの有効化 |
+| `deploy-to-pages` | ❌ | `true` | GitHub Pages への自動デプロイ |
+| `site-subdirectory` | ❌ | `beaver` | サイトのサブディレクトリ名 |
+
 ## 🎯 解決する課題
 
 **エンジニアリングマネージャの日々の苦悩:**
@@ -388,159 +474,9 @@ Beaver v2では、Codecovへのリンクが動的に生成されます：
    };
    ```
 
-## 📈 パフォーマンス & 品質
-
-### ⚡ パフォーマンス最適化
-- **静的サイト生成**: 高速な初期ロード
-- **Island Architecture**: 必要最小限の JavaScript
-- **画像最適化**: 自動リサイズ・フォーマット変換
-- **CDN 配信**: GitHub Pages / Vercel Edge
-
-### 🧪 品質保証
-- **包括的テスト**: 1843テスト (50テストファイル)
-- **コードカバレッジ**: 57.85% (継続的改善中)
-- **型安全性**: TypeScript 5.6 strict mode
-- **コード品質**: ESLint + Prettier + Zod validation
-- **CI/CD**: GitHub Actions自動化
-
-## 🤝 コントリビューション
-
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-### AI Agent コントリビューション
-AI Agent による開発では、`CLAUDE.md` のガイドラインに従ってください。
-
 ## 📄 ライセンス
 
 MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
-
-## 🚀 GitHub Action として使用
-
-Beaverは GitHub Action として他のリポジトリで簡単に使用できます。最低限の設定で AI 知識管理システムを導入可能です。
-
-### 基本的な使用方法
-
-```yaml
-# .github/workflows/beaver.yml
-name: Generate Knowledge Base with Beaver
-
-on:
-  push:
-    branches: [ main ]
-  issues:
-    types: [opened, edited, closed, reopened, labeled, unlabeled]
-  schedule:
-    - cron: '0 6 * * *'  # 毎日午前6時に実行
-
-jobs:
-  knowledge-base:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    
-    environment:
-      name: github-pages
-      url: ${{ steps.beaver.outputs.site-url }}
-    
-    steps:
-      - name: Generate Beaver Knowledge Base
-        id: beaver
-        uses: nyasuto/beaver@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}  # オプション
-```
-
-### 設定オプション
-
-| パラメータ | 必須 | デフォルト | 説明 |
-|-----------|------|-----------|------|
-| `github-token` | ❌ | `${{ github.token }}` | GitHub API アクセス用トークン |
-| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用） |
-| `enable-quality-dashboard` | ❌ | `true` | 品質ダッシュボードの有効化 |
-| `deploy-to-pages` | ❌ | `true` | GitHub Pages への自動デプロイ |
-| `site-subdirectory` | ❌ | `beaver` | サイトのサブディレクトリ名 |
-
-### 必要な権限設定
-
-```yaml
-permissions:
-  contents: read      # リポジトリ読み取り
-  pages: write        # GitHub Pages デプロイ
-  id-token: write     # GitHub Pages 認証
-```
-
-### 環境変数（オプション）
-
-```bash
-# Repository Settings → Secrets and variables → Actions
-CODECOV_TOKEN=your_codecov_token_here  # 品質分析を有効にする場合
-```
-
-### 生成される成果物
-
-- 📊 **知識ベースサイト**: `https://username.github.io/beaver/`
-- 📋 **Issues 分析**: AI による自動分類・優先度付け
-- 📈 **品質ダッシュボード**: コードカバレッジ・モジュール分析
-- 🔍 **検索可能Wiki**: 構造化された開発知識
-
-### 最小設定例
-
-```yaml
-# 最低限の設定（自動デプロイなし）
-- uses: nyasuto/beaver@v1
-```
-
-これだけで Beaver があなたのリポジトリの Issues を分析し、知識ベースを生成します！
-
-## 🆘 サポート
-
-- **Issues**: GitHub Issues で報告
-- **Discussions**: GitHub Discussions で質問
-- **Documentation**: `docs/` ディレクトリ
-- **AI Agent Guide**: `CLAUDE.md`
-
-## 🎯 ロードマップ
-
-### Phase 1: Core Features ✅ (完了)
-- [x] GitHub Issues 取得・分類
-- [x] 基本的な知識ベース生成
-- [x] Astro + TypeScript セットアップ
-- [x] 日本語ローカライゼーション
-- [x] インタラクティブ品質ダッシュボード
-- [x] Codecov API統合による品質分析
-- [x] 包括的テストフレームワーク
-
-### Phase 2: Advanced Quality Features ⚡ (進行中)
-- [x] コード品質分析ダッシュボード
-- [x] インタラクティブ可視化 (Chart.js)
-- [x] 動的Codecovリンク生成
-- [x] TypeScript JSON モジュール対応
-- [x] GitHub Actions CI/CD最適化
-- [ ] 高度な分類アルゴリズム
-- [ ] パフォーマンス最適化
-- [ ] セキュリティ分析
-
-### Phase 3: GitHub Action & OSS Distribution 🚀 (完了)
-- [x] GitHub Action 配布対応
-- [x] 最小設定での簡単導入
-- [x] クロスプラットフォーム対応
-- [x] 自動リポジトリ情報取得
-- [ ] GitHub Marketplace 公開
-- [ ] マルチリポジトリ対応
-- [ ] チーム分析機能
-
-### Phase 4: Enterprise Features 🌟 (将来)
-- [ ] API 提供
-- [ ] プラグインシステム
-- [ ] エンタープライズ認証
-- [ ] 大規模データ対応
 
 ---
 
