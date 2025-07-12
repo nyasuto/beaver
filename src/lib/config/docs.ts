@@ -169,10 +169,13 @@ export async function buildEditUrl(filePath: string): Promise<string | null> {
 export async function buildNavUrl(path: string): Promise<string> {
   // Use BASE_URL environment variable first (for GitHub Actions deployment)
   const envBaseUrl = process.env['BASE_URL'];
-  if (envBaseUrl) {
+
+  if (envBaseUrl && envBaseUrl.trim() !== '') {
+    // Handle absolute paths by prepending BASE_URL
     if (path.startsWith('/')) {
-      return path;
+      return `${envBaseUrl}${path}`;
     }
+    // Handle relative paths by building from base + docs
     return `${envBaseUrl}/docs/${path}`;
   }
 

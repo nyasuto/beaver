@@ -5,6 +5,9 @@
 
 import type { DocsConfig } from './src/lib/types/docs-config.js';
 
+// Get base URL from environment variable (for dynamic deployment paths)
+const baseUrl = process.env['BASE_URL'] ? process.env['BASE_URL'] : '/beaver';
+
 export const docsConfig: DocsConfig = {
   project: {
     name: 'Beaver',
@@ -12,7 +15,7 @@ export const docsConfig: DocsConfig = {
     description: 'Beaverの完全なドキュメント集 - セットアップから高度な機能まで',
     githubUrl: 'https://github.com/nyasuto/beaver',
     editBaseUrl: 'https://github.com/nyasuto/beaver/edit/main',
-    homeUrl: '/beaver/',
+    homeUrl: `${baseUrl}/`,
   },
   
   ui: {
@@ -31,21 +34,21 @@ export const docsConfig: DocsConfig = {
     quickLinks: [
       {
         title: 'クイックスタート',
-        href: '/beaver/docs/readme',
+        href: `${baseUrl}/docs/readme`,
         icon: '🚀',
         description: 'GitHub Actionとして数分で導入',
         color: 'blue',
       },
       {
         title: '開発者ガイド',
-        href: '/beaver/docs/local-development',
+        href: `${baseUrl}/docs/local-development`,
         icon: '🛠️',
         description: 'ローカル開発とカスタマイズ',
         color: 'green',
       },
       {
         title: '詳細設定',
-        href: '/beaver/docs/configuration',
+        href: `${baseUrl}/docs/configuration`,
         icon: '🔧',
         description: '高度な機能とセキュリティ',
         color: 'purple',
@@ -62,7 +65,7 @@ export const docsConfig: DocsConfig = {
   
   paths: {
     docsDir: 'docs',
-    baseUrl: '/beaver/docs',
+    baseUrl: `${baseUrl}/docs`,
   },
   
   search: {
