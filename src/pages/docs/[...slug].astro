@@ -1,0 +1,234 @@
+---
+/**
+ * Dynamic documentation page - displays individual documentation files
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import DocsLayout from '../../components/docs/DocsLayout.astro';
+import { DocsService } from '../../lib/services/DocsService.js';
+
+export async function getStaticPaths() {
+  const docsService = new DocsService();
+  const docsCollection = await docsService.collectDocs();
+
+  return docsCollection.docs.map(doc => ({
+    params: { slug: doc.slug },
+    props: { doc, navigation: docsCollection.navigation },
+  }));
+}
+
+const { doc, navigation } = Astro.props;
+
+if (!doc) {
+  return Astro.redirect('/docs');
+}
+
+const pageTitle = `${doc.metadata.title} - Beaver Documentation`;
+const pageDescription = doc.metadata.description || `${doc.metadata.title}に関するドキュメント`;
+---
+
+<PageLayout title={pageTitle} description={pageDescription}>
+  <DocsLayout doc={doc} navigation={navigation}>
+    <!-- Breadcrumbs -->
+    <nav class="mb-6 text-sm">
+      <ol class="flex items-center space-x-2 text-gray-500">
+        <li><a href="/docs" class="hover:text-blue-600">ドキュメント</a></li>
+        {
+          doc.breadcrumbs.slice(1).map((crumb, _index) => (
+            <li class="flex items-center space-x-2">
+              <span>/</span>
+              <a href={`/docs/${crumb.slug}`} class="hover:text-blue-600">
+                {crumb.title}
+              </a>
+            </li>
+          ))
+        }
+        <li class="flex items-center space-x-2">
+          <span>/</span>
+          <span class="text-gray-900">{doc.metadata.title}</span>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Document Header -->
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{doc.metadata.title}</h1>
+      {
+        doc.metadata.description && (
+          <p class="text-xl text-gray-600 mb-4">{doc.metadata.description}</p>
+        )
+      }
+
+      <!-- Document Meta -->
+      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
+        <span>📖 {doc.readingTime}分で読める</span>
+        <span>📝 {doc.wordCount}語</span>
+        <span>📅 {doc.metadata.lastModified.toLocaleDateString('ja-JP')}</span>
+      </div>
+
+      <!-- Tags -->
+      {
+        doc.metadata.tags && doc.metadata.tags.length > 0 && (
+          <div class="flex flex-wrap gap-2 mb-6">
+            {doc.metadata.tags.map(tag => (
+              <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">{tag}</span>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    <!-- Table of Contents (if sections exist) -->
+    {
+      doc.sections.length > 0 && (
+        <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+          <h2 class="font-semibold text-lg mb-3">📋 目次</h2>
+          <nav>
+            <ul class="space-y-1">
+              {doc.sections.map(section => (
+                <li style={`margin-left: ${(section.level - 1) * 1}rem`}>
+                  <a href={`#${section.anchor}`} class="text-blue-600 hover:text-blue-800 text-sm">
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      )
+    }
+
+    <!-- Document Content -->
+    <article class="prose prose-lg max-w-none">
+      <div set:html={doc.htmlContent} />
+    </article>
+
+    <!-- Document Footer -->
+    <footer class="mt-12 pt-8 border-t border-gray-200">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="text-sm text-gray-500">
+          最終更新: {
+            doc.metadata.lastModified.toLocaleDateString('ja-JP', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+          }
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a
+            href={`https://github.com/nyasuto/beaver/edit/main/${doc.path.replace(process.cwd() + '/', '')}`}
+            class="text-sm text-blue-600 hover:text-blue-800"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            📝 このページを編集
+          </a>
+          <a href="/docs" class="text-sm text-gray-600 hover:text-gray-800">
+            📚 ドキュメント一覧に戻る
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Related Documents (if any) -->
+    {
+      doc.relatedDocs.length > 0 && (
+        <section class="mt-12">
+          <h2 class="text-2xl font-semibold text-gray-900 mb-4">関連ドキュメント</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            {doc.relatedDocs.slice(0, 4).map(relatedSlug => {
+              // This would need to be enhanced to fetch related doc metadata
+              return (
+                <a
+                  href={`/docs/${relatedSlug}`}
+                  class="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
+                >
+                  <div class="font-medium text-gray-900">{relatedSlug}</div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )
+    }
+  </DocsLayout>
+</PageLayout>
+
+<style>
+  /* Custom styles for documentation content */
+  .prose {
+    @apply text-gray-900;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    @apply font-bold text-gray-900;
+    scroll-margin-top: 2rem;
+  }
+
+  .prose h1 {
+    @apply text-3xl mb-4 mt-8;
+  }
+  .prose h2 {
+    @apply text-2xl mb-3 mt-6;
+  }
+  .prose h3 {
+    @apply text-xl mb-2 mt-4;
+  }
+
+  .prose p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .prose ul,
+  .prose ol {
+    @apply mb-4 ml-6;
+  }
+
+  .prose li {
+    @apply mb-1;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-blue-200 pl-4 ml-0 italic text-gray-700 bg-blue-50 py-2;
+  }
+
+  .prose code {
+    @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono;
+  }
+
+  .prose pre {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .prose table {
+    @apply w-full border-collapse border border-gray-300 mb-4;
+  }
+
+  .prose th,
+  .prose td {
+    @apply border border-gray-300 px-3 py-2 text-left;
+  }
+
+  .prose th {
+    @apply bg-gray-50 font-semibold;
+  }
+
+  .prose a {
+    @apply text-blue-600 hover:text-blue-800 hover:underline;
+  }
+
+  .prose img {
+    @apply max-w-full h-auto rounded-lg shadow-sm;
+  }
+</style>
