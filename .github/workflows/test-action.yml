@@ -26,12 +26,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Test Beaver Action
+      - name: Test Beaver Action (with Codecov)
         id: test-beaver
         uses: ./  # ローカルアクションをテスト
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          codecov-token: ${{ secrets.CODECOV_API_TOKEN }}
           enable-quality-dashboard: true
           deploy-to-pages: true
           site-subdirectory: beaver
@@ -51,10 +51,11 @@ jobs:
           
           echo "✅ Beaver Action test completed successfully!"
       
-      - name: Test without deployment
+      - name: Test without Codecov (generic repository simulation)
         uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          enable-quality-dashboard: false
           deploy-to-pages: false
       
       - name: Verify artifacts

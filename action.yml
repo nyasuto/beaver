@@ -52,7 +52,6 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
     
     - name: Setup environment
       shell: bash
@@ -86,6 +85,7 @@ runs:
         cp "${{ github.action_path }}/astro.config.mjs" .
         cp "${{ github.action_path }}/tailwind.config.mjs" .
         cp "${{ github.action_path }}/tsconfig.json" .
+        cp "${{ github.action_path }}/docs.config.ts" .
         
         # Copy scripts
         mkdir -p scripts
