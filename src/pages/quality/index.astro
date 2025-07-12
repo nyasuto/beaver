@@ -12,6 +12,7 @@ import PageLayout from '../../components/layouts/PageLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import ModuleCoverageChart from '../../components/charts/ModuleCoverageChart.tsx';
 import CoverageHistoryChart from '../../components/charts/CoverageHistoryChart.tsx';
+import QualityDashboardWithSettings from '../../components/quality/QualityDashboardWithSettings.tsx';
 import { getQualityMetrics } from '../../lib/quality/codecov';
 
 const title = '品質分析ダッシュボード';
@@ -60,10 +61,9 @@ try {
   };
 }
 
-// 対処が必要な上位5モジュールを特定
-const modulesNeedingAttention = qualityData.modules
-  .sort((a, b) => a.coverage - b.coverage)
-  .slice(0, 5);
+// 設定可能な閾値による品質分析
+const DEFAULT_ATTENTION_THRESHOLD = 80; // デフォルト閾値を80%に設定
+const DEFAULT_DISPLAY_COUNT = 5;
 
 // モジュール別カバレッジチャート用データの準備
 const moduleCoverageData = qualityData.modules.map(module => ({
@@ -213,11 +213,11 @@ const coverageHistoryData = qualityData.history.map(entry => ({
       <ModuleCoverageChart
         data={moduleCoverageData}
         title="モジュール別カバレッジ分析"
-        description="全モジュールのカバレッジ状況（低い順に表示）"
+        description={`閾値${DEFAULT_ATTENTION_THRESHOLD}%でのカバレッジ状況（低い順に表示）`}
         height={400}
         showPercentage={true}
         showValues={true}
-        threshold={50}
+        threshold={DEFAULT_ATTENTION_THRESHOLD}
         maxModules={10}
         sortOrder="asc"
         loading={false}
@@ -226,82 +226,13 @@ const coverageHistoryData = qualityData.history.map(entry => ({
       />
     </div>
 
-    <!-- Modules Needing Attention -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <div class="card">
-        <h2 class="text-lg font-semibold text-heading mb-4">対処が必要な上位5モジュール</h2>
-        <div class="space-y-4">
-          {
-            modulesNeedingAttention.map((module, index) => (
-              <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <h3 class="font-medium text-red-900">{module.name}</h3>
-                    <p class="text-sm text-red-700 mt-1">
-                      カバレッジ: {module.coverage.toFixed(1)}% • 未カバー: {module.missedLines}行 /{' '}
-                      {module.lines}行
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      {index + 1}位
-                    </span>
-                    <span class="text-2xl">⚠️</span>
-                  </div>
-                </div>
-                <div class="mt-3">
-                  <div class="w-full bg-red-200 rounded-full h-2">
-                    <div class="bg-red-600 h-2 rounded-full" style={`width: ${module.coverage}%`} />
-                  </div>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-      </div>
-
-      <!-- Quality Summary -->
-      <div class="card">
-        <h2 class="text-lg font-semibold text-heading mb-4">品質サマリー</h2>
-        <div class="space-y-4">
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h3 class="font-medium text-gray-900 mb-2">カバレッジ分析</h3>
-            <ul class="text-sm text-gray-700 space-y-1">
-              <li>• 総合カバレッジ: {qualityData.overallCoverage.toFixed(1)}%</li>
-              <li>• ブランチカバレッジ: {qualityData.branchCoverage.toFixed(1)}%</li>
-              <li>• ライン数: {qualityData.totalLines.toLocaleString()}行</li>
-              <li>• 分析済みモジュール: {qualityData.modules.length}個</li>
-            </ul>
-          </div>
-
-          <div class="p-4 bg-blue-50 rounded-lg">
-            <h3 class="font-medium text-blue-900 mb-2">推奨事項</h3>
-            <ul class="text-sm text-blue-800 space-y-1">
-              <li>• 低カバレッジモジュールにテストを追加</li>
-              <li>• 50%未満のモジュールを優先的に改善</li>
-              <li>• 定期的なカバレッジ監視を実施</li>
-              <li>• CI/CDパイプラインにカバレッジ閾値を設定</li>
-            </ul>
-          </div>
-
-          <div class="p-4 bg-green-50 rounded-lg">
-            <h3 class="font-medium text-green-900 mb-2">高カバレッジモジュール</h3>
-            <ul class="text-sm text-green-800 space-y-1">
-              {
-                qualityData.modules
-                  .filter(m => m.coverage >= 80)
-                  .slice(0, 3)
-                  .map(module => (
-                    <li>
-                      • {module.name}: {module.coverage.toFixed(1)}%
-                    </li>
-                  ))
-              }
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Interactive Quality Dashboard with Settings -->
+    <QualityDashboardWithSettings
+      modules={moduleCoverageData}
+      defaultThreshold={DEFAULT_ATTENTION_THRESHOLD}
+      defaultDisplayCount={DEFAULT_DISPLAY_COUNT}
+      client:load
+    />
 
     <!-- API Status -->
     <div class="card">

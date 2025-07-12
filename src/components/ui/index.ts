@@ -25,6 +25,10 @@ export type {
   FormValidation,
 } from '../../lib/schemas/ui';
 
+// Quality settings component
+export { default as QualitySettings, useQualitySettings } from './QualitySettings.tsx';
+export type { QualitySettingsConfig, QualitySettingsProps } from './QualitySettings.tsx';
+
 // UI component metadata
 export const UI_COMPONENTS = {
   Button: {
