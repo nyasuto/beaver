@@ -418,6 +418,87 @@ AI Agent による開発では、`CLAUDE.md` のガイドラインに従って�
 
 MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 
+## 🚀 GitHub Action として使用
+
+Beaverは GitHub Action として他のリポジトリで簡単に使用できます。最低限の設定で AI 知識管理システムを導入可能です。
+
+### 基本的な使用方法
+
+```yaml
+# .github/workflows/beaver.yml
+name: Generate Knowledge Base with Beaver
+
+on:
+  push:
+    branches: [ main ]
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  schedule:
+    - cron: '0 6 * * *'  # 毎日午前6時に実行
+
+jobs:
+  knowledge-base:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.beaver.outputs.site-url }}
+    
+    steps:
+      - name: Generate Beaver Knowledge Base
+        id: beaver
+        uses: nyasuto/beaver@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}  # オプション
+```
+
+### 設定オプション
+
+| パラメータ | 必須 | デフォルト | 説明 |
+|-----------|------|-----------|------|
+| `github-token` | ❌ | `${{ github.token }}` | GitHub API アクセス用トークン |
+| `codecov-token` | ❌ | - | Codecov API トークン（品質分析用） |
+| `enable-quality-dashboard` | ❌ | `true` | 品質ダッシュボードの有効化 |
+| `deploy-to-pages` | ❌ | `true` | GitHub Pages への自動デプロイ |
+| `site-subdirectory` | ❌ | `beaver` | サイトのサブディレクトリ名 |
+
+### 必要な権限設定
+
+```yaml
+permissions:
+  contents: read      # リポジトリ読み取り
+  pages: write        # GitHub Pages デプロイ
+  id-token: write     # GitHub Pages 認証
+```
+
+### 環境変数（オプション）
+
+```bash
+# Repository Settings → Secrets and variables → Actions
+CODECOV_TOKEN=your_codecov_token_here  # 品質分析を有効にする場合
+```
+
+### 生成される成果物
+
+- 📊 **知識ベースサイト**: `https://username.github.io/beaver/`
+- 📋 **Issues 分析**: AI による自動分類・優先度付け
+- 📈 **品質ダッシュボード**: コードカバレッジ・モジュール分析
+- 🔍 **検索可能Wiki**: 構造化された開発知識
+
+### 最小設定例
+
+```yaml
+# 最低限の設定（自動デプロイなし）
+- uses: nyasuto/beaver@v1
+```
+
+これだけで Beaver があなたのリポジトリの Issues を分析し、知識ベースを生成します！
+
 ## 🆘 サポート
 
 - **Issues**: GitHub Issues で報告
@@ -446,11 +527,14 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 - [ ] パフォーマンス最適化
 - [ ] セキュリティ分析
 
-### Phase 3: Team Collaboration 🚀 (計画中)
+### Phase 3: GitHub Action & OSS Distribution 🚀 (完了)
+- [x] GitHub Action 配布対応
+- [x] 最小設定での簡単導入
+- [x] クロスプラットフォーム対応
+- [x] 自動リポジトリ情報取得
+- [ ] GitHub Marketplace 公開
 - [ ] マルチリポジトリ対応
 - [ ] チーム分析機能
-- [ ] コラボレーション機能
-- [ ] 通知システム
 
 ### Phase 4: Enterprise Features 🌟 (将来)
 - [ ] API 提供

@@ -1,0 +1,190 @@
+name: 'Beaver Knowledge Management'
+description: 'AI-first knowledge management system that transforms GitHub development activities into structured knowledge bases'
+author: 'Beaver Team'
+
+branding:
+  icon: 'database'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token for API access'
+    required: false
+    default: ${{ github.token }}
+  codecov-token:
+    description: 'Codecov API token for quality analysis (optional)'
+    required: false
+  enable-quality-dashboard:
+    description: 'Enable code quality analysis dashboard'
+    required: false
+    default: 'true'
+  deploy-to-pages:
+    description: 'Deploy the generated site to GitHub Pages'
+    required: false
+    default: 'true'
+  site-subdirectory:
+    description: 'Subdirectory path for the site (e.g., "beaver" for /beaver/ path)'
+    required: false
+    default: 'beaver'
+
+outputs:
+  site-url:
+    description: 'URL of the generated knowledge base site'
+    value: ${{ steps.deploy.outputs.page_url }}
+  issues-analyzed:
+    description: 'Number of GitHub issues analyzed'
+    value: ${{ steps.analyze.outputs.issues-count }}
+  build-status:
+    description: 'Status of the build process'
+    value: ${{ steps.build.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup workspace
+      shell: bash
+      run: |
+        echo "🦫 Setting up Beaver Knowledge Management System..."
+        echo "Repository: ${{ github.repository }}"
+        echo "Working directory: ${{ github.workspace }}"
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ${{ github.action_path }}/package-lock.json
+    
+    - name: Install Beaver dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        echo "📦 Installing Beaver dependencies..."
+        npm ci --only=production
+    
+    - name: Setup environment
+      shell: bash
+      run: |
+        echo "🔧 Setting up environment variables..."
+        echo "GITHUB_TOKEN=${{ inputs.github-token }}" >> $GITHUB_ENV
+        echo "GITHUB_OWNER=${{ github.repository_owner }}" >> $GITHUB_ENV
+        echo "GITHUB_REPO=${{ github.event.repository.name }}" >> $GITHUB_ENV
+        
+        # Optional Codecov token
+        if [ -n "${{ inputs.codecov-token }}" ]; then
+          echo "CODECOV_API_TOKEN=${{ inputs.codecov-token }}" >> $GITHUB_ENV
+          echo "CODECOV_TOKEN=${{ inputs.codecov-token }}" >> $GITHUB_ENV
+        fi
+        
+        # Public site URL for GitHub Pages
+        echo "PUBLIC_SITE_URL=https://${{ github.repository_owner }}.github.io/${{ inputs.site-subdirectory }}" >> $GITHUB_ENV
+        echo "PUBLIC_REPOSITORY=${{ github.repository }}" >> $GITHUB_ENV
+    
+    - name: Create Beaver workspace
+      shell: bash
+      run: |
+        echo "📁 Creating Beaver workspace..."
+        mkdir -p beaver-workspace
+        cd beaver-workspace
+        
+        # Copy Beaver source files to workspace
+        cp -r "${{ github.action_path }}/src" .
+        cp -r "${{ github.action_path }}/public" .
+        cp "${{ github.action_path }}/package.json" .
+        cp "${{ github.action_path }}/astro.config.mjs" .
+        cp "${{ github.action_path }}/tailwind.config.mjs" .
+        cp "${{ github.action_path }}/tsconfig.json" .
+        
+        # Copy scripts
+        mkdir -p scripts
+        cp "${{ github.action_path }}/scripts/fetch-github-data.ts" scripts/
+        
+        echo "BEAVER_WORKSPACE=${{ github.workspace }}/beaver-workspace" >> $GITHUB_ENV
+    
+    - name: Install workspace dependencies
+      shell: bash
+      working-directory: beaver-workspace
+      run: |
+        echo "📦 Installing workspace dependencies..."
+        npm install
+    
+    - name: Analyze GitHub data
+      id: analyze
+      shell: bash
+      working-directory: beaver-workspace
+      run: |
+        echo "🔍 Analyzing GitHub repository data..."
+        
+        # Run the data fetching script
+        npm run fetch-data
+        
+        # Count analyzed issues
+        if [ -f "src/data/github/metadata.json" ]; then
+          issues_count=$(node -p "JSON.parse(require('fs').readFileSync('src/data/github/metadata.json', 'utf8')).statistics.total")
+          echo "issues-count=$issues_count" >> $GITHUB_OUTPUT
+          echo "✅ Analyzed $issues_count issues"
+        else
+          echo "issues-count=0" >> $GITHUB_OUTPUT
+          echo "⚠️ No issues data found"
+        fi
+    
+    - name: Build knowledge base
+      id: build
+      shell: bash
+      working-directory: beaver-workspace
+      run: |
+        echo "🏗️ Building knowledge base..."
+        
+        # Build the Astro site
+        npm run build
+        
+        if [ $? -eq 0 ]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "✅ Build completed successfully"
+          
+          # Copy build output to action workspace
+          mkdir -p "${{ github.workspace }}/beaver-output"
+          cp -r dist/* "${{ github.workspace }}/beaver-output/"
+        else
+          echo "status=failed" >> $GITHUB_OUTPUT
+          echo "❌ Build failed"
+          exit 1
+        fi
+    
+    - name: Setup GitHub Pages
+      if: inputs.deploy-to-pages == 'true'
+      uses: actions/configure-pages@v5
+    
+    - name: Upload Pages artifact
+      if: inputs.deploy-to-pages == 'true'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: beaver-output
+    
+    - name: Deploy to GitHub Pages
+      if: inputs.deploy-to-pages == 'true'
+      id: deploy
+      uses: actions/deploy-pages@v4
+    
+    - name: Generate summary
+      shell: bash
+      run: |
+        echo "📊 Beaver Knowledge Management Summary" >> $GITHUB_STEP_SUMMARY
+        echo "=====================================" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🔍 **Analysis Results:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Issues Analyzed: ${{ steps.analyze.outputs.issues-count }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Build Status: ${{ steps.build.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Repository: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ inputs.deploy-to-pages }}" == "true" ] && [ -n "${{ steps.deploy.outputs.page_url }}" ]; then
+          echo "🌐 **Generated Knowledge Base:**" >> $GITHUB_STEP_SUMMARY
+          echo "[${{ steps.deploy.outputs.page_url }}](${{ steps.deploy.outputs.page_url }})" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "📁 **Generated Files:**" >> $GITHUB_STEP_SUMMARY
+          echo "Knowledge base files generated in \`beaver-output/\` directory" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🦫 Powered by [Beaver Knowledge Management](https://github.com/nyasuto/beaver)" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,41 @@
+# Action ignore file - exclude unnecessary files when used as GitHub Action
+
+# Development files
+.env*
+*.log
+.DS_Store
+
+# Test files
+**/__tests__/**
+**/*.test.*
+**/*.spec.*
+coverage/
+playwright-report/
+test-results/
+
+# Documentation
+docs/
+*.md
+!README.md
+!action.yml
+
+# Development configs
+.vscode/
+.idea/
+*.local
+
+# Build artifacts
+dist/
+.astro/
+node_modules/
+
+# Git
+.git/
+.github/workflows/
+!.github/
+
+# Temporary files
+tmp/
+temp/
+beaver-workspace/
+beaver-output/

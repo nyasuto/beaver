@@ -9,8 +9,10 @@ import { GitHubConfigSchema } from '../src/lib/schemas/config.js';
 import { createTestClassificationEngine } from '../src/lib/classification/engine.js';
 import { z } from 'zod';
 
-// Load environment variables from .env file
-config();
+// Load environment variables from .env file (GitHub Actions環境では不要)
+if (process.env.CI !== 'true') {
+  config();
+}
 
 /**
  * GitHub API からデータを取得し、静的ファイルとして保存するスクリプト
