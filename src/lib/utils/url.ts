@@ -21,14 +21,8 @@ export function resolveUrl(path: string): string {
   // Get the base URL from Astro's environment
   const base = import.meta.env.BASE_URL || '/';
 
-  // Debug logging for URL resolution
-  console.log('🔍 resolveUrl - input path:', path);
-  console.log('🔍 resolveUrl - import.meta.env.BASE_URL:', import.meta.env.BASE_URL);
-  console.log('🔍 resolveUrl - base:', base);
-
   // If base is root '/', return path as-is (development)
   if (base === '/') {
-    console.log('🔍 resolveUrl - using development mode, result:', path);
     return path;
   }
 
@@ -38,10 +32,7 @@ export function resolveUrl(path: string): string {
   // Ensure path starts with '/'
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
-  const result = `${cleanBase}${normalizedPath}`;
-  console.log('🔍 resolveUrl - production mode, result:', result);
-
-  return result;
+  return `${cleanBase}${normalizedPath}`;
 }
 
 /**
