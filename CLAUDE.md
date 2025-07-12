@@ -8,6 +8,25 @@ Beaver Astro + TypeScript project guidance for Claude Code (claude.ai/code)
 
 **Tech Stack**: Astro 4.0+ | TypeScript 5.0+ | Octokit | Zod | Tailwind CSS
 
+## 🚫 CRITICAL: GitHub Operations Restrictions
+
+**最重要ルール: Claude Codeは以下の操作を決して行ってはいけません**
+
+### 🔴 絶対禁止事項
+1. **Pull Requestのマージ** - ユーザーのみが判断・実行する
+2. **Issueのクローズ** - ユーザーのみが判断・実行する  
+3. **ブランチの削除** - ユーザーのみが判断・実行する
+4. **リリースの作成** - ユーザーのみが判断・実行する
+
+### ✅ Claude Codeが実行可能な操作
+- Pull Requestの作成
+- Issueの作成
+- ブランチの作成
+- コミットの作成とプッシュ
+- CI/CDの実行確認（状況報告のみ）
+
+**理由**: これらの操作はプロジェクトの方向性や品質に重大な影響を与えるため、必ずユーザーの明示的な判断と承認が必要です。
+
 ## 🔄 Pull Request Creation Rule
 
 **CRITICAL: コード変更後は必ずPull Requestを作成する**
@@ -17,6 +36,7 @@ Beaver Astro + TypeScript project guidance for Claude Code (claude.ai/code)
 2. 品質チェック実行 (`npm run quality`)
 3. 変更をコミット
 4. **Pull Request作成** (絶対に忘れてはいけない)
+5. ⚠️ **ユーザーによる承認・マージ待ち** (Claude Codeはマージしない)
 
 ### PR作成チェックリスト
 - [ ] すべてのコード変更が完了している
@@ -24,6 +44,7 @@ Beaver Astro + TypeScript project guidance for Claude Code (claude.ai/code)
 - [ ] 適切なブランチ名になっている
 - [ ] PR説明が適切に記載されている
 - [ ] 関連するIssueが参照されている
+- [ ] ユーザーに承認・マージを依頼
 
 ## 🏗 AI-First Design Principles
 
