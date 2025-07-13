@@ -59,6 +59,7 @@ export default defineConfig({
     minify: true,
     inlineStylesheets: 'auto',
     rollupOptions: {
+      external: ['jsdom'],
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
@@ -80,6 +81,7 @@ export default defineConfig({
       target: 'es2020',
       minify: 'esbuild',
       rollupOptions: {
+        external: ['jsdom'],
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
