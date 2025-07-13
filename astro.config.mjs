@@ -57,6 +57,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png'],
       
+      // Correct Service Worker path
+      filename: 'sw.js',
+      srcDir: 'src',
+      strategies: 'generateSW',
+      
+      // Fix registerSW.js Service Worker path
+      injectRegister: 'inline',
+      selfDestroying: false,
+      
       // Use existing dynamic manifest instead of static one
       manifest: false,
       

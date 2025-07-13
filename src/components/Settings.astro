@@ -1201,7 +1201,7 @@ const headerID = `${settingsId}-header`;
   }
 
   // PWA specific functions
-  function updatePWAStatus() {
+  function updatePWAStatus(retryCount = 0) {
     const statusText = document.getElementById('pwa-status-text');
     const statusDetails = document.getElementById('pwa-status-details');
     const installButton = document.getElementById('install-pwa');
@@ -1225,9 +1225,29 @@ const headerID = `${settingsId}-header`;
 
       // Show install button if PWA is installable
       installButton.style.display = status.installable && !status.isStandalone ? 'block' : 'none';
+    } else if (retryCount < 10) {
+      // PWAシステムの初期化を待つ（最大10秒）
+      statusText.textContent = '初期化中...';
+      statusDetails.textContent = `PWAシステムの初期化を待機中 (${retryCount + 1}/10)`;
+      installButton.style.display = 'none';
+
+      setTimeout(() => updatePWAStatus(retryCount + 1), 1000);
     } else {
-      statusText.textContent = '利用不可';
-      statusDetails.textContent = 'PWAシステムが初期化されていません';
+      // Service Workerの基本サポートをチェック
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          if (registrations.length > 0) {
+            statusText.textContent = 'Service Worker検出';
+            statusDetails.textContent = 'PWAシステム未連携・Service Worker動作中';
+          } else {
+            statusText.textContent = '利用不可';
+            statusDetails.textContent = 'Service Worker未登録・PWAシステム初期化失敗';
+          }
+        });
+      } else {
+        statusText.textContent = '非対応';
+        statusDetails.textContent = 'このブラウザはPWA機能に対応していません';
+      }
       installButton.style.display = 'none';
     }
   }
@@ -1274,6 +1294,22 @@ const headerID = `${settingsId}-header`;
       });
     }
   }
+
+  // Listen for PWA system events
+  document.addEventListener('pwa:system-initialized', e => {
+    console.log('🚀 PWA System initialized event received:', e);
+    updatePWAStatus();
+  });
+
+  document.addEventListener('pwa:ready', e => {
+    console.log('✅ PWA ready event received:', e);
+    updatePWAStatus();
+  });
+
+  document.addEventListener('pwa:sw-registered', e => {
+    console.log('📝 Service Worker registered event received:', e);
+    updatePWAStatus();
+  });
 
   // Listen for PWA install prompt
   window.addEventListener('beforeinstallprompt', e => {
