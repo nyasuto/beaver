@@ -403,7 +403,7 @@ export class PWASystem {
         }
 
         try {
-          const response = await originalFetch.apply(this, args);
+          const response = await originalFetch(...args);
           if (response.ok) {
             const clonedResponse = response.clone();
             const versionData = await clonedResponse.json();
@@ -458,7 +458,7 @@ export class PWASystem {
         }
       }
 
-      return originalFetch.apply(this, args);
+      return originalFetch(...args);
     };
 
     // Log PWA polling intervals
