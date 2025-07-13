@@ -620,9 +620,99 @@ export function createBrowserNotificationManager(
   config?: Partial<BrowserNotificationConfig>
 ): BrowserNotificationManager {
   if (!globalBrowserNotificationManager) {
-    globalBrowserNotificationManager = new BrowserNotificationManager(config);
+    try {
+      globalBrowserNotificationManager = new BrowserNotificationManager(config);
+    } catch (error) {
+      console.error('Failed to create BrowserNotificationManager, using fallback:', error);
+
+      // Create fallback manager that does nothing but doesn't crash
+      globalBrowserNotificationManager = createFallbackNotificationManager();
+    }
   }
   return globalBrowserNotificationManager;
+}
+
+/**
+ * Create fallback notification manager when main one fails
+ */
+function createFallbackNotificationManager(): BrowserNotificationManager {
+  const fallbackManager = Object.create(BrowserNotificationManager.prototype);
+
+  // Initialize with safe minimal state
+  fallbackManager.isSupported = false;
+  fallbackManager.config = {
+    enabled: false,
+    autoRequestPermission: false,
+    defaultIcon: '/beaver/favicon.png',
+    defaultBadge: '/beaver/favicon.png',
+    maxConcurrent: 3,
+    onlyWhenHidden: true,
+  };
+  fallbackManager.eventTarget = new EventTarget();
+  fallbackManager.activeNotifications = new Map();
+
+  // Override methods to be safe no-ops
+  fallbackManager.show = async function () {
+    console.warn('Fallback notification manager: show() called but disabled');
+    return { success: false, fallback: 'disabled', error: 'Fallback manager' };
+  };
+
+  fallbackManager.getPermissionState = function () {
+    return 'denied';
+  };
+
+  fallbackManager.requestPermission = async function () {
+    return 'denied';
+  };
+
+  fallbackManager.close = function () {
+    return false;
+  };
+
+  fallbackManager.closeAll = function () {
+    return 0;
+  };
+
+  fallbackManager.updateConfig = function () {
+    // Do nothing
+  };
+
+  fallbackManager.getConfig = function () {
+    return { ...this.config };
+  };
+
+  fallbackManager.getSupportInfo = function () {
+    return {
+      supported: false,
+      permission: 'denied',
+      maxActions: 0,
+      features: {
+        actions: false,
+        badge: false,
+        image: false,
+        renotify: false,
+        requireInteraction: false,
+        silent: false,
+        tag: false,
+        timestamp: false,
+      },
+    };
+  };
+
+  fallbackManager.addEventListener = function () {
+    // Do nothing
+  };
+
+  fallbackManager.removeEventListener = function () {
+    // Do nothing
+  };
+
+  fallbackManager.destroy = function () {
+    // Do nothing
+  };
+
+  console.log('🛡️ Fallback notification manager created');
+  return fallbackManager;
 }
 
 export function getBrowserNotificationManager(): BrowserNotificationManager | null {

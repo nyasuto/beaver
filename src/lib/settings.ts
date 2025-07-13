@@ -367,16 +367,39 @@ export class UserSettingsManager {
           return validationResult.data;
         } else {
           console.warn(
-            'Settings validation failed after migration, using defaults:',
+            'Settings validation failed after migration, clearing localStorage and using defaults:',
             validationResult.error
           );
+          // Clear corrupted settings
+          this.clearCorruptedSettings();
         }
       }
     } catch (error) {
-      console.warn('Failed to load user settings:', error);
+      console.warn('Failed to load user settings, clearing localStorage:', error);
+      // Clear corrupted settings
+      this.clearCorruptedSettings();
     }
 
     return this.createDefaultSettings();
+  }
+
+  /**
+   * Clear corrupted settings from localStorage
+   */
+  private clearCorruptedSettings(): void {
+    try {
+      localStorage.removeItem(SETTINGS_CONSTANTS.STORAGE_KEY);
+      // Also clear any other potentially corrupted beaver settings
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('beaver_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log('🧹 Cleared corrupted settings from localStorage');
+    } catch (error) {
+      console.warn('Failed to clear localStorage:', error);
+    }
   }
 
   /**
@@ -530,9 +553,94 @@ let globalSettingsManager: UserSettingsManager | null = null;
 
 export function createSettingsManager(): UserSettingsManager {
   if (!globalSettingsManager) {
-    globalSettingsManager = new UserSettingsManager();
+    try {
+      globalSettingsManager = new UserSettingsManager();
+    } catch (error) {
+      console.error('Failed to create UserSettingsManager, attempting emergency reset:', error);
+
+      // Emergency reset: clear all localStorage and try again
+      try {
+        if (typeof localStorage !== 'undefined') {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.startsWith('beaver_')) {
+              localStorage.removeItem(key);
+            }
+          });
+          console.log('🚨 Emergency localStorage reset completed');
+        }
+
+        // Try creating manager again after reset
+        globalSettingsManager = new UserSettingsManager();
+        console.log('✅ UserSettingsManager created successfully after reset');
+      } catch (emergencyError) {
+        console.error('Emergency reset failed, creating minimal fallback manager:', emergencyError);
+
+        // Create minimal fallback implementation
+        globalSettingsManager = createFallbackSettingsManager();
+      }
+    }
   }
   return globalSettingsManager;
+}
+
+/**
+ * Create fallback settings manager when all else fails
+ */
+function createFallbackSettingsManager(): UserSettingsManager {
+  // Create a new class instance with minimal functionality
+  const fallbackManager = Object.create(UserSettingsManager.prototype);
+
+  // Initialize with safe defaults
+  fallbackManager.settings = {
+    notifications: {
+      enabled: true,
+      position: 'top',
+      animation: 'slide',
+      autoHide: 0,
+      showVersionDetails: true,
+      sound: false,
+      browser: {
+        enabled: false,
+        autoRequestPermission: false,
+        onlyWhenHidden: true,
+        maxConcurrent: 3,
+      },
+    },
+    versionCheck: {
+      enabled: true,
+      interval: 30000,
+      checkOnlyWhenVisible: true,
+      maxRetries: 3,
+    },
+    ui: {
+      theme: 'system',
+      animations: true,
+      compactMode: false,
+      language: 'ja',
+    },
+    privacy: {
+      analytics: true,
+      errorReporting: true,
+      usageStats: false,
+    },
+    version: '1.0.0',
+    updatedAt: Date.now(),
+  };
+
+  fallbackManager.eventTarget = new EventTarget();
+
+  // Override methods to be safe
+  fallbackManager.getSettings = function () {
+    return { ...this.settings };
+  };
+
+  fallbackManager.saveSettings = function () {
+    // Do nothing to avoid localStorage errors
+  };
+
+  console.log('🛡️ Fallback settings manager created');
+  return fallbackManager;
 }
 
 export function getSettingsManager(): UserSettingsManager | null {
