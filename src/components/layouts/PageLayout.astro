@@ -310,7 +310,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
         }
       });
 
-      // Initialize user settings and version checker system
+      // Initialize user settings, version checker, and PWA system
       setTimeout(() => {
         initializeUserSystemsIntegration();
       }, 1000);
@@ -320,6 +320,25 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           // Initialize user settings manager
           const { createSettingsManager } = await import('../../lib/settings.js');
           const settingsManager = createSettingsManager();
+
+          // Initialize PWA system if supported
+          try {
+            const { initializePWA } = await import('../../lib/pwa-init.js');
+            const pwaSettings = settingsManager.getPWASettings();
+
+            if (pwaSettings.enabled) {
+              await initializePWA({
+                enabled: true,
+                scope: '/beaver/',
+                versionCheckInterval: settingsManager.getVersionCheckSettings().interval,
+                debug: pwaSettings.debugMode,
+                autoRegister: true,
+              });
+              console.log('🚀 PWA System initialized');
+            }
+          } catch (error) {
+            console.warn('⚠️ PWA initialization failed:', error);
+          }
 
           // Initialize browser notification manager
           const { createBrowserNotificationManager } = await import('../../lib/notifications.js');

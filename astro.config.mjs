@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
+import VitePWA from '@vite-pwa/astro';
 import { generateVersionInfo } from './scripts/generate-version.js';
 import fs from 'fs';
 import path from 'path';
@@ -49,6 +50,135 @@ export default defineConfig({
       applyBaseStyles: true,
     }),
     versionIntegration(),
+    VitePWA({
+      // PWA Configuration for Beaver
+      base: baseUrl,
+      scope: baseUrl + '/',
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.png'],
+      
+      // Use existing dynamic manifest instead of static one
+      manifest: false,
+      
+      workbox: {
+        // Custom cache strategies for Beaver
+        globPatterns: [
+          '**/*.{js,css,html,svg,png,ico,woff,woff2}',
+          '**/version.json'
+        ],
+        
+        // Beaver-specific runtime caching
+        runtimeCaching: [
+          // Static assets (Cache-first strategy)
+          {
+            urlPattern: new RegExp(`^${baseUrl}/assets/.*\\.(js|css|png|jpg|jpeg|svg|woff|woff2)$`),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'beaver-static-assets',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+            },
+          },
+          
+          // Application core (Stale-while-revalidate strategy)
+          {
+            urlPattern: new RegExp(`^${baseUrl}/?$`),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'beaver-app-core',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+              },
+            },
+          },
+          
+          // Issues and analytics pages
+          {
+            urlPattern: new RegExp(`^${baseUrl}/(issues|analytics)/.*$`),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'beaver-app-pages',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 3, // 3 days
+              },
+            },
+          },
+          
+          // Dynamic web manifest
+          {
+            urlPattern: new RegExp(`^${baseUrl}/site\\.webmanifest$`),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'beaver-manifest',
+              expiration: {
+                maxEntries: 5,
+                maxAgeSeconds: 60 * 60 * 24, // 1 day
+              },
+            },
+          },
+          
+          // Version checking (Network-first for real-time updates)
+          {
+            urlPattern: new RegExp(`^${baseUrl}/version\\.json$`),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'beaver-version',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 5, // 5 minutes
+              },
+              networkTimeoutSeconds: 5,
+            },
+          },
+          
+          // GitHub API data (Network-first with fallback)
+          {
+            urlPattern: /^https:\/\/api\.github\.com\//,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'github-api-data',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 2, // 2 hours
+              },
+              networkTimeoutSeconds: 10,
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
+        
+        // Navigation fallback for SPA-like behavior
+        navigateFallback: `${baseUrl}/`,
+        navigateFallbackDenylist: [
+          // Don't use fallback for API routes and assets
+          /^\/api\//,
+          /\.[^/?]+$/,
+          /^\/[^/?]+\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2)$/,
+        ],
+        
+        // Clean up old caches
+        cleanupOutdatedCaches: true,
+        
+        // Skip waiting for immediate activation
+        skipWaiting: true,
+        clientsClaim: true,
+      },
+      
+      // Development configuration
+      devOptions: {
+        enabled: false, // Disable in development for faster builds
+        type: 'module',
+      },
+      
+      // Mode configuration
+      mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+    }),
   ],
   output: 'static',
   site: 'https://nyasuto.github.io',

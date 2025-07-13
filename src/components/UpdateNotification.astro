@@ -497,10 +497,34 @@ const actionsId = `${notificationId}-actions`;
         })
       );
 
-      // Reload page after short delay
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Handle PWA-specific update if available
+      const windowWithPWA = window as any;
+      if (windowWithPWA.pwaUpdateActions) {
+        const { clearCaches, forceUpdate } = windowWithPWA.pwaUpdateActions;
+
+        // Clear PWA caches first
+        if (typeof clearCaches === 'function') {
+          clearCaches();
+        }
+
+        // Force Service Worker update
+        if (typeof forceUpdate === 'function') {
+          forceUpdate();
+        }
+
+        // Clean up
+        delete windowWithPWA.pwaUpdateActions;
+
+        // Reload after PWA operations
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        // Regular reload for non-PWA updates
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
     }
 
     function handleDismiss(): void {
@@ -558,6 +582,24 @@ const actionsId = `${notificationId}-actions`;
           customEvent.detail.currentVersion,
           customEvent.detail.latestVersion
         );
+      }
+    });
+
+    // Listen for PWA Service Worker update events
+    document.addEventListener('pwa:sw-update-available', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (notificationController) {
+        // Show PWA-specific update notification
+        const currentVersion = customEvent.detail.versionResult?.currentVersion;
+        const latestVersion = customEvent.detail.versionResult?.latestVersion;
+
+        notificationController.show(currentVersion, latestVersion);
+
+        // Store PWA-specific actions for the reload handler
+        (window as any).pwaUpdateActions = {
+          clearCaches: customEvent.detail.clearCaches,
+          forceUpdate: customEvent.detail.forceUpdate,
+        };
       }
     });
 
