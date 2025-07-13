@@ -85,6 +85,10 @@ export const PWASettingsSchema = z.object({
   offlineMode: z.boolean().default(true),
   /** Auto-update Service Worker */
   autoUpdate: z.boolean().default(true),
+  /** Auto-reload page when version update detected */
+  autoReload: z.boolean().default(false),
+  /** Auto-reload delay in milliseconds */
+  autoReloadDelay: z.number().int().min(0).max(30000).default(5000),
   /** Cache invalidation strategy */
   cacheStrategy: z.enum(['immediate', 'background', 'user-consent']).default('background'),
   /** Background sync enabled */
@@ -131,6 +135,7 @@ export const SETTINGS_CONSTANTS = {
     VERSION_CHECK_TOGGLED: 'settings:version-check-toggled',
     PWA_TOGGLED: 'settings:pwa-toggled',
     PWA_CACHE_STRATEGY_CHANGED: 'settings:pwa-cache-strategy-changed',
+    PWA_AUTO_RELOAD_TOGGLED: 'settings:pwa-auto-reload-toggled',
   } as const,
   DEFAULTS: {
     notifications: {
@@ -168,6 +173,8 @@ export const SETTINGS_CONSTANTS = {
       enabled: true,
       offlineMode: true,
       autoUpdate: true,
+      autoReload: false,
+      autoReloadDelay: 5000,
       cacheStrategy: 'background' as const,
       backgroundSync: false,
       pushNotifications: false,
@@ -330,6 +337,7 @@ export class UserSettingsManager {
   public updatePWASettings(updates: Partial<PWASettings>): void {
     const oldEnabled = this.settings.pwa.enabled;
     const oldCacheStrategy = this.settings.pwa.cacheStrategy;
+    const oldAutoReload = this.settings.pwa.autoReload;
 
     this.settings.pwa = {
       ...this.settings.pwa,
@@ -359,6 +367,13 @@ export class UserSettingsManager {
       });
     }
 
+    if (oldAutoReload !== this.settings.pwa.autoReload) {
+      this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.PWA_AUTO_RELOAD_TOGGLED, {
+        enabled: this.settings.pwa.autoReload,
+        delay: this.settings.pwa.autoReloadDelay,
+      });
+    }
+
     // Notify PWA system about settings changes
     this.notifyPWASystem(updates);
   }
@@ -379,6 +394,22 @@ export class UserSettingsManager {
     const newEnabled = !this.settings.versionCheck.enabled;
     this.updateVersionCheckSettings({ enabled: newEnabled });
     return newEnabled;
+  }
+
+  /**
+   * Toggle PWA auto-reload enabled state
+   */
+  public togglePWAAutoReload(): boolean {
+    const newEnabled = !this.settings.pwa.autoReload;
+    this.updatePWASettings({ autoReload: newEnabled });
+    return newEnabled;
+  }
+
+  /**
+   * Set PWA auto-reload delay
+   */
+  public setPWAAutoReloadDelay(delay: number): void {
+    this.updatePWASettings({ autoReloadDelay: delay });
   }
 
   /**
