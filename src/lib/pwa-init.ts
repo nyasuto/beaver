@@ -104,8 +104,14 @@ export class PWASystem {
       this.initialized = true;
 
       if (this.config.debug) {
-        console.log('✅ PWA System initialized successfully');
+        console.log('✅ PWA System initialized successfully', {
+          timestamp: new Date().toISOString(),
+          localTime: new Date().toLocaleString('ja-JP'),
+          pollingEnabled: true,
+          debugMode: true,
+        });
         console.log('📊 PWA Status:', this.getStatus());
+        console.log('🔄 PWA Polling logs enabled - watching for version.json requests');
       }
 
       // Dispatch initialization event
@@ -365,7 +371,9 @@ export class PWASystem {
         console.log('🔄 PWA: Polling version.json', {
           url,
           timestamp: new Date().toISOString(),
+          localTime: new Date().toLocaleString('ja-JP'),
           source: 'pwa-polling',
+          requestType: typeof request === 'string' ? 'string' : 'Request object',
         });
 
         try {
@@ -375,10 +383,15 @@ export class PWASystem {
             const versionData = await clonedResponse.json();
             console.log('✅ PWA: Polling response received', {
               status: response.status,
+              statusText: response.statusText,
               fromCache: response.headers.has('cf-cache-status') || response.headers.has('x-cache'),
               version: versionData.version,
               buildId: versionData.buildId,
+              gitCommit: versionData.gitCommit,
+              environment: versionData.environment,
               timestamp: new Date().toISOString(),
+              localTime: new Date().toLocaleString('ja-JP'),
+              responseTime: 'calculated in browser',
             });
           }
           return response;
@@ -401,8 +414,12 @@ export class PWASystem {
         console.log('📊 PWA: Polling status check', {
           initialized: this.initialized,
           serviceWorkerActive: 'serviceWorker' in navigator && navigator.serviceWorker.controller,
+          serviceWorkerReady: navigator.serviceWorker.ready !== undefined,
           timestamp: new Date().toISOString(),
+          localTime: new Date().toLocaleString('ja-JP'),
           checkInterval: this.config.versionCheckInterval,
+          nextCheckIn: `${this.config.versionCheckInterval || 30000}ms`,
+          pwaStatus: 'monitoring',
         });
       }
     }, this.config.versionCheckInterval || 30000);
@@ -503,10 +520,10 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   // Initialize after DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      initializePWA({ debug: process.env['NODE_ENV'] === 'development' });
+      initializePWA({ debug: true }); // Force debug mode for polling logs
     });
   } else {
-    initializePWA({ debug: process.env['NODE_ENV'] === 'development' });
+    initializePWA({ debug: true }); // Force debug mode for polling logs
   }
 }
 
