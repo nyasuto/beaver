@@ -15,6 +15,16 @@
 // export type { UIComponentProps, ChartData, NavigationItem } from './ui';
 // export type { APIResponse, ErrorResponse, PaginatedResponse } from './api';
 
+// Version info type
+export type VersionInfo = {
+  version: string;
+  timestamp: number;
+  buildId: string;
+  gitCommit: string;
+  environment: 'development' | 'production' | 'staging';
+  dataHash?: string;
+};
+
 // Common utility types
 export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
