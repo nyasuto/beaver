@@ -311,9 +311,23 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
       });
 
       // Initialize user settings, version checker, and PWA system
-      setTimeout(() => {
-        initializeUserSystemsIntegration();
-      }, 1000);
+      // Wait for DOM to be ready and settings panel to be available
+      function waitForSystemsReady() {
+        // Check if settings panel is available (indicates UI is ready)
+        const settingsPanel = document.querySelector('[data-testid="user-settings"]');
+        if (settingsPanel || document.readyState === 'complete') {
+          initializeUserSystemsIntegration();
+        } else {
+          // Retry every 100ms for up to 10 seconds
+          setTimeout(waitForSystemsReady, 100);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForSystemsReady);
+      } else {
+        waitForSystemsReady();
+      }
 
       async function initializeUserSystemsIntegration() {
         try {
