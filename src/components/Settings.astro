@@ -673,11 +673,20 @@ const headerID = `${settingsId}-header`;
       // Dynamically import browser notification manager
       const { createBrowserNotificationManager } = await import('../lib/notifications');
       const settings = settingsManager.getSettings();
+
+      // Safely access browser settings with fallbacks
+      const browserSettings = settings.notifications.browser || {
+        enabled: false,
+        autoRequestPermission: false,
+        onlyWhenHidden: true,
+        maxConcurrent: 3,
+      };
+
       browserNotificationManager = createBrowserNotificationManager({
-        enabled: settings.notifications.browser.enabled,
-        autoRequestPermission: settings.notifications.browser.autoRequestPermission,
-        onlyWhenHidden: settings.notifications.browser.onlyWhenHidden,
-        maxConcurrent: settings.notifications.browser.maxConcurrent,
+        enabled: browserSettings.enabled,
+        autoRequestPermission: browserSettings.autoRequestPermission,
+        onlyWhenHidden: browserSettings.onlyWhenHidden,
+        maxConcurrent: browserSettings.maxConcurrent,
       });
     } catch (error) {
       console.error('Failed to load settings manager:', error);
@@ -695,17 +704,18 @@ const headerID = `${settingsId}-header`;
     setSelectValue('notification-animation', settings.notifications.animation);
     setCheckboxValue('show-version-details', settings.notifications.showVersionDetails);
 
-    // Load browser notification settings
-    setCheckboxValue('browser-notifications-enabled', settings.notifications.browser.enabled);
-    setCheckboxValue(
-      'auto-request-permission',
-      settings.notifications.browser.autoRequestPermission
-    );
-    setCheckboxValue('only-when-hidden', settings.notifications.browser.onlyWhenHidden);
-    setSelectValue(
-      'max-concurrent-notifications',
-      String(settings.notifications.browser.maxConcurrent)
-    );
+    // Load browser notification settings with fallbacks
+    const browserSettings = settings.notifications.browser || {
+      enabled: false,
+      autoRequestPermission: false,
+      onlyWhenHidden: true,
+      maxConcurrent: 3,
+    };
+
+    setCheckboxValue('browser-notifications-enabled', browserSettings.enabled);
+    setCheckboxValue('auto-request-permission', browserSettings.autoRequestPermission);
+    setCheckboxValue('only-when-hidden', browserSettings.onlyWhenHidden);
+    setSelectValue('max-concurrent-notifications', String(browserSettings.maxConcurrent));
 
     // Load version check settings
     setCheckboxValue('version-check-enabled', settings.versionCheck.enabled);

@@ -324,11 +324,20 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           // Initialize browser notification manager
           const { createBrowserNotificationManager } = await import('../../lib/notifications.js');
           const settings = settingsManager.getSettings();
+
+          // Safely access browser settings with fallbacks
+          const browserSettings = settings.notifications.browser || {
+            enabled: false,
+            autoRequestPermission: false,
+            onlyWhenHidden: true,
+            maxConcurrent: 3,
+          };
+
           const browserNotificationManager = createBrowserNotificationManager({
-            enabled: settings.notifications.browser.enabled,
-            autoRequestPermission: settings.notifications.browser.autoRequestPermission,
-            onlyWhenHidden: settings.notifications.browser.onlyWhenHidden,
-            maxConcurrent: settings.notifications.browser.maxConcurrent,
+            enabled: browserSettings.enabled,
+            autoRequestPermission: browserSettings.autoRequestPermission,
+            onlyWhenHidden: browserSettings.onlyWhenHidden,
+            maxConcurrent: browserSettings.maxConcurrent,
           });
 
           // Initialize version checker with settings

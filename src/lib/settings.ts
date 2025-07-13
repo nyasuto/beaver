@@ -358,17 +358,18 @@ export class UserSettingsManager {
       const stored = localStorage.getItem(SETTINGS_CONSTANTS.STORAGE_KEY);
       if (stored) {
         const data = JSON.parse(stored);
-        const validationResult = UserSettingsSchema.safeParse(data);
+
+        // Try to migrate first, even if validation fails
+        const migratedData = this.migrateSettings(data);
+        const validationResult = UserSettingsSchema.safeParse(migratedData);
 
         if (validationResult.success) {
-          // Check if settings need migration
-          const settings = validationResult.data;
-          if (settings.version !== SETTINGS_CONSTANTS.VERSION) {
-            return this.migrateSettings(settings);
-          }
-          return settings;
+          return validationResult.data;
         } else {
-          console.warn('Invalid settings format, using defaults:', validationResult.error);
+          console.warn(
+            'Settings validation failed after migration, using defaults:',
+            validationResult.error
+          );
         }
       }
     } catch (error) {
@@ -406,17 +407,55 @@ export class UserSettingsManager {
   /**
    * Migrate settings from older versions
    */
-  private migrateSettings(oldSettings: UserSettings): UserSettings {
-    // For now, just update to current version and fill missing fields
-    const migrated = UserSettingsSchema.parse({
-      ...this.createDefaultSettings(),
-      ...oldSettings,
-      version: SETTINGS_CONSTANTS.VERSION,
-      updatedAt: Date.now(),
-    });
+  private migrateSettings(oldSettings: any): UserSettings {
+    try {
+      // Start with defaults and merge existing valid settings
+      const defaults = this.createDefaultSettings();
 
-    console.log(`Settings migrated from ${oldSettings.version} to ${SETTINGS_CONSTANTS.VERSION}`);
-    return migrated;
+      // Safely merge notifications settings
+      const notifications = {
+        ...defaults.notifications,
+        ...(oldSettings.notifications || {}),
+        // Ensure browser settings exist with defaults
+        browser: {
+          ...defaults.notifications.browser,
+          ...(oldSettings.notifications?.browser || {}),
+        },
+      };
+
+      // Safely merge other settings
+      const versionCheck = {
+        ...defaults.versionCheck,
+        ...(oldSettings.versionCheck || {}),
+      };
+
+      const ui = {
+        ...defaults.ui,
+        ...(oldSettings.ui || {}),
+      };
+
+      const privacy = {
+        ...defaults.privacy,
+        ...(oldSettings.privacy || {}),
+      };
+
+      const migrated = {
+        notifications,
+        versionCheck,
+        ui,
+        privacy,
+        version: SETTINGS_CONSTANTS.VERSION,
+        updatedAt: Date.now(),
+      };
+
+      const currentVersion = oldSettings.version || 'unknown';
+      console.log(`Settings migrated from ${currentVersion} to ${SETTINGS_CONSTANTS.VERSION}`);
+
+      return migrated;
+    } catch (error) {
+      console.warn('Migration failed, using defaults:', error);
+      return this.createDefaultSettings();
+    }
   }
 
   /**
