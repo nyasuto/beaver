@@ -8,6 +8,7 @@
     "start": "astro dev",
     "prebuild": "npm run fetch-data",
     "build": "astro build",
+    "postbuild": "npm run validate-version",
     "build:full": "npm run fetch-data && npm run build",
     "preview": "astro preview",
     "astro": "astro",
