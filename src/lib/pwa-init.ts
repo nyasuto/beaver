@@ -7,7 +7,6 @@
  * @module PWAInit
  */
 
-import { PWAVersionUtils } from './pwa-version-checker';
 import { createSettingsManager } from './settings';
 
 /**
@@ -262,10 +261,31 @@ export class PWASystem {
       initialized: this.initialized,
       serviceWorkerRegistered: 'serviceWorker' in navigator,
       versionCheckerActive: false, // PWA uses native updates
-      installable: PWAVersionUtils.isPWAInstallable(),
-      isStandalone: PWAVersionUtils.isPWAMode(),
+      installable: this.isPWAInstallable(),
+      isStandalone: this.isPWAMode(),
       offline: !navigator.onLine,
     };
+  }
+
+  /**
+   * Check if PWA is installable
+   */
+  private isPWAInstallable(): boolean {
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  }
+
+  /**
+   * Check if running as PWA
+   */
+  private isPWAMode(): boolean {
+    return window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  }
+
+  /**
+   * Check Service Worker support
+   */
+  private hasServiceWorkerSupport(): boolean {
+    return 'serviceWorker' in navigator;
   }
 
   /**
@@ -296,8 +316,11 @@ export class PWASystem {
   /**
    * Get cache storage estimate
    */
-  public async getCacheInfo(): Promise<any> {
-    return await PWAVersionUtils.getCacheStorageEstimate();
+  public async getCacheInfo(): Promise<StorageEstimate | null> {
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+      return await navigator.storage.estimate();
+    }
+    return null;
   }
 
   /**
@@ -391,7 +414,7 @@ export async function destroyPWA(): Promise<void> {
 }
 
 // Auto-initialize PWA system when module loads (if browser supports it)
-if (typeof window !== 'undefined' && PWAVersionUtils.hasServiceWorkerSupport()) {
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   // Initialize after DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
