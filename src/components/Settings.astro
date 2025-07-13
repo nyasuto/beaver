@@ -841,6 +841,13 @@ const headerID = `${settingsId}-header`;
     setCheckboxValue('auto-update-sw', pwaSettings.autoUpdate);
     setCheckboxValue('auto-reload', pwaSettings.autoReload);
     setRangeValue('auto-reload-delay', Math.round(pwaSettings.autoReloadDelay / 1000));
+
+    // Debug auto-reload settings
+    console.log('🔄 Auto-reload settings loaded:', {
+      autoReload: pwaSettings.autoReload,
+      autoReloadDelay: pwaSettings.autoReloadDelay,
+      delaySeconds: Math.round(pwaSettings.autoReloadDelay / 1000),
+    });
     setSelectValue('cache-strategy', pwaSettings.cacheStrategy);
     setCheckboxValue('push-notifications', pwaSettings.pushNotifications);
 
@@ -913,28 +920,12 @@ const headerID = `${settingsId}-header`;
     const installButton = settingsPanel.querySelector('#install-pwa');
     installButton?.addEventListener('click', installPWA);
 
-    // Auto-reload delay range input
+    // Auto-reload delay range input - only handle display updates
     const autoReloadDelayRange = settingsPanel.querySelector('#auto-reload-delay');
     autoReloadDelayRange?.addEventListener('input', (e: Event) => {
       const target = e.target as HTMLInputElement;
       const value = parseInt(target.value);
       updateRangeDisplay('auto-reload-delay', value);
-    });
-
-    autoReloadDelayRange?.addEventListener('change', (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      const value = parseInt(target.value);
-      const syntheticEvent = {
-        target: {
-          getAttribute: (attr: string) => {
-            if (attr === 'data-setting') return 'pwa.autoReloadDelay';
-            return null;
-          },
-          checked: false,
-          value: value.toString(),
-        },
-      } as any;
-      handleSettingChange(syntheticEvent);
     });
   }
 
@@ -949,9 +940,17 @@ const headerID = `${settingsId}-header`;
     const value =
       target.type === 'checkbox'
         ? (target as HTMLInputElement).checked
-        : target.type === 'number'
+        : target.type === 'number' || target.type === 'range'
           ? Number(target.value)
           : target.value;
+
+    // Debug logging
+    console.log('🔧 Setting change:', {
+      settingPath,
+      value,
+      type: target.type,
+      element: target.id,
+    });
 
     const pathParts = settingPath.split('.');
     const [section, subsection, key] = pathParts;
@@ -1012,6 +1011,9 @@ const headerID = `${settingsId}-header`;
 
     // Update subsetting visibility
     updateSubsettingVisibility();
+
+    // Success logging
+    console.log('✅ Setting saved:', { section, key, value, settingPath });
   }
 
   function handleSettingsChange(detail: any) {

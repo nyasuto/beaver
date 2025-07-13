@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Settings Debug</title>
+</head>
+<body>
+    <h1>Settings Debug</h1>
+    <button onclick="checkSettings()">Check Settings</button>
+    <button onclick="toggleAutoReload()">Toggle Auto Reload</button>
+    <button onclick="clearSettings()">Clear Settings</button>
+    <div id="output"></div>
+
+    <script>
+        function checkSettings() {
+            const stored = localStorage.getItem('beaver_user_settings');
+            const output = document.getElementById('output');
+            if (stored) {
+                const settings = JSON.parse(stored);
+                output.innerHTML = '<pre>' + JSON.stringify(settings, null, 2) + '</pre>';
+            } else {
+                output.innerHTML = 'No settings found in localStorage';
+            }
+        }
+
+        function toggleAutoReload() {
+            const stored = localStorage.getItem('beaver_user_settings');
+            if (stored) {
+                const settings = JSON.parse(stored);
+                settings.pwa = settings.pwa || {};
+                settings.pwa.autoReload = !settings.pwa.autoReload;
+                settings.updatedAt = Date.now();
+                localStorage.setItem('beaver_user_settings', JSON.stringify(settings));
+                checkSettings();
+            }
+        }
+
+        function clearSettings() {
+            localStorage.removeItem('beaver_user_settings');
+            checkSettings();
+        }
+
+        // Initial check
+        checkSettings();
+    </script>
+</body>
+</html>
