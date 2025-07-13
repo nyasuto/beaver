@@ -121,6 +121,7 @@ const actionsId = `${notificationId}-actions`;
   class={notificationClasses}
   style={`display: ${isVisible ? 'block' : 'none'}; ${style || ''}`}
   data-testid={testId}
+  data-component="update-notification"
   data-position={position}
   data-animation={animation}
   data-auto-hide={autoHide}
@@ -525,6 +526,32 @@ const actionsId = `${notificationId}-actions`;
           customEvent.detail.currentVersion,
           customEvent.detail.latestVersion
         );
+      }
+    });
+
+    // Listen for notification:show events from settings system
+    notification.addEventListener('notification:show', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { currentVersion, latestVersion, position, animation, showVersionDetails, autoHide } =
+        customEvent.detail;
+
+      // Update notification attributes based on settings
+      if (position) notification.setAttribute('data-position', position);
+      if (animation) notification.setAttribute('data-animation', animation);
+      if (autoHide !== undefined) notification.setAttribute('data-auto-hide', autoHide.toString());
+
+      // Update version details visibility
+      const versionDetailsElement = notification.querySelector(
+        '.text-body-small.text-muted.font-mono'
+      );
+      if (versionDetailsElement) {
+        (versionDetailsElement as HTMLElement).style.display = showVersionDetails
+          ? 'block'
+          : 'none';
+      }
+
+      if (notificationController) {
+        notificationController.show(currentVersion, latestVersion);
       }
     });
 

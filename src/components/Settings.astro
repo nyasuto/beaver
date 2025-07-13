@@ -1,0 +1,919 @@
+---
+/**
+ * Settings Component
+ *
+ * Provides comprehensive user settings interface for:
+ * - Notification preferences (ON/OFF control)
+ * - Version checking preferences
+ * - Theme settings
+ * - Privacy controls
+ *
+ * Integrates with Beaver design system and includes:
+ * - Responsive design
+ * - Dark/Light theme support
+ * - Smooth animations
+ * - Accessibility features
+ */
+import { z } from 'zod';
+import { BaseUIPropsSchema } from '../lib/schemas/ui';
+
+// Settings component props schema
+export const SettingsPropsSchema = BaseUIPropsSchema.extend({
+  /** Initial open state */
+  isOpen: z.boolean().default(false),
+  /** Position of the settings panel */
+  position: z.enum(['left', 'right', 'center']).default('right'),
+  /** Size of the settings panel */
+  size: z.enum(['sm', 'md', 'lg', 'xl']).default('md'),
+  /** Enable modal backdrop */
+  modal: z.boolean().default(true),
+  /** Title of the settings panel */
+  title: z.string().default('設定'),
+});
+
+export type SettingsProps = z.infer<typeof SettingsPropsSchema>;
+
+type Props = SettingsProps;
+
+const {
+  isOpen = false,
+  position = 'right',
+  size = 'md',
+  modal = true,
+  title = '設定',
+  className = '',
+  id = 'user-settings',
+  style,
+  'data-testid': testId = 'user-settings',
+  'aria-label': ariaLabel = 'ユーザー設定',
+  ...rest
+} = Astro.props;
+
+// Validate props with Zod schema
+try {
+  SettingsPropsSchema.parse(Astro.props);
+} catch (error) {
+  console.warn('Settings props validation failed:', error);
+}
+
+// Panel size classes
+const sizeClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+};
+
+// Position classes for slide-in animation
+const positionClasses = {
+  left: 'left-0',
+  right: 'right-0',
+  center: 'left-1/2 -translate-x-1/2',
+};
+
+// Build component classes
+const panelClasses = [
+  'fixed top-0 h-full z-50',
+  'surface-raised shadow-strong border-soft',
+  'overflow-y-auto',
+  'transition-smooth',
+  sizeClasses[size],
+  positionClasses[position],
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+
+const backdropClasses = [
+  'fixed inset-0 z-40',
+  'bg-black/50 dark:bg-black/70',
+  'backdrop-blur-sm',
+  'transition-smooth',
+].join(' ');
+
+// Generate unique IDs
+const settingsId = id || `settings-${Math.random().toString(36).substring(2, 11)}`;
+const contentId = `${settingsId}-content`;
+const headerID = `${settingsId}-header`;
+---
+
+<!-- Modal Backdrop -->{
+  modal && (
+    <div
+      id={`${settingsId}-backdrop`}
+      class={backdropClasses}
+      style={`display: ${isOpen ? 'block' : 'none'}`}
+      data-settings-backdrop
+      aria-hidden="true"
+    />
+  )
+}
+
+<!-- Settings Panel -->
+<div
+  id={settingsId}
+  class={panelClasses}
+  style={`display: ${isOpen ? 'block' : 'none'}; ${style || ''}`}
+  data-testid={testId}
+  data-position={position}
+  data-size={size}
+  aria-label={ariaLabel}
+  aria-labelledby={headerID}
+  role="dialog"
+  aria-modal={modal}
+  {...rest}
+>
+  <!-- Settings Header -->
+  <div
+    id={headerID}
+    class="sticky top-0 surface bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-soft p-responsive"
+  >
+    <div class="flex items-center justify-between">
+      <h2 class="text-heading-2 text-heading font-semibold">
+        {title}
+      </h2>
+
+      <button
+        type="button"
+        class="btn btn-ghost p-2 touch-target-sm"
+        data-action="close"
+        aria-label="設定を閉じる"
+      >
+        <svg
+          class="icon icon-md"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Content -->
+  <div id={contentId} class="p-responsive space-stack-lg">
+    <!-- Notification Settings Section -->
+    <section class="space-stack-md">
+      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
+        🔔 通知設定
+      </h3>
+
+      <div class="space-stack-sm">
+        <!-- Main Notification Toggle -->
+        <div class="flex items-center justify-between py-3">
+          <div class="flex-1 space-stack-xs">
+            <label class="text-body font-medium text-heading" for="notifications-enabled">
+              自動更新通知
+            </label>
+            <p class="text-body-small text-muted">
+              新しいバージョンが利用可能になったときに通知を表示します
+            </p>
+          </div>
+
+          <div class="ml-4">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                id="notifications-enabled"
+                class="sr-only peer"
+                data-setting="notifications.enabled"
+                aria-describedby="notifications-enabled-desc"
+              />
+              <div class="toggle-switch"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notification Position -->
+        <div class="notification-subsetting">
+          <label class="label" for="notification-position"> 通知表示位置 </label>
+          <select
+            id="notification-position"
+            class="input w-full"
+            data-setting="notifications.position"
+          >
+            <option value="top">上部</option>
+            <option value="bottom">下部</option>
+          </select>
+        </div>
+
+        <!-- Notification Animation -->
+        <div class="notification-subsetting">
+          <label class="label" for="notification-animation"> アニメーション </label>
+          <select
+            id="notification-animation"
+            class="input w-full"
+            data-setting="notifications.animation"
+          >
+            <option value="slide">スライド</option>
+            <option value="fade">フェード</option>
+            <option value="bounce">バウンス</option>
+          </select>
+        </div>
+
+        <!-- Show Version Details -->
+        <div class="notification-subsetting flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="show-version-details">
+              バージョン詳細を表示
+            </label>
+            <p class="text-body-small text-muted">通知にバージョン情報を含めます</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="show-version-details"
+              class="sr-only peer"
+              data-setting="notifications.showVersionDetails"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Version Check Settings Section -->
+    <section class="space-stack-md">
+      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
+        🔄 バージョンチェック
+      </h3>
+
+      <div class="space-stack-sm">
+        <!-- Version Check Toggle -->
+        <div class="flex items-center justify-between py-3">
+          <div class="flex-1 space-stack-xs">
+            <label class="text-body font-medium text-heading" for="version-check-enabled">
+              自動バージョンチェック
+            </label>
+            <p class="text-body-small text-muted">定期的に新しいバージョンをチェックします</p>
+          </div>
+
+          <div class="ml-4">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                id="version-check-enabled"
+                class="sr-only peer"
+                data-setting="versionCheck.enabled"
+              />
+              <div class="toggle-switch"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Check Interval -->
+        <div class="version-check-subsetting">
+          <label class="label" for="check-interval"> チェック間隔 </label>
+          <select id="check-interval" class="input w-full" data-setting="versionCheck.interval">
+            <option value="10000">10秒</option>
+            <option value="30000">30秒</option>
+            <option value="60000">1分</option>
+            <option value="300000">5分</option>
+            <option value="600000">10分</option>
+          </select>
+        </div>
+
+        <!-- Check Only When Visible -->
+        <div class="version-check-subsetting flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="check-when-visible">
+              画面表示時のみチェック
+            </label>
+            <p class="text-body-small text-muted">ページが非表示の時はチェックを停止します</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="check-when-visible"
+              class="sr-only peer"
+              data-setting="versionCheck.checkOnlyWhenVisible"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- UI Settings Section -->
+    <section class="space-stack-md">
+      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
+        🎨 表示設定
+      </h3>
+
+      <div class="space-stack-sm">
+        <!-- Theme Selection -->
+        <div>
+          <label class="label" for="theme-select"> テーマ </label>
+          <select id="theme-select" class="input w-full" data-setting="ui.theme">
+            <option value="system">システム設定に従う</option>
+            <option value="light">ライト</option>
+            <option value="dark">ダーク</option>
+          </select>
+        </div>
+
+        <!-- Enable Animations -->
+        <div class="flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="ui-animations">
+              アニメーション
+            </label>
+            <p class="text-body-small text-muted">UI要素のアニメーション効果を有効にします</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="ui-animations"
+              class="sr-only peer"
+              data-setting="ui.animations"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+
+        <!-- Compact Mode -->
+        <div class="flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="compact-mode">
+              コンパクトモード
+            </label>
+            <p class="text-body-small text-muted">より密度の高いレイアウトを使用します</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="compact-mode"
+              class="sr-only peer"
+              data-setting="ui.compactMode"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy Settings Section -->
+    <section class="space-stack-md">
+      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
+        🔒 プライバシー
+      </h3>
+
+      <div class="space-stack-sm">
+        <!-- Analytics -->
+        <div class="flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="analytics-enabled">
+              使用状況分析
+            </label>
+            <p class="text-body-small text-muted">サービス改善のための匿名使用データを送信します</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="analytics-enabled"
+              class="sr-only peer"
+              data-setting="privacy.analytics"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+
+        <!-- Error Reporting -->
+        <div class="flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="error-reporting">
+              エラーレポート
+            </label>
+            <p class="text-body-small text-muted">エラー発生時の情報を開発者に送信します</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="error-reporting"
+              class="sr-only peer"
+              data-setting="privacy.errorReporting"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings Actions -->
+    <section class="border-t border-soft pt-6 space-stack-md">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" class="btn btn-outline flex-1" data-action="reset">
+          <svg
+            class="icon icon-sm mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+          初期設定に戻す
+        </button>
+
+        <button type="button" class="btn btn-ghost flex-1" data-action="export">
+          <svg
+            class="icon icon-sm mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+          設定をエクスポート
+        </button>
+      </div>
+
+      <div class="text-center">
+        <label class="btn btn-ghost cursor-pointer">
+          <svg
+            class="icon icon-sm mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+            ></path>
+          </svg>
+          設定をインポート
+          <input type="file" accept=".json" class="sr-only" data-action="import" />
+        </label>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // Settings functionality (client-side)
+  import type {
+    UserSettingsManager,
+    NotificationSettings,
+    VersionCheckSettings,
+    UISettings,
+    PrivacySettings,
+  } from '../lib/settings';
+
+  // Settings panel management
+  let settingsManager: UserSettingsManager | null = null;
+  let settingsPanel: HTMLElement | null = null;
+  let backdrop: HTMLElement | null = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initializeSettings();
+  });
+
+  async function initializeSettings() {
+    // Wait for settings manager to be available
+    await loadSettingsManager();
+
+    settingsPanel = document.getElementById('user-settings');
+    backdrop = document.querySelector('[data-settings-backdrop]');
+
+    if (!settingsPanel || !settingsManager) return;
+
+    // Load current settings into UI
+    loadSettingsIntoUI();
+
+    // Set up event listeners
+    setupEventListeners();
+
+    // Listen for settings changes
+    settingsManager.addEventListener('settings:changed', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      handleSettingsChange(customEvent.detail);
+    });
+  }
+
+  async function loadSettingsManager() {
+    try {
+      // Dynamically import settings manager
+      const { createSettingsManager } = await import('../lib/settings');
+      settingsManager = createSettingsManager();
+    } catch (error) {
+      console.error('Failed to load settings manager:', error);
+    }
+  }
+
+  function loadSettingsIntoUI() {
+    if (!settingsManager || !settingsPanel) return;
+
+    const settings = settingsManager.getSettings();
+
+    // Load notification settings
+    setCheckboxValue('notifications-enabled', settings.notifications.enabled);
+    setSelectValue('notification-position', settings.notifications.position);
+    setSelectValue('notification-animation', settings.notifications.animation);
+    setCheckboxValue('show-version-details', settings.notifications.showVersionDetails);
+
+    // Load version check settings
+    setCheckboxValue('version-check-enabled', settings.versionCheck.enabled);
+    setSelectValue('check-interval', String(settings.versionCheck.interval));
+    setCheckboxValue('check-when-visible', settings.versionCheck.checkOnlyWhenVisible);
+
+    // Load UI settings
+    setSelectValue('theme-select', settings.ui.theme);
+    setCheckboxValue('ui-animations', settings.ui.animations);
+    setCheckboxValue('compact-mode', settings.ui.compactMode);
+
+    // Load privacy settings
+    setCheckboxValue('analytics-enabled', settings.privacy.analytics);
+    setCheckboxValue('error-reporting', settings.privacy.errorReporting);
+
+    // Update subsetting visibility
+    updateSubsettingVisibility();
+  }
+
+  function setupEventListeners() {
+    if (!settingsPanel || !settingsManager) return;
+
+    // Close button
+    const closeButton = settingsPanel.querySelector('[data-action="close"]');
+    closeButton?.addEventListener('click', closeSettings);
+
+    // Backdrop click
+    backdrop?.addEventListener('click', closeSettings);
+
+    // Setting inputs
+    const settingInputs = settingsPanel.querySelectorAll('[data-setting]');
+    settingInputs.forEach(input => {
+      input.addEventListener('change', handleSettingChange);
+    });
+
+    // Action buttons
+    const resetButton = settingsPanel.querySelector('[data-action="reset"]');
+    resetButton?.addEventListener('click', resetSettings);
+
+    const exportButton = settingsPanel.querySelector('[data-action="export"]');
+    exportButton?.addEventListener('click', exportSettings);
+
+    const importInput = settingsPanel.querySelector('[data-action="import"]');
+    importInput?.addEventListener('change', importSettings);
+
+    // Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && isSettingsOpen()) {
+        closeSettings();
+      }
+    });
+  }
+
+  function handleSettingChange(event: Event) {
+    if (!settingsManager) return;
+
+    const target = event.target as HTMLInputElement | HTMLSelectElement;
+    const settingPath = target.getAttribute('data-setting');
+
+    if (!settingPath) return;
+
+    const value =
+      target.type === 'checkbox'
+        ? (target as HTMLInputElement).checked
+        : target.type === 'number'
+          ? Number(target.value)
+          : target.value;
+
+    const [section, key] = settingPath.split('.');
+
+    if (section === 'notifications') {
+      settingsManager.updateNotificationSettings({ [key as keyof NotificationSettings]: value });
+    } else if (section === 'versionCheck') {
+      settingsManager.updateVersionCheckSettings({ [key as keyof VersionCheckSettings]: value });
+    } else if (section === 'ui') {
+      settingsManager.updateUISettings({ [key as keyof UISettings]: value });
+    } else if (section === 'privacy') {
+      settingsManager.updatePrivacySettings({ [key as keyof PrivacySettings]: value });
+    }
+
+    // Update subsetting visibility
+    updateSubsettingVisibility();
+  }
+
+  function handleSettingsChange(detail: any) {
+    // Handle specific setting changes that affect other components
+    if (detail.section === 'notifications' && 'enabled' in detail.updates) {
+      // Dispatch event for notification system
+      document.dispatchEvent(
+        new CustomEvent('settings:notifications-toggled', {
+          detail: { enabled: detail.updates.enabled },
+        })
+      );
+    }
+
+    if (detail.section === 'versionCheck' && 'enabled' in detail.updates) {
+      // Dispatch event for version checker
+      document.dispatchEvent(
+        new CustomEvent('settings:version-check-toggled', {
+          detail: { enabled: detail.updates.enabled },
+        })
+      );
+    }
+
+    if (detail.section === 'ui' && 'theme' in detail.updates) {
+      // Handle theme change
+      applyTheme(detail.updates.theme);
+    }
+  }
+
+  function updateSubsettingVisibility() {
+    // Show/hide notification subsettings
+    const notificationsEnabled = getCheckboxValue('notifications-enabled');
+    const notificationSubsettings = settingsPanel?.querySelectorAll('.notification-subsetting');
+    notificationSubsettings?.forEach(element => {
+      (element as HTMLElement).style.display = notificationsEnabled ? 'block' : 'none';
+    });
+
+    // Show/hide version check subsettings
+    const versionCheckEnabled = getCheckboxValue('version-check-enabled');
+    const versionCheckSubsettings = settingsPanel?.querySelectorAll('.version-check-subsetting');
+    versionCheckSubsettings?.forEach(element => {
+      (element as HTMLElement).style.display = versionCheckEnabled ? 'block' : 'none';
+    });
+  }
+
+  function applyTheme(theme: string) {
+    const html = document.documentElement;
+
+    if (theme === 'dark') {
+      html.classList.add('dark');
+      html.setAttribute('data-theme', 'dark');
+    } else if (theme === 'light') {
+      html.classList.remove('dark');
+      html.setAttribute('data-theme', 'light');
+    } else {
+      // System theme
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (systemDark) {
+        html.classList.add('dark');
+        html.setAttribute('data-theme', 'dark');
+      } else {
+        html.classList.remove('dark');
+        html.setAttribute('data-theme', 'light');
+      }
+    }
+  }
+
+  function resetSettings() {
+    if (!settingsManager) return;
+
+    if (confirm('すべての設定を初期値に戻しますか？')) {
+      settingsManager.resetToDefaults();
+      loadSettingsIntoUI();
+    }
+  }
+
+  function exportSettings() {
+    if (!settingsManager) return;
+
+    const settingsJson = settingsManager.exportSettings();
+    const blob = new Blob([settingsJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `beaver-settings-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importSettings(event: Event) {
+    if (!settingsManager) return;
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const settingsJson = e.target?.result as string;
+        const success = settingsManager!.importSettings(settingsJson);
+
+        if (success) {
+          loadSettingsIntoUI();
+          alert('設定をインポートしました');
+        } else {
+          alert('設定ファイルの形式が正しくありません');
+        }
+      } catch (error) {
+        alert('設定のインポートに失敗しました');
+        console.error('Import error:', error);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset input
+    input.value = '';
+  }
+
+  function openSettings() {
+    if (!settingsPanel) return;
+
+    settingsPanel.style.display = 'block';
+    if (backdrop) {
+      backdrop.style.display = 'block';
+    }
+
+    // Add animation class
+    requestAnimationFrame(() => {
+      settingsPanel?.classList.add('slide-in');
+      backdrop?.classList.add('fade-in');
+    });
+
+    // Focus management
+    const firstFocusable = settingsPanel.querySelector('button, input, select') as HTMLElement;
+    firstFocusable?.focus();
+  }
+
+  function closeSettings() {
+    if (!settingsPanel) return;
+
+    settingsPanel.classList.remove('slide-in');
+    backdrop?.classList.remove('fade-in');
+
+    setTimeout(() => {
+      settingsPanel!.style.display = 'none';
+      if (backdrop) {
+        backdrop.style.display = 'none';
+      }
+    }, 300);
+  }
+
+  function isSettingsOpen(): boolean {
+    return settingsPanel?.style.display === 'block' || false;
+  }
+
+  // Utility functions
+  function setCheckboxValue(id: string, value: boolean) {
+    const checkbox = document.getElementById(id) as HTMLInputElement;
+    if (checkbox) checkbox.checked = value;
+  }
+
+  function setSelectValue(id: string, value: string) {
+    const select = document.getElementById(id) as HTMLSelectElement;
+    if (select) select.value = value;
+  }
+
+  function getCheckboxValue(id: string): boolean {
+    const checkbox = document.getElementById(id) as HTMLInputElement;
+    return checkbox ? checkbox.checked : false;
+  }
+
+  // Expose functions globally for external use
+  (window as any).openSettings = openSettings;
+  (window as any).closeSettings = closeSettings;
+  (window as any).settingsManager = settingsManager;
+</script>
+
+<style>
+  /* Toggle Switch Styles */
+  .toggle-switch {
+    @apply relative w-11 h-6 bg-gray-200 rounded-full dark:bg-gray-700;
+    @apply after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600;
+  }
+
+  .toggle-switch-sm {
+    @apply relative w-8 h-4 bg-gray-200 rounded-full dark:bg-gray-700;
+    @apply after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600;
+  }
+
+  /* Peer state styles for toggles */
+  input[type='checkbox']:checked + .toggle-switch {
+    @apply bg-primary-600;
+  }
+
+  input[type='checkbox']:checked + .toggle-switch::after {
+    @apply translate-x-full border-white;
+  }
+
+  input[type='checkbox']:checked + .toggle-switch-sm {
+    @apply bg-primary-600;
+  }
+
+  input[type='checkbox']:checked + .toggle-switch-sm::after {
+    @apply translate-x-full border-white;
+  }
+
+  input[type='checkbox']:focus + .toggle-switch {
+    @apply outline-none ring-4 ring-primary-300 dark:ring-primary-800;
+  }
+
+  input[type='checkbox']:focus + .toggle-switch-sm {
+    @apply outline-none ring-2 ring-primary-300 dark:ring-primary-800;
+  }
+
+  /* Settings Panel Animations */
+  [data-position='right'] {
+    transform: translateX(100%);
+  }
+
+  [data-position='left'] {
+    transform: translateX(-100%);
+  }
+
+  [data-position='center'] {
+    transform: translateX(-50%) translateY(-100%);
+  }
+
+  .slide-in[data-position='right'] {
+    transform: translateX(0);
+  }
+
+  .slide-in[data-position='left'] {
+    transform: translateX(0);
+  }
+
+  .slide-in[data-position='center'] {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .fade-in {
+    opacity: 1;
+  }
+
+  [data-settings-backdrop] {
+    opacity: 0;
+  }
+
+  /* Subsetting styles */
+  .notification-subsetting,
+  .version-check-subsetting {
+    @apply ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700;
+  }
+
+  /* Responsive improvements */
+  @media (max-width: 640px) {
+    .toggle-switch {
+      @apply w-10 h-5 after:h-4 after:w-4;
+    }
+
+    .toggle-switch-sm {
+      @apply w-7 h-3.5 after:h-2.5 after:w-2.5;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .toggle-switch,
+    .toggle-switch-sm {
+      @apply border-2 border-gray-800 dark:border-gray-200;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .toggle-switch::after,
+    .toggle-switch-sm::after {
+      @apply transition-none;
+    }
+
+    [data-position] {
+      transform: none !important;
+    }
+
+    .slide-in {
+      animation: none !important;
+    }
+  }
+
+  /* Print styles */
+  @media print {
+    #user-settings,
+    [data-settings-backdrop] {
+      display: none !important;
+    }
+  }
+</style>
