@@ -12,6 +12,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "fetch-data": "tsx scripts/fetch-github-data.ts",
+    "generate-version": "node scripts/generate-version.js",
+    "validate-version": "node scripts/validate-version.js",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx,.astro src",
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.astro src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,astro,json,md}\"",

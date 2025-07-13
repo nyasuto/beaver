@@ -16,6 +16,16 @@ export const UrlSchema = z.string().url();
 export const EmailSchema = z.string().email();
 export const NonEmptyStringSchema = z.string().min(1);
 
+// Version schema for version.json
+export const VersionInfoSchema = z.object({
+  version: z.string().min(1, 'Version must not be empty'),
+  timestamp: z.number().int().positive('Timestamp must be a positive integer'),
+  buildId: z.string().min(1, 'Build ID must not be empty'),
+  gitCommit: z.string().min(1, 'Git commit hash must not be empty'),
+  environment: z.enum(['development', 'production', 'staging']),
+  dataHash: z.string().optional(),
+});
+
 // Pagination schema
 export const PaginationSchema = z.object({
   page: z.number().int().min(1).default(1),
