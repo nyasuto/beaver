@@ -1,7 +1,7 @@
 # Beaver Astro Project Makefile
 # AI-first knowledge management system development automation
 
-.PHONY: help install dev build preview clean test lint format type-check quality quality-fix validate analyze deploy setup git-hooks env-info pr-ready
+.PHONY: help install dev build preview clean test lint format type-check quality quality-fix validate analyze deploy setup git-hooks env-info pr-ready generate-version validate-version
 
 # Default target
 .DEFAULT_GOAL := help
@@ -66,6 +66,17 @@ test-watch: ## Run tests in watch mode
 test-coverage: ## Run tests with coverage
 	@echo "$(BLUE)🧪 Running tests with coverage...$(NC)"
 	@npm run test:coverage
+
+# Version Management
+generate-version: ## Generate version.json file
+	@echo "$(CYAN)🔄 Generating version.json...$(NC)"
+	@npm run generate-version
+	@echo "$(GREEN)✅ Version.json generated successfully$(NC)"
+
+validate-version: ## Validate version.json file
+	@echo "$(BLUE)🔍 Validating version.json...$(NC)"
+	@npm run validate-version
+	@echo "$(GREEN)✅ Version.json validation completed$(NC)"
 
 # Code Quality
 lint: ## Run linting

@@ -8,11 +8,23 @@ import { remark } from 'remark';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
 
-// Create a JSDOM window for DOMPurify on server-side
-const window = new JSDOM('').window;
-const purify = DOMPurify(window);
+// Dynamic import for server-side only
+let purify: any;
+
+// Initialize DOMPurify with JSDOM only on server-side
+async function initializePurify() {
+  if (typeof window === 'undefined') {
+    // Server-side: use JSDOM
+    const { JSDOM } = await import('jsdom');
+    const jsdomWindow = new JSDOM('').window;
+    purify = DOMPurify(jsdomWindow);
+  } else {
+    // Client-side: use browser's window
+    purify = DOMPurify(window);
+  }
+  return purify;
+}
 
 /**
  * Convert markdown to safe HTML
@@ -24,6 +36,11 @@ export async function markdownToHtml(markdown: string): Promise<string> {
   try {
     // Convert markdown to HTML using remark
     const result = await remark().use(remarkRehype).use(rehypeStringify).process(markdown);
+
+    // Initialize purify if not already done
+    if (!purify) {
+      await initializePurify();
+    }
 
     // Sanitize the HTML to prevent XSS attacks
     const sanitizedHtml = purify.sanitize(result.toString(), {
