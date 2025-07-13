@@ -218,6 +218,11 @@ export class PWASystem {
       });
     });
 
+    // Set up periodic logging for PWA update checks
+    if (this.config.debug) {
+      this.setupPWAPollingLogs();
+    }
+
     // Listen for version checker events and forward to PWA update system
     document.addEventListener('version:update-available', (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -344,6 +349,63 @@ export class PWASystem {
       return await navigator.storage.estimate();
     }
     return null;
+  }
+
+  /**
+   * Set up periodic logging for PWA update checks
+   */
+  private setupPWAPollingLogs(): void {
+    // Monitor version.json requests for polling logs
+    const originalFetch = window.fetch;
+    window.fetch = async function (...args) {
+      const request = args[0];
+      const url = typeof request === 'string' ? request : (request as Request).url;
+
+      if (url.includes('/version.json')) {
+        console.log('🔄 PWA: Polling version.json', {
+          url,
+          timestamp: new Date().toISOString(),
+          source: 'pwa-polling',
+        });
+
+        try {
+          const response = await originalFetch.apply(this, args);
+          if (response.ok) {
+            const clonedResponse = response.clone();
+            const versionData = await clonedResponse.json();
+            console.log('✅ PWA: Polling response received', {
+              status: response.status,
+              fromCache: response.headers.has('cf-cache-status') || response.headers.has('x-cache'),
+              version: versionData.version,
+              buildId: versionData.buildId,
+              timestamp: new Date().toISOString(),
+            });
+          }
+          return response;
+        } catch (error) {
+          console.error('❌ PWA: Polling failed', {
+            url,
+            error: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString(),
+          });
+          throw error;
+        }
+      }
+
+      return originalFetch.apply(this, args);
+    };
+
+    // Log PWA polling intervals
+    setInterval(() => {
+      if (this.config.debug) {
+        console.log('📊 PWA: Polling status check', {
+          initialized: this.initialized,
+          serviceWorkerActive: 'serviceWorker' in navigator && navigator.serviceWorker.controller,
+          timestamp: new Date().toISOString(),
+          checkInterval: this.config.versionCheckInterval,
+        });
+      }
+    }, this.config.versionCheckInterval || 30000);
   }
 
   /**

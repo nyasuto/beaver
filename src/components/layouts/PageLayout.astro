@@ -345,10 +345,10 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
                 enabled: true,
                 scope: '/beaver/',
                 versionCheckInterval: settingsManager.getVersionCheckSettings().interval,
-                debug: pwaSettings.debugMode,
+                debug: true, // Force debug mode for polling logs
                 autoRegister: true,
               });
-              console.log('🚀 PWA System initialized');
+              console.log('🚀 PWA System initialized with polling logs enabled');
             }
           } catch (error) {
             console.warn('⚠️ PWA initialization failed:', error);
