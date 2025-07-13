@@ -9,6 +9,7 @@
 import Header from '../navigation/Header.astro';
 import Footer from '../navigation/Footer.astro';
 import SkipLinks from '../accessibility/SkipLinks.astro';
+import UpdateNotification from '../UpdateNotification.astro';
 
 // Import global styles
 import '../../styles/global.css';
@@ -195,6 +196,16 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
     {/* Skip Links for accessibility */}
     <SkipLinks />
 
+    {/* Version Update Notification */}
+    <UpdateNotification
+      isVisible={false}
+      autoHide={0}
+      position="top"
+      animation="slide"
+      variant="info"
+      showVersionDetails={true}
+    />
+
     {/* Header */}
     {
       showHeader && (
@@ -294,6 +305,89 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           }
         }
       });
+
+      // Initialize VersionChecker for auto-reload functionality
+      // Simplified initialization using client-side only approach
+
+      // Wait for potential module loading and then initialize
+      setTimeout(() => {
+        initializeAutoReload();
+      }, 1000);
+
+      function initializeAutoReload() {
+        // Simple version checking without external modules
+        let currentVersion: any = null;
+        let checkInterval: NodeJS.Timeout | null = null;
+
+        async function checkForUpdates() {
+          try {
+            const baseUrl = window.location.pathname.includes('/beaver')
+              ? window.location.origin + '/beaver'
+              : window.location.origin;
+
+            const response = await fetch(`${baseUrl}/version.json?t=${Date.now()}`);
+            const latestVersion = await response.json();
+
+            if (currentVersion === null) {
+              currentVersion = latestVersion;
+              console.log('🔄 Initial version loaded:', latestVersion.version);
+              return;
+            }
+
+            // Check if version has changed
+            if (
+              currentVersion.buildId !== latestVersion.buildId ||
+              currentVersion.gitCommit !== latestVersion.gitCommit ||
+              currentVersion.dataHash !== latestVersion.dataHash
+            ) {
+              console.log('🔄 New version detected!', {
+                current: currentVersion.version,
+                latest: latestVersion.version,
+              });
+
+              // Dispatch update available event
+              const updateEvent = new CustomEvent('version:update-available', {
+                detail: {
+                  currentVersion: currentVersion,
+                  latestVersion: latestVersion,
+                },
+              });
+              document.dispatchEvent(updateEvent);
+
+              // Update current version
+              currentVersion = latestVersion;
+            }
+          } catch (error) {
+            console.warn('Version check failed:', error);
+
+            // Dispatch check failed event
+            const failedEvent = new CustomEvent('version:check-failed', {
+              detail: { error: error instanceof Error ? error.message : String(error) },
+            });
+            document.dispatchEvent(failedEvent);
+          }
+        }
+
+        // Start checking immediately
+        checkForUpdates();
+
+        // Set up periodic checking (every 30 seconds)
+        checkInterval = setInterval(checkForUpdates, 30000);
+
+        // Expose control globally for debugging
+        (window as any).autoReloadControl = {
+          checkNow: checkForUpdates,
+          stop: () => {
+            if (checkInterval) {
+              clearInterval(checkInterval);
+              checkInterval = null;
+            }
+          },
+          getCurrentVersion: () => currentVersion,
+        };
+
+        console.log('🔄 Auto-reload system initialized (simplified version)');
+      }
     </script>
   </body>
 </html>
