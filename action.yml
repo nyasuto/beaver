@@ -100,6 +100,8 @@ runs:
         # Copy scripts
         mkdir -p scripts
         cp "${{ github.action_path }}/scripts/fetch-github-data.ts" scripts/
+        cp "${{ github.action_path }}/scripts/generate-version.js" scripts/
+        cp "${{ github.action_path }}/scripts/validate-version.js" scripts/
         
         # Copy target repository documentation files
         echo "📄 Copying target repository documentation..."
