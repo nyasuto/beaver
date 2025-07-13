@@ -339,12 +339,24 @@ export class UserSettingsManager {
     const oldCacheStrategy = this.settings.pwa.cacheStrategy;
     const oldAutoReload = this.settings.pwa.autoReload;
 
+    console.log('🔧 updatePWASettings called:', {
+      updates,
+      oldAutoReload,
+      currentPWA: this.settings.pwa,
+    });
+
     this.settings.pwa = {
       ...this.settings.pwa,
       ...updates,
     };
 
     this.settings.updatedAt = Date.now();
+
+    console.log('🔧 PWA settings after update:', {
+      newAutoReload: this.settings.pwa.autoReload,
+      allPWASettings: this.settings.pwa,
+    });
+
     this.saveSettings();
 
     this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.SETTINGS_CHANGED, {
@@ -531,7 +543,14 @@ export class UserSettingsManager {
    */
   private saveSettings(): void {
     try {
-      localStorage.setItem(SETTINGS_CONSTANTS.STORAGE_KEY, JSON.stringify(this.settings));
+      const settingsJson = JSON.stringify(this.settings);
+      console.log('💾 Saving settings to localStorage:', {
+        key: SETTINGS_CONSTANTS.STORAGE_KEY,
+        autoReload: this.settings.pwa?.autoReload,
+        autoReloadDelay: this.settings.pwa?.autoReloadDelay,
+      });
+      localStorage.setItem(SETTINGS_CONSTANTS.STORAGE_KEY, settingsJson);
+      console.log('✅ Settings saved successfully');
     } catch (error) {
       console.warn('Failed to save user settings:', error);
     }

@@ -930,7 +930,12 @@ const headerID = `${settingsId}-header`;
   }
 
   function handleSettingChange(event: Event) {
-    if (!settingsManager) return;
+    if (!settingsManager) {
+      console.error('❌ Settings manager not available!');
+      return;
+    }
+
+    console.log('✅ Settings manager available:', typeof settingsManager);
 
     const target = event.target as HTMLInputElement | HTMLSelectElement;
     const settingPath = target.getAttribute('data-setting');
@@ -990,8 +995,10 @@ const headerID = `${settingsId}-header`;
       // Special handling for autoReloadDelay (convert seconds to milliseconds)
       if (key === 'autoReloadDelay') {
         const delayMs = typeof value === 'number' ? value * 1000 : parseInt(String(value)) * 1000;
+        console.log('🔧 PWA autoReloadDelay update:', { value, delayMs });
         settingsManager.updatePWASettings({ [key as keyof PWASettings]: delayMs });
       } else {
+        console.log('🔧 PWA setting update:', { key, value, type: typeof value });
         settingsManager.updatePWASettings({ [key as keyof PWASettings]: value });
       }
 
@@ -1012,8 +1019,22 @@ const headerID = `${settingsId}-header`;
     // Update subsetting visibility
     updateSubsettingVisibility();
 
+    // Check localStorage before and after
+    const beforeSave = localStorage.getItem('beaver_user_settings');
+
     // Success logging
     console.log('✅ Setting saved:', { section, key, value, settingPath });
+
+    // Check if actually saved to localStorage
+    setTimeout(() => {
+      const afterSave = localStorage.getItem('beaver_user_settings');
+      const changed = beforeSave !== afterSave;
+      console.log('💾 LocalStorage check:', {
+        changed,
+        before: beforeSave ? JSON.parse(beforeSave).pwa?.autoReload : 'none',
+        after: afterSave ? JSON.parse(afterSave).pwa?.autoReload : 'none',
+      });
+    }, 100);
   }
 
   function handleSettingsChange(detail: any) {
