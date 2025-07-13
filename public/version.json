@@ -1,8 +1,8 @@
 {
   "version": "0.1.0",
-  "timestamp": 1752381831449,
-  "buildId": "local-1752381831449",
-  "gitCommit": "23ea95c",
-  "environment": "development",
-  "dataHash": "b8579d034c92eeb3"
+  "timestamp": 1752383351356,
+  "buildId": "local-1752383351356",
+  "gitCommit": "58c9a72",
+  "environment": "production",
+  "dataHash": "aa30f44c7990d421"
 }
