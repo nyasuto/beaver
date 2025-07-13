@@ -8,6 +8,7 @@
  */
 
 import { createSettingsManager } from './settings';
+import type { VersionInfo } from './types';
 
 /**
  * PWA System Configuration
@@ -44,12 +45,26 @@ export interface PWASystemStatus {
 }
 
 /**
+ * PWA Version State for LocalStorage management
+ */
+export interface PWAVersionState {
+  /** Current version information */
+  currentVersion: VersionInfo | null;
+  /** Timestamp of last successful check */
+  lastCheckedAt: number | null;
+  /** Whether a new version is available */
+  updateAvailable: boolean;
+}
+
+/**
  * Global PWA System Class
  */
 export class PWASystem {
   private config: PWASystemConfig;
   private settingsManager: any;
   private initialized = false;
+  private versionState: PWAVersionState;
+  private readonly VERSION_STORAGE_KEY = 'beaver_pwa_version_state';
 
   constructor(config: PWASystemConfig = {}) {
     this.config = {
@@ -61,8 +76,12 @@ export class PWASystem {
       ...config,
     };
 
+    // Initialize version state from localStorage
+    this.versionState = this.loadVersionState();
+
     if (this.config.debug) {
       console.log('🚀 PWA System initializing with config:', this.config);
+      console.log('📊 PWA Version state loaded:', this.versionState);
     }
   }
 
@@ -95,8 +114,8 @@ export class PWASystem {
       // Set up PWA event listeners for native Service Worker updates
       this.setupPWAEventListeners();
 
-      // Disable manual version polling when PWA is active
-      this.disableRedundantVersionChecking();
+      // Setup integrated version checking within PWA system
+      this.setupIntegratedVersionChecking();
 
       // Expose PWA system globally for debugging and integration
       this.exposeGlobally();
@@ -174,25 +193,29 @@ export class PWASystem {
   }
 
   /**
-   * Disable redundant version checking when PWA is active
-   * Skip this for version-test page to allow testing
+   * Setup integrated version checking within PWA system
+   * Replaces traditional VersionChecker with PWA-integrated approach
    */
-  private disableRedundantVersionChecking(): void {
-    // Skip disabling version checker on test pages
+  private setupIntegratedVersionChecking(): void {
     if (window.location.pathname.includes('/version-test')) {
       if (this.config.debug) {
         console.log('⚠️ Test page detected - keeping manual version checker active');
       }
+      // On test pages, disable traditional version checker but still run PWA integrated checking
+      this.dispatchEvent('pwa:disable-version-polling', {
+        reason: 'PWA integrated version checking active',
+        timestamp: Date.now(),
+      });
       return;
     }
 
     if (this.config.debug) {
-      console.log('🚫 Disabling manual version polling - using PWA native updates');
+      console.log('🔄 PWA integrated version checking enabled - replacing manual polling');
     }
 
-    // Signal to disable traditional version checker
+    // Signal to disable traditional version checker in favor of PWA integrated approach
     this.dispatchEvent('pwa:disable-version-polling', {
-      reason: 'PWA native updates active',
+      reason: 'PWA integrated version checking active',
       timestamp: Date.now(),
     });
   }
@@ -358,41 +381,71 @@ export class PWASystem {
   }
 
   /**
-   * Set up periodic logging for PWA update checks
+   * Set up integrated PWA version checking with update detection
    */
   private setupPWAPollingLogs(): void {
-    // Monitor version.json requests for polling logs
+    // Monitor version.json requests for polling logs and version comparison
     const originalFetch = window.fetch;
-    window.fetch = async function (...args) {
+
+    window.fetch = async (...args) => {
       const request = args[0];
       const url = typeof request === 'string' ? request : (request as Request).url;
 
       if (url.includes('/version.json')) {
-        console.log('🔄 PWA: Polling version.json', {
-          url,
-          timestamp: new Date().toISOString(),
-          localTime: new Date().toLocaleString('ja-JP'),
-          source: 'pwa-polling',
-          requestType: typeof request === 'string' ? 'string' : 'Request object',
-        });
+        if (this.config.debug) {
+          console.log('🔄 PWA: Polling version.json', {
+            url,
+            timestamp: new Date().toISOString(),
+            localTime: new Date().toLocaleString('ja-JP'),
+            source: 'pwa-integrated-polling',
+            requestType: typeof request === 'string' ? 'string' : 'Request object',
+          });
+        }
 
         try {
           const response = await originalFetch.apply(this, args);
           if (response.ok) {
             const clonedResponse = response.clone();
             const versionData = await clonedResponse.json();
-            console.log('✅ PWA: Polling response received', {
-              status: response.status,
-              statusText: response.statusText,
-              fromCache: response.headers.has('cf-cache-status') || response.headers.has('x-cache'),
-              version: versionData.version,
-              buildId: versionData.buildId,
-              gitCommit: versionData.gitCommit,
-              environment: versionData.environment,
-              timestamp: new Date().toISOString(),
-              localTime: new Date().toLocaleString('ja-JP'),
-              responseTime: 'calculated in browser',
-            });
+
+            if (this.config.debug) {
+              console.log('✅ PWA: Polling response received', {
+                status: response.status,
+                statusText: response.statusText,
+                fromCache:
+                  response.headers.has('cf-cache-status') || response.headers.has('x-cache'),
+                version: versionData.version,
+                buildId: versionData.buildId,
+                gitCommit: versionData.gitCommit,
+                environment: versionData.environment,
+                timestamp: new Date().toISOString(),
+                localTime: new Date().toLocaleString('ja-JP'),
+              });
+            }
+
+            // Perform version comparison and update detection
+            const updateDetected = this.checkForVersionUpdate(versionData);
+            if (updateDetected) {
+              if (this.config.debug) {
+                console.log('🚨 PWA: Version update detected!', {
+                  currentVersion: this.versionState.currentVersion,
+                  latestVersion: versionData,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+
+              // Dispatch version update event
+              this.dispatchEvent('version:update-available', {
+                currentVersion: this.versionState.currentVersion,
+                latestVersion: versionData,
+                updateType: 'pwa-integrated',
+                source: 'pwa-system',
+                timestamp: Date.now(),
+              });
+            }
+
+            // Update stored version state
+            this.updateVersionState(versionData);
           }
           return response;
         } catch (error) {
@@ -426,6 +479,91 @@ export class PWASystem {
   }
 
   /**
+   * Load version state from localStorage
+   */
+  private loadVersionState(): PWAVersionState {
+    try {
+      const stored = localStorage.getItem(this.VERSION_STORAGE_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        return {
+          currentVersion: data.currentVersion || null,
+          lastCheckedAt: data.lastCheckedAt || null,
+          updateAvailable: data.updateAvailable || false,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to load PWA version state:', error);
+    }
+
+    // Return default state
+    return {
+      currentVersion: null,
+      lastCheckedAt: null,
+      updateAvailable: false,
+    };
+  }
+
+  /**
+   * Save version state to localStorage
+   */
+  private saveVersionState(): void {
+    try {
+      localStorage.setItem(this.VERSION_STORAGE_KEY, JSON.stringify(this.versionState));
+    } catch (error) {
+      console.warn('Failed to save PWA version state:', error);
+    }
+  }
+
+  /**
+   * Check if a version update is available
+   */
+  private checkForVersionUpdate(latest: VersionInfo): boolean {
+    const current = this.versionState.currentVersion;
+
+    // If no current version, this is the first check
+    if (!current) {
+      return false;
+    }
+
+    // Compare version identifiers
+    const isUpdate =
+      current.buildId !== latest.buildId ||
+      current.gitCommit !== latest.gitCommit ||
+      (current.dataHash && latest.dataHash && current.dataHash !== latest.dataHash) ||
+      current.version !== latest.version;
+
+    if (this.config.debug && isUpdate) {
+      console.log('🔍 PWA: Version comparison details', {
+        'buildId changed': current.buildId !== latest.buildId,
+        'gitCommit changed': current.gitCommit !== latest.gitCommit,
+        'dataHash changed': current.dataHash !== latest.dataHash,
+        'version changed': current.version !== latest.version,
+        current: current,
+        latest: latest,
+      });
+    }
+
+    return isUpdate;
+  }
+
+  /**
+   * Update version state with new version info
+   */
+  private updateVersionState(latest: VersionInfo): void {
+    this.versionState = {
+      currentVersion: latest,
+      lastCheckedAt: Date.now(),
+      updateAvailable: false, // Reset after processing
+    };
+    this.saveVersionState();
+
+    if (this.config.debug) {
+      console.log('💾 PWA: Version state updated', this.versionState);
+    }
+  }
+
+  /**
    * Expose PWA system globally for debugging and integration
    */
   private exposeGlobally(): void {
@@ -438,6 +576,50 @@ export class PWASystem {
     windowWithBeaver.beaverSystems.pwa = this;
     windowWithBeaver.beaverSystems.settingsManager = this.settingsManager;
 
+    // PWA integrated version checker API
+    windowWithBeaver.beaverSystems.versionChecker = {
+      getState: () => ({
+        currentVersion: this.versionState.currentVersion,
+        lastCheckedAt: this.versionState.lastCheckedAt,
+        updateAvailable: this.versionState.updateAvailable,
+        source: 'pwa-integrated',
+        enabled: true,
+      }),
+      getConfig: () => ({
+        enabled: true,
+        checkInterval: this.config.versionCheckInterval,
+        source: 'pwa-integrated',
+        debug: this.config.debug,
+      }),
+      checkVersion: async () => {
+        try {
+          const baseUrl = window.location.pathname.includes('/beaver')
+            ? window.location.origin + '/beaver'
+            : window.location.origin;
+          const response = await fetch(`${baseUrl}/version.json?t=${Date.now()}`);
+          const versionData = await response.json();
+
+          const updateAvailable = this.checkForVersionUpdate(versionData);
+          this.updateVersionState(versionData);
+
+          return {
+            success: true,
+            updateAvailable,
+            currentVersion: this.versionState.currentVersion,
+            latestVersion: versionData,
+            checkedAt: Date.now(),
+            source: 'pwa-integrated-manual',
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            source: 'pwa-integrated-manual',
+          };
+        }
+      },
+    };
+
     // Debug utilities
     if (this.config.debug) {
       windowWithBeaver.beaverPWA = {
@@ -447,6 +629,12 @@ export class PWASystem {
         getCacheInfo: () => this.getCacheInfo(),
         enablePWA: () => this.enablePWA(),
         disablePWA: () => this.disablePWA(),
+        getVersionState: () => this.versionState,
+        clearVersionState: () => {
+          localStorage.removeItem(this.VERSION_STORAGE_KEY);
+          this.versionState = this.loadVersionState();
+          console.log('🗑️ PWA: Version state cleared');
+        },
       };
     }
   }
