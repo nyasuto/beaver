@@ -17,9 +17,9 @@ export const BrowserNotificationOptionsSchema = z.object({
   /** Notification body text */
   body: z.string().optional(),
   /** Notification icon URL */
-  icon: z.string().url().optional(),
+  icon: z.string().optional(),
   /** Notification badge URL */
-  badge: z.string().url().optional(),
+  badge: z.string().optional(),
   /** Notification tag for grouping */
   tag: z.string().optional(),
   /** Whether to require user interaction to dismiss */
@@ -34,7 +34,7 @@ export const BrowserNotificationOptionsSchema = z.object({
       z.object({
         action: z.string(),
         title: z.string(),
-        icon: z.string().url().optional(),
+        icon: z.string().optional(),
       })
     )
     .optional(),
@@ -46,9 +46,9 @@ export const BrowserNotificationConfigSchema = z.object({
   /** Request permission automatically */
   autoRequestPermission: z.boolean().default(false),
   /** Default icon for notifications */
-  defaultIcon: z.string().url().optional(),
+  defaultIcon: z.string().optional(),
   /** Default badge for notifications */
-  defaultBadge: z.string().url().optional(),
+  defaultBadge: z.string().optional(),
   /** Maximum number of concurrent notifications */
   maxConcurrent: z.number().int().min(1).max(10).default(3),
   /** Show browser notifications only when page is hidden */
@@ -96,10 +96,25 @@ export class BrowserNotificationManager {
   constructor(config: Partial<BrowserNotificationConfig> = {}) {
     this.eventTarget = new EventTarget();
     this.isSupported = this.checkBrowserSupport();
-    this.config = BrowserNotificationConfigSchema.parse({
+
+    // Debug logging for configuration
+    const mergedConfig = {
       ...this.getDefaultConfig(),
       ...config,
+    };
+    console.log('🔍 BrowserNotificationManager config debug:', {
+      inputConfig: config,
+      defaultConfig: this.getDefaultConfig(),
+      mergedConfig,
     });
+
+    try {
+      this.config = BrowserNotificationConfigSchema.parse(mergedConfig);
+    } catch (error) {
+      console.error('❌ BrowserNotificationConfigSchema validation failed:', error);
+      console.error('📊 Failed config object:', mergedConfig);
+      throw error;
+    }
 
     // Load saved configuration
     this.loadConfig();
