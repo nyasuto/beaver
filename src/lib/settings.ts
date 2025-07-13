@@ -27,6 +27,24 @@ export const NotificationSettingsSchema = z.object({
   showVersionDetails: z.boolean().default(true),
   /** Notification sound (future feature) */
   sound: z.boolean().default(false),
+  /** Browser notification settings */
+  browser: z
+    .object({
+      /** Enable native browser notifications */
+      enabled: z.boolean().default(false),
+      /** Request permission automatically */
+      autoRequestPermission: z.boolean().default(false),
+      /** Show browser notifications only when page is hidden */
+      onlyWhenHidden: z.boolean().default(true),
+      /** Maximum concurrent browser notifications */
+      maxConcurrent: z.number().int().min(1).max(10).default(3),
+    })
+    .default({
+      enabled: false,
+      autoRequestPermission: false,
+      onlyWhenHidden: true,
+      maxConcurrent: 3,
+    }),
 });
 
 export const VersionCheckSettingsSchema = z.object({
@@ -100,6 +118,12 @@ export const SETTINGS_CONSTANTS = {
       autoHide: 0,
       showVersionDetails: true,
       sound: false,
+      browser: {
+        enabled: false,
+        autoRequestPermission: false,
+        onlyWhenHidden: true,
+        maxConcurrent: 3,
+      },
     },
     versionCheck: {
       enabled: true,

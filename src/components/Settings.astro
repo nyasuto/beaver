@@ -236,6 +236,154 @@ const headerID = `${settingsId}-header`;
             <div class="toggle-switch-sm"></div>
           </label>
         </div>
+
+        <!-- Browser Notifications Section -->
+        <div class="notification-subsetting border-t border-soft pt-4 mt-4">
+          <h4 class="text-body font-semibold text-heading mb-3">🔔 ブラウザ通知</h4>
+
+          <!-- Browser Notifications Toggle -->
+          <div class="flex items-center justify-between py-2">
+            <div class="flex-1 space-stack-xs">
+              <label class="text-body font-medium text-heading" for="browser-notifications-enabled">
+                ネイティブ通知
+              </label>
+              <p class="text-body-small text-muted">
+                ブラウザのネイティブ通知システムを使用します（許可が必要）
+              </p>
+            </div>
+
+            <label class="relative inline-flex items-center cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                id="browser-notifications-enabled"
+                class="sr-only peer"
+                data-setting="notifications.browser.enabled"
+              />
+              <div class="toggle-switch-sm"></div>
+            </label>
+          </div>
+
+          <!-- Browser notification subsettings -->
+          <div
+            class="browser-notification-subsetting ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700 space-stack-sm"
+          >
+            <!-- Permission Info -->
+            <div
+              class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3"
+            >
+              <div class="flex items-start space-x-2">
+                <svg
+                  class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                <div class="flex-1">
+                  <p class="text-body-small font-medium text-blue-800 dark:text-blue-200">
+                    通知許可状態: <span id="notification-permission-status" class="font-mono"
+                      >確認中...</span
+                    >
+                  </p>
+                  <button
+                    type="button"
+                    id="request-notification-permission"
+                    class="mt-2 text-body-small text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                    style="display: none;"
+                  >
+                    通知を許可する
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Auto Request Permission -->
+            <div class="flex items-center justify-between py-2">
+              <div class="flex-1">
+                <label class="text-body font-medium text-heading" for="auto-request-permission">
+                  自動許可リクエスト
+                </label>
+                <p class="text-body-small text-muted">
+                  ブラウザ通知を有効にした際に自動で許可をリクエストします
+                </p>
+              </div>
+
+              <label class="relative inline-flex items-center cursor-pointer ml-4">
+                <input
+                  type="checkbox"
+                  id="auto-request-permission"
+                  class="sr-only peer"
+                  data-setting="notifications.browser.autoRequestPermission"
+                />
+                <div class="toggle-switch-sm"></div>
+              </label>
+            </div>
+
+            <!-- Only When Hidden -->
+            <div class="flex items-center justify-between py-2">
+              <div class="flex-1">
+                <label class="text-body font-medium text-heading" for="only-when-hidden">
+                  非表示時のみ通知
+                </label>
+                <p class="text-body-small text-muted">
+                  ページが非表示の時のみブラウザ通知を表示します
+                </p>
+              </div>
+
+              <label class="relative inline-flex items-center cursor-pointer ml-4">
+                <input
+                  type="checkbox"
+                  id="only-when-hidden"
+                  class="sr-only peer"
+                  data-setting="notifications.browser.onlyWhenHidden"
+                />
+                <div class="toggle-switch-sm"></div>
+              </label>
+            </div>
+
+            <!-- Max Concurrent -->
+            <div>
+              <label class="label" for="max-concurrent-notifications">同時表示数</label>
+              <select
+                id="max-concurrent-notifications"
+                class="input w-full"
+                data-setting="notifications.browser.maxConcurrent"
+              >
+                <option value="1">1個</option>
+                <option value="2">2個</option>
+                <option value="3">3個</option>
+                <option value="5">5個</option>
+                <option value="10">10個</option>
+              </select>
+            </div>
+
+            <!-- Test Browser Notification -->
+            <div class="pt-2">
+              <button
+                type="button"
+                id="test-browser-notification"
+                class="btn btn-outline btn-sm w-full"
+              >
+                <svg
+                  class="icon icon-sm mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-5 5-5-5h5v-6H5l5-5 5 5h-5v6z"></path>
+                </svg>
+                テスト通知を送信
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -488,6 +636,7 @@ const headerID = `${settingsId}-header`;
   let settingsManager: UserSettingsManager | null = null;
   let settingsPanel: HTMLElement | null = null;
   let backdrop: HTMLElement | null = null;
+  let browserNotificationManager: any = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     initializeSettings();
@@ -520,6 +669,16 @@ const headerID = `${settingsId}-header`;
       // Dynamically import settings manager
       const { createSettingsManager } = await import('../lib/settings');
       settingsManager = createSettingsManager();
+
+      // Dynamically import browser notification manager
+      const { createBrowserNotificationManager } = await import('../lib/notifications');
+      const settings = settingsManager.getSettings();
+      browserNotificationManager = createBrowserNotificationManager({
+        enabled: settings.notifications.browser.enabled,
+        autoRequestPermission: settings.notifications.browser.autoRequestPermission,
+        onlyWhenHidden: settings.notifications.browser.onlyWhenHidden,
+        maxConcurrent: settings.notifications.browser.maxConcurrent,
+      });
     } catch (error) {
       console.error('Failed to load settings manager:', error);
     }
@@ -535,6 +694,18 @@ const headerID = `${settingsId}-header`;
     setSelectValue('notification-position', settings.notifications.position);
     setSelectValue('notification-animation', settings.notifications.animation);
     setCheckboxValue('show-version-details', settings.notifications.showVersionDetails);
+
+    // Load browser notification settings
+    setCheckboxValue('browser-notifications-enabled', settings.notifications.browser.enabled);
+    setCheckboxValue(
+      'auto-request-permission',
+      settings.notifications.browser.autoRequestPermission
+    );
+    setCheckboxValue('only-when-hidden', settings.notifications.browser.onlyWhenHidden);
+    setSelectValue(
+      'max-concurrent-notifications',
+      String(settings.notifications.browser.maxConcurrent)
+    );
 
     // Load version check settings
     setCheckboxValue('version-check-enabled', settings.versionCheck.enabled);
@@ -552,6 +723,9 @@ const headerID = `${settingsId}-header`;
 
     // Update subsetting visibility
     updateSubsettingVisibility();
+
+    // Update browser notification permission status
+    updateBrowserNotificationStatus();
   }
 
   function setupEventListeners() {
@@ -586,6 +760,13 @@ const headerID = `${settingsId}-header`;
         closeSettings();
       }
     });
+
+    // Browser notification specific events
+    const permissionButton = settingsPanel.querySelector('#request-notification-permission');
+    permissionButton?.addEventListener('click', requestNotificationPermission);
+
+    const testButton = settingsPanel.querySelector('#test-browser-notification');
+    testButton?.addEventListener('click', testBrowserNotification);
   }
 
   function handleSettingChange(event: Event) {
@@ -603,10 +784,40 @@ const headerID = `${settingsId}-header`;
           ? Number(target.value)
           : target.value;
 
-    const [section, key] = settingPath.split('.');
+    const pathParts = settingPath.split('.');
+    const [section, subsection, key] = pathParts;
 
     if (section === 'notifications') {
-      settingsManager.updateNotificationSettings({ [key as keyof NotificationSettings]: value });
+      if (subsection === 'browser') {
+        // Handle nested browser notification settings
+        const currentSettings = settingsManager.getNotificationSettings();
+        settingsManager.updateNotificationSettings({
+          browser: {
+            ...currentSettings.browser,
+            [key as keyof typeof currentSettings.browser]: value,
+          },
+        });
+
+        // Update browser notification manager
+        if (browserNotificationManager) {
+          const browserConfig = settingsManager.getNotificationSettings().browser;
+          browserNotificationManager.updateConfig({
+            enabled: browserConfig.enabled,
+            autoRequestPermission: browserConfig.autoRequestPermission,
+            onlyWhenHidden: browserConfig.onlyWhenHidden,
+            maxConcurrent: browserConfig.maxConcurrent,
+          });
+
+          // Request permission if auto-request is enabled and notifications are enabled
+          if (key === 'enabled' && value && browserConfig.autoRequestPermission) {
+            requestNotificationPermission();
+          }
+        }
+      } else {
+        settingsManager.updateNotificationSettings({
+          [subsection as keyof NotificationSettings]: value,
+        });
+      }
     } else if (section === 'versionCheck') {
       settingsManager.updateVersionCheckSettings({ [key as keyof VersionCheckSettings]: value });
     } else if (section === 'ui') {
@@ -651,6 +862,15 @@ const headerID = `${settingsId}-header`;
     const notificationSubsettings = settingsPanel?.querySelectorAll('.notification-subsetting');
     notificationSubsettings?.forEach(element => {
       (element as HTMLElement).style.display = notificationsEnabled ? 'block' : 'none';
+    });
+
+    // Show/hide browser notification subsettings
+    const browserNotificationsEnabled = getCheckboxValue('browser-notifications-enabled');
+    const browserNotificationSubsettings = settingsPanel?.querySelectorAll(
+      '.browser-notification-subsetting'
+    );
+    browserNotificationSubsettings?.forEach(element => {
+      (element as HTMLElement).style.display = browserNotificationsEnabled ? 'block' : 'none';
     });
 
     // Show/hide version check subsettings
@@ -790,6 +1010,82 @@ const headerID = `${settingsId}-header`;
   function getCheckboxValue(id: string): boolean {
     const checkbox = document.getElementById(id) as HTMLInputElement;
     return checkbox ? checkbox.checked : false;
+  }
+
+  // Browser notification functions
+  function updateBrowserNotificationStatus() {
+    if (!browserNotificationManager) return;
+
+    const statusElement = document.getElementById('notification-permission-status');
+    const requestButton = document.getElementById('request-notification-permission');
+
+    if (!statusElement || !requestButton) return;
+
+    const permission = browserNotificationManager.getPermissionState();
+    const supportInfo = browserNotificationManager.getSupportInfo();
+
+    let statusText = '';
+    let showRequestButton = false;
+
+    if (!supportInfo.supported) {
+      statusText = '未対応';
+    } else {
+      switch (permission) {
+        case 'granted':
+          statusText = '許可済み';
+          break;
+        case 'denied':
+          statusText = 'ブロック中';
+          break;
+        case 'default':
+          statusText = '未許可';
+          showRequestButton = true;
+          break;
+      }
+    }
+
+    statusElement.textContent = statusText;
+    requestButton.style.display = showRequestButton ? 'inline' : 'none';
+  }
+
+  async function requestNotificationPermission() {
+    if (!browserNotificationManager) return;
+
+    try {
+      const permission = await browserNotificationManager.requestPermission();
+      updateBrowserNotificationStatus();
+
+      if (permission === 'granted') {
+        console.log('🔔 Browser notification permission granted');
+      } else {
+        console.warn('🔔 Browser notification permission denied');
+      }
+    } catch (error) {
+      console.error('Failed to request notification permission:', error);
+    }
+  }
+
+  async function testBrowserNotification() {
+    if (!browserNotificationManager) return;
+
+    try {
+      const result = await browserNotificationManager.show({
+        title: 'Beaver Astro Edition',
+        body: 'これはテスト通知です。ブラウザ通知が正常に動作しています！',
+        icon: '/beaver/favicon.png',
+        tag: 'test-notification',
+        requireInteraction: false,
+        autoClose: 5000,
+      });
+
+      if (result.success) {
+        console.log('🔔 Test browser notification sent successfully');
+      } else {
+        console.warn('🔔 Test browser notification fallback:', result.fallback);
+      }
+    } catch (error) {
+      console.error('Failed to send test notification:', error);
+    }
   }
 
   // Expose functions globally for external use

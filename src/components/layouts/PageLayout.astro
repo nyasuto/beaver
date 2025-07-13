@@ -321,9 +321,18 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           const { createSettingsManager } = await import('../../lib/settings.js');
           const settingsManager = createSettingsManager();
 
+          // Initialize browser notification manager
+          const { createBrowserNotificationManager } = await import('../../lib/notifications.js');
+          const settings = settingsManager.getSettings();
+          const browserNotificationManager = createBrowserNotificationManager({
+            enabled: settings.notifications.browser.enabled,
+            autoRequestPermission: settings.notifications.browser.autoRequestPermission,
+            onlyWhenHidden: settings.notifications.browser.onlyWhenHidden,
+            maxConcurrent: settings.notifications.browser.maxConcurrent,
+          });
+
           // Initialize version checker with settings
           const { createVersionChecker } = await import('../../lib/version-checker.js');
-          const settings = settingsManager.getSettings();
 
           const versionChecker = createVersionChecker({
             versionUrl: '/beaver/version.json',
@@ -366,23 +375,67 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
             const notificationSettings = settingsManager.getNotificationSettings();
 
             if (notificationSettings.enabled) {
-              // Show update notification
-              const updateNotification = document.querySelector(
-                '[data-component="update-notification"]'
-              );
-              if (updateNotification) {
-                const showEvent = new CustomEvent('notification:show', {
-                  detail: {
-                    currentVersion: customEvent.detail.currentVersion,
-                    latestVersion: customEvent.detail.latestVersion,
-                    position: notificationSettings.position,
-                    animation: notificationSettings.animation,
-                    showVersionDetails: notificationSettings.showVersionDetails,
-                    autoHide: notificationSettings.autoHide,
-                  },
-                });
-                updateNotification.dispatchEvent(showEvent);
+              // Try browser notification first if enabled
+              if (notificationSettings.browser.enabled && browserNotificationManager) {
+                browserNotificationManager
+                  .show({
+                    title: '新しいバージョンが利用可能です',
+                    body: `Beaver Astro Editionの新しいバージョン ${customEvent.detail.latestVersion?.version || ''} が利用可能になりました。`,
+                    icon: '/beaver/favicon.png',
+                    tag: 'version-update',
+                    requireInteraction: false,
+                    autoClose: 10000,
+                    data: {
+                      currentVersion: customEvent.detail.currentVersion,
+                      latestVersion: customEvent.detail.latestVersion,
+                    },
+                  })
+                  .then(result => {
+                    // If browser notification failed, fall back to in-page notification
+                    if (!result.success) {
+                      showInPageNotification(customEvent, notificationSettings);
+                    }
+                  });
+              } else {
+                // Show in-page notification directly
+                showInPageNotification(customEvent, notificationSettings);
               }
+            }
+          });
+
+          function showInPageNotification(customEvent: CustomEvent, notificationSettings: any) {
+            const updateNotification = document.querySelector(
+              '[data-component="update-notification"]'
+            );
+            if (updateNotification) {
+              const showEvent = new CustomEvent('notification:show', {
+                detail: {
+                  currentVersion: customEvent.detail.currentVersion,
+                  latestVersion: customEvent.detail.latestVersion,
+                  position: notificationSettings.position,
+                  animation: notificationSettings.animation,
+                  showVersionDetails: notificationSettings.showVersionDetails,
+                  autoHide: notificationSettings.autoHide,
+                },
+              });
+              updateNotification.dispatchEvent(showEvent);
+            }
+          }
+
+          // Listen for browser notification fallback events
+          document.addEventListener('browserNotification:fallback', (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const { options, reason } = customEvent.detail;
+
+            console.warn('Browser notification fallback triggered:', reason);
+
+            // If this was a version update notification, show in-page notification
+            if (options.tag === 'version-update' && options.data) {
+              const notificationSettings = settingsManager.getNotificationSettings();
+              const mockEvent = new CustomEvent('version:update-available', {
+                detail: options.data,
+              });
+              showInPageNotification(mockEvent, notificationSettings);
             }
           });
 
@@ -401,6 +454,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           (window as any).beaverSystems = {
             settingsManager,
             versionChecker,
+            browserNotificationManager,
             openSettings: () => {
               const settingsEvent = new CustomEvent('settings:open');
               document.dispatchEvent(settingsEvent);
@@ -408,6 +462,15 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
             checkVersion: () => versionChecker.checkVersion(),
             toggleNotifications: () => settingsManager.toggleNotifications(),
             toggleVersionCheck: () => settingsManager.toggleVersionCheck(),
+            testBrowserNotification: () =>
+              browserNotificationManager?.show({
+                title: 'Beaver Test Notification',
+                body: 'Browser notification system is working correctly!',
+                icon: '/beaver/favicon.png',
+                tag: 'test',
+                requireInteraction: false,
+                autoClose: 5000,
+              }),
           };
 
           console.log('🔄 User systems integration initialized successfully');
