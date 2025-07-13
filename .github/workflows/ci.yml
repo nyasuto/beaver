@@ -14,7 +14,6 @@ env:
   CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   # Version generation environment variables
-  NODE_ENV: production
   GITHUB_RUN_ID: ${{ github.run_id }}
   GITHUB_SHA: ${{ github.sha }}
   GITHUB_REF: ${{ github.ref }}
@@ -53,8 +52,8 @@ jobs:
       - name: Build project
         run: |
           echo "🏗️ Building for production..."
-          npm run fetch-data
-          ./node_modules/.bin/astro build
+          NODE_ENV=production npm run fetch-data
+          NODE_ENV=production ./node_modules/.bin/astro build
           npm run validate-version
           echo "✅ Build completed successfully"
         
