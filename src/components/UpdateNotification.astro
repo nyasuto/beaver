@@ -1,0 +1,594 @@
+---
+/**
+ * UpdateNotification Component
+ *
+ * Displays a notification banner when a version update is detected.
+ * Provides one-click reload functionality and smooth animations.
+ * Integrates with the VersionChecker for automatic update detection.
+ */
+import { z } from 'zod';
+import { BaseUIPropsSchema } from '../lib/schemas/ui';
+
+// UpdateNotification props schema
+export const UpdateNotificationPropsSchema = BaseUIPropsSchema.extend({
+  /** Whether to show the notification */
+  isVisible: z.boolean().default(false),
+  /** Current version info */
+  currentVersion: z.string().optional(),
+  /** Latest version info */
+  latestVersion: z.string().optional(),
+  /** Position of the notification */
+  position: z.enum(['top', 'bottom']).default('top'),
+  /** Animation type */
+  animation: z.enum(['slide', 'fade', 'bounce']).default('slide'),
+  /** Auto-hide after milliseconds (0 = never) */
+  autoHide: z.number().int().min(0).default(0),
+  /** Custom message */
+  message: z.string().optional(),
+  /** Whether to show version details */
+  showVersionDetails: z.boolean().default(true),
+  /** Theme variant */
+  variant: z.enum(['info', 'success', 'warning']).default('info'),
+});
+
+export type UpdateNotificationProps = z.infer<typeof UpdateNotificationPropsSchema>;
+
+type Props = UpdateNotificationProps;
+
+const {
+  isVisible = false,
+  currentVersion,
+  latestVersion,
+  position = 'top',
+  animation = 'slide',
+  autoHide = 0,
+  message = '新しいバージョンが利用可能です',
+  showVersionDetails = true,
+  variant = 'info',
+  className = '',
+  id = 'update-notification',
+  style,
+  'data-testid': testId = 'update-notification',
+  'aria-label': ariaLabel = '更新通知',
+  ...rest
+} = Astro.props;
+
+// Validate props with Zod schema
+try {
+  UpdateNotificationPropsSchema.parse(Astro.props);
+} catch (error) {
+  console.warn('UpdateNotification props validation failed:', error);
+}
+
+// Base classes for the notification
+const baseClasses = [
+  'fixed',
+  'left-0',
+  'right-0',
+  'z-50',
+  'px-4',
+  'py-3',
+  'text-sm',
+  'font-medium',
+  'shadow-lg',
+  'border',
+  'backdrop-blur-sm',
+  'transition-all',
+  'duration-300',
+  'ease-in-out',
+].join(' ');
+
+// Position-specific classes
+const positionClasses = {
+  top: 'top-0 border-b',
+  bottom: 'bottom-0 border-t',
+};
+
+// Variant-specific classes
+const variantClasses = {
+  info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200',
+  success:
+    'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200',
+  warning:
+    'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-200',
+};
+
+// Construct final className
+const notificationClasses = [
+  baseClasses,
+  positionClasses[position],
+  variantClasses[variant],
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+
+// Generate unique IDs
+const notificationId = id || `update-notification-${Math.random().toString(36).substring(2, 11)}`;
+const contentId = `${notificationId}-content`;
+const actionsId = `${notificationId}-actions`;
+---
+
+<div
+  id={notificationId}
+  class={notificationClasses}
+  style={`display: ${isVisible ? 'block' : 'none'}; ${style || ''}`}
+  data-testid={testId}
+  data-position={position}
+  data-animation={animation}
+  data-auto-hide={autoHide}
+  aria-label={ariaLabel}
+  aria-live="polite"
+  aria-atomic="true"
+  role="alert"
+  {...rest}
+>
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <!-- Notification Content -->
+    <div id={contentId} class="flex items-center space-x-3 flex-1">
+      <!-- Icon -->
+      <div class="flex-shrink-0">
+        {
+          variant === 'info' && (
+            <svg
+              class="w-5 h-5 text-blue-600 dark:text-blue-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          )
+        }
+        {
+          variant === 'success' && (
+            <svg
+              class="w-5 h-5 text-green-600 dark:text-green-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          )
+        }
+        {
+          variant === 'warning' && (
+            <svg
+              class="w-5 h-5 text-yellow-600 dark:text-yellow-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          )
+        }
+      </div>
+
+      <!-- Message and Version Info -->
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold">
+          {message}
+        </p>
+        {
+          showVersionDetails && (currentVersion || latestVersion) && (
+            <p class="text-xs opacity-75 mt-1">
+              {currentVersion && `現在: v${currentVersion}`}
+              {currentVersion && latestVersion && ' → '}
+              {latestVersion && `最新: v${latestVersion}`}
+            </p>
+          )
+        }
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div id={actionsId} class="flex items-center space-x-2 ml-4">
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+        data-action="reload"
+        aria-label="ページをリロードして更新を適用"
+      >
+        リロード
+      </button>
+
+      <button
+        type="button"
+        class="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md"
+        data-action="dismiss"
+        aria-label="通知を閉じる"
+      >
+        後で
+      </button>
+
+      <button
+        type="button"
+        class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md"
+        data-action="close"
+        aria-label="通知を閉じる"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // UpdateNotification functionality (client-side)
+
+  // Import VersionChecker types for better type safety
+  interface VersionInfo {
+    version: string;
+    timestamp: number;
+    buildId: string;
+    gitCommit: string;
+    environment: 'development' | 'production' | 'staging';
+    dataHash?: string;
+  }
+
+  interface UpdateNotificationController {
+    show(currentVersion?: VersionInfo, latestVersion?: VersionInfo): void;
+    hide(): void;
+    setAutoHide(milliseconds: number): void;
+    destroy(): void;
+  }
+
+  // Global controller instance
+  let notificationController: UpdateNotificationController | null = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const notification = document.getElementById('update-notification');
+    if (!notification) return;
+
+    let autoHideTimer: number | null = null;
+
+    // Create controller
+    notificationController = {
+      show(currentVersion?: VersionInfo, latestVersion?: VersionInfo): void {
+        if (!notification) return;
+
+        // Update version details if provided
+        if (currentVersion || latestVersion) {
+          updateVersionDisplay(currentVersion, latestVersion);
+        }
+
+        // Show notification with animation
+        showNotification();
+
+        // Set up auto-hide if configured
+        const autoHide = parseInt(notification.getAttribute('data-auto-hide') || '0');
+        if (autoHide > 0) {
+          this.setAutoHide(autoHide);
+        }
+      },
+
+      hide(): void {
+        hideNotification();
+      },
+
+      setAutoHide(milliseconds: number): void {
+        if (autoHideTimer) {
+          clearTimeout(autoHideTimer);
+        }
+        autoHideTimer = window.setTimeout(() => {
+          this.hide();
+        }, milliseconds);
+      },
+
+      destroy(): void {
+        if (autoHideTimer) {
+          clearTimeout(autoHideTimer);
+        }
+        if (notification) {
+          notification.remove();
+        }
+        notificationController = null;
+      },
+    };
+
+    // Handle button clicks
+    notification.addEventListener('click', (e: Event) => {
+      const target = e.target as HTMLElement;
+      const action = target.getAttribute('data-action');
+
+      switch (action) {
+        case 'reload':
+          handleReload();
+          break;
+        case 'dismiss':
+          handleDismiss();
+          break;
+        case 'close':
+          handleClose();
+          break;
+      }
+    });
+
+    // Animation helper functions
+    function showNotification(): void {
+      if (!notification) return;
+
+      const animationType = notification.getAttribute('data-animation') || 'slide';
+      const position = notification.getAttribute('data-position') || 'top';
+
+      notification.style.display = 'block';
+
+      // Reset transform/opacity
+      notification.style.transform = '';
+      notification.style.opacity = '1';
+
+      // Apply initial animation state
+      switch (animationType) {
+        case 'slide':
+          notification.style.transform =
+            position === 'top' ? 'translateY(-100%)' : 'translateY(100%)';
+          break;
+        case 'fade':
+          notification.style.opacity = '0';
+          break;
+        case 'bounce':
+          notification.style.transform = 'scale(0.95)';
+          break;
+      }
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        notification.style.transform = '';
+        notification.style.opacity = '1';
+      });
+
+      // Dispatch show event
+      notification.dispatchEvent(
+        new CustomEvent('notificationShow', {
+          bubbles: true,
+          detail: { notificationId: notification.id },
+        })
+      );
+    }
+
+    function hideNotification(): void {
+      if (!notification) return;
+
+      const animationType = notification.getAttribute('data-animation') || 'slide';
+      const position = notification.getAttribute('data-position') || 'top';
+
+      // Apply exit animation
+      switch (animationType) {
+        case 'slide':
+          notification.style.transform =
+            position === 'top' ? 'translateY(-100%)' : 'translateY(100%)';
+          break;
+        case 'fade':
+          notification.style.opacity = '0';
+          break;
+        case 'bounce':
+          notification.style.transform = 'scale(0.95)';
+          break;
+      }
+
+      // Hide after animation
+      setTimeout(() => {
+        if (notification) {
+          notification.style.display = 'none';
+        }
+      }, 300);
+
+      // Dispatch hide event
+      notification.dispatchEvent(
+        new CustomEvent('notificationHide', {
+          bubbles: true,
+          detail: { notificationId: notification.id },
+        })
+      );
+    }
+
+    function updateVersionDisplay(currentVersion?: VersionInfo, latestVersion?: VersionInfo): void {
+      const versionElement = notification?.querySelector('.text-xs.opacity-75');
+      if (!versionElement) return;
+
+      let versionText = '';
+      if (currentVersion) {
+        versionText += `現在: v${currentVersion.version}`;
+      }
+      if (currentVersion && latestVersion) {
+        versionText += ' → ';
+      }
+      if (latestVersion) {
+        versionText += `最新: v${latestVersion.version}`;
+      }
+
+      versionElement.textContent = versionText;
+    }
+
+    // Action handlers
+    function handleReload(): void {
+      // Show loading state
+      const reloadButton = notification?.querySelector(
+        '[data-action="reload"]'
+      ) as HTMLButtonElement;
+      if (reloadButton) {
+        reloadButton.textContent = 'リロード中...';
+        reloadButton.disabled = true;
+      }
+
+      // Dispatch reload event before actual reload
+      notification?.dispatchEvent(
+        new CustomEvent('notificationReload', {
+          bubbles: true,
+          detail: { notificationId: notification?.id },
+        })
+      );
+
+      // Reload page after short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    }
+
+    function handleDismiss(): void {
+      // Hide notification and acknowledge update in VersionChecker
+      hideNotification();
+
+      // Try to acknowledge the update if VersionChecker is available
+      try {
+        const windowWithVersionChecker = window as any;
+        if (
+          windowWithVersionChecker.versionChecker &&
+          typeof windowWithVersionChecker.versionChecker.acknowledgeUpdate === 'function'
+        ) {
+          windowWithVersionChecker.versionChecker.acknowledgeUpdate();
+        }
+      } catch (error) {
+        console.warn('Could not acknowledge version update:', error);
+      }
+
+      // Dispatch dismiss event
+      notification?.dispatchEvent(
+        new CustomEvent('notificationDismiss', {
+          bubbles: true,
+          detail: { notificationId: notification?.id },
+        })
+      );
+    }
+
+    function handleClose(): void {
+      hideNotification();
+
+      // Dispatch close event
+      notification?.dispatchEvent(
+        new CustomEvent('notificationClose', {
+          bubbles: true,
+          detail: { notificationId: notification?.id },
+        })
+      );
+    }
+
+    // Listen for version checker events
+    document.addEventListener('version:update-available', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (notificationController) {
+        notificationController.show(
+          customEvent.detail.currentVersion,
+          customEvent.detail.latestVersion
+        );
+      }
+    });
+
+    // Expose controller globally for external use
+    (window as any).updateNotificationController = notificationController;
+  });
+</script>
+
+<style>
+  /* Notification animations */
+  #update-notification {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Slide animations */
+  #update-notification[data-animation='slide'][data-position='top'] {
+    transform: translateY(0);
+  }
+
+  #update-notification[data-animation='slide'][data-position='bottom'] {
+    transform: translateY(0);
+  }
+
+  /* Fade animation */
+  #update-notification[data-animation='fade'] {
+    opacity: 1;
+  }
+
+  /* Bounce animation */
+  #update-notification[data-animation='bounce'] {
+    transform: scale(1);
+  }
+
+  /* Button hover effects */
+  #update-notification button {
+    transition: all 0.2s ease-in-out;
+  }
+
+  #update-notification button:hover {
+    transform: translateY(-1px);
+  }
+
+  #update-notification button:active {
+    transform: translateY(0);
+  }
+
+  /* Loading state for reload button */
+  #update-notification button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Dark mode enhancements */
+  @media (prefers-color-scheme: dark) {
+    #update-notification {
+      backdrop-filter: blur(8px);
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    #update-notification {
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    #update-notification button:hover {
+      transform: none;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    #update-notification {
+      border-width: 2px;
+    }
+
+    #update-notification button {
+      border: 1px solid currentColor;
+    }
+  }
+
+  /* Focus management */
+  #update-notification button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  /* Print styles - hide notification */
+  @media print {
+    #update-notification {
+      display: none !important;
+    }
+  }
+</style>
