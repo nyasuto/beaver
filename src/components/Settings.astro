@@ -300,64 +300,10 @@ const headerID = `${settingsId}-header`;
               </div>
             </div>
 
-            <!-- Auto Request Permission -->
-            <div class="flex items-center justify-between py-2">
-              <div class="flex-1">
-                <label class="text-body font-medium text-heading" for="auto-request-permission">
-                  自動許可リクエスト
-                </label>
-                <p class="text-body-small text-muted">
-                  ブラウザ通知を有効にした際に自動で許可をリクエストします
-                </p>
-              </div>
-
-              <label class="relative inline-flex items-center cursor-pointer ml-4">
-                <input
-                  type="checkbox"
-                  id="auto-request-permission"
-                  class="sr-only peer"
-                  data-setting="notifications.browser.autoRequestPermission"
-                />
-                <div class="toggle-switch-sm"></div>
-              </label>
-            </div>
-
-            <!-- Only When Hidden -->
-            <div class="flex items-center justify-between py-2">
-              <div class="flex-1">
-                <label class="text-body font-medium text-heading" for="only-when-hidden">
-                  非表示時のみ通知
-                </label>
-                <p class="text-body-small text-muted">
-                  ページが非表示の時のみブラウザ通知を表示します
-                </p>
-              </div>
-
-              <label class="relative inline-flex items-center cursor-pointer ml-4">
-                <input
-                  type="checkbox"
-                  id="only-when-hidden"
-                  class="sr-only peer"
-                  data-setting="notifications.browser.onlyWhenHidden"
-                />
-                <div class="toggle-switch-sm"></div>
-              </label>
-            </div>
-
-            <!-- Max Concurrent -->
-            <div>
-              <label class="label" for="max-concurrent-notifications">同時表示数</label>
-              <select
-                id="max-concurrent-notifications"
-                class="input w-full"
-                data-setting="notifications.browser.maxConcurrent"
-              >
-                <option value="1">1個</option>
-                <option value="2">2個</option>
-                <option value="3">3個</option>
-                <option value="5">5個</option>
-                <option value="10">10個</option>
-              </select>
+            <!-- Simplified notification control -->
+            <div class="text-body-small text-muted p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p class="font-medium mb-1">ℹ️ PWA連携情報</p>
+              <p>PWA機能が有効な場合、ブラウザ通知はPWAシステムが管理します。</p>
             </div>
 
             <!-- Test Browser Notification -->
@@ -387,65 +333,189 @@ const headerID = `${settingsId}-header`;
       </div>
     </section>
 
-    <!-- Version Check Settings Section -->
+    <!-- PWA Settings Section -->
     <section class="space-stack-md">
       <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
-        🔄 バージョンチェック
+        📱 PWA設定
       </h3>
 
       <div class="space-stack-sm">
-        <!-- Version Check Toggle -->
+        <!-- PWA Status Display -->
+        <div
+          class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
+        >
+          <div class="flex items-center space-x-3">
+            <div id="pwa-status-icon" class="flex-shrink-0">
+              <svg
+                class="w-6 h-6 text-blue-600 dark:text-blue-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                  clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-body font-medium text-blue-800 dark:text-blue-200">
+                PWAステータス: <span id="pwa-status-text" class="font-mono">確認中...</span>
+              </p>
+              <p
+                id="pwa-status-details"
+                class="text-body-small text-blue-600 dark:text-blue-300 mt-1"
+              >
+                Service Worker とオフライン機能の状態
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PWA Enable Toggle -->
         <div class="flex items-center justify-between py-3">
           <div class="flex-1 space-stack-xs">
-            <label class="text-body font-medium text-heading" for="version-check-enabled">
-              自動バージョンチェック
+            <label class="text-body font-medium text-heading" for="pwa-enabled">
+              PWA機能を有効化
             </label>
-            <p class="text-body-small text-muted">定期的に新しいバージョンをチェックします</p>
+            <p class="text-body-small text-muted">
+              Service Worker を使用したオフライン機能と自動更新を有効にします
+            </p>
           </div>
 
           <div class="ml-4">
             <label class="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                id="version-check-enabled"
+                id="pwa-enabled"
                 class="sr-only peer"
-                data-setting="versionCheck.enabled"
+                data-setting="pwa.enabled"
               />
               <div class="toggle-switch"></div>
             </label>
           </div>
         </div>
 
-        <!-- Check Interval -->
-        <div class="version-check-subsetting">
-          <label class="label" for="check-interval"> チェック間隔 </label>
-          <select id="check-interval" class="input w-full" data-setting="versionCheck.interval">
-            <option value="10000">10秒</option>
-            <option value="30000">30秒</option>
-            <option value="60000">1分</option>
-            <option value="300000">5分</option>
-            <option value="600000">10分</option>
-          </select>
-        </div>
-
-        <!-- Check Only When Visible -->
-        <div class="version-check-subsetting flex items-center justify-between py-2">
+        <!-- Offline Mode -->
+        <div class="pwa-subsetting flex items-center justify-between py-2">
           <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="check-when-visible">
-              画面表示時のみチェック
+            <label class="text-body font-medium text-heading" for="offline-mode">
+              オフラインモード
             </label>
-            <p class="text-body-small text-muted">ページが非表示の時はチェックを停止します</p>
+            <p class="text-body-small text-muted">
+              インターネット接続がないときでもアプリを使用できます
+            </p>
           </div>
 
           <label class="relative inline-flex items-center cursor-pointer ml-4">
             <input
               type="checkbox"
-              id="check-when-visible"
+              id="offline-mode"
               class="sr-only peer"
-              data-setting="versionCheck.checkOnlyWhenVisible"
+              data-setting="pwa.offlineMode"
             />
             <div class="toggle-switch-sm"></div>
           </label>
+        </div>
+
+        <!-- Auto Update Service Worker -->
+        <div class="pwa-subsetting flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="auto-update-sw">
+              自動アップデート
+            </label>
+            <p class="text-body-small text-muted">
+              新しいバージョンが利用可能になったときに自動的に適用します
+            </p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="auto-update-sw"
+              class="sr-only peer"
+              data-setting="pwa.autoUpdate"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+
+        <!-- Cache Strategy -->
+        <div class="pwa-subsetting">
+          <label class="label" for="cache-strategy">キャッシュ戦略</label>
+          <select id="cache-strategy" class="input w-full" data-setting="pwa.cacheStrategy">
+            <option value="immediate">即座更新</option>
+            <option value="background">バックグラウンド更新</option>
+            <option value="user-consent">ユーザー確認</option>
+          </select>
+        </div>
+
+        <!-- Push Notifications -->
+        <div class="pwa-subsetting flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="push-notifications">
+              プッシュ通知
+            </label>
+            <p class="text-body-small text-muted">アプリが非アクティブ時でも通知を受信します</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="push-notifications"
+              class="sr-only peer"
+              data-setting="pwa.pushNotifications"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+
+        <!-- PWA Actions -->
+        <div class="pwa-subsetting border-t border-soft pt-4 mt-4">
+          <h4 class="text-body font-semibold text-heading mb-3">📱 PWA管理</h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" id="clear-pwa-cache" class="btn btn-outline btn-sm">
+              <svg class="icon icon-sm mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16"
+                ></path>
+              </svg>
+              キャッシュクリア
+            </button>
+
+            <button type="button" id="force-sw-update" class="btn btn-outline btn-sm">
+              <svg class="icon icon-sm mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                ></path>
+              </svg>
+              強制アップデート
+            </button>
+          </div>
+
+          <div class="mt-3">
+            <button
+              type="button"
+              id="install-pwa"
+              class="btn btn-primary btn-sm w-full"
+              style="display: none;"
+            >
+              <svg class="icon icon-sm mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              PWAとしてインストール
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -627,9 +697,9 @@ const headerID = `${settingsId}-header`;
   import type {
     UserSettingsManager,
     NotificationSettings,
-    VersionCheckSettings,
     UISettings,
     PrivacySettings,
+    PWASettings,
   } from '../lib/settings';
 
   // Settings panel management
@@ -713,14 +783,21 @@ const headerID = `${settingsId}-header`;
     };
 
     setCheckboxValue('browser-notifications-enabled', browserSettings.enabled);
-    setCheckboxValue('auto-request-permission', browserSettings.autoRequestPermission);
-    setCheckboxValue('only-when-hidden', browserSettings.onlyWhenHidden);
-    setSelectValue('max-concurrent-notifications', String(browserSettings.maxConcurrent));
 
-    // Load version check settings
-    setCheckboxValue('version-check-enabled', settings.versionCheck.enabled);
-    setSelectValue('check-interval', String(settings.versionCheck.interval));
-    setCheckboxValue('check-when-visible', settings.versionCheck.checkOnlyWhenVisible);
+    // Load PWA settings with fallbacks
+    const pwaSettings = settings.pwa || {
+      enabled: false,
+      offlineMode: true,
+      autoUpdate: true,
+      cacheStrategy: 'background',
+      pushNotifications: false,
+    };
+
+    setCheckboxValue('pwa-enabled', pwaSettings.enabled);
+    setCheckboxValue('offline-mode', pwaSettings.offlineMode);
+    setCheckboxValue('auto-update-sw', pwaSettings.autoUpdate);
+    setSelectValue('cache-strategy', pwaSettings.cacheStrategy);
+    setCheckboxValue('push-notifications', pwaSettings.pushNotifications);
 
     // Load UI settings
     setSelectValue('theme-select', settings.ui.theme);
@@ -736,6 +813,9 @@ const headerID = `${settingsId}-header`;
 
     // Update browser notification permission status
     updateBrowserNotificationStatus();
+
+    // Update PWA status
+    updatePWAStatus();
   }
 
   function setupEventListeners() {
@@ -777,6 +857,16 @@ const headerID = `${settingsId}-header`;
 
     const testButton = settingsPanel.querySelector('#test-browser-notification');
     testButton?.addEventListener('click', testBrowserNotification);
+
+    // PWA specific events
+    const clearCacheButton = settingsPanel.querySelector('#clear-pwa-cache');
+    clearCacheButton?.addEventListener('click', clearPWACache);
+
+    const forceUpdateButton = settingsPanel.querySelector('#force-sw-update');
+    forceUpdateButton?.addEventListener('click', forceServiceWorkerUpdate);
+
+    const installButton = settingsPanel.querySelector('#install-pwa');
+    installButton?.addEventListener('click', installPWA);
   }
 
   function handleSettingChange(event: Event) {
@@ -828,8 +918,17 @@ const headerID = `${settingsId}-header`;
           [subsection as keyof NotificationSettings]: value,
         });
       }
-    } else if (section === 'versionCheck') {
-      settingsManager.updateVersionCheckSettings({ [key as keyof VersionCheckSettings]: value });
+    } else if (section === 'pwa') {
+      settingsManager.updatePWASettings({ [key as keyof PWASettings]: value });
+
+      // Handle PWA system integration
+      if (key === 'enabled' && (window as any).beaverSystems?.pwa) {
+        if (value) {
+          (window as any).beaverSystems.pwa.enablePWA();
+        } else {
+          (window as any).beaverSystems.pwa.disablePWA();
+        }
+      }
     } else if (section === 'ui') {
       settingsManager.updateUISettings({ [key as keyof UISettings]: value });
     } else if (section === 'privacy') {
@@ -851,10 +950,13 @@ const headerID = `${settingsId}-header`;
       );
     }
 
-    if (detail.section === 'versionCheck' && 'enabled' in detail.updates) {
-      // Dispatch event for version checker
+    if (detail.section === 'pwa' && 'enabled' in detail.updates) {
+      // Update PWA status display
+      updatePWAStatus();
+
+      // Dispatch event for PWA system
       document.dispatchEvent(
-        new CustomEvent('settings:version-check-toggled', {
+        new CustomEvent('settings:pwa-toggled', {
           detail: { enabled: detail.updates.enabled },
         })
       );
@@ -883,11 +985,11 @@ const headerID = `${settingsId}-header`;
       (element as HTMLElement).style.display = browserNotificationsEnabled ? 'block' : 'none';
     });
 
-    // Show/hide version check subsettings
-    const versionCheckEnabled = getCheckboxValue('version-check-enabled');
-    const versionCheckSubsettings = settingsPanel?.querySelectorAll('.version-check-subsetting');
-    versionCheckSubsettings?.forEach(element => {
-      (element as HTMLElement).style.display = versionCheckEnabled ? 'block' : 'none';
+    // Show/hide PWA subsettings
+    const pwaEnabled = getCheckboxValue('pwa-enabled');
+    const pwaSubsettings = settingsPanel?.querySelectorAll('.pwa-subsetting');
+    pwaSubsettings?.forEach(element => {
+      (element as HTMLElement).style.display = pwaEnabled ? 'block' : 'none';
     });
   }
 
@@ -1098,10 +1200,100 @@ const headerID = `${settingsId}-header`;
     }
   }
 
+  // PWA specific functions
+  function updatePWAStatus() {
+    const statusText = document.getElementById('pwa-status-text');
+    const statusDetails = document.getElementById('pwa-status-details');
+    const installButton = document.getElementById('install-pwa');
+
+    if (!statusText || !statusDetails || !installButton) return;
+
+    const pwaSystem = (window as any).beaverSystems?.pwa;
+
+    if (pwaSystem) {
+      const status = pwaSystem.getStatus();
+
+      statusText.textContent = status.initialized ? 'アクティブ' : '非アクティブ';
+
+      const details = [];
+      if (status.serviceWorkerRegistered) details.push('Service Worker: 登録済み');
+      if (status.offline) details.push('オフライン機能: 利用可能');
+      if (status.isStandalone) details.push('スタンドアロンモード');
+
+      statusDetails.textContent =
+        details.length > 0 ? details.join(' • ') : 'Service Worker とオフライン機能の状態';
+
+      // Show install button if PWA is installable
+      installButton.style.display = status.installable && !status.isStandalone ? 'block' : 'none';
+    } else {
+      statusText.textContent = '利用不可';
+      statusDetails.textContent = 'PWAシステムが初期化されていません';
+      installButton.style.display = 'none';
+    }
+  }
+
+  async function clearPWACache() {
+    const pwaSystem = (window as any).beaverSystems?.pwa;
+    if (pwaSystem) {
+      try {
+        await pwaSystem.clearCaches();
+        alert('🧹 PWAキャッシュをクリアしました');
+      } catch (error) {
+        console.error('Failed to clear PWA cache:', error);
+        alert('⚠️ キャッシュのクリアに失敗しました');
+      }
+    }
+  }
+
+  async function forceServiceWorkerUpdate() {
+    const pwaSystem = (window as any).beaverSystems?.pwa;
+    if (pwaSystem) {
+      try {
+        await pwaSystem.forceUpdate();
+        alert('🔄 Service Workerの強制更新を実行しました');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        console.error('Failed to force SW update:', error);
+        alert('⚠️ Service Workerの更新に失敗しました');
+      }
+    }
+  }
+
+  function installPWA() {
+    const installPrompt = (window as any).deferredPrompt;
+    if (installPrompt) {
+      installPrompt.prompt();
+      installPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('📱 PWAインストールが受け入れられました');
+        }
+        (window as any).deferredPrompt = null;
+        updatePWAStatus();
+      });
+    }
+  }
+
+  // Listen for PWA install prompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    (window as any).deferredPrompt = e;
+    updatePWAStatus();
+  });
+
+  // Listen for PWA installation
+  window.addEventListener('appinstalled', () => {
+    console.log('📱 PWAがインストールされました');
+    (window as any).deferredPrompt = null;
+    updatePWAStatus();
+  });
+
   // Expose functions globally for external use
   (window as any).openSettings = openSettings;
   (window as any).closeSettings = closeSettings;
   (window as any).settingsManager = settingsManager;
+  (window as any).updatePWAStatus = updatePWAStatus;
 </script>
 
 <style>
@@ -1176,7 +1368,7 @@ const headerID = `${settingsId}-header`;
 
   /* Subsetting styles */
   .notification-subsetting,
-  .version-check-subsetting {
+  .pwa-subsetting {
     @apply ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700;
   }
 
