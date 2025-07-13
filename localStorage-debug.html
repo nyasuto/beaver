@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>localStorage Debug Test</title>
+</head>
+<body>
+    <h1>LocalStorage Debug Test</h1>
+    <button onclick="testSettings()">Test Settings Save/Load</button>
+    <button onclick="clearSettings()">Clear Settings</button>
+    <button onclick="checkSettings()">Check Current Settings</button>
+    <div id="output"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+
+        function testSettings() {
+            log('=== Testing Settings ===');
+            
+            // Test direct localStorage manipulation
+            const testSettings = {
+                notifications: { enabled: true },
+                pwa: { 
+                    enabled: true, 
+                    autoReload: true, 
+                    autoReloadDelay: 5000 
+                },
+                ui: { theme: 'system' },
+                privacy: { analytics: true },
+                version: '1.0.0',
+                updatedAt: Date.now()
+            };
+            
+            log('Saving test settings...');
+            localStorage.setItem('beaver_user_settings', JSON.stringify(testSettings));
+            
+            // Verify save
+            const saved = localStorage.getItem('beaver_user_settings');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                log('✅ Settings saved successfully');
+                log('autoReload value: ' + parsed.pwa.autoReload);
+                log('autoReloadDelay value: ' + parsed.pwa.autoReloadDelay);
+            } else {
+                log('❌ Settings not saved');
+            }
+        }
+
+        function clearSettings() {
+            localStorage.removeItem('beaver_user_settings');
+            log('Settings cleared');
+        }
+
+        function checkSettings() {
+            const settings = localStorage.getItem('beaver_user_settings');
+            if (settings) {
+                const parsed = JSON.parse(settings);
+                log('Current settings:');
+                log('autoReload: ' + parsed.pwa?.autoReload);
+                log('autoReloadDelay: ' + parsed.pwa?.autoReloadDelay);
+                log('Full settings: ' + JSON.stringify(parsed, null, 2));
+            } else {
+                log('No settings found');
+            }
+        }
+
+        // Test on load
+        checkSettings();
+    </script>
+</body>
+</html>

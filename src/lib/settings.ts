@@ -343,6 +343,19 @@ export class UserSettingsManager {
       updates,
       oldAutoReload,
       currentPWA: this.settings.pwa,
+      updateKeys: Object.keys(updates),
+      updateValues: Object.values(updates),
+    });
+
+    // Ensure we have a pwa object
+    if (!this.settings.pwa) {
+      console.warn('⚠️ PWA settings object missing, creating default');
+      this.settings.pwa = { ...SETTINGS_CONSTANTS.DEFAULTS.pwa };
+    }
+
+    console.log('🔧 Before merge:', {
+      existingPWA: this.settings.pwa,
+      updateData: updates,
     });
 
     this.settings.pwa = {
@@ -354,7 +367,9 @@ export class UserSettingsManager {
 
     console.log('🔧 PWA settings after update:', {
       newAutoReload: this.settings.pwa.autoReload,
+      newAutoReloadDelay: this.settings.pwa.autoReloadDelay,
       allPWASettings: this.settings.pwa,
+      settingsTimestamp: this.settings.updatedAt,
     });
 
     this.saveSettings();
@@ -548,9 +563,21 @@ export class UserSettingsManager {
         key: SETTINGS_CONSTANTS.STORAGE_KEY,
         autoReload: this.settings.pwa?.autoReload,
         autoReloadDelay: this.settings.pwa?.autoReloadDelay,
+        fullPWASettings: this.settings.pwa,
       });
       localStorage.setItem(SETTINGS_CONSTANTS.STORAGE_KEY, settingsJson);
-      console.log('✅ Settings saved successfully');
+
+      // Verify save immediately
+      const savedSettings = localStorage.getItem(SETTINGS_CONSTANTS.STORAGE_KEY);
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        console.log('✅ Settings saved and verified:', {
+          autoReloadInStorage: parsed.pwa?.autoReload,
+          autoReloadDelayInStorage: parsed.pwa?.autoReloadDelay,
+        });
+      } else {
+        console.error('❌ Settings not found in localStorage after save');
+      }
     } catch (error) {
       console.warn('Failed to save user settings:', error);
     }
