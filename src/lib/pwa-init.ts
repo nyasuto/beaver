@@ -169,8 +169,17 @@ export class PWASystem {
 
   /**
    * Disable redundant version checking when PWA is active
+   * Skip this for version-test page to allow testing
    */
   private disableRedundantVersionChecking(): void {
+    // Skip disabling version checker on test pages
+    if (window.location.pathname.includes('/version-test')) {
+      if (this.config.debug) {
+        console.log('⚠️ Test page detected - keeping manual version checker active');
+      }
+      return;
+    }
+
     if (this.config.debug) {
       console.log('🚫 Disabling manual version polling - using PWA native updates');
     }
@@ -207,6 +216,20 @@ export class PWASystem {
         updateType: 'service-worker',
         timestamp: Date.now(),
       });
+    });
+
+    // Listen for version checker events and forward to PWA update system
+    document.addEventListener('version:update-available', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail.updateType !== 'service-worker') {
+        if (this.config.debug) {
+          console.log(
+            '🔄 Version checker update detected, handling via PWA system:',
+            customEvent.detail
+          );
+        }
+        // Allow version checker updates to be processed normally
+      }
     });
 
     // Cache cleared
