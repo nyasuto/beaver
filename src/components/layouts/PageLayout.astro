@@ -369,8 +369,20 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
             maxRetries: settings.versionCheck.maxRetries,
           });
 
-          // Start version checking if enabled
-          if (settings.versionCheck.enabled) {
+          // Only start version checking if PWA is not handling updates
+          let shouldStartVersionChecker = settings.versionCheck.enabled;
+
+          // Listen for PWA disable signal
+          document.addEventListener('pwa:disable-version-polling', () => {
+            if (shouldStartVersionChecker) {
+              console.log('🔄 PWA active - skipping manual version polling');
+              shouldStartVersionChecker = false;
+              versionChecker.stop();
+            }
+          });
+
+          // Start version checking if enabled and PWA hasn't disabled it
+          if (shouldStartVersionChecker) {
             versionChecker.start();
           }
 
@@ -510,8 +522,16 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
         }
       }
 
-      // Fallback version checker (simplified, without settings integration)
+      // Fallback version checker for non-PWA browsers
       function initializeFallbackVersionChecker() {
+        // Check if PWA/Service Worker is available
+        if ('serviceWorker' in navigator) {
+          console.log('🚀 PWA available - using native Service Worker updates');
+          return; // Skip fallback when PWA is available
+        }
+
+        console.log('📱 Non-PWA browser detected - using fallback version checker');
+
         let currentVersion: any = null;
         let checkInterval: NodeJS.Timeout | null = null;
 
@@ -545,6 +565,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
                 detail: {
                   currentVersion: currentVersion,
                   latestVersion: latestVersion,
+                  updateType: 'manual-check',
                 },
               });
               document.dispatchEvent(updateEvent);
@@ -570,7 +591,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           getCurrentVersion: () => currentVersion,
         };
 
-        console.log('🔄 Fallback version checker initialized');
+        console.log('🔄 Fallback version checker initialized for non-PWA browser');
       }
     </script>
   </body>

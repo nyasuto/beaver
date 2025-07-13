@@ -7,11 +7,7 @@
  * @module PWAInit
  */
 
-import {
-  createPWAVersionChecker,
-  PWAVersionUtils,
-  type PWAVersionCheckConfig,
-} from './pwa-version-checker';
+import { PWAVersionUtils } from './pwa-version-checker';
 import { createSettingsManager } from './settings';
 
 /**
@@ -54,7 +50,6 @@ export interface PWASystemStatus {
 export class PWASystem {
   private config: PWASystemConfig;
   private settingsManager: any;
-  private pwaVersionChecker: any;
   private initialized = false;
 
   constructor(config: PWASystemConfig = {}) {
@@ -98,31 +93,11 @@ export class PWASystem {
         return;
       }
 
-      // Initialize PWA version checker
-      const versionCheckConfig: PWAVersionCheckConfig = {
-        versionUrl: '/beaver/version.json',
-        checkInterval: this.config.versionCheckInterval || 30000,
-        enabled: true,
-        maxRetries: 3,
-        retryDelay: 5000,
-        serviceWorkerEnabled: true,
-        serviceWorkerScope: this.config.scope,
-        forceSwUpdateOnVersionChange: pwaSettings.autoUpdate,
-        cacheInvalidationStrategy: pwaSettings.cacheStrategy,
-      };
-
-      this.pwaVersionChecker = createPWAVersionChecker(versionCheckConfig);
-
-      // Set up settings event listeners
-      this.setupSettingsListeners();
-
-      // Set up PWA event listeners
+      // Set up PWA event listeners for native Service Worker updates
       this.setupPWAEventListeners();
 
-      // Start version checking if auto-register is enabled
-      if (this.config.autoRegister) {
-        this.pwaVersionChecker.start();
-      }
+      // Disable manual version polling when PWA is active
+      this.disableRedundantVersionChecking();
 
       // Expose PWA system globally for debugging and integration
       this.exposeGlobally();
@@ -188,11 +163,23 @@ export class PWASystem {
     // Listen for cache strategy changes
     document.addEventListener('settings:pwa-cache-strategy-changed', (e: Event) => {
       const customEvent = e as CustomEvent;
-      if (this.pwaVersionChecker) {
-        this.pwaVersionChecker.updatePWAConfig({
-          cacheInvalidationStrategy: customEvent.detail.cacheStrategy,
-        });
-      }
+      // Cache strategy changes are handled by Service Worker automatically
+      console.log('PWA cache strategy changed:', customEvent.detail.cacheStrategy);
+    });
+  }
+
+  /**
+   * Disable redundant version checking when PWA is active
+   */
+  private disableRedundantVersionChecking(): void {
+    if (this.config.debug) {
+      console.log('🚫 Disabling manual version polling - using PWA native updates');
+    }
+
+    // Signal to disable traditional version checker
+    this.dispatchEvent('pwa:disable-version-polling', {
+      reason: 'PWA native updates active',
+      timestamp: Date.now(),
     });
   }
 
@@ -208,11 +195,19 @@ export class PWASystem {
       this.dispatchEvent('pwa:ready', { offline: true });
     });
 
-    // Service Worker update available
+    // Service Worker update available - dispatch as version update
     document.addEventListener('pwa:sw-update-available', (e: Event) => {
       if (this.config.debug) {
         console.log('🔄 Service Worker update available:', e);
       }
+
+      // Convert Service Worker update to version update event
+      this.dispatchEvent('version:update-available', {
+        currentVersion: { version: 'current', source: 'pwa' },
+        latestVersion: { version: 'latest', source: 'pwa' },
+        updateType: 'service-worker',
+        timestamp: Date.now(),
+      });
     });
 
     // Cache cleared
@@ -236,12 +231,8 @@ export class PWASystem {
    */
   public async enablePWA(): Promise<void> {
     try {
-      if (this.pwaVersionChecker) {
-        this.pwaVersionChecker.updatePWAConfig({ serviceWorkerEnabled: true });
-        this.pwaVersionChecker.start();
-      }
-
-      console.log('✅ PWA enabled');
+      // PWA functionality is handled by Service Worker automatically
+      console.log('✅ PWA enabled - using native Service Worker updates');
     } catch (error) {
       console.error('❌ Failed to enable PWA:', error);
     }
@@ -252,11 +243,11 @@ export class PWASystem {
    */
   public async disablePWA(): Promise<void> {
     try {
-      if (this.pwaVersionChecker) {
-        this.pwaVersionChecker.stop();
-        this.pwaVersionChecker.updatePWAConfig({ serviceWorkerEnabled: false });
+      // Unregister Service Worker if needed
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(registration => registration.unregister()));
       }
-
       console.log('⏹️ PWA disabled');
     } catch (error) {
       console.error('❌ Failed to disable PWA:', error);
@@ -267,19 +258,13 @@ export class PWASystem {
    * Get PWA system status
    */
   public getStatus(): PWASystemStatus {
-    const swStatus = this.pwaVersionChecker?.getServiceWorkerStatus() || {
-      registered: false,
-      updatePending: false,
-      offline: !navigator.onLine,
-    };
-
     return {
       initialized: this.initialized,
-      serviceWorkerRegistered: swStatus.registered,
-      versionCheckerActive: this.pwaVersionChecker ? true : false,
+      serviceWorkerRegistered: 'serviceWorker' in navigator,
+      versionCheckerActive: false, // PWA uses native updates
       installable: PWAVersionUtils.isPWAInstallable(),
       isStandalone: PWAVersionUtils.isPWAMode(),
-      offline: swStatus.offline,
+      offline: !navigator.onLine,
     };
   }
 
@@ -287,8 +272,9 @@ export class PWASystem {
    * Force Service Worker update
    */
   public async forceUpdate(): Promise<void> {
-    if (this.pwaVersionChecker) {
-      this.pwaVersionChecker.forceServiceWorkerUpdate();
+    // Skip waiting to activate new Service Worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
     }
   }
 
@@ -296,8 +282,14 @@ export class PWASystem {
    * Clear PWA caches
    */
   public async clearCaches(): Promise<void> {
-    if (this.pwaVersionChecker) {
-      await this.pwaVersionChecker.clearCaches();
+    try {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.filter(name => name.includes('beaver')).map(name => caches.delete(name))
+      );
+      console.log('🧹 PWA caches cleared');
+    } catch (error) {
+      console.warn('Failed to clear caches:', error);
     }
   }
 
@@ -319,7 +311,6 @@ export class PWASystem {
     }
 
     windowWithBeaver.beaverSystems.pwa = this;
-    windowWithBeaver.beaverSystems.pwaVersionChecker = this.pwaVersionChecker;
     windowWithBeaver.beaverSystems.settingsManager = this.settingsManager;
 
     // Debug utilities
@@ -348,17 +339,12 @@ export class PWASystem {
    */
   public async destroy(): Promise<void> {
     try {
-      if (this.pwaVersionChecker) {
-        await this.pwaVersionChecker.destroy();
-      }
-
       this.initialized = false;
 
       // Clean up global references
       const windowWithBeaver = window as any;
       if (windowWithBeaver.beaverSystems) {
         delete windowWithBeaver.beaverSystems.pwa;
-        delete windowWithBeaver.beaverSystems.pwaVersionChecker;
       }
       if (windowWithBeaver.beaverPWA) {
         delete windowWithBeaver.beaverPWA;

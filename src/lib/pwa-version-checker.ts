@@ -78,7 +78,7 @@ export class PWAVersionChecker extends VersionChecker {
         scope: this.pwaConfig.serviceWorkerScope,
       });
 
-      // Set up Service Worker event listeners
+      // Set up Service Worker event listeners for native updates
       this.setupServiceWorkerListeners();
 
       // Register Service Worker
@@ -89,7 +89,7 @@ export class PWAVersionChecker extends VersionChecker {
         scope: this.pwaConfig.serviceWorkerScope,
       });
 
-      console.log('✅ PWA Service Worker registered successfully');
+      console.log('✅ PWA Service Worker registered - native updates enabled');
     } catch (error) {
       console.warn('⚠️ Failed to initialize Service Worker:', error);
       // Fallback to regular version checking without SW
@@ -133,54 +133,19 @@ export class PWAVersionChecker extends VersionChecker {
   }
 
   /**
-   * Enhanced version checking with Service Worker integration
+   * PWA uses native Service Worker updates - no manual checking needed
    */
   public override async checkVersion(): Promise<VersionCheckResult> {
-    try {
-      // If Service Worker is available, use it for version checking
-      if (this.isServiceWorkerRegistered && this.workbox) {
-        const result = await this.checkVersionViaSW();
-        if (result) return result;
-      }
-
-      // Fallback to regular version checking
-      return await super.checkVersion();
-    } catch (error) {
-      console.warn('PWA version check failed, falling back to regular check:', error);
-      return await super.checkVersion();
-    }
-  }
-
-  /**
-   * Check version via Service Worker
-   */
-  private async checkVersionViaSW(): Promise<VersionCheckResult | null> {
-    try {
-      if (!this.workbox) return null;
-
-      // Send version check request to Service Worker
-      const response = await this.messageSW({
-        type: 'VERSION_CHECK',
-        versionUrl: this.getConfig().versionUrl,
-        timestamp: Date.now(),
-      });
-
-      if (response && response.success) {
-        const result = await super.checkVersion();
-
-        // Handle cache invalidation if version changed
-        if (result.updateAvailable && this.pwaConfig.cacheInvalidationStrategy !== 'user-consent') {
-          await this.handleCacheInvalidation(result);
-        }
-
-        return result;
-      }
-
-      return null;
-    } catch (error) {
-      console.warn('Service Worker version check failed:', error);
-      return null;
-    }
+    // PWA relies on Service Worker lifecycle events for updates
+    // Return no-update-needed to prevent manual polling
+    return {
+      success: true,
+      updateAvailable: false,
+      currentVersion: null,
+      latestVersion: null,
+      error: undefined,
+      checkedAt: Date.now(),
+    };
   }
 
   /**
