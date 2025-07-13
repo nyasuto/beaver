@@ -439,6 +439,47 @@ const headerID = `${settingsId}-header`;
           </label>
         </div>
 
+        <!-- Auto Reload -->
+        <div class="pwa-subsetting flex items-center justify-between py-2">
+          <div class="flex-1">
+            <label class="text-body font-medium text-heading" for="auto-reload">
+              自動リロード
+            </label>
+            <p class="text-body-small text-muted">バージョン更新時に自動でページをリロードします</p>
+          </div>
+
+          <label class="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              type="checkbox"
+              id="auto-reload"
+              class="sr-only peer"
+              data-setting="pwa.autoReload"
+            />
+            <div class="toggle-switch-sm"></div>
+          </label>
+        </div>
+
+        <!-- Auto Reload Delay -->
+        <div class="pwa-subsetting" id="auto-reload-delay-container">
+          <label class="label" for="auto-reload-delay">自動リロード遅延時間</label>
+          <div class="flex items-center space-x-3">
+            <input
+              type="range"
+              id="auto-reload-delay"
+              class="flex-1"
+              min="0"
+              max="30"
+              step="1"
+              data-setting="pwa.autoReloadDelay"
+            />
+            <span
+              id="auto-reload-delay-value"
+              class="text-body-small font-mono text-muted min-w-0 w-8">5秒</span
+            >
+          </div>
+          <p class="text-body-small text-muted mt-1">0秒で即座、5秒でユーザーの準備時間を確保</p>
+        </div>
+
         <!-- Cache Strategy -->
         <div class="pwa-subsetting">
           <label class="label" for="cache-strategy">キャッシュ戦略</label>
@@ -789,6 +830,8 @@ const headerID = `${settingsId}-header`;
       enabled: false,
       offlineMode: true,
       autoUpdate: true,
+      autoReload: false,
+      autoReloadDelay: 5000,
       cacheStrategy: 'background',
       pushNotifications: false,
     };
@@ -796,6 +839,15 @@ const headerID = `${settingsId}-header`;
     setCheckboxValue('pwa-enabled', pwaSettings.enabled);
     setCheckboxValue('offline-mode', pwaSettings.offlineMode);
     setCheckboxValue('auto-update-sw', pwaSettings.autoUpdate);
+    setCheckboxValue('auto-reload', pwaSettings.autoReload);
+    setRangeValue('auto-reload-delay', Math.round(pwaSettings.autoReloadDelay / 1000));
+
+    // Debug auto-reload settings
+    console.log('🔄 Auto-reload settings loaded:', {
+      autoReload: pwaSettings.autoReload,
+      autoReloadDelay: pwaSettings.autoReloadDelay,
+      delaySeconds: Math.round(pwaSettings.autoReloadDelay / 1000),
+    });
     setSelectValue('cache-strategy', pwaSettings.cacheStrategy);
     setCheckboxValue('push-notifications', pwaSettings.pushNotifications);
 
@@ -867,10 +919,23 @@ const headerID = `${settingsId}-header`;
 
     const installButton = settingsPanel.querySelector('#install-pwa');
     installButton?.addEventListener('click', installPWA);
+
+    // Auto-reload delay range input - only handle display updates
+    const autoReloadDelayRange = settingsPanel.querySelector('#auto-reload-delay');
+    autoReloadDelayRange?.addEventListener('input', (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const value = parseInt(target.value);
+      updateRangeDisplay('auto-reload-delay', value);
+    });
   }
 
   function handleSettingChange(event: Event) {
-    if (!settingsManager) return;
+    if (!settingsManager) {
+      console.error('❌ Settings manager not available!');
+      return;
+    }
+
+    console.log('✅ Settings manager available:', typeof settingsManager);
 
     const target = event.target as HTMLInputElement | HTMLSelectElement;
     const settingPath = target.getAttribute('data-setting');
@@ -880,9 +945,17 @@ const headerID = `${settingsId}-header`;
     const value =
       target.type === 'checkbox'
         ? (target as HTMLInputElement).checked
-        : target.type === 'number'
+        : target.type === 'number' || target.type === 'range'
           ? Number(target.value)
           : target.value;
+
+    // Debug logging
+    console.log('🔧 Setting change:', {
+      settingPath,
+      value,
+      type: target.type,
+      element: target.id,
+    });
 
     const pathParts = settingPath.split('.');
     const [section, subsection, key] = pathParts;
@@ -919,10 +992,21 @@ const headerID = `${settingsId}-header`;
         });
       }
     } else if (section === 'pwa') {
-      settingsManager.updatePWASettings({ [key as keyof PWASettings]: value });
+      // Use subsection as the PWA setting key (pwa.autoReload -> subsection = 'autoReload')
+      const pwaKey = subsection;
+
+      // Special handling for autoReloadDelay (convert seconds to milliseconds)
+      if (pwaKey === 'autoReloadDelay') {
+        const delayMs = typeof value === 'number' ? value * 1000 : parseInt(String(value)) * 1000;
+        console.log('🔧 PWA autoReloadDelay update:', { pwaKey, value, delayMs });
+        settingsManager.updatePWASettings({ [pwaKey as keyof PWASettings]: delayMs });
+      } else {
+        console.log('🔧 PWA setting update:', { pwaKey, value, type: typeof value });
+        settingsManager.updatePWASettings({ [pwaKey as keyof PWASettings]: value });
+      }
 
       // Handle PWA system integration
-      if (key === 'enabled' && (window as any).beaverSystems?.pwa) {
+      if (pwaKey === 'enabled' && (window as any).beaverSystems?.pwa) {
         if (value) {
           (window as any).beaverSystems.pwa.enablePWA();
         } else {
@@ -937,6 +1021,28 @@ const headerID = `${settingsId}-header`;
 
     // Update subsetting visibility
     updateSubsettingVisibility();
+
+    // Check localStorage before and after
+    const beforeSave = localStorage.getItem('beaver_user_settings');
+
+    // Success logging
+    console.log('✅ Setting saved:', {
+      section,
+      key: section === 'pwa' ? subsection : key,
+      value,
+      settingPath,
+    });
+
+    // Check if actually saved to localStorage
+    setTimeout(() => {
+      const afterSave = localStorage.getItem('beaver_user_settings');
+      const changed = beforeSave !== afterSave;
+      console.log('💾 LocalStorage check:', {
+        changed,
+        before: beforeSave ? JSON.parse(beforeSave).pwa?.autoReload : 'none',
+        after: afterSave ? JSON.parse(afterSave).pwa?.autoReload : 'none',
+      });
+    }, 100);
   }
 
   function handleSettingsChange(detail: any) {
@@ -958,6 +1064,21 @@ const headerID = `${settingsId}-header`;
       document.dispatchEvent(
         new CustomEvent('settings:pwa-toggled', {
           detail: { enabled: detail.updates.enabled },
+        })
+      );
+    }
+
+    if (detail.section === 'pwa' && 'autoReload' in detail.updates) {
+      // Update auto-reload delay visibility
+      updateAutoReloadDelayVisibility();
+
+      // Dispatch event for auto-reload system
+      document.dispatchEvent(
+        new CustomEvent('settings:pwa-auto-reload-toggled', {
+          detail: {
+            enabled: detail.updates.autoReload,
+            delay: settingsManager?.getPWASettings().autoReloadDelay,
+          },
         })
       );
     }
@@ -991,6 +1112,17 @@ const headerID = `${settingsId}-header`;
     pwaSubsettings?.forEach(element => {
       (element as HTMLElement).style.display = pwaEnabled ? 'block' : 'none';
     });
+
+    // Show/hide auto-reload delay setting
+    updateAutoReloadDelayVisibility();
+  }
+
+  function updateAutoReloadDelayVisibility() {
+    const autoReloadEnabled = getCheckboxValue('auto-reload');
+    const delayContainer = settingsPanel?.querySelector('#auto-reload-delay-container');
+    if (delayContainer) {
+      (delayContainer as HTMLElement).style.display = autoReloadEnabled ? 'block' : 'none';
+    }
   }
 
   function applyTheme(theme: string) {
@@ -1117,6 +1249,22 @@ const headerID = `${settingsId}-header`;
   function setSelectValue(id: string, value: string) {
     const select = document.getElementById(id) as HTMLSelectElement;
     if (select) select.value = value;
+  }
+
+  function setRangeValue(id: string, value: number) {
+    const range = document.getElementById(id) as HTMLInputElement;
+    if (range) {
+      range.value = value.toString();
+      // Update the display value
+      updateRangeDisplay(id, value);
+    }
+  }
+
+  function updateRangeDisplay(id: string, value: number) {
+    const displayElement = document.getElementById(id + '-value');
+    if (displayElement) {
+      displayElement.textContent = `${value}秒`;
+    }
   }
 
   function getCheckboxValue(id: string): boolean {

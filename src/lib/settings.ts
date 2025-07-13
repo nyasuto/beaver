@@ -85,6 +85,10 @@ export const PWASettingsSchema = z.object({
   offlineMode: z.boolean().default(true),
   /** Auto-update Service Worker */
   autoUpdate: z.boolean().default(true),
+  /** Auto-reload page when version update detected */
+  autoReload: z.boolean().default(false),
+  /** Auto-reload delay in milliseconds */
+  autoReloadDelay: z.number().int().min(0).max(30000).default(5000),
   /** Cache invalidation strategy */
   cacheStrategy: z.enum(['immediate', 'background', 'user-consent']).default('background'),
   /** Background sync enabled */
@@ -131,6 +135,7 @@ export const SETTINGS_CONSTANTS = {
     VERSION_CHECK_TOGGLED: 'settings:version-check-toggled',
     PWA_TOGGLED: 'settings:pwa-toggled',
     PWA_CACHE_STRATEGY_CHANGED: 'settings:pwa-cache-strategy-changed',
+    PWA_AUTO_RELOAD_TOGGLED: 'settings:pwa-auto-reload-toggled',
   } as const,
   DEFAULTS: {
     notifications: {
@@ -168,6 +173,8 @@ export const SETTINGS_CONSTANTS = {
       enabled: true,
       offlineMode: true,
       autoUpdate: true,
+      autoReload: false,
+      autoReloadDelay: 5000,
       cacheStrategy: 'background' as const,
       backgroundSync: false,
       pushNotifications: false,
@@ -330,6 +337,26 @@ export class UserSettingsManager {
   public updatePWASettings(updates: Partial<PWASettings>): void {
     const oldEnabled = this.settings.pwa.enabled;
     const oldCacheStrategy = this.settings.pwa.cacheStrategy;
+    const oldAutoReload = this.settings.pwa.autoReload;
+
+    console.log('🔧 updatePWASettings called:', {
+      updates,
+      oldAutoReload,
+      currentPWA: this.settings.pwa,
+      updateKeys: Object.keys(updates),
+      updateValues: Object.values(updates),
+    });
+
+    // Ensure we have a pwa object
+    if (!this.settings.pwa) {
+      console.warn('⚠️ PWA settings object missing, creating default');
+      this.settings.pwa = { ...SETTINGS_CONSTANTS.DEFAULTS.pwa };
+    }
+
+    console.log('🔧 Before merge:', {
+      existingPWA: this.settings.pwa,
+      updateData: updates,
+    });
 
     this.settings.pwa = {
       ...this.settings.pwa,
@@ -337,6 +364,14 @@ export class UserSettingsManager {
     };
 
     this.settings.updatedAt = Date.now();
+
+    console.log('🔧 PWA settings after update:', {
+      newAutoReload: this.settings.pwa.autoReload,
+      newAutoReloadDelay: this.settings.pwa.autoReloadDelay,
+      allPWASettings: this.settings.pwa,
+      settingsTimestamp: this.settings.updatedAt,
+    });
+
     this.saveSettings();
 
     this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.SETTINGS_CHANGED, {
@@ -356,6 +391,13 @@ export class UserSettingsManager {
       this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.PWA_CACHE_STRATEGY_CHANGED, {
         cacheStrategy: this.settings.pwa.cacheStrategy,
         previousStrategy: oldCacheStrategy,
+      });
+    }
+
+    if (oldAutoReload !== this.settings.pwa.autoReload) {
+      this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.PWA_AUTO_RELOAD_TOGGLED, {
+        enabled: this.settings.pwa.autoReload,
+        delay: this.settings.pwa.autoReloadDelay,
       });
     }
 
@@ -379,6 +421,22 @@ export class UserSettingsManager {
     const newEnabled = !this.settings.versionCheck.enabled;
     this.updateVersionCheckSettings({ enabled: newEnabled });
     return newEnabled;
+  }
+
+  /**
+   * Toggle PWA auto-reload enabled state
+   */
+  public togglePWAAutoReload(): boolean {
+    const newEnabled = !this.settings.pwa.autoReload;
+    this.updatePWASettings({ autoReload: newEnabled });
+    return newEnabled;
+  }
+
+  /**
+   * Set PWA auto-reload delay
+   */
+  public setPWAAutoReloadDelay(delay: number): void {
+    this.updatePWASettings({ autoReloadDelay: delay });
   }
 
   /**
@@ -500,7 +558,26 @@ export class UserSettingsManager {
    */
   private saveSettings(): void {
     try {
-      localStorage.setItem(SETTINGS_CONSTANTS.STORAGE_KEY, JSON.stringify(this.settings));
+      const settingsJson = JSON.stringify(this.settings);
+      console.log('💾 Saving settings to localStorage:', {
+        key: SETTINGS_CONSTANTS.STORAGE_KEY,
+        autoReload: this.settings.pwa?.autoReload,
+        autoReloadDelay: this.settings.pwa?.autoReloadDelay,
+        fullPWASettings: this.settings.pwa,
+      });
+      localStorage.setItem(SETTINGS_CONSTANTS.STORAGE_KEY, settingsJson);
+
+      // Verify save immediately
+      const savedSettings = localStorage.getItem(SETTINGS_CONSTANTS.STORAGE_KEY);
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        console.log('✅ Settings saved and verified:', {
+          autoReloadInStorage: parsed.pwa?.autoReload,
+          autoReloadDelayInStorage: parsed.pwa?.autoReloadDelay,
+        });
+      } else {
+        console.error('❌ Settings not found in localStorage after save');
+      }
     } catch (error) {
       console.warn('Failed to save user settings:', error);
     }
