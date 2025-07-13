@@ -60,37 +60,44 @@ try {
   console.warn('UpdateNotification props validation failed:', error);
 }
 
-// Base classes for the notification
+// Enhanced base classes for the notification using Beaver design system
 const baseClasses = [
   'fixed',
   'left-0',
   'right-0',
   'z-50',
-  'px-4',
-  'py-3',
-  'text-sm',
+  'p-responsive', // Mobile-first responsive padding
+  'text-responsive-sm', // Responsive text sizing
   'font-medium',
-  'shadow-lg',
-  'border',
-  'backdrop-blur-sm',
-  'transition-all',
-  'duration-300',
-  'ease-in-out',
+  'shadow-strong', // Using Beaver shadow system
+  'border-soft', // Using Beaver border utility
+  'surface-overlay', // Using glassmorphism from design system
+  'transition-smooth', // Using Beaver transition utility
 ].join(' ');
 
-// Position-specific classes
+// Position-specific classes with enhanced positioning
 const positionClasses = {
-  top: 'top-0 border-b',
-  bottom: 'bottom-0 border-t',
+  top: 'top-0 border-b-2 border-primary-200 dark:border-primary-700',
+  bottom: 'bottom-0 border-t-2 border-primary-200 dark:border-primary-700',
 };
 
-// Variant-specific classes
+// Enhanced variant-specific classes using Beaver color system
 const variantClasses = {
-  info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200',
-  success:
-    'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200',
-  warning:
-    'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-200',
+  info: [
+    'bg-primary-50/95 border-primary-200 text-primary-800',
+    'dark:bg-primary-900/30 dark:border-primary-700 dark:text-primary-200',
+    'backdrop-blur-md', // Enhanced glassmorphism
+  ].join(' '),
+  success: [
+    'bg-success-50/95 border-success-200 text-success-800',
+    'dark:bg-success-900/30 dark:border-success-700 dark:text-success-200',
+    'backdrop-blur-md',
+  ].join(' '),
+  warning: [
+    'bg-warning-50/95 border-warning-200 text-warning-800',
+    'dark:bg-warning-900/30 dark:border-warning-700 dark:text-warning-200',
+    'backdrop-blur-md',
+  ].join(' '),
 };
 
 // Construct final className
@@ -123,15 +130,17 @@ const actionsId = `${notificationId}-actions`;
   role="alert"
   {...rest}
 >
-  <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <div
+    class="container-mobile flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
+  >
     <!-- Notification Content -->
-    <div id={contentId} class="flex items-center space-x-3 flex-1">
+    <div id={contentId} class="flex items-center space-inline-md flex-1 min-w-0">
       <!-- Icon -->
       <div class="flex-shrink-0">
         {
           variant === 'info' && (
             <svg
-              class="w-5 h-5 text-blue-600 dark:text-blue-400"
+              class="icon icon-md text-primary-600 dark:text-primary-400"
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden="true"
@@ -147,7 +156,7 @@ const actionsId = `${notificationId}-actions`;
         {
           variant === 'success' && (
             <svg
-              class="w-5 h-5 text-green-600 dark:text-green-400"
+              class="icon icon-md text-success-600 dark:text-success-400"
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden="true"
@@ -163,7 +172,7 @@ const actionsId = `${notificationId}-actions`;
         {
           variant === 'warning' && (
             <svg
-              class="w-5 h-5 text-yellow-600 dark:text-yellow-400"
+              class="icon icon-md text-warning-600 dark:text-warning-400"
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden="true"
@@ -179,13 +188,13 @@ const actionsId = `${notificationId}-actions`;
       </div>
 
       <!-- Message and Version Info -->
-      <div class="flex-1 min-w-0">
-        <p class="font-semibold">
+      <div class="flex-1 min-w-0 space-stack-xs">
+        <p class="text-body font-semibold text-heading">
           {message}
         </p>
         {
           showVersionDetails && (currentVersion || latestVersion) && (
-            <p class="text-xs opacity-75 mt-1">
+            <p class="text-body-small text-muted font-mono">
               {currentVersion && `現在: v${currentVersion}`}
               {currentVersion && latestVersion && ' → '}
               {latestVersion && `最新: v${latestVersion}`}
@@ -196,19 +205,38 @@ const actionsId = `${notificationId}-actions`;
     </div>
 
     <!-- Action Buttons -->
-    <div id={actionsId} class="flex items-center space-x-2 ml-4">
+    <div
+      id={actionsId}
+      class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 sm:ml-4 gap-2 sm:gap-0"
+    >
       <button
         type="button"
-        class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+        class="btn btn-primary text-xs px-3 py-1.5 touch-target-sm"
         data-action="reload"
         aria-label="ページをリロードして更新を適用"
       >
-        リロード
+        <span class="flex items-center space-inline-xs">
+          <svg
+            class="icon icon-xs"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+          <span>リロード</span>
+        </span>
       </button>
 
       <button
         type="button"
-        class="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md"
+        class="btn btn-ghost text-xs px-2 py-1.5 touch-target-sm"
         data-action="dismiss"
         aria-label="通知を閉じる"
       >
@@ -217,12 +245,12 @@ const actionsId = `${notificationId}-actions`;
 
       <button
         type="button"
-        class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-md"
+        class="btn btn-ghost p-1 touch-target-sm"
         data-action="close"
         aria-label="通知を閉じる"
       >
         <svg
-          class="w-4 h-4"
+          class="icon icon-sm"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -506,89 +534,237 @@ const actionsId = `${notificationId}-actions`;
 </script>
 
 <style>
-  /* Notification animations */
+  /* Enhanced notification animations using Beaver design system */
   #update-notification {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
   }
 
-  /* Slide animations */
+  /* Slide animations with improved easing */
   #update-notification[data-animation='slide'][data-position='top'] {
     transform: translateY(0);
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   #update-notification[data-animation='slide'][data-position='bottom'] {
     transform: translateY(0);
+    animation: slideInFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Fade animation */
+  /* Enhanced fade animation */
   #update-notification[data-animation='fade'] {
     opacity: 1;
+    animation: fadeIn 0.3s ease-out;
   }
 
-  /* Bounce animation */
+  /* Improved bounce animation */
   #update-notification[data-animation='bounce'] {
     transform: scale(1);
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
-  /* Button hover effects */
-  #update-notification button {
-    transition: all 0.2s ease-in-out;
-  }
-
-  #update-notification button:hover {
-    transform: translateY(-1px);
-  }
-
-  #update-notification button:active {
-    transform: translateY(0);
-  }
-
-  /* Loading state for reload button */
-  #update-notification button[disabled] {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* Dark mode enhancements */
-  @media (prefers-color-scheme: dark) {
-    #update-notification {
-      backdrop-filter: blur(8px);
+  /* Custom keyframes for enhanced animations */
+  @keyframes slideIn {
+    0% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
     }
   }
 
-  /* Reduced motion support */
+  @keyframes slideInFromBottom {
+    0% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes bounceIn {
+    0% {
+      transform: scale(0.3);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Enhanced button interactions */
+  #update-notification .btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+  }
+
+  #update-notification .btn:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  #update-notification .btn:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
+  }
+
+  /* Loading state with spinner */
+  #update-notification .btn[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    position: relative;
+  }
+
+  #update-notification .btn[disabled]::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Enhanced glassmorphism effect */
+  #update-notification {
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  }
+
+  /* Dark mode specific enhancements */
+  .dark #update-notification {
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  }
+
+  /* Mobile-specific optimizations */
+  @media (max-width: 640px) {
+    #update-notification {
+      margin: 0 8px;
+      border-radius: 12px;
+      left: 8px;
+      right: 8px;
+      width: auto;
+    }
+
+    #update-notification .btn {
+      min-height: 44px; /* Touch-friendly height */
+      font-size: 14px;
+    }
+  }
+
+  /* Reduced motion support with fallbacks */
   @media (prefers-reduced-motion: reduce) {
     #update-notification {
       transition: opacity 0.2s ease-in-out;
+      animation: none !important;
     }
 
-    #update-notification button:hover {
+    #update-notification .btn:hover {
       transform: none;
+      box-shadow: none;
+    }
+
+    #update-notification .btn:active {
+      transform: none;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(0deg);
+      }
     }
   }
 
   /* High contrast mode support */
   @media (prefers-contrast: high) {
     #update-notification {
-      border-width: 2px;
+      border-width: 3px;
+      backdrop-filter: none;
+      background: var(--color-background) !important;
     }
 
-    #update-notification button {
-      border: 1px solid currentColor;
+    #update-notification .btn {
+      border: 2px solid currentColor;
+      background: transparent;
+    }
+
+    #update-notification .icon {
+      stroke-width: 3;
     }
   }
 
-  /* Focus management */
-  #update-notification button:focus-visible {
-    outline: 2px solid currentColor;
+  /* Focus management with enhanced visibility */
+  #update-notification .btn:focus-visible {
+    outline: 3px solid var(--color-primary);
     outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.1);
   }
 
-  /* Print styles - hide notification */
+  /* Print styles - completely hide notification */
   @media print {
     #update-notification {
       display: none !important;
+    }
+  }
+
+  /* RTL support */
+  [dir='rtl'] #update-notification {
+    left: auto;
+    right: 0;
+  }
+
+  [dir='rtl'] #update-notification .space-inline-md > * + * {
+    margin-left: 0;
+    margin-right: 1rem;
+  }
+
+  /* Container queries for responsive design */
+  @container (max-width: 400px) {
+    #update-notification .btn span {
+      display: none;
+    }
+
+    #update-notification .btn .icon {
+      margin: 0;
     }
   }
 </style>
