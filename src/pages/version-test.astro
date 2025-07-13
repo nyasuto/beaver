@@ -153,27 +153,65 @@ const description =
     // Manual check button
     document.getElementById('manual-check')?.addEventListener('click', async () => {
       addTestOutput('Manually triggering version check...');
-      if (window.versionChecker) {
+
+      // Try multiple paths to find version checker
+      let versionChecker = window.beaverSystems?.versionChecker;
+      if (!versionChecker) {
+        versionChecker = window.versionChecker;
+      }
+      if (!versionChecker) {
+        versionChecker = window.autoReloadControl;
+      }
+
+      if (versionChecker) {
         try {
-          const result = await window.versionChecker.checkVersion();
+          let result;
+          if (typeof versionChecker.checkVersion === 'function') {
+            result = await versionChecker.checkVersion();
+          } else if (typeof versionChecker.checkNow === 'function') {
+            await versionChecker.checkNow();
+            result = { success: true, message: 'Check initiated via fallback method' };
+          }
           addTestOutput(`Check result: ${JSON.stringify(result)}`);
         } catch (error) {
           addTestOutput(`Check error: ${error.message}`);
         }
       } else {
-        addTestOutput('VersionChecker not available');
+        addTestOutput('❌ VersionChecker not available - checking possible causes...');
+        addTestOutput(
+          `Available systems: beaverSystems=${typeof window.beaverSystems}, versionChecker=${typeof window.versionChecker}, autoReloadControl=${typeof window.autoReloadControl}`
+        );
       }
     });
 
     // Show state button
     document.getElementById('show-state')?.addEventListener('click', () => {
-      if (window.versionChecker) {
-        const state = window.versionChecker.getState();
-        const config = window.versionChecker.getConfig();
-        addTestOutput(`State: ${JSON.stringify(state, null, 2)}`);
-        addTestOutput(`Config: ${JSON.stringify(config, null, 2)}`);
+      // Try multiple paths to find version checker
+      let versionChecker = window.beaverSystems?.versionChecker;
+      if (!versionChecker) {
+        versionChecker = window.versionChecker;
+      }
+
+      if (versionChecker) {
+        try {
+          const state = versionChecker.getState();
+          const config = versionChecker.getConfig();
+          addTestOutput(`State: ${JSON.stringify(state, null, 2)}`);
+          addTestOutput(`Config: ${JSON.stringify(config, null, 2)}`);
+        } catch (error) {
+          addTestOutput(`Error getting VersionChecker state: ${error.message}`);
+        }
       } else {
-        addTestOutput('VersionChecker not available');
+        addTestOutput('❌ VersionChecker not available');
+        addTestOutput('Available global objects:');
+        addTestOutput(`- window.beaverSystems: ${typeof window.beaverSystems}`);
+        if (window.beaverSystems) {
+          addTestOutput(
+            `- window.beaverSystems.versionChecker: ${typeof window.beaverSystems.versionChecker}`
+          );
+        }
+        addTestOutput(`- window.versionChecker: ${typeof window.versionChecker}`);
+        addTestOutput(`- window.autoReloadControl: ${typeof window.autoReloadControl}`);
       }
     });
 

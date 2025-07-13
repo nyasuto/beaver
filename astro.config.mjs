@@ -130,7 +130,7 @@ export default defineConfig({
             },
           },
           
-          // Version checking (Network-first for real-time updates)
+          // Version checking (Network-first for real-time updates with logging)
           {
             urlPattern: new RegExp(`^${baseUrl}/version\\.json$`),
             handler: 'NetworkFirst',
@@ -141,6 +141,46 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 5, // 5 minutes
               },
               networkTimeoutSeconds: 5,
+              plugins: [
+                {
+                  requestWillFetch: async ({ request }) => {
+                    console.log('🔄 PWA: Fetching version.json for update check', {
+                      url: request.url,
+                      timestamp: new Date().toISOString(),
+                      cache: request.cache,
+                      mode: request.mode
+                    });
+                    return request;
+                  },
+                  fetchDidSucceed: async ({ response }) => {
+                    if (response.ok) {
+                      const clonedResponse = response.clone();
+                      try {
+                        const versionData = await clonedResponse.json();
+                        console.log('✅ PWA: Version check completed', {
+                          status: response.status,
+                          fromCache: response.headers.get('x-from-sw-cache') === 'true',
+                          version: versionData.version,
+                          buildId: versionData.buildId,
+                          gitCommit: versionData.gitCommit,
+                          timestamp: new Date().toISOString()
+                        });
+                      } catch (error) {
+                        console.warn('⚠️ PWA: Could not parse version data:', error);
+                      }
+                    }
+                    return response;
+                  },
+                  fetchDidFail: async ({ originalRequest, error }) => {
+                    console.error('❌ PWA: Version check failed', {
+                      url: originalRequest.url,
+                      error: error.message,
+                      timestamp: new Date().toISOString()
+                    });
+                    throw error;
+                  }
+                }
+              ]
             },
           },
           
