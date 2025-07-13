@@ -1,0 +1,209 @@
+---
+/**
+ * Version Test Page for GitHub Pages Verification
+ *
+ * This page helps test the auto-reload functionality in the GitHub Pages environment.
+ * It displays current version information and provides manual controls for testing.
+ */
+import PageLayout from '../components/layouts/PageLayout.astro';
+
+const title = 'Version Test - Auto-reload Verification';
+const description =
+  'Test page for verifying Phase 1 auto-reload functionality in GitHub Pages environment';
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  showHeader={true}
+  showFooter={true}
+  maxWidth="4xl"
+  padding="md"
+>
+  <section class="py-8">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-6">Auto-reload System Test</h1>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Current Version Information
+        </h2>
+
+        <div id="version-info" class="space-y-3 text-sm font-mono">
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Loading version data...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-4">
+          Test Instructions
+        </h2>
+        <ol class="list-decimal list-inside space-y-2 text-blue-700 dark:text-blue-300">
+          <li>This page will automatically check for version updates every 30 seconds</li>
+          <li>When a new version is deployed, you should see a notification at the top</li>
+          <li>Use the controls below to manually test the system</li>
+          <li>Check the browser console for debug information</li>
+        </ol>
+      </div>
+
+      <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Manual Test Controls
+        </h2>
+
+        <div class="space-x-4 mb-4">
+          <button
+            id="manual-check"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Check for Updates Now
+          </button>
+
+          <button
+            id="show-state"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          >
+            Show VersionChecker State
+          </button>
+
+          <button
+            id="simulate-update"
+            class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors"
+          >
+            Simulate Update Available
+          </button>
+        </div>
+
+        <div
+          id="test-output"
+          class="bg-gray-100 dark:bg-gray-600 rounded p-4 text-sm font-mono min-h-24"
+        >
+          <span class="text-gray-600 dark:text-gray-400">Test output will appear here...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</PageLayout>
+
+<script is:inline>
+  // Load version information
+  async function loadVersionInfo() {
+    try {
+      const baseUrl = window.location.pathname.includes('/beaver')
+        ? window.location.origin + '/beaver'
+        : window.location.origin;
+      const response = await fetch(`${baseUrl}/version.json`);
+      const versionData = await response.json();
+
+      const versionInfoElement = document.getElementById('version-info');
+      if (versionInfoElement) {
+        versionInfoElement.innerHTML = `
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Version:</span>
+            <span class="text-gray-900 dark:text-white">${versionData.version}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Build ID:</span>
+            <span class="text-gray-900 dark:text-white">${versionData.buildId}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Git Commit:</span>
+            <span class="text-gray-900 dark:text-white">${versionData.gitCommit}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Environment:</span>
+            <span class="text-gray-900 dark:text-white">${versionData.environment}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Timestamp:</span>
+            <span class="text-gray-900 dark:text-white">${new Date(versionData.timestamp).toLocaleString()}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Data Hash:</span>
+            <span class="text-gray-900 dark:text-white">${versionData.dataHash}</span>
+          </div>
+        `;
+      }
+    } catch (error) {
+      const versionInfoElement = document.getElementById('version-info');
+      if (versionInfoElement) {
+        versionInfoElement.innerHTML = `
+          <div class="text-red-600">Error loading version information: ${error.message}</div>
+        `;
+      }
+    }
+  }
+
+  // Test controls
+  document.addEventListener('DOMContentLoaded', () => {
+    loadVersionInfo();
+
+    const testOutput = document.getElementById('test-output');
+
+    function addTestOutput(message) {
+      if (testOutput) {
+        const timestamp = new Date().toLocaleTimeString();
+        testOutput.innerHTML += `[${timestamp}] ${message}\n`;
+        testOutput.scrollTop = testOutput.scrollHeight;
+      }
+    }
+
+    // Manual check button
+    document.getElementById('manual-check')?.addEventListener('click', async () => {
+      addTestOutput('Manually triggering version check...');
+      if (window.versionChecker) {
+        try {
+          const result = await window.versionChecker.checkVersion();
+          addTestOutput(`Check result: ${JSON.stringify(result)}`);
+        } catch (error) {
+          addTestOutput(`Check error: ${error.message}`);
+        }
+      } else {
+        addTestOutput('VersionChecker not available');
+      }
+    });
+
+    // Show state button
+    document.getElementById('show-state')?.addEventListener('click', () => {
+      if (window.versionChecker) {
+        const state = window.versionChecker.getState();
+        const config = window.versionChecker.getConfig();
+        addTestOutput(`State: ${JSON.stringify(state, null, 2)}`);
+        addTestOutput(`Config: ${JSON.stringify(config, null, 2)}`);
+      } else {
+        addTestOutput('VersionChecker not available');
+      }
+    });
+
+    // Simulate update button
+    document.getElementById('simulate-update')?.addEventListener('click', () => {
+      addTestOutput('Simulating update available event...');
+      const mockEvent = new CustomEvent('version:update-available', {
+        detail: {
+          currentVersion: { version: '0.1.0', buildId: 'current-build' },
+          latestVersion: { version: '0.1.1', buildId: 'new-build' },
+        },
+      });
+      document.dispatchEvent(mockEvent);
+    });
+
+    // Listen for version checker events
+    document.addEventListener('version:update-available', e => {
+      addTestOutput(
+        `🔄 Update available! Current: ${e.detail.currentVersion.version}, Latest: ${e.detail.latestVersion.version}`
+      );
+    });
+
+    document.addEventListener('version:check-failed', e => {
+      addTestOutput(`❌ Version check failed: ${e.detail.error}`);
+    });
+
+    document.addEventListener('version:check-completed', e => {
+      addTestOutput(`✅ Version check completed. Update available: ${e.detail.updateAvailable}`);
+    });
+
+    addTestOutput('Test page initialized. Auto-reload system should be running.');
+  });
+</script>
