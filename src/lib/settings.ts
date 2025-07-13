@@ -78,6 +78,23 @@ export const PrivacySettingsSchema = z.object({
   usageStats: z.boolean().default(false),
 });
 
+export const PWASettingsSchema = z.object({
+  /** Enable PWA functionality */
+  enabled: z.boolean().default(true),
+  /** Enable offline mode */
+  offlineMode: z.boolean().default(true),
+  /** Auto-update Service Worker */
+  autoUpdate: z.boolean().default(true),
+  /** Cache invalidation strategy */
+  cacheStrategy: z.enum(['immediate', 'background', 'user-consent']).default('background'),
+  /** Background sync enabled */
+  backgroundSync: z.boolean().default(false),
+  /** Push notifications enabled */
+  pushNotifications: z.boolean().default(false),
+  /** Service Worker debug mode */
+  debugMode: z.boolean().default(false),
+});
+
 export const UserSettingsSchema = z.object({
   /** Notification preferences */
   notifications: NotificationSettingsSchema,
@@ -87,6 +104,8 @@ export const UserSettingsSchema = z.object({
   ui: UISettingsSchema,
   /** Privacy preferences */
   privacy: PrivacySettingsSchema,
+  /** PWA preferences */
+  pwa: PWASettingsSchema,
   /** Settings version for migration */
   version: z.string().default('1.0.0'),
   /** Last updated timestamp */
@@ -98,6 +117,7 @@ export type NotificationSettings = z.infer<typeof NotificationSettingsSchema>;
 export type VersionCheckSettings = z.infer<typeof VersionCheckSettingsSchema>;
 export type UISettings = z.infer<typeof UISettingsSchema>;
 export type PrivacySettings = z.infer<typeof PrivacySettingsSchema>;
+export type PWASettings = z.infer<typeof PWASettingsSchema>;
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 
 // Settings Constants
@@ -109,6 +129,8 @@ export const SETTINGS_CONSTANTS = {
     NOTIFICATIONS_TOGGLED: 'settings:notifications-toggled',
     THEME_CHANGED: 'settings:theme-changed',
     VERSION_CHECK_TOGGLED: 'settings:version-check-toggled',
+    PWA_TOGGLED: 'settings:pwa-toggled',
+    PWA_CACHE_STRATEGY_CHANGED: 'settings:pwa-cache-strategy-changed',
   } as const,
   DEFAULTS: {
     notifications: {
@@ -141,6 +163,15 @@ export const SETTINGS_CONSTANTS = {
       analytics: true,
       errorReporting: true,
       usageStats: false,
+    },
+    pwa: {
+      enabled: true,
+      offlineMode: true,
+      autoUpdate: true,
+      cacheStrategy: 'background' as const,
+      backgroundSync: false,
+      pushNotifications: false,
+      debugMode: false,
     },
   } as const,
 } as const;
@@ -183,6 +214,10 @@ export class UserSettingsManager {
 
   public getPrivacySettings(): Readonly<PrivacySettings> {
     return { ...this.settings.privacy };
+  }
+
+  public getPWASettings(): Readonly<PWASettings> {
+    return { ...this.settings.pwa };
   }
 
   /**
@@ -290,6 +325,45 @@ export class UserSettingsManager {
   }
 
   /**
+   * Update PWA settings
+   */
+  public updatePWASettings(updates: Partial<PWASettings>): void {
+    const oldEnabled = this.settings.pwa.enabled;
+    const oldCacheStrategy = this.settings.pwa.cacheStrategy;
+
+    this.settings.pwa = {
+      ...this.settings.pwa,
+      ...updates,
+    };
+
+    this.settings.updatedAt = Date.now();
+    this.saveSettings();
+
+    this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.SETTINGS_CHANGED, {
+      section: 'pwa',
+      updates,
+      settings: this.settings.pwa,
+    });
+
+    // Dispatch specific events for important changes
+    if (oldEnabled !== this.settings.pwa.enabled) {
+      this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.PWA_TOGGLED, {
+        enabled: this.settings.pwa.enabled,
+      });
+    }
+
+    if (oldCacheStrategy !== this.settings.pwa.cacheStrategy) {
+      this.dispatchEvent(SETTINGS_CONSTANTS.EVENTS.PWA_CACHE_STRATEGY_CHANGED, {
+        cacheStrategy: this.settings.pwa.cacheStrategy,
+        previousStrategy: oldCacheStrategy,
+      });
+    }
+
+    // Notify PWA system about settings changes
+    this.notifyPWASystem(updates);
+  }
+
+  /**
    * Toggle notification enabled state
    */
   public toggleNotifications(): boolean {
@@ -315,6 +389,22 @@ export class UserSettingsManager {
   }
 
   /**
+   * Toggle PWA enabled state
+   */
+  public togglePWA(): boolean {
+    const newEnabled = !this.settings.pwa.enabled;
+    this.updatePWASettings({ enabled: newEnabled });
+    return newEnabled;
+  }
+
+  /**
+   * Set PWA cache strategy
+   */
+  public setPWACacheStrategy(strategy: PWASettings['cacheStrategy']): void {
+    this.updatePWASettings({ cacheStrategy: strategy });
+  }
+
+  /**
    * Reset all settings to defaults
    */
   public resetToDefaults(): void {
@@ -332,7 +422,7 @@ export class UserSettingsManager {
    * Reset specific setting section
    */
   public resetSection(
-    section: keyof Pick<UserSettings, 'notifications' | 'versionCheck' | 'ui' | 'privacy'>
+    section: keyof Pick<UserSettings, 'notifications' | 'versionCheck' | 'ui' | 'privacy' | 'pwa'>
   ): void {
     switch (section) {
       case 'notifications':
@@ -346,6 +436,9 @@ export class UserSettingsManager {
         break;
       case 'privacy':
         this.updatePrivacySettings(SETTINGS_CONSTANTS.DEFAULTS.privacy);
+        break;
+      case 'pwa':
+        this.updatePWASettings(SETTINGS_CONSTANTS.DEFAULTS.pwa);
         break;
     }
   }
@@ -422,6 +515,7 @@ export class UserSettingsManager {
       versionCheck: { ...SETTINGS_CONSTANTS.DEFAULTS.versionCheck },
       ui: { ...SETTINGS_CONSTANTS.DEFAULTS.ui },
       privacy: { ...SETTINGS_CONSTANTS.DEFAULTS.privacy },
+      pwa: { ...SETTINGS_CONSTANTS.DEFAULTS.pwa },
       version: SETTINGS_CONSTANTS.VERSION,
       updatedAt: Date.now(),
     };
@@ -462,11 +556,17 @@ export class UserSettingsManager {
         ...(oldSettings.privacy || {}),
       };
 
+      const pwa = {
+        ...defaults.pwa,
+        ...(oldSettings.pwa || {}),
+      };
+
       const migrated = {
         notifications,
         versionCheck,
         ui,
         privacy,
+        pwa,
         version: SETTINGS_CONSTANTS.VERSION,
         updatedAt: Date.now(),
       };
@@ -542,6 +642,37 @@ export class UserSettingsManager {
     } catch (error) {
       console.error('Failed to import settings:', error);
       return false;
+    }
+  }
+
+  /**
+   * Notify PWA system about settings changes
+   */
+  private notifyPWASystem(updates: Partial<PWASettings>): void {
+    try {
+      // Notify Service Worker if available
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'PWA_SETTINGS_UPDATE',
+          settings: updates,
+          timestamp: Date.now(),
+        });
+      }
+
+      // Notify PWA version checker if available
+      const windowWithPWA = window as any;
+      if (windowWithPWA.beaverSystems?.pwaVersionChecker) {
+        const pwaVersionChecker = windowWithPWA.beaverSystems.pwaVersionChecker;
+        if (typeof pwaVersionChecker.updatePWAConfig === 'function') {
+          pwaVersionChecker.updatePWAConfig({
+            serviceWorkerEnabled: updates.enabled,
+            cacheInvalidationStrategy: updates.cacheStrategy,
+            forceSwUpdateOnVersionChange: updates.autoUpdate,
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to notify PWA system about settings changes:', error);
     }
   }
 }
@@ -623,6 +754,15 @@ function createFallbackSettingsManager(): UserSettingsManager {
       analytics: true,
       errorReporting: true,
       usageStats: false,
+    },
+    pwa: {
+      enabled: true,
+      offlineMode: true,
+      autoUpdate: true,
+      cacheStrategy: 'background',
+      backgroundSync: false,
+      pushNotifications: false,
+      debugMode: false,
     },
     version: '1.0.0',
     updatedAt: Date.now(),
