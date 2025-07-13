@@ -38,10 +38,25 @@ jobs:
         run: npm ci
         
       - name: Run quality checks
-        run: make quality
+        run: |
+          echo "🔍 Running comprehensive quality checks..."
+          echo "1/4 Linting..."
+          ./node_modules/.bin/eslint --ext .js,.jsx,.ts,.tsx,.astro src
+          echo "2/4 Format checking..."
+          ./node_modules/.bin/prettier --check "src/**/*.{js,jsx,ts,tsx,astro,json,md}"
+          echo "3/4 Type checking..."
+          ./node_modules/.bin/astro check --minimumSeverity error && ./node_modules/.bin/tsc --noEmit --skipLibCheck
+          echo "4/4 Testing..."
+          ./node_modules/.bin/vitest run
+          echo "✅ Quality checks completed"
         
       - name: Build project
-        run: make build
+        run: |
+          echo "🏗️ Building for production..."
+          npm run fetch-data
+          ./node_modules/.bin/astro build
+          npm run validate-version
+          echo "✅ Build completed successfully"
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
