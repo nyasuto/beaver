@@ -34,7 +34,6 @@ jobs:
           codecov-token: ${{ secrets.CODECOV_API_TOKEN }}
           enable-quality-dashboard: true
           deploy-to-pages: true
-          site-subdirectory: beaver
       
       - name: Verify outputs
         run: |
