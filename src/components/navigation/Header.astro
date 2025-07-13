@@ -231,6 +231,28 @@ const headerClasses = [
 
       <!-- Right side actions -->
       <div class="flex items-center space-x-2">
+        <!-- Settings button -->
+        <button
+          id="settings-toggle"
+          class="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 focus-visible"
+          aria-label="設定を開く"
+          title="設定"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            ></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+
         <!-- Theme toggle -->
         <ThemeToggle size="md" class="hidden sm:flex" />
         <ThemeToggle size="sm" class="sm:hidden" />
@@ -420,10 +442,11 @@ const headerClasses = [
 </header>
 
 <script>
-  // Mobile menu functionality
+  // Header functionality
   document.addEventListener('DOMContentLoaded', () => {
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const mobileMenu = document.getElementById('mobile-menu');
+    const settingsToggle = document.getElementById('settings-toggle');
 
     // Mobile menu toggle
     if (mobileMenuToggle && mobileMenu) {
@@ -459,5 +482,28 @@ const headerClasses = [
         }
       });
     }
+
+    // Settings toggle functionality
+    if (settingsToggle) {
+      settingsToggle.addEventListener('click', () => {
+        // Try to open settings using the global function
+        if (typeof (window as any).openSettings === 'function') {
+          (window as any).openSettings();
+        } else {
+          // Fallback: dispatch a custom event
+          document.dispatchEvent(new CustomEvent('settings:open'));
+        }
+      });
+    }
+
+    // Listen for settings:open events to show settings panel
+    document.addEventListener('settings:open', () => {
+      // Try to open settings via global function
+      if (typeof (window as any).openSettings === 'function') {
+        (window as any).openSettings();
+      } else {
+        console.warn('Settings system not available');
+      }
+    });
   });
 </script>

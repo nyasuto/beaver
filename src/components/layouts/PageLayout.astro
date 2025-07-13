@@ -10,6 +10,7 @@ import Header from '../navigation/Header.astro';
 import Footer from '../navigation/Footer.astro';
 import SkipLinks from '../accessibility/SkipLinks.astro';
 import UpdateNotification from '../UpdateNotification.astro';
+import Settings from '../Settings.astro';
 
 // Import global styles
 import '../../styles/global.css';
@@ -229,6 +230,9 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
     {/* Footer */}
     {showFooter && <Footer class={footerClass} />}
 
+    {/* Settings Panel */}
+    <Settings isOpen={false} position="right" size="md" modal={true} title="設定" />
+
     {/* Back to top button */}
     <button
       id="back-to-top"
@@ -306,16 +310,117 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
         }
       });
 
-      // Initialize VersionChecker for auto-reload functionality
-      // Simplified initialization using client-side only approach
-
-      // Wait for potential module loading and then initialize
+      // Initialize user settings and version checker system
       setTimeout(() => {
-        initializeAutoReload();
+        initializeUserSystemsIntegration();
       }, 1000);
 
-      function initializeAutoReload() {
-        // Simple version checking without external modules
+      async function initializeUserSystemsIntegration() {
+        try {
+          // Initialize user settings manager
+          const { createSettingsManager } = await import('../../lib/settings.js');
+          const settingsManager = createSettingsManager();
+
+          // Initialize version checker with settings
+          const { createVersionChecker } = await import('../../lib/version-checker.js');
+          const settings = settingsManager.getSettings();
+
+          const versionChecker = createVersionChecker({
+            versionUrl: '/beaver/version.json',
+            enabled: settings.versionCheck.enabled,
+            checkInterval: settings.versionCheck.interval,
+            maxRetries: settings.versionCheck.maxRetries,
+          });
+
+          // Start version checking if enabled
+          if (settings.versionCheck.enabled) {
+            versionChecker.start();
+          }
+
+          // Listen for settings changes
+          document.addEventListener('settings:version-check-toggled', (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const { enabled } = customEvent.detail;
+
+            if (enabled) {
+              versionChecker.updateConfig({ enabled: true });
+              versionChecker.start();
+              console.log('🔄 Version checking enabled');
+            } else {
+              versionChecker.stop();
+              versionChecker.updateConfig({ enabled: false });
+              console.log('🔄 Version checking disabled');
+            }
+          });
+
+          // Listen for notification settings changes
+          document.addEventListener('settings:notifications-toggled', (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const { enabled } = customEvent.detail;
+            console.log(`🔔 Notifications ${enabled ? 'enabled' : 'disabled'}`);
+          });
+
+          // Listen for version update events
+          document.addEventListener('version:update-available', (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const notificationSettings = settingsManager.getNotificationSettings();
+
+            if (notificationSettings.enabled) {
+              // Show update notification
+              const updateNotification = document.querySelector(
+                '[data-component="update-notification"]'
+              );
+              if (updateNotification) {
+                const showEvent = new CustomEvent('notification:show', {
+                  detail: {
+                    currentVersion: customEvent.detail.currentVersion,
+                    latestVersion: customEvent.detail.latestVersion,
+                    position: notificationSettings.position,
+                    animation: notificationSettings.animation,
+                    showVersionDetails: notificationSettings.showVersionDetails,
+                    autoHide: notificationSettings.autoHide,
+                  },
+                });
+                updateNotification.dispatchEvent(showEvent);
+              }
+            }
+          });
+
+          // Handle Page Visibility API for performance optimization
+          if (settings.versionCheck.checkOnlyWhenVisible) {
+            document.addEventListener('visibilitychange', () => {
+              if (document.hidden) {
+                versionChecker.stop();
+              } else if (settings.versionCheck.enabled) {
+                versionChecker.start();
+              }
+            });
+          }
+
+          // Expose controls globally for debugging and external use
+          (window as any).beaverSystems = {
+            settingsManager,
+            versionChecker,
+            openSettings: () => {
+              const settingsEvent = new CustomEvent('settings:open');
+              document.dispatchEvent(settingsEvent);
+            },
+            checkVersion: () => versionChecker.checkVersion(),
+            toggleNotifications: () => settingsManager.toggleNotifications(),
+            toggleVersionCheck: () => settingsManager.toggleVersionCheck(),
+          };
+
+          console.log('🔄 User systems integration initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize user systems:', error);
+
+          // Fallback to simple version checking if module loading fails
+          initializeFallbackVersionChecker();
+        }
+      }
+
+      // Fallback version checker (simplified, without settings integration)
+      function initializeFallbackVersionChecker() {
         let currentVersion: any = null;
         let checkInterval: NodeJS.Timeout | null = null;
 
@@ -330,7 +435,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
 
             if (currentVersion === null) {
               currentVersion = latestVersion;
-              console.log('🔄 Initial version loaded:', latestVersion.version);
+              console.log('🔄 Initial version loaded (fallback):', latestVersion.version);
               return;
             }
 
@@ -340,12 +445,11 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
               currentVersion.gitCommit !== latestVersion.gitCommit ||
               currentVersion.dataHash !== latestVersion.dataHash
             ) {
-              console.log('🔄 New version detected!', {
+              console.log('🔄 New version detected! (fallback)', {
                 current: currentVersion.version,
                 latest: latestVersion.version,
               });
 
-              // Dispatch update available event
               const updateEvent = new CustomEvent('version:update-available', {
                 detail: {
                   currentVersion: currentVersion,
@@ -354,27 +458,16 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
               });
               document.dispatchEvent(updateEvent);
 
-              // Update current version
               currentVersion = latestVersion;
             }
           } catch (error) {
-            console.warn('Version check failed:', error);
-
-            // Dispatch check failed event
-            const failedEvent = new CustomEvent('version:check-failed', {
-              detail: { error: error instanceof Error ? error.message : String(error) },
-            });
-            document.dispatchEvent(failedEvent);
+            console.warn('Version check failed (fallback):', error);
           }
         }
 
-        // Start checking immediately
         checkForUpdates();
-
-        // Set up periodic checking (every 30 seconds)
         checkInterval = setInterval(checkForUpdates, 30000);
 
-        // Expose control globally for debugging
         (window as any).autoReloadControl = {
           checkNow: checkForUpdates,
           stop: () => {
@@ -386,7 +479,7 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           getCurrentVersion: () => currentVersion,
         };
 
-        console.log('🔄 Auto-reload system initialized (simplified version)');
+        console.log('🔄 Fallback version checker initialized');
       }
     </script>
   </body>
