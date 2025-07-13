@@ -344,16 +344,33 @@ const actionsId = `${notificationId}-actions`;
     // Handle button clicks
     notification.addEventListener('click', (e: Event) => {
       const target = e.target as HTMLElement;
-      const action = target.getAttribute('data-action');
+
+      // Find the button with data-action (traverse up the DOM tree)
+      let actionElement = target;
+      let action = actionElement.getAttribute('data-action');
+
+      // Look up the DOM tree to find an element with data-action
+      while (!action && actionElement && actionElement !== notification) {
+        actionElement = actionElement.parentElement as HTMLElement;
+        if (actionElement) {
+          action = actionElement.getAttribute('data-action');
+        }
+      }
 
       switch (action) {
         case 'reload':
+          e.preventDefault();
+          e.stopPropagation();
           handleReload();
           break;
         case 'dismiss':
+          e.preventDefault();
+          e.stopPropagation();
           handleDismiss();
           break;
         case 'close':
+          e.preventDefault();
+          e.stopPropagation();
           handleClose();
           break;
       }
@@ -462,7 +479,13 @@ const actionsId = `${notificationId}-actions`;
         '[data-action="reload"]'
       ) as HTMLButtonElement;
       if (reloadButton) {
-        reloadButton.textContent = 'リロード中...';
+        // Preserve button structure and update only the text span
+        const textSpan = reloadButton.querySelector('span span');
+        if (textSpan) {
+          textSpan.textContent = 'リロード中...';
+        } else {
+          reloadButton.textContent = 'リロード中...';
+        }
         reloadButton.disabled = true;
       }
 
@@ -487,11 +510,20 @@ const actionsId = `${notificationId}-actions`;
       // Try to acknowledge the update if VersionChecker is available
       try {
         const windowWithVersionChecker = window as any;
-        if (
-          windowWithVersionChecker.versionChecker &&
-          typeof windowWithVersionChecker.versionChecker.acknowledgeUpdate === 'function'
-        ) {
-          windowWithVersionChecker.versionChecker.acknowledgeUpdate();
+        // Try multiple paths to find the version checker
+        let versionChecker = null;
+
+        if (windowWithVersionChecker.beaverSystems?.versionChecker) {
+          versionChecker = windowWithVersionChecker.beaverSystems.versionChecker;
+        } else if (windowWithVersionChecker.versionChecker) {
+          versionChecker = windowWithVersionChecker.versionChecker;
+        } else if (windowWithVersionChecker.autoReloadControl) {
+          // Fallback: manually clear the version update state
+          console.log('Using fallback version control for acknowledgment');
+        }
+
+        if (versionChecker && typeof versionChecker.acknowledgeUpdate === 'function') {
+          versionChecker.acknowledgeUpdate();
         }
       } catch (error) {
         console.warn('Could not acknowledge version update:', error);
