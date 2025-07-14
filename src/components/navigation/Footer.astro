@@ -5,6 +5,8 @@
  * Clean and minimal footer with essential information only.
  */
 
+import { getRepositoryUrls } from '../../lib/github/repository';
+
 export interface Props {
   class?: string;
 }
@@ -12,6 +14,7 @@ export interface Props {
 const { class: className = '' } = Astro.props;
 
 const currentYear = new Date().getFullYear();
+const repositoryInfo = getRepositoryUrls();
 ---
 
 <footer
@@ -41,7 +44,7 @@ const currentYear = new Date().getFullYear();
       <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
         {/* GitHub link */}
         <a
-          href="https://github.com/nyasuto/beaver"
+          href={repositoryInfo.repository}
           class="flex items-center space-x-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
           target="_blank"
           rel="noopener noreferrer"

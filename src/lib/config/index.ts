@@ -35,7 +35,7 @@ export const DEFAULT_CONFIG = {
   site: {
     title: 'Beaver Astro Edition',
     description: 'AI-first knowledge management system',
-    baseUrl: `https://nyasuto.github.io${process.env['BASE_URL'] ? process.env['BASE_URL'] : '/beaver'}`,
+    baseUrl: `https://${process.env['GITHUB_OWNER'] || 'nyasuto'}.github.io${process.env['BASE_URL'] || '/beaver'}`,
   },
   analytics: {
     enabled: true,

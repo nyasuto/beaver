@@ -212,12 +212,18 @@ export type RepositoryStats = z.infer<typeof RepositoryStatsSchema>;
 
 /**
  * Repository URL utilities
+ *
+ * Supports dynamic repository configuration via environment variables:
+ * - GITHUB_OWNER: Repository owner (default: 'nyasuto')
+ * - GITHUB_REPO: Repository name (default: 'beaver')
+ *
+ * This enables the same codebase to work for both:
+ * - Development: nyasuto/beaver
+ * - Deployment: nyasuto/hive (when environment variables are set)
  */
 export function getRepositoryUrls() {
-  // For now, use hardcoded values but with expanded return object
-  // Environment variable support will be added in the header component
-  const REPO_OWNER = 'nyasuto';
-  const REPO_NAME = 'beaver';
+  const REPO_OWNER = process.env['GITHUB_OWNER'] || 'nyasuto';
+  const REPO_NAME = process.env['GITHUB_REPO'] || 'beaver';
   const baseUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
 
   return {
