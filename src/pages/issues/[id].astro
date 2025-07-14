@@ -49,6 +49,15 @@ const description = `Detailed view of GitHub issue #${currentIssue.number} with 
 // Issue 本文の markdown 処理
 const processedBody = currentIssue.body ? await markdownToHtml(currentIssue.body) : '';
 
+// デバッグ用：markdown処理結果をコンソールに出力
+if (import.meta.env.DEV && currentIssue.number === 314) {
+  console.log('🔍 Debug Issue #314 Markdown Processing:');
+  console.log('Original body length:', currentIssue.body?.length || 0);
+  console.log('Processed body length:', processedBody.length);
+  console.log('First 200 chars of original:', currentIssue.body?.substring(0, 200));
+  console.log('First 200 chars of processed:', processedBody.substring(0, 200));
+}
+
 // Generate enhanced classification for the current issue
 let issueClassification: EnhancedIssueClassification | null = null;
 
@@ -209,7 +218,14 @@ try {
         <div class="prose dark:prose-invert max-w-none">
           {
             currentIssue.body ? (
-              <div set:html={processedBody} />
+              processedBody.length > 0 ? (
+                <div set:html={processedBody} />
+              ) : (
+                <div>
+                  <p class="text-red-600 mb-2">Markdown processing failed. Showing raw content:</p>
+                  <pre class="whitespace-pre-wrap text-sm">{currentIssue.body}</pre>
+                </div>
+              )
             ) : (
               <p class="text-muted">この Issue には説明がありません。</p>
             )
