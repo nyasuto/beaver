@@ -5,16 +5,32 @@
 
 import type { DocsConfig } from './src/lib/types/docs-config.js';
 
+// Get dynamic repository and base URL information from environment variables
+const getRepositoryInfo = () => {
+  const githubOwner = process.env['GITHUB_OWNER'] || 'nyasuto';
+  const githubRepo = process.env['GITHUB_REPO'] || 'beaver';
+  const githubBranch = process.env['GITHUB_REF_NAME'] || 'main';
+  
+  return {
+    owner: githubOwner,
+    repo: githubRepo,
+    branch: githubBranch,
+    githubUrl: `https://github.com/${githubOwner}/${githubRepo}`,
+    editBaseUrl: `https://github.com/${githubOwner}/${githubRepo}/edit/${githubBranch}`,
+  };
+};
+
 // Get base URL from environment variable (for dynamic deployment paths)
 const baseUrl = process.env['BASE_URL'] ? process.env['BASE_URL'] : '/beaver';
+const repoInfo = getRepositoryInfo();
 
 export const docsConfig: DocsConfig = {
   project: {
-    name: 'Beaver',
+    name: repoInfo.repo.charAt(0).toUpperCase() + repoInfo.repo.slice(1), // Capitalize repo name
     emoji: '🦫',
-    description: 'Beaverの完全なドキュメント集 - セットアップから高度な機能まで',
-    githubUrl: 'https://github.com/nyasuto/beaver',
-    editBaseUrl: 'https://github.com/nyasuto/beaver/edit/main',
+    description: `${repoInfo.repo}の完全なドキュメント集 - セットアップから高度な機能まで`,
+    githubUrl: repoInfo.githubUrl,
+    editBaseUrl: repoInfo.editBaseUrl,
     homeUrl: `${baseUrl}/`,
   },
   

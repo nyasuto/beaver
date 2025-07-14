@@ -13,8 +13,13 @@ Beaverをローカル環境で開発・カスタマイズするためのセッ�
 ### 1. リポジトリクローン
 
 ```bash
-git clone https://github.com/your-org/beaver-astro
-cd beaver-astro
+# Beaver環境の場合
+git clone https://github.com/nyasuto/beaver
+cd beaver
+
+# Hive環境の場合
+git clone https://github.com/nyasuto/hive
+cd hive
 ```
 
 ### 2. 依存関係インストール
@@ -34,8 +39,14 @@ cp .env.example .env
 ```bash
 # .env
 GITHUB_TOKEN=ghp_your_github_token_here
-PUBLIC_SITE_URL=https://your-org.github.io/beaver
-PUBLIC_REPOSITORY=your-org/your-repo
+
+# Beaver環境の場合
+PUBLIC_SITE_URL=https://nyasuto.github.io/beaver
+PUBLIC_REPOSITORY=nyasuto/beaver
+
+# Hive環境の場合  
+PUBLIC_SITE_URL=https://nyasuto.github.io/hive
+PUBLIC_REPOSITORY=nyasuto/hive
 
 # 品質分析ダッシュボード (オプション)
 CODECOV_API_TOKEN=your_codecov_api_token_here  # Codecov API token (新版)
