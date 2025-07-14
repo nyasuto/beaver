@@ -85,7 +85,11 @@ const {
 
           {metaInfo && !metaInfo.isDataAvailable && (
             <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
-              ⚠️ 静的データが未生成です
+              <div class="font-medium">⚠️ 静的データが未生成です</div>
+              <div class="text-xs mt-1 text-warning-500">
+                GitHub API データの取得に失敗しました。GitHub
+                Actions設定またはアクセストークンを確認してください。
+              </div>
             </div>
           )}
         </div>

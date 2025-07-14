@@ -45,7 +45,8 @@ try {
 } catch (error) {
   console.error('メタデータの読み込みに失敗しました:', error);
   isDataAvailable = false;
-  warningMessage = '静的データの読み込みに失敗しました';
+  warningMessage =
+    '静的データの読み込みに失敗しました。データ取得プロセスでエラーが発生した可能性があります。';
 }
 
 // 最新の Issue を先頭に表示

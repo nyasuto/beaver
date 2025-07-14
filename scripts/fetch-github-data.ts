@@ -44,20 +44,30 @@ function validateEnvironment() {
     GITHUB_REPO: process.env['GITHUB_REPO'],
   };
 
+  // デバッグ情報を出力（トークンは部分的にマスク）
+  console.log('🔍 環境変数の検証:');
+  console.log(`  - GITHUB_TOKEN: ${env.GITHUB_TOKEN ? `${env.GITHUB_TOKEN.substring(0, 4)}...` : 'undefined'}`);
+  console.log(`  - GITHUB_OWNER: ${env.GITHUB_OWNER || 'undefined'}`);
+  console.log(`  - GITHUB_REPO: ${env.GITHUB_REPO || 'undefined'}`);
+  console.log(`  - CI環境: ${process.env['CI'] || 'false'}`);
+
   try {
-    return EnvSchema.parse(env);
+    const validatedEnv = EnvSchema.parse(env);
+    console.log('✅ 環境変数の検証が完了しました');
+    return validatedEnv;
   } catch (error) {
-    console.warn('⚠️ 環境変数が設定されていません:');
+    console.error('❌ 環境変数の検証に失敗しました:');
     if (error instanceof z.ZodError) {
       error.issues.forEach((err) => {
-        console.warn(`  - ${err.path.join('.')}: ${err.message}`);
+        console.error(`  - ${err.path.join('.')}: ${err.message}`);
       });
     }
-    console.warn('\nGitHub データの取得をスキップします。');
-    console.warn('実際のデータを取得するには以下の環境変数を設定してください:');
-    console.warn('  - GITHUB_TOKEN: GitHub Personal Access Token');
-    console.warn('  - GITHUB_OWNER: リポジトリのオーナー名');
-    console.warn('  - GITHUB_REPO: リポジトリ名');
+    console.error('\n🚨 データ取得プロセスがスキップされました。');
+    console.error('GitHub Actions環境では以下の環境変数が自動設定されているはずです:');
+    console.error('  - GITHUB_TOKEN: GitHub組み込みトークン');
+    console.error('  - GITHUB_OWNER: リポジトリオーナー（${{ github.repository_owner }}）');
+    console.error('  - GITHUB_REPO: リポジトリ名（${{ github.event.repository.name }}）');
+    console.error('\nこのエラーが発生した場合は、GitHub Actions設定を確認してください。');
     return null;
   }
 }
@@ -96,7 +106,16 @@ async function fetchAndSaveGitHubData() {
   
   // 環境変数が設定されていない場合はスキップ
   if (!env) {
-    console.log('📋 サンプルデータを使用してビルドを継続します。');
+    console.error('🚨 環境変数の検証に失敗したため、データ取得をスキップします。');
+    console.error('⚠️ 静的データが生成されないため、アプリケーションでエラーが発生します。');
+    
+    // CI環境では失敗として扱う
+    if (process.env['CI'] === 'true') {
+      console.error('💀 CI環境では環境変数の設定が必須です。プロセスを終了します。');
+      process.exit(1);
+    }
+    
+    console.log('📋 開発環境: サンプルデータを使用してビルドを継続します。');
     return;
   }
   
@@ -345,7 +364,15 @@ async function fetchAndSaveGitHubData() {
       }
     }
     
-    process.exit(1);
+    // CI環境では確実に失敗として扱う
+    if (process.env['CI'] === 'true') {
+      console.error('💀 CI環境でのデータ取得失敗は致命的エラーです。');
+      console.error('🔧 GitHub Actions設定またはトークン権限を確認してください。');
+      process.exit(1);
+    }
+    
+    console.error('💡 開発環境では処理を継続しますが、アプリケーションにエラーが発生する可能性があります。');
+    console.error('🔧 GitHub_TOKEN、GITHUB_OWNER、GITHUB_REPOの設定を確認してください。');
   }
 }
 
