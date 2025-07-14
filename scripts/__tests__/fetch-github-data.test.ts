@@ -275,8 +275,8 @@ describe('fetch-github-data スクリプト', () => {
       await fetchAndSaveGitHubData();
 
       expect(mockIssuesService.fetchIssuesOptimized).toHaveBeenCalledWith(
-        'nyasuto',
-        'beaver', 
+        'test-owner',
+        'test-repo', 
         {
           state: 'open',
           per_page: 100,
