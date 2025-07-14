@@ -18,12 +18,13 @@ import {
   CodecovRateLimitError,
   CodecovApiError,
 } from '../../lib/quality/codecov';
-
-// リポジトリメタデータの読み込み
-import githubMetadata from '../../data/github/metadata.json';
+import { getRepositoryUrls } from '../../lib/github/repository';
 
 const title = '品質分析ダッシュボード';
 const description = 'Codecov APIを使用してコードカバレッジの品質分析を表示';
+
+// Get dynamic repository URLs based on environment variables
+const repoUrls = getRepositoryUrls();
 
 // Codecovからの品質メトリクスを取得
 let qualityData = null;
@@ -102,10 +103,11 @@ const coverageHistoryData = qualityData.history.map(entry => ({
   // Only add branch coverage if we have actual data, don't fabricate it
 }));
 
-// 動的Codecov URL生成
+// 動的Codecov URL生成 - 環境変数ベースのリポジトリ情報を使用
 const generateCodecovUrl = () => {
-  const { owner, name } = githubMetadata.repository;
-  return `https://codecov.io/gh/${owner}/${name}`;
+  // Extract owner/repo from the repository URL
+  const repoPath = repoUrls.repository.replace('https://github.com/', '');
+  return `https://codecov.io/gh/${repoPath}`;
 };
 
 const codecovUrl = generateCodecovUrl();
