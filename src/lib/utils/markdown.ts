@@ -5,6 +5,7 @@
  */
 
 import { remark } from 'remark';
+import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import DOMPurify from 'dompurify';
@@ -34,15 +35,19 @@ async function initializePurify() {
  */
 export async function markdownToHtml(markdown: string): Promise<string> {
   try {
-    // Convert markdown to HTML using remark
-    const result = await remark().use(remarkRehype).use(rehypeStringify).process(markdown);
+    // Convert markdown to HTML using remark with GitHub Flavored Markdown support
+    const result = await remark()
+      .use(remarkGfm)
+      .use(remarkRehype)
+      .use(rehypeStringify)
+      .process(markdown);
 
     // Initialize purify if not already done
     if (!purify) {
       await initializePurify();
     }
 
-    // Sanitize the HTML to prevent XSS attacks
+    // Sanitize the HTML to prevent XSS attacks with more permissive settings
     const sanitizedHtml = purify.sanitize(result.toString(), {
       ALLOWED_TAGS: [
         'p',
@@ -64,15 +69,37 @@ export async function markdownToHtml(markdown: string): Promise<string> {
         'li',
         'a',
         'blockquote',
+        'div',
+        'span',
+        'table',
+        'thead',
+        'tbody',
+        'tr',
+        'td',
+        'th',
+        'hr',
+        'del',
+        'ins',
       ],
-      ALLOWED_ATTR: ['href', 'title', 'target', 'rel'],
+      ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class', 'id'],
       ALLOW_DATA_ATTR: false,
     });
+
+    // Debug logging for development
+    if (import.meta.env.DEV) {
+      console.log('🔍 Markdown Processing Debug:', {
+        inputLength: markdown.length,
+        outputLength: sanitizedHtml.length,
+        inputPreview: markdown.substring(0, 100),
+        outputPreview: sanitizedHtml.substring(0, 100),
+      });
+    }
 
     return sanitizedHtml;
   } catch (error) {
     console.error('Failed to convert markdown to HTML:', error);
-    return markdown; // Return original markdown if conversion fails
+    // Return a better fallback that preserves line breaks
+    return `<pre style="white-space: pre-wrap; font-family: inherit;">${markdown}</pre>`;
   }
 }
 
