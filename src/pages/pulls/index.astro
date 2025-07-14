@@ -3,56 +3,43 @@
  * Pull Requests List Page
  *
  * Displays a comprehensive list of GitHub Pull Requests with filtering and sorting capabilities.
- * Part of Issue #314 - PR管理機能 Phase 2 implementation.
+ * Uses pre-generated static data for optimal performance and GitHub Pages compatibility.
  */
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
-import { GitHubPullsService } from '../../lib/github/pulls';
-import { createGitHubClient } from '../../lib/github/client';
 import { resolveUrl } from '../../lib/utils/url';
 import type { EnhancedPullRequest } from '../../lib/schemas/pulls';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
-// Initialize GitHub client and service
+// Load Pull Requests data from static JSON file
 let pulls: EnhancedPullRequest[] = [];
 let error: string | null = null;
 
 try {
-  // Get repository info from environment or configuration
-  const owner = 'nyasuto'; // TODO: Make this configurable
-  const repo = 'beaver'; // TODO: Make this configurable
+  const dataPath = join(process.cwd(), 'src/data/github/pulls.json');
 
-  // Get GitHub token from environment variables (type assertion for Astro env)
-  const githubToken = (import.meta.env as any).GITHUB_TOKEN || '';
+  if (existsSync(dataPath)) {
+    const rawData = readFileSync(dataPath, 'utf-8');
+    const pullsData = JSON.parse(rawData);
 
-  const clientResult = createGitHubClient({
-    token: githubToken,
-    owner,
-    repo,
-  });
-
-  if (!clientResult.success) {
-    error = clientResult.error.message;
-  } else {
-    const pullsService = new GitHubPullsService(clientResult.data);
-
-    // Fetch enhanced pull requests with default parameters
-    const result = await pullsService.fetchEnhancedPullRequests(owner, repo, {
-      state: 'open',
-      sort: 'created',
-      direction: 'desc',
-      per_page: 50,
-      page: 1,
-    });
-
-    if (result.success) {
-      pulls = result.data;
+    // Ensure we have an array of pull requests
+    if (Array.isArray(pullsData)) {
+      pulls = pullsData;
+      console.log(`✅ Loaded ${pulls.length} pull requests from static data`);
     } else {
-      error = result.error.message;
+      console.warn('⚠️ Pull requests data is not an array');
+      pulls = [];
     }
+  } else {
+    console.warn('⚠️ Pull requests data file not found:', dataPath);
+    console.warn('Run "npm run fetch-data" to generate GitHub data');
+    pulls = [];
   }
 } catch (e) {
-  error = e instanceof Error ? e.message : 'Failed to fetch pull requests';
-  console.error('Pull requests fetch error:', e);
+  error = e instanceof Error ? e.message : 'Failed to load pull requests data';
+  console.error('Pull requests data load error:', e);
+  pulls = [];
 }
 
 const title = 'Pull Requests | Beaver';
@@ -115,11 +102,11 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
       <div class="flex items-center gap-3">
         <span class="text-sm font-medium text-heading">Filter:</span>
         <div class="flex items-center gap-2">
-          <button class="filter-btn active" data-state="open" aria-pressed="true">
+          <button class="filter-btn" data-state="open" aria-pressed="false">
             <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span>
             Open
           </button>
-          <button class="filter-btn" data-state="closed" aria-pressed="false">
+          <button class="filter-btn active" data-state="closed" aria-pressed="true">
             <span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-2"></span>
             Closed
           </button>
@@ -448,7 +435,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
     const searchInput = document.getElementById('search-input') as HTMLInputElement;
     const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
 
-    let currentFilter = 'open';
+    let currentFilter = 'closed';
     let currentSort = 'created';
     let searchQuery = '';
 

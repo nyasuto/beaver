@@ -80,7 +80,7 @@ export const PullRequestSchema = z.object({
   head: BranchRefSchema,
   base: BranchRefSchema,
   draft: z.boolean(),
-  mergeable: z.boolean().nullable(),
+  mergeable: z.boolean().nullable().optional(),
   mergeable_state: z.string().optional(),
   merged: z.boolean().optional(),
   merge_commit_sha: z.string().nullable().optional(),

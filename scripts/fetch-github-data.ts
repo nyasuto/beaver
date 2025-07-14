@@ -5,6 +5,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { createGitHubClient } from '../src/lib/github/client.js';
 import { GitHubIssuesService } from '../src/lib/github/issues.js';
+import { GitHubPullsService } from '../src/lib/github/pulls.js';
 import { GitHubConfigSchema } from '../src/lib/schemas/config.js';
 import { createTestClassificationEngine } from '../src/lib/classification/engine.js';
 import { z } from 'zod';
@@ -179,6 +180,57 @@ async function fetchAndSaveGitHubData() {
       );
     }
 
+    // Pull Requests の取得
+    console.log('📥 GitHub Pull Requests を取得中...');
+    
+    const pullsService = new GitHubPullsService(clientResult.data);
+    
+    // すべての状態のPull Requestを取得（open, closed, merged）
+    const pullsResults = await Promise.all([
+      pullsService.fetchEnhancedPullRequests(config.owner, config.repo, {
+        state: 'open',
+        per_page: 100,
+        sort: 'updated',
+        direction: 'desc'
+      }),
+      pullsService.fetchEnhancedPullRequests(config.owner, config.repo, {
+        state: 'closed',
+        per_page: 100,
+        sort: 'updated', 
+        direction: 'desc'
+      })
+    ]);
+
+    const allPulls = [];
+    for (const [index, result] of pullsResults.entries()) {
+      if (!result.success) {
+        console.warn(`⚠️ Pull Requests取得でエラーが発生しました (${index === 0 ? 'open' : 'closed'}):`, result.error.message);
+        continue;
+      }
+      allPulls.push(...result.data);
+    }
+
+    console.log(`✅ ${allPulls.length} 件のPull Request を取得しました`);
+
+    // Pull Requests データを保存
+    saveJsonFile(
+      join(dataDir, 'pulls.json'),
+      allPulls,
+      'Pull Requests データ'
+    );
+
+    // 個別 Pull Request ファイルの保存
+    const pullsDir = join(dataDir, 'pulls');
+    ensureDirectoryExists(pullsDir);
+
+    for (const pr of allPulls) {
+      saveJsonFile(
+        join(pullsDir, `${pr.number}.json`),
+        pr,
+        `Pull Request #${pr.number}`
+      );
+    }
+
     // 個別 Issue ファイルの保存（分類結果を含む）
     const issuesDir = join(dataDir, 'issues');
     ensureDirectoryExists(issuesDir);
@@ -199,7 +251,7 @@ async function fetchAndSaveGitHubData() {
       );
     }
 
-    // 統計情報の計算（オープンIssueのみなので閉じたIssueは0）
+    // 統計情報の計算
     const openIssues = issues; // すべてオープンIssue
     const closedIssues: typeof issues = []; // 閉じたIssueは取得していない
     const labelCounts = issues.reduce((acc, issue) => {
@@ -209,6 +261,11 @@ async function fetchAndSaveGitHubData() {
       return acc;
     }, {} as Record<string, number>);
 
+    // Pull Requests統計の計算
+    const openPulls = allPulls.filter(pr => pr.state === 'open');
+    const closedPulls = allPulls.filter(pr => pr.state === 'closed' && !pr.merged_at);
+    const mergedPulls = allPulls.filter(pr => pr.merged_at);
+
     // メタデータの保存
     const metadata = {
       lastUpdated: new Date().toISOString(),
@@ -217,13 +274,22 @@ async function fetchAndSaveGitHubData() {
         name: config.repo,
       },
       statistics: {
-        total: issues.length,
-        open: openIssues.length,
-        closed: closedIssues.length,
+        issues: {
+          total: issues.length,
+          open: openIssues.length,
+          closed: closedIssues.length,
+        },
+        pullRequests: {
+          total: allPulls.length,
+          open: openPulls.length,
+          closed: closedPulls.length,
+          merged: mergedPulls.length,
+        },
         labels: Object.keys(labelCounts).length,
       },
       labelCounts,
       lastIssue: issues.length > 0 ? issues[0] : null,
+      lastPullRequest: allPulls.length > 0 ? allPulls[0] : null,
     };
 
     saveJsonFile(
@@ -235,9 +301,15 @@ async function fetchAndSaveGitHubData() {
     // 成功メッセージ
     console.log('\n🎉 GitHub データの取得と保存が完了しました!');
     console.log(`📊 統計情報:`);
-    console.log(`   - 総 Issue 数: ${metadata.statistics.total}`);
-    console.log(`   - オープン: ${metadata.statistics.open}`);
-    console.log(`   - クローズ: ${metadata.statistics.closed}`);
+    console.log(`   Issues:`);
+    console.log(`     - 総数: ${metadata.statistics.issues.total}`);
+    console.log(`     - オープン: ${metadata.statistics.issues.open}`);
+    console.log(`     - クローズ: ${metadata.statistics.issues.closed}`);
+    console.log(`   Pull Requests:`);
+    console.log(`     - 総数: ${metadata.statistics.pullRequests.total}`);
+    console.log(`     - オープン: ${metadata.statistics.pullRequests.open}`);
+    console.log(`     - クローズ: ${metadata.statistics.pullRequests.closed}`);
+    console.log(`     - マージ済み: ${metadata.statistics.pullRequests.merged}`);
     console.log(`   - ラベル数: ${metadata.statistics.labels}`);
     console.log(`   - 最終更新: ${new Date(metadata.lastUpdated).toLocaleString('ja-JP')}`);
 
