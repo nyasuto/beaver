@@ -339,13 +339,15 @@ export class UserSettingsManager {
     const oldCacheStrategy = this.settings.pwa.cacheStrategy;
     const oldAutoReload = this.settings.pwa.autoReload;
 
-    console.log('🔧 updatePWASettings called:', {
-      updates,
-      oldAutoReload,
-      currentPWA: this.settings.pwa,
-      updateKeys: Object.keys(updates),
-      updateValues: Object.values(updates),
-    });
+    if (this.settings.pwa.debugMode) {
+      console.log('🔧 updatePWASettings called:', {
+        updates,
+        oldAutoReload,
+        currentPWA: this.settings.pwa,
+        updateKeys: Object.keys(updates),
+        updateValues: Object.values(updates),
+      });
+    }
 
     // Ensure we have a pwa object
     if (!this.settings.pwa) {
@@ -353,10 +355,12 @@ export class UserSettingsManager {
       this.settings.pwa = { ...SETTINGS_CONSTANTS.DEFAULTS.pwa };
     }
 
-    console.log('🔧 Before merge:', {
-      existingPWA: this.settings.pwa,
-      updateData: updates,
-    });
+    if (this.settings.pwa.debugMode) {
+      console.log('🔧 Before merge:', {
+        existingPWA: this.settings.pwa,
+        updateData: updates,
+      });
+    }
 
     this.settings.pwa = {
       ...this.settings.pwa,
@@ -365,12 +369,14 @@ export class UserSettingsManager {
 
     this.settings.updatedAt = Date.now();
 
-    console.log('🔧 PWA settings after update:', {
-      newAutoReload: this.settings.pwa.autoReload,
-      newAutoReloadDelay: this.settings.pwa.autoReloadDelay,
-      allPWASettings: this.settings.pwa,
-      settingsTimestamp: this.settings.updatedAt,
-    });
+    if (this.settings.pwa.debugMode) {
+      console.log('🔧 PWA settings after update:', {
+        newAutoReload: this.settings.pwa.autoReload,
+        newAutoReloadDelay: this.settings.pwa.autoReloadDelay,
+        allPWASettings: this.settings.pwa,
+        settingsTimestamp: this.settings.updatedAt,
+      });
+    }
 
     this.saveSettings();
 

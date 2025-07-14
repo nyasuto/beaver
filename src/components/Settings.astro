@@ -950,12 +950,15 @@ const headerID = `${settingsId}-header`;
           : target.value;
 
     // Debug logging
-    console.log('🔧 Setting change:', {
-      settingPath,
-      value,
-      type: target.type,
-      element: target.id,
-    });
+    const debugMode = settingsManager.getPWASettings().debugMode;
+    if (debugMode) {
+      console.log('🔧 Setting change:', {
+        settingPath,
+        value,
+        type: target.type,
+        element: target.id,
+      });
+    }
 
     const pathParts = settingPath.split('.');
     const [section, subsection, key] = pathParts;
@@ -998,10 +1001,14 @@ const headerID = `${settingsId}-header`;
       // Special handling for autoReloadDelay (convert seconds to milliseconds)
       if (pwaKey === 'autoReloadDelay') {
         const delayMs = typeof value === 'number' ? value * 1000 : parseInt(String(value)) * 1000;
-        console.log('🔧 PWA autoReloadDelay update:', { pwaKey, value, delayMs });
+        if (debugMode) {
+          console.log('🔧 PWA autoReloadDelay update:', { pwaKey, value, delayMs });
+        }
         settingsManager.updatePWASettings({ [pwaKey as keyof PWASettings]: delayMs });
       } else {
-        console.log('🔧 PWA setting update:', { pwaKey, value, type: typeof value });
+        if (debugMode) {
+          console.log('🔧 PWA setting update:', { pwaKey, value, type: typeof value });
+        }
         settingsManager.updatePWASettings({ [pwaKey as keyof PWASettings]: value });
       }
 

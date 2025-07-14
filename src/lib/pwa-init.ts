@@ -90,14 +90,18 @@ export class PWASystem {
    */
   public async initialize(): Promise<void> {
     if (this.initialized) {
-      console.warn('PWA System already initialized');
+      if (this.config.debug) {
+        console.warn('PWA System already initialized');
+      }
       return;
     }
 
     try {
       // Check browser compatibility
       if (!this.checkCompatibility()) {
-        console.warn('❌ PWA not supported in this browser');
+        if (this.config.debug) {
+          console.warn('❌ PWA not supported in this browser');
+        }
         return;
       }
 
@@ -107,7 +111,9 @@ export class PWASystem {
 
       // Check if PWA is enabled in settings
       if (!pwaSettings.enabled) {
-        console.log('ℹ️ PWA disabled in user settings');
+        if (this.config.debug) {
+          console.log('ℹ️ PWA disabled in user settings');
+        }
         return;
       }
 
@@ -188,7 +194,9 @@ export class PWASystem {
     document.addEventListener('settings:pwa-cache-strategy-changed', (e: Event) => {
       const customEvent = e as CustomEvent;
       // Cache strategy changes are handled by Service Worker automatically
-      console.log('PWA cache strategy changed:', customEvent.detail.cacheStrategy);
+      if (this.config.debug) {
+        console.log('PWA cache strategy changed:', customEvent.detail.cacheStrategy);
+      }
     });
   }
 
@@ -288,7 +296,9 @@ export class PWASystem {
   public async enablePWA(): Promise<void> {
     try {
       // PWA functionality is handled by Service Worker automatically
-      console.log('✅ PWA enabled - using native Service Worker updates');
+      if (this.config.debug) {
+        console.log('✅ PWA enabled - using native Service Worker updates');
+      }
     } catch (error) {
       console.error('❌ Failed to enable PWA:', error);
     }
@@ -304,7 +314,9 @@ export class PWASystem {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map(registration => registration.unregister()));
       }
-      console.log('⏹️ PWA disabled');
+      if (this.config.debug) {
+        console.log('⏹️ PWA disabled');
+      }
     } catch (error) {
       console.error('❌ Failed to disable PWA:', error);
     }
@@ -364,9 +376,13 @@ export class PWASystem {
       await Promise.all(
         cacheNames.filter(name => name.includes('beaver')).map(name => caches.delete(name))
       );
-      console.log('🧹 PWA caches cleared');
+      if (this.config.debug) {
+        console.log('🧹 PWA caches cleared');
+      }
     } catch (error) {
-      console.warn('Failed to clear caches:', error);
+      if (this.config.debug) {
+        console.warn('Failed to clear caches:', error);
+      }
     }
   }
 
@@ -449,11 +465,13 @@ export class PWASystem {
           }
           return response;
         } catch (error) {
-          console.error('❌ PWA: Polling failed', {
-            url,
-            error: error instanceof Error ? error.message : String(error),
-            timestamp: new Date().toISOString(),
-          });
+          if (this.config.debug) {
+            console.error('❌ PWA: Polling failed', {
+              url,
+              error: error instanceof Error ? error.message : String(error),
+              timestamp: new Date().toISOString(),
+            });
+          }
           throw error;
         }
       }
@@ -493,7 +511,9 @@ export class PWASystem {
         };
       }
     } catch (error) {
-      console.warn('Failed to load PWA version state:', error);
+      if (this.config.debug) {
+        console.warn('Failed to load PWA version state:', error);
+      }
     }
 
     // Return default state
@@ -511,7 +531,9 @@ export class PWASystem {
     try {
       localStorage.setItem(this.VERSION_STORAGE_KEY, JSON.stringify(this.versionState));
     } catch (error) {
-      console.warn('Failed to save PWA version state:', error);
+      if (this.config.debug) {
+        console.warn('Failed to save PWA version state:', error);
+      }
     }
   }
 
@@ -633,7 +655,9 @@ export class PWASystem {
         clearVersionState: () => {
           localStorage.removeItem(this.VERSION_STORAGE_KEY);
           this.versionState = this.loadVersionState();
-          console.log('🗑️ PWA: Version state cleared');
+          if (this.config.debug) {
+            console.log('🗑️ PWA: Version state cleared');
+          }
         },
       };
     }
@@ -663,7 +687,9 @@ export class PWASystem {
         delete windowWithBeaver.beaverPWA;
       }
 
-      console.log('🔄 PWA System destroyed');
+      if (this.config.debug) {
+        console.log('🔄 PWA System destroyed');
+      }
     } catch (error) {
       console.error('❌ Failed to destroy PWA System:', error);
     }

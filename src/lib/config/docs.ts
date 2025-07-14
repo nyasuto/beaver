@@ -29,7 +29,9 @@ async function loadTsConfig(): Promise<Partial<DocsConfig> | null> {
  * Priority: auto-detection → beaver.yml → docs.config.ts
  */
 async function loadDocsConfig(): Promise<DocsConfig> {
-  console.log('🔧 Loading documentation configuration...');
+  if (import.meta.env.DEV) {
+    console.log('🔧 Loading documentation configuration...');
+  }
 
   // 1. Start with auto-detected configuration
   const autoConfig = await autoDetectConfig();
