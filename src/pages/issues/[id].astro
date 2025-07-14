@@ -50,7 +50,7 @@ const description = `Detailed view of GitHub issue #${currentIssue.number} with 
 const processedBody = currentIssue.body ? await markdownToHtml(currentIssue.body) : '';
 
 // デバッグ用：markdown処理結果をコンソールに出力
-if (import.meta.env.DEV && currentIssue.number === 314) {
+if (import.meta.env?.DEV && currentIssue.number === 314) {
   console.log('🔍 Debug Issue #314 Markdown Processing:');
   console.log('Original body length:', currentIssue.body?.length || 0);
   console.log('Processed body length:', processedBody.length);
