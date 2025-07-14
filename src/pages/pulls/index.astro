@@ -7,14 +7,27 @@
  */
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
+import PageHeader from '../../components/ui/PageHeader.astro';
 import { resolveUrl } from '../../lib/utils/url';
 import type { EnhancedPullRequest } from '../../lib/schemas/pulls';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import {
+  getStaticMetadata,
+  getLastUpdated,
+  getDataAvailabilityStatus,
+} from '../../lib/data/github';
 
 // Load Pull Requests data from static JSON file
 let pulls: EnhancedPullRequest[] = [];
 let error: string | null = null;
+let metadata = null;
+let lastUpdated = null;
+
+// データの包括的な利用可能性チェック
+const dataStatus = getDataAvailabilityStatus();
+let isDataAvailable = dataStatus.isDataAvailable;
+let warningMessage = '';
 
 try {
   const dataPath = join(process.cwd(), 'src/data/github/pulls.json');
@@ -36,10 +49,23 @@ try {
     console.warn('Run "npm run fetch-data" to generate GitHub data');
     pulls = [];
   }
+
+  // メタデータの読み込み
+  if (dataStatus.hasStaticData) {
+    metadata = getStaticMetadata();
+    lastUpdated = getLastUpdated();
+
+    // リポジトリが一致しない場合の警告メッセージ
+    if (dataStatus.shouldShowWarning) {
+      warningMessage = `静的データは ${metadata.repository.owner}/${metadata.repository.name} のものです`;
+    }
+  }
 } catch (e) {
   error = e instanceof Error ? e.message : 'Failed to load pull requests data';
   console.error('Pull requests data load error:', e);
   pulls = [];
+  isDataAvailable = false;
+  warningMessage = 'Pull Requestsデータの読み込みに失敗しました';
 }
 
 const title = 'Pull Requests | Beaver';
@@ -55,45 +81,51 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
   maxWidth="7xl"
   padding="lg"
 >
-  <!-- Pull Requests Header -->
-  <div class="mb-8">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-heading">Pull Requests</h1>
-        <p class="text-muted mt-2">Track and manage GitHub Pull Requests directly within Beaver</p>
-      </div>
+  <PageHeader
+    title="Pull Requests"
+    description="Track and manage GitHub Pull Requests directly within Beaver"
+    icon="🔀"
+    metaInfo={{
+      totalCount: pulls.length,
+      openCount: pulls.filter(pr => pr.state === 'open').length,
+      closedCount: pulls.filter(pr => pr.state === 'closed').length,
+      lastUpdated: lastUpdated || undefined,
+      repositoryOwner: metadata?.repository?.owner,
+      repositoryName: metadata?.repository?.name,
+      isDataAvailable: isDataAvailable,
+    }}
+    warningMessage={warningMessage || undefined}
+    actionSlot={true}
+  >
+    <div slot="actions" class="flex items-center gap-3">
+      <a
+        href="https://github.com/nyasuto/beaver/compare"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-primary"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        New Pull Request
+      </a>
 
-      <!-- Quick Actions -->
-      <div class="flex items-center gap-3">
-        <a
-          href="https://github.com/nyasuto/beaver/compare"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn btn-primary"
-        >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          New Pull Request
-        </a>
-
-        <button id="refresh-pulls" class="btn btn-outline" aria-label="Refresh pull requests">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            ></path>
-          </svg>
-        </button>
-      </div>
+      <button id="refresh-pulls" class="btn btn-outline" aria-label="Refresh pull requests">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          ></path>
+        </svg>
+      </button>
     </div>
-  </div>
+  </PageHeader>
 
   <!-- Filters and Controls -->
   <div class="card mb-6">

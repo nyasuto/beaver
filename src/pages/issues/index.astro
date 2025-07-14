@@ -11,8 +11,8 @@ import PageHeader from '../../components/ui/PageHeader.astro';
 import {
   getIssuesOnlyWithFallback,
   getStaticMetadata,
-  hasStaticData,
   getLastUpdated,
+  getDataAvailabilityStatus,
 } from '../../lib/data/github';
 import { resolveUrl } from '../../lib/utils/url';
 import { getFilterOptions } from '../../lib/utils/search';
@@ -26,16 +26,26 @@ const description = 'AI搭載の洞察でGitHubのIssueを閲覧・分析';
 const allIssues = getIssuesOnlyWithFallback();
 let metadata = null;
 let lastUpdated = null;
-let isDataAvailable = hasStaticData();
+
+// データの包括的な利用可能性チェック
+const dataStatus = getDataAvailabilityStatus();
+let isDataAvailable = dataStatus.isDataAvailable;
+let warningMessage = '';
 
 try {
-  if (isDataAvailable) {
+  if (dataStatus.hasStaticData) {
     metadata = getStaticMetadata();
     lastUpdated = getLastUpdated();
+
+    // リポジトリが一致しない場合の警告メッセージ
+    if (dataStatus.shouldShowWarning) {
+      warningMessage = `静的データは ${metadata.repository.owner}/${metadata.repository.name} のものです`;
+    }
   }
 } catch (error) {
   console.error('メタデータの読み込みに失敗しました:', error);
   isDataAvailable = false;
+  warningMessage = '静的データの読み込みに失敗しました';
 }
 
 // 最新の Issue を先頭に表示
@@ -147,6 +157,7 @@ const filterOptions = getFilterOptions(issues);
       repositoryName: metadata?.repository?.name,
       isDataAvailable: isDataAvailable,
     }}
+    warningMessage={warningMessage || undefined}
   />
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 space-lg">
