@@ -240,8 +240,8 @@ describe('Configuration Module Index', () => {
       it('サイト設定のデフォルト値が適切であること', () => {
         expect(DEFAULT_CONFIG.site.title).toBe('Beaver Astro Edition');
         expect(DEFAULT_CONFIG.site.description).toBe('AI-first knowledge management system');
-        // BASE_URL環境変数に応じた動的なbaseUrl設定をテスト
-        expect(DEFAULT_CONFIG.site.baseUrl).toContain('https://nyasuto.github.io');
+        // GITHUB_OWNER環境変数に応じた動的なbaseUrl設定をテスト（テスト環境では'test-owner'が設定される）
+        expect(DEFAULT_CONFIG.site.baseUrl).toContain('.github.io');
 
         // Validate title is meaningful
         expect(DEFAULT_CONFIG.site.title.length).toBeGreaterThan(0);

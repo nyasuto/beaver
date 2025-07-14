@@ -6,7 +6,10 @@ import { generateVersionInfo } from './scripts/generate-version.js';
 import fs from 'fs';
 import path from 'path';
 
+// Dynamic configuration based on environment
 const baseUrl = process.env['BASE_URL'] || '/beaver';
+const siteOwner = process.env.GITHUB_OWNER || 'nyasuto';
+const siteUrl = `https://${siteOwner}.github.io`;
 
 // Version generation integration
 function versionIntegration() {
@@ -230,7 +233,7 @@ export default defineConfig({
     }),
   ],
   output: 'static',
-  site: 'https://nyasuto.github.io',
+  site: siteUrl,
   base: baseUrl,
   build: {
     assets: 'assets',
