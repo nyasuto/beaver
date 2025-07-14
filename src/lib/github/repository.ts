@@ -214,6 +214,8 @@ export type RepositoryStats = z.infer<typeof RepositoryStatsSchema>;
  * Repository URL utilities
  */
 export function getRepositoryUrls() {
+  // For now, use hardcoded values but with expanded return object
+  // Environment variable support will be added in the header component
   const REPO_OWNER = 'nyasuto';
   const REPO_NAME = 'beaver';
   const baseUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
@@ -225,6 +227,9 @@ export function getRepositoryUrls() {
     commits: `${baseUrl}/commits`,
     releases: `${baseUrl}/releases`,
     actions: `${baseUrl}/actions`,
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    fullName: `${REPO_OWNER}/${REPO_NAME}`,
   };
 }
 
