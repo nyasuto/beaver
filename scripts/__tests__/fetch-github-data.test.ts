@@ -81,8 +81,8 @@ describe('fetch-github-data スクリプト', () => {
 
       await fetchAndSaveGitHubData();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ 環境変数が設定されていません:');
-      expect(consoleLogSpy).toHaveBeenCalledWith('📋 サンプルデータを使用してビルドを継続します。');
+      expect(consoleLogSpy).toHaveBeenCalledWith('🔍 環境変数の検証:');
+      expect(consoleLogSpy).toHaveBeenCalledWith('📋 開発環境: サンプルデータを使用してビルドを継続します。');
       expect(mockCreateGitHubClient).not.toHaveBeenCalled();
     });
 
@@ -94,9 +94,9 @@ describe('fetch-github-data スクリプト', () => {
 
       await fetchAndSaveGitHubData();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ 環境変数が設定されていません:');
-      expect(consoleWarnSpy).toHaveBeenCalledWith('  - GITHUB_OWNER: Invalid input: expected string, received undefined');
-      expect(consoleWarnSpy).toHaveBeenCalledWith('  - GITHUB_REPO: Invalid input: expected string, received undefined');
+      expect(consoleLogSpy).toHaveBeenCalledWith('🔍 環境変数の検証:');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('  - GITHUB_OWNER: Invalid input: expected string, received undefined');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('  - GITHUB_REPO: Invalid input: expected string, received undefined');
     });
 
     it('すべての環境変数が正しく設定されている場合は処理を続行する', async () => {
@@ -215,6 +215,9 @@ describe('fetch-github-data スクリプト', () => {
     });
 
     it('GitHub クライアントの作成に失敗した場合はエラーを表示して終了する', async () => {
+      // CI環境をシミュレート
+      process.env.CI = 'true';
+      
       mockCreateGitHubClient.mockReturnValue({
         success: false,
         error: new Error('認証エラー'),
@@ -230,6 +233,9 @@ describe('fetch-github-data スクリプト', () => {
     });
 
     it('Issues の取得に失敗した場合はエラーを表示して終了する', async () => {
+      // CI環境をシミュレート
+      process.env.CI = 'true';
+      
       const mockClient = { id: 'mock-client' };
       mockCreateGitHubClient.mockReturnValue({
         success: true,
@@ -237,6 +243,10 @@ describe('fetch-github-data スクリプト', () => {
       });
 
       const mockIssuesService = {
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+          success: false,
+          error: new Error('API エラー'),
+        }),
         getIssues: vi.fn().mockResolvedValue({
           success: false,
           error: new Error('API レート制限'),
@@ -540,6 +550,9 @@ describe('fetch-github-data スクリプト', () => {
     });
 
     it('ファイル保存エラーの場合は詳細を表示して終了する', async () => {
+      // CI環境をシミュレート
+      process.env.CI = 'true';
+      
       const mockClient = { id: 'mock-client' };
       mockCreateGitHubClient.mockReturnValue({
         success: true,

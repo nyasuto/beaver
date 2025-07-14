@@ -69,7 +69,8 @@ try {
   console.error('Pull requests data load error:', e);
   pulls = [];
   isDataAvailable = false;
-  warningMessage = 'Pull Requestsデータの読み込みに失敗しました';
+  warningMessage =
+    'Pull Requestsデータの読み込みに失敗しました。データ取得プロセスでエラーが発生した可能性があります。';
 }
 
 const title = 'Pull Requests | Beaver';
