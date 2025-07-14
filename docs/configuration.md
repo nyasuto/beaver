@@ -9,8 +9,15 @@ Beaverの設定オプションとカスタマイズ方法について説明し�
 ```bash
 # GitHub API アクセス
 GITHUB_TOKEN=ghp_your_github_token_here
-PUBLIC_SITE_URL=https://your-org.github.io/beaver
-PUBLIC_REPOSITORY=your-org/your-repo
+
+# リポジトリ設定（環境に応じて選択）
+# Beaver環境
+PUBLIC_SITE_URL=https://nyasuto.github.io/beaver
+PUBLIC_REPOSITORY=nyasuto/beaver
+
+# Hive環境  
+# PUBLIC_SITE_URL=https://nyasuto.github.io/hive
+# PUBLIC_REPOSITORY=nyasuto/hive
 ```
 
 ### オプション設定
@@ -100,8 +107,8 @@ export default {
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://your-org.github.io',
-  base: '/beaver',
+  site: 'https://nyasuto.github.io',
+  base: '/beaver', // or '/hive' for Hive environment
   build: {
     assets: 'assets'
   },
@@ -229,13 +236,15 @@ PUBLIC_SITE_URL=http://localhost:3000/beaver
 **staging:**
 ```bash
 NODE_ENV=staging  
-PUBLIC_SITE_URL=https://staging.your-org.github.io/beaver
+# Staging environment (adapt repository name as needed)
+PUBLIC_SITE_URL=https://staging.nyasuto.github.io/beaver
 ```
 
 **production:**
 ```bash
 NODE_ENV=production
-PUBLIC_SITE_URL=https://your-org.github.io/beaver
+# Production environment (adapt repository name as needed)
+PUBLIC_SITE_URL=https://nyasuto.github.io/beaver
 ```
 
 ## 🔒 セキュリティ設定
