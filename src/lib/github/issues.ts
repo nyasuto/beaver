@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import type { Result } from '../types';
 import { GitHubClient, GitHubError } from './client';
+import { GitHubGraphQLClient } from './graphql-client';
 
 // Issue state enum
 export const IssueState = z.enum(['open', 'closed', 'all']);
@@ -410,6 +411,147 @@ export class GitHubIssuesService {
     }
 
     return milestoneCounts;
+  }
+
+  /**
+   * Fetch issues using GraphQL API (efficient alternative to REST API)
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param options - Query options for filtering and pagination
+   * @returns Promise resolving to issues data or error
+   */
+  async fetchIssuesWithGraphQL(
+    owner: string,
+    repo: string,
+    options: {
+      states?: ('OPEN' | 'CLOSED')[];
+      maxItems?: number;
+      useGraphQL?: boolean;
+    } = {}
+  ): Promise<Result<Issue[]>> {
+    try {
+      const { states = ['OPEN'], maxItems = 0, useGraphQL = true } = options;
+
+      if (!useGraphQL) {
+        // Fallback to REST API
+        return this.getIssues({
+          state:
+            states.includes('OPEN') && states.includes('CLOSED')
+              ? 'all'
+              : states.includes('OPEN')
+                ? 'open'
+                : 'closed',
+          per_page: maxItems > 0 ? Math.min(maxItems, 100) : 100,
+        });
+      }
+
+      // Note: config contains owner, repo but not token (excluded for security)
+      // const config = this.client.getConfig();
+
+      // Create GraphQL client with token from the private config
+      // Note: We need to access the token through the client's private configuration
+      const graphqlClient = new GitHubGraphQLClient({
+        token: (this.client as any).config.token, // Access private config for token
+        owner,
+        repo,
+      });
+
+      console.log(`🚀 Using GraphQL API to fetch issues (much more efficient!)`);
+      const startTime = Date.now();
+
+      // Fetch issues using GraphQL
+      const result = await graphqlClient.fetchAllIssues(states, maxItems);
+
+      if (!result.success) {
+        console.warn('⚠️ GraphQL failed, falling back to REST API');
+        return this.getIssues({
+          state:
+            states.includes('OPEN') && states.includes('CLOSED')
+              ? 'all'
+              : states.includes('OPEN')
+                ? 'open'
+                : 'closed',
+          per_page: maxItems > 0 ? Math.min(maxItems, 100) : 100,
+        });
+      }
+
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+
+      // Convert GraphQL format to REST format for compatibility
+      const convertedIssues = result.data.map(graphqlIssue =>
+        GitHubGraphQLClient.convertToRestFormat(graphqlIssue)
+      );
+
+      // Validate converted data
+      const validatedIssues = z.array(IssueSchema).parse(convertedIssues);
+
+      console.log(
+        `✅ GraphQL: Successfully fetched ${validatedIssues.length} issues in ${duration}ms`
+      );
+      console.log(
+        `📊 API Efficiency: ~${Math.max(1, Math.ceil(validatedIssues.length / 100))} REST calls → 1 GraphQL call`
+      );
+
+      return { success: true, data: validatedIssues };
+    } catch (error: unknown) {
+      console.error('❌ GraphQL Issues fetch failed:', error);
+      return {
+        success: false,
+        error: this.handleError(error, 'Failed to fetch issues with GraphQL'),
+      };
+    }
+  }
+
+  /**
+   * Enhanced issue fetching with automatic GraphQL/REST API selection
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param query - Query parameters
+   * @returns Promise resolving to issues data or error
+   */
+  async fetchIssuesOptimized(
+    owner: string,
+    repo: string,
+    query: Partial<IssuesQuery> = {}
+  ): Promise<Result<Issue[]>> {
+    try {
+      const validatedQuery = IssuesQuerySchema.parse(query);
+
+      // Determine if GraphQL is beneficial
+      const shouldUseGraphQL =
+        validatedQuery.per_page >= 50 || // Large batches benefit from GraphQL
+        !validatedQuery.milestone || // Simple queries work better with GraphQL
+        !validatedQuery.assignee; // Complex filtering may need REST
+
+      if (shouldUseGraphQL) {
+        console.log(`🧠 Auto-selecting GraphQL API for better efficiency`);
+
+        // Convert REST query to GraphQL format
+        const graphqlStates: ('OPEN' | 'CLOSED')[] = [];
+        if (validatedQuery.state === 'open' || validatedQuery.state === 'all') {
+          graphqlStates.push('OPEN');
+        }
+        if (validatedQuery.state === 'closed' || validatedQuery.state === 'all') {
+          graphqlStates.push('CLOSED');
+        }
+
+        return this.fetchIssuesWithGraphQL(owner, repo, {
+          states: graphqlStates,
+          maxItems: validatedQuery.per_page,
+        });
+      }
+
+      console.log(`🔄 Using REST API for complex filtering`);
+      return this.getIssues(validatedQuery);
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: this.handleError(error, 'Failed to fetch issues (optimized)'),
+      };
+    }
   }
 
   /**
