@@ -1,0 +1,75 @@
+---
+/**
+ * Pull Request Detail Page
+ *
+ * Displays detailed information about a specific GitHub Pull Request.
+ * This is a placeholder for Phase 3 implementation.
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import { resolveUrl } from '../../lib/utils/url';
+
+// Static paths for Phase 3 placeholder - generate a few common PR numbers
+export async function getStaticPaths() {
+  // Generate paths for common PR numbers (placeholder for Phase 3)
+  return [
+    { params: { number: '1' } },
+    { params: { number: '2' } },
+    { params: { number: '3' } },
+    { params: { number: '322' } }, // Current PR
+    { params: { number: '323' } }, // Recently created issue
+  ];
+}
+
+const { number } = Astro.params;
+
+if (!number || isNaN(parseInt(number))) {
+  return Astro.redirect(resolveUrl('/pulls'));
+}
+
+const pullNumber = parseInt(number);
+const title = `Pull Request #${pullNumber} | Beaver`;
+const description = `Detailed view of GitHub Pull Request #${pullNumber}`;
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  showHeader={true}
+  showFooter={true}
+  showSearch={false}
+  maxWidth="7xl"
+  padding="lg"
+>
+  <div class="card">
+    <div class="text-center py-12">
+      <svg
+        class="w-12 h-12 text-muted mx-auto mb-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+      </svg>
+      <h1 class="text-2xl font-bold text-heading mb-2">Pull Request #{pullNumber}</h1>
+      <p class="text-muted mb-4">
+        Detailed PR view is coming in Phase 3 of the PR management feature.
+      </p>
+      <div class="flex items-center justify-center gap-3">
+        <a href={resolveUrl('/pulls')} class="btn btn-outline"> Back to Pull Requests </a>
+        <a
+          href={`https://github.com/nyasuto/beaver/pull/${pullNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary"
+        >
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</PageLayout>

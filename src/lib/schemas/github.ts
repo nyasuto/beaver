@@ -55,6 +55,36 @@ export {
 } from '../github/repository';
 
 export {
+  PullRequestSchema,
+  EnhancedPullRequestSchema,
+  PullsQuerySchema,
+  ReviewSchema,
+  BranchRefSchema,
+  PullRequestState,
+  PullRequestSort,
+  PullRequestDirection,
+  type PullRequest,
+  type EnhancedPullRequest,
+  type Review,
+  type BranchRef,
+  type PullsQuery,
+  type PullRequestFilters,
+  type CreatePullRequestParams,
+  type UpdatePullRequestParams,
+  type PullRequestStateType,
+  type PullRequestSortType,
+  type PullRequestDirectionType,
+  type ReviewState,
+} from '../schemas/pulls';
+
+export {
+  GitHubPullsService,
+  formatPullRequestState,
+  getRelativeTime,
+  needsAttention,
+} from '../github/pulls';
+
+export {
   createGitHubServices,
   createGitHubServicesFromEnv,
   GITHUB_API_CONFIG,

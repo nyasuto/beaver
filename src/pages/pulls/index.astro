@@ -1,0 +1,515 @@
+---
+/**
+ * Pull Requests List Page
+ *
+ * Displays a comprehensive list of GitHub Pull Requests with filtering and sorting capabilities.
+ * Part of Issue #314 - PR管理機能 Phase 2 implementation.
+ */
+
+import PageLayout from '../../components/layouts/PageLayout.astro';
+import { GitHubPullsService } from '../../lib/github/pulls';
+import { createGitHubClient } from '../../lib/github/client';
+import { resolveUrl } from '../../lib/utils/url';
+import type { EnhancedPullRequest } from '../../lib/schemas/pulls';
+
+// Initialize GitHub client and service
+let pulls: EnhancedPullRequest[] = [];
+let error: string | null = null;
+
+try {
+  // Get repository info from environment or configuration
+  const owner = 'nyasuto'; // TODO: Make this configurable
+  const repo = 'beaver'; // TODO: Make this configurable
+
+  // Get GitHub token from environment variables (type assertion for Astro env)
+  const githubToken = (import.meta.env as any).GITHUB_TOKEN || '';
+
+  const clientResult = createGitHubClient({
+    token: githubToken,
+    owner,
+    repo,
+  });
+
+  if (!clientResult.success) {
+    error = clientResult.error.message;
+  } else {
+    const pullsService = new GitHubPullsService(clientResult.data);
+
+    // Fetch enhanced pull requests with default parameters
+    const result = await pullsService.fetchEnhancedPullRequests(owner, repo, {
+      state: 'open',
+      sort: 'created',
+      direction: 'desc',
+      per_page: 50,
+      page: 1,
+    });
+
+    if (result.success) {
+      pulls = result.data;
+    } else {
+      error = result.error.message;
+    }
+  }
+} catch (e) {
+  error = e instanceof Error ? e.message : 'Failed to fetch pull requests';
+  console.error('Pull requests fetch error:', e);
+}
+
+const title = 'Pull Requests | Beaver';
+const description = 'Manage and track GitHub Pull Requests directly within Beaver';
+---
+
+<PageLayout
+  title={title}
+  description={description}
+  showHeader={true}
+  showFooter={true}
+  showSearch={false}
+  maxWidth="7xl"
+  padding="lg"
+>
+  <!-- Pull Requests Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-heading">Pull Requests</h1>
+        <p class="text-muted mt-2">Track and manage GitHub Pull Requests directly within Beaver</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-3">
+        <a
+          href="https://github.com/nyasuto/beaver/compare"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          New Pull Request
+        </a>
+
+        <button id="refresh-pulls" class="btn btn-outline" aria-label="Refresh pull requests">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Controls -->
+  <div class="card mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <!-- State Filters -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-medium text-heading">Filter:</span>
+        <div class="flex items-center gap-2">
+          <button class="filter-btn active" data-state="open" aria-pressed="true">
+            <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span>
+            Open
+          </button>
+          <button class="filter-btn" data-state="closed" aria-pressed="false">
+            <span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-2"></span>
+            Closed
+          </button>
+          <button class="filter-btn" data-state="merged" aria-pressed="false">
+            <span class="w-2 h-2 bg-purple-500 rounded-full inline-block mr-2"></span>
+            Merged
+          </button>
+          <button class="filter-btn" data-state="draft" aria-pressed="false">
+            <span class="w-2 h-2 bg-gray-400 rounded-full inline-block mr-2"></span>
+            Draft
+          </button>
+        </div>
+      </div>
+
+      <!-- Sort Controls -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-medium text-heading">Sort:</span>
+        <select id="sort-select" class="input input-sm" aria-label="Sort pull requests">
+          <option value="created">Recently Created</option>
+          <option value="updated">Recently Updated</option>
+          <option value="title">Title (A-Z)</option>
+        </select>
+      </div>
+
+      <!-- Search -->
+      <div class="flex-1 max-w-md">
+        <div class="relative">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search pull requests..."
+            class="input pl-10 w-full"
+            aria-label="Search pull requests"
+          />
+          <svg
+            class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  {
+    error ? (
+      <div class="card">
+        <div class="text-center py-12">
+          <svg
+            class="w-12 h-12 text-red-500 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h3 class="text-lg font-semibold text-heading mb-2">Failed to Load Pull Requests</h3>
+          <p class="text-muted mb-4">{error}</p>
+          <button onclick="window.location.reload()" class="btn btn-primary">
+            Try Again
+          </button>
+        </div>
+      </div>
+    ) : pulls.length === 0 ? (
+      <div class="card">
+        <div class="text-center py-12">
+          <svg
+            class="w-12 h-12 text-muted mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+            />
+          </svg>
+          <h3 class="text-lg font-semibold text-heading mb-2">No Pull Requests Found</h3>
+          <p class="text-muted mb-4">There are no pull requests matching your current filters.</p>
+          <a
+            href="https://github.com/nyasuto/beaver/compare"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-primary"
+          >
+            Create First Pull Request
+          </a>
+        </div>
+      </div>
+    ) : (
+      <div class="space-y-4" id="pulls-list">
+        {pulls.map(pull => (
+          <article
+            class="card hover:border-primary-300 transition-colors duration-200"
+            data-pull-id={pull.id}
+            data-state={pull.status}
+          >
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  {pull.status === 'open' && (
+                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
+                      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z" />
+                    </svg>
+                  )}
+
+                  {pull.status === 'merged' && (
+                    <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M7.27 2.047a1 1 0 0 1 1.46 0l6.345 6.77c.6.638.146 1.683-.73 1.683H11.5v1a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1H1.654C.78 10.5.326 9.455.924 8.817L7.27 2.047z" />
+                    </svg>
+                  )}
+
+                  {pull.status === 'closed' && (
+                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                    </svg>
+                  )}
+
+                  {pull.draft && (
+                    <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2zm-3.5-7h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z" />
+                    </svg>
+                  )}
+
+                  <h3 class="text-lg font-semibold text-heading hover:text-primary-600 transition-colors">
+                    <a href={resolveUrl(`/pulls/${pull.number}`)} class="hover:underline">
+                      {pull.title}
+                    </a>
+                  </h3>
+
+                  <span class="text-sm text-muted">#{pull.number}</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-muted">
+                  <span>
+                    opened{' '}
+                    {Math.floor(
+                      (new Date().getTime() - new Date(pull.created_at).getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )}{' '}
+                    days ago by
+                    <a
+                      href={`https://github.com/${pull.user.login}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      @{pull.user.login}
+                    </a>
+                  </span>
+
+                  {pull.merged_at && (
+                    <span class="text-purple-600">
+                      merged{' '}
+                      {Math.floor(
+                        (new Date().getTime() - new Date(pull.merged_at).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )}{' '}
+                      days ago
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {pull.labels && pull.labels.length > 0 && (
+                <div class="flex flex-wrap gap-1 ml-4">
+                  {pull.labels.slice(0, 3).map(label => (
+                    <span
+                      class="px-2 py-1 text-xs rounded-full font-medium"
+                      style={`background-color: #${label.color}20; color: #${label.color}`}
+                    >
+                      {label.name}
+                    </span>
+                  ))}
+                  {pull.labels.length > 3 && (
+                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-medium">
+                      +{pull.labels.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div class="flex items-center gap-2 mb-3 text-sm">
+              <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-md font-mono text-xs">
+                {pull.branch_info.head_branch}
+              </span>
+              <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17 8l4 4m0 0l-4 4m4-4H3"
+                />
+              </svg>
+              <span class="px-2 py-1 bg-green-50 text-green-700 rounded-md font-mono text-xs">
+                {pull.branch_info.base_branch}
+              </span>
+
+              {pull.conflicts && (
+                <span class="px-2 py-1 bg-red-50 text-red-700 rounded-md text-xs font-medium">
+                  Has conflicts
+                </span>
+              )}
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4 text-sm text-muted">
+                {pull.comments_count > 0 && (
+                  <div class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    <span>{pull.comments_count}</span>
+                  </div>
+                )}
+
+                {pull.reviews_count > 0 && (
+                  <div class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span>{pull.reviews_count} reviews</span>
+                  </div>
+                )}
+
+                {pull.changed_files && (
+                  <div class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <span>{pull.changed_files} files</span>
+                  </div>
+                )}
+              </div>
+
+              <div class="flex items-center gap-2">
+                <a
+                  href={pull.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-outline btn-sm"
+                  aria-label={`View PR #${pull.number} on GitHub`}
+                >
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    )
+  }
+
+  <!-- Pagination placeholder for future implementation -->
+  {
+    pulls.length >= 50 && (
+      <div class="flex justify-center mt-8">
+        <div class="flex items-center gap-2">
+          <button class="btn btn-outline btn-sm" disabled>
+            Previous
+          </button>
+          <span class="px-3 py-1 text-sm text-muted">Page 1 of 1</span>
+          <button class="btn btn-outline btn-sm" disabled>
+            Next
+          </button>
+        </div>
+      </div>
+    )
+  }
+</PageLayout>
+
+<style>
+  .filter-btn {
+    @apply px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center;
+  }
+
+  .filter-btn.active {
+    @apply bg-primary-50 border-primary-300 text-primary-700;
+  }
+
+  .filter-btn[aria-pressed='true'] {
+    @apply bg-primary-100 border-primary-400 text-primary-800;
+  }
+</style>
+
+<script>
+  // Client-side JavaScript for interactivity
+  document.addEventListener('DOMContentLoaded', () => {
+    // Filter functionality
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const pullsList = document.getElementById('pulls-list');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
+
+    let currentFilter = 'open';
+    let currentSort = 'created';
+    let searchQuery = '';
+
+    // Filter button handlers
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const state = button.getAttribute('data-state');
+        if (state) {
+          currentFilter = state;
+          updateFilterButtons();
+          filterPulls();
+        }
+      });
+    });
+
+    // Search handler
+    searchInput?.addEventListener('input', e => {
+      searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+      filterPulls();
+    });
+
+    // Sort handler
+    sortSelect?.addEventListener('change', e => {
+      currentSort = (e.target as HTMLSelectElement).value;
+      sortPulls();
+    });
+
+    function updateFilterButtons() {
+      filterButtons.forEach(button => {
+        const state = button.getAttribute('data-state');
+        const isActive = state === currentFilter;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    function filterPulls() {
+      const pulls = pullsList?.querySelectorAll('[data-pull-id]');
+
+      pulls?.forEach(pull => {
+        const pullElement = pull as HTMLElement;
+        const state = pullElement.getAttribute('data-state');
+        const title = pullElement.querySelector('h3')?.textContent?.toLowerCase() || '';
+
+        const matchesFilter = currentFilter === 'all' || state === currentFilter;
+        const matchesSearch = searchQuery === '' || title.includes(searchQuery);
+
+        pullElement.style.display = matchesFilter && matchesSearch ? 'block' : 'none';
+      });
+    }
+
+    function sortPulls() {
+      // In a real implementation, this would re-fetch data with new sort parameters
+      // For now, we'll just show a message that sorting is applied
+      console.log(`Sorting by: ${currentSort}`);
+    }
+
+    // Refresh button
+    const refreshButton = document.getElementById('refresh-pulls');
+    refreshButton?.addEventListener('click', () => {
+      window.location.reload();
+    });
+  });
+</script>
