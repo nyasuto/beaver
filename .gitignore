@@ -145,3 +145,6 @@ src/data/cache/*.json
 # Generated GitHub data files
 src/data/github/
 !src/data/github/README.md
+
+# Auto-generated version file
+public/version.json
