@@ -125,20 +125,41 @@ async function fetchAndSaveGitHubData() {
     // Issues サービスの作成と実行（オープンIssueのみ）
     const issuesService = new GitHubIssuesService(clientResult.data);
     
-    // オープンなIssueのみを取得
-    const openIssuesResult = await issuesService.getIssues({ 
-      state: 'open', 
-      per_page: 100,
-      sort: 'updated',
-      direction: 'desc'
-    });
+    // GraphQL API を優先して使用（Rate Limit対策）
+    console.log('🚀 GraphQL API を使用してIssue取得を最適化...');
+    const optimizedIssuesResult = await issuesService.fetchIssuesOptimized(
+      config.owner,
+      config.repo,
+      {
+        state: 'open',
+        per_page: 100,
+        sort: 'updated',
+        direction: 'desc'
+      }
+    );
     
-    if (!openIssuesResult.success) {
-      throw new Error(`GitHub API エラー (open issues): ${openIssuesResult.error.message}`);
+    let issues;
+    if (!optimizedIssuesResult.success) {
+      console.warn('⚠️ 最適化されたAPI取得に失敗、標準REST APIにフォールバック...');
+      
+      // フォールバック: 従来のREST API
+      const openIssuesResult = await issuesService.getIssues({
+        state: 'open', 
+        per_page: 100,
+        sort: 'updated',
+        direction: 'desc'
+      });
+      
+      if (!openIssuesResult.success) {
+        throw new Error(`GitHub API エラー (open issues): ${openIssuesResult.error.message}`);
+      }
+      
+      console.log(`✅ REST API fallback: ${openIssuesResult.data.length} 件のオープン Issue を取得しました`);
+      issues = openIssuesResult.data;
+    } else {
+      console.log(`✅ GraphQL API: ${optimizedIssuesResult.data.length} 件のオープン Issue を取得しました`);
+      issues = optimizedIssuesResult.data;
     }
-    
-    const issues = openIssuesResult.data;
-    console.log(`✅ ${issues.length} 件のオープン Issue を取得しました`);
 
     // Issue分類処理を実行
     console.log('🤖 Issue分類エンジンを開始...');
