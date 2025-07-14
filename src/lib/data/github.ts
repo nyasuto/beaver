@@ -216,6 +216,50 @@ export function hasStaticData(): boolean {
 }
 
 /**
+ * 現在の環境設定と静的データのリポジトリが一致するかを確認
+ *
+ * @returns リポジトリが一致する場合、または設定が見つからない場合 true
+ */
+export function isDataRepositoryMatched(): boolean {
+  try {
+    // 静的データが存在しない場合は一致していると見なす
+    if (!hasStaticData()) {
+      return true;
+    }
+
+    const metadata = getStaticMetadata();
+
+    // 環境変数から現在の設定を取得
+    const currentOwner = process.env['GITHUB_OWNER'] || 'nyasuto';
+    const currentRepo = process.env['GITHUB_REPO'] || 'beaver';
+
+    // リポジトリ情報が一致するかチェック
+    return metadata.repository.owner === currentOwner && metadata.repository.name === currentRepo;
+  } catch (error) {
+    console.warn('リポジトリ一致確認でエラーが発生しました:', error);
+    // エラーの場合は一致していると見なして警告を表示しない
+    return true;
+  }
+}
+
+/**
+ * データの利用可能性を包括的にチェック
+ *
+ * @returns {object} データの状態情報
+ */
+export function getDataAvailabilityStatus() {
+  const hasData = hasStaticData();
+  const isMatched = isDataRepositoryMatched();
+
+  return {
+    hasStaticData: hasData,
+    isRepositoryMatched: isMatched,
+    isDataAvailable: hasData && isMatched,
+    shouldShowWarning: hasData && !isMatched,
+  };
+}
+
+/**
  * フォールバック用のサンプルデータを取得
  *
  * @returns サンプル Issue データ
