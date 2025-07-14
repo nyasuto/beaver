@@ -21,8 +21,12 @@ try {
   const owner = 'nyasuto'; // TODO: Make this configurable
   const repo = 'beaver'; // TODO: Make this configurable
 
+  // Get GitHub token from environment variables using a safer approach
+  const env = import.meta.env;
+  const githubToken = env['GITHUB_TOKEN'] || '';
+
   const clientResult = createGitHubClient({
-    token: import.meta.env['GITHUB_TOKEN'] || '',
+    token: githubToken,
     owner,
     repo,
   });

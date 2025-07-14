@@ -9,6 +9,18 @@
 import PageLayout from '../../components/layouts/PageLayout.astro';
 import { resolveUrl } from '../../lib/utils/url';
 
+// Static paths for Phase 3 placeholder - generate a few common PR numbers
+export async function getStaticPaths() {
+  // Generate paths for common PR numbers (placeholder for Phase 3)
+  return [
+    { params: { number: '1' } },
+    { params: { number: '2' } },
+    { params: { number: '3' } },
+    { params: { number: '322' } }, // Current PR
+    { params: { number: '323' } }, // Recently created issue
+  ];
+}
+
 const { number } = Astro.params;
 
 if (!number || isNaN(parseInt(number))) {
