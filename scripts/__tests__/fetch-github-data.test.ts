@@ -118,6 +118,10 @@ describe('fetch-github-data スクリプト', () => {
           success: true,
           data: [],
         }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+          success: true,
+          data: [],
+        }),
       };
       mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
 
@@ -157,6 +161,10 @@ describe('fetch-github-data スクリプト', () => {
           success: true,
           data: [],
         }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+          success: true,
+          data: [],
+        }),
       };
       mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
 
@@ -182,6 +190,10 @@ describe('fetch-github-data スクリプト', () => {
 
       const mockIssuesService = {
         getIssues: vi.fn().mockResolvedValue({
+          success: true,
+          data: [],
+        }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
           success: true,
           data: [],
         }),
@@ -253,17 +265,25 @@ describe('fetch-github-data スクリプト', () => {
           success: true,
           data: [],
         }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+          success: true,
+          data: [],
+        }),
       };
       mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
 
       await fetchAndSaveGitHubData();
 
-      expect(mockIssuesService.getIssues).toHaveBeenCalledWith({
-        state: 'open',
-        per_page: 100,
-        sort: 'updated',
-        direction: 'desc'
-      });
+      expect(mockIssuesService.fetchIssuesOptimized).toHaveBeenCalledWith(
+        'nyasuto',
+        'beaver', 
+        {
+          state: 'open',
+          per_page: 100,
+          sort: 'updated',
+          direction: 'desc'
+        }
+      );
     });
   });
 
@@ -306,6 +326,10 @@ describe('fetch-github-data スクリプト', () => {
 
       const mockIssuesService = {
         getIssues: vi.fn().mockResolvedValue({
+          success: true,
+          data: sampleIssues,
+        }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
           success: true,
           data: sampleIssues,
         }),
@@ -485,7 +509,8 @@ describe('fetch-github-data スクリプト', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledWith('🚀 GitHub データの取得を開始します...');
       expect(consoleLogSpy).toHaveBeenCalledWith('📥 GitHub Issues を取得中...');
-      expect(consoleLogSpy).toHaveBeenCalledWith('✅ 2 件のオープン Issue を取得しました');
+      expect(consoleLogSpy).toHaveBeenCalledWith('🚀 GraphQL API を使用してIssue取得を最適化...');
+      expect(consoleLogSpy).toHaveBeenCalledWith('✅ GraphQL API: 2 件のオープン Issue を取得しました');
       expect(consoleLogSpy).toHaveBeenCalledWith('\n🎉 GitHub データの取得と保存が完了しました!');
     });
 
@@ -526,6 +551,10 @@ describe('fetch-github-data スクリプト', () => {
           success: true,
           data: [],
         }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+          success: true,
+          data: [],
+        }),
       };
       mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
 
@@ -555,6 +584,10 @@ describe('fetch-github-data スクリプト', () => {
           success: true,
           data: [],
         }),
+        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+          success: true,
+          data: [],
+        }),
       };
       mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
 
@@ -567,8 +600,8 @@ describe('fetch-github-data スクリプト', () => {
 
       await fetchAndSaveGitHubData();
 
+      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ データ取得中にエラーが発生しました:', expect.any(Error));
       expect(consoleErrorSpy).toHaveBeenCalledWith('エラー詳細:', '予期しないエラー');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('スタックトレース:', 'test stack trace');
     });
   });
 });
