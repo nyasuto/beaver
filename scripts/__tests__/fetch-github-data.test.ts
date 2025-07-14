@@ -458,9 +458,17 @@ describe('fetch-github-data スクリプト', () => {
             name: 'test-repo',
           },
           statistics: {
-            total: 2,
-            open: 2,
-            closed: 0,
+            issues: {
+              total: 2,
+              open: 2,
+              closed: 0,
+            },
+            pullRequests: {
+              total: 0,
+              open: 0,
+              closed: 0,
+              merged: 0,
+            },
             labels: 3, // bug, high-priority, feature
           },
           labelCounts: {
@@ -485,9 +493,15 @@ describe('fetch-github-data スクリプト', () => {
       await fetchAndSaveGitHubData();
 
       expect(consoleLogSpy).toHaveBeenCalledWith('📊 統計情報:');
-      expect(consoleLogSpy).toHaveBeenCalledWith('   - 総 Issue 数: 2');
-      expect(consoleLogSpy).toHaveBeenCalledWith('   - オープン: 2');
-      expect(consoleLogSpy).toHaveBeenCalledWith('   - クローズ: 0');
+      expect(consoleLogSpy).toHaveBeenCalledWith('   Issues:');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - 総数: 2');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - オープン: 2');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - クローズ: 0');
+      expect(consoleLogSpy).toHaveBeenCalledWith('   Pull Requests:');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - 総数: 0');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - オープン: 0');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - クローズ: 0');
+      expect(consoleLogSpy).toHaveBeenCalledWith('     - マージ済み: 0');
       expect(consoleLogSpy).toHaveBeenCalledWith('   - ラベル数: 3');
     });
   });
