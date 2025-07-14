@@ -86,7 +86,7 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     });
 
     // Debug logging for development
-    if (import.meta.env.DEV) {
+    if (import.meta.env?.DEV) {
       console.log('🔍 Markdown Processing Debug:', {
         inputLength: markdown.length,
         outputLength: sanitizedHtml.length,
