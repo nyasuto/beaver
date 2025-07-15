@@ -139,11 +139,11 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
       <div class="flex items-center gap-3">
         <span class="text-sm font-medium text-heading">Filter:</span>
         <div class="flex items-center gap-2">
-          <button class="filter-btn" data-state="open" aria-pressed="false">
+          <button class="filter-btn active" data-state="open" aria-pressed="true">
             <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span>
             Open
           </button>
-          <button class="filter-btn active" data-state="closed" aria-pressed="true">
+          <button class="filter-btn" data-state="closed" aria-pressed="false">
             <span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-2"></span>
             Closed
           </button>
@@ -451,7 +451,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
     const searchInput = document.getElementById('search-input') as HTMLInputElement;
     const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
 
-    let currentFilter = 'closed';
+    let currentFilter = 'open';
     let currentSort = 'created';
     let searchQuery = '';
 
