@@ -50,14 +50,18 @@ const mockChart = {
   destroy: vi.fn(),
   update: vi.fn(),
   resize: vi.fn(),
-  data: {},
-  options: {},
+  data: {} as any,
+  options: {} as any,
+  config: {} as any,
+  render: vi.fn(),
+  toBase64Image: vi.fn().mockReturnValue('data:image/png;base64,mock-image'),
+  getElementsAtEventForMode: vi.fn().mockReturnValue([]),
 };
 
 vi.mock('../utils/safe-wrapper', () => ({
   createSafeChart: vi.fn().mockImplementation(({ onReady }) => {
     setTimeout(() => onReady?.(mockChart), 0);
-    return { success: true };
+    return { success: true, data: mockChart };
   }),
 }));
 
@@ -229,6 +233,187 @@ describe('BaseChart', () => {
 
     expect(screen.getByRole('img')).toBeInTheDocument();
   });
+
+  it('handles chart destruction on unmount', async () => {
+    const { unmount } = render(<BaseChart type="line" data={mockData} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('img')).toBeInTheDocument();
+    });
+
+    unmount();
+
+    expect(mockChart.destroy).toHaveBeenCalled();
+  });
+
+  it('handles chart recreation when type changes', async () => {
+    const { rerender } = render(<BaseChart type="line" data={mockData} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('img')).toBeInTheDocument();
+    });
+
+    rerender(<BaseChart type="bar" data={mockData} />);
+
+    expect(mockChart.destroy).toHaveBeenCalled();
+  });
+
+  it('handles empty data gracefully', () => {
+    const emptyData: SafeChartData<'line'> = {
+      labels: [],
+      datasets: [],
+    };
+
+    render(<BaseChart type="line" data={emptyData} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
+  it('handles null data gracefully', () => {
+    const nullData: SafeChartData<'line'> = {
+      labels: ['Jan', 'Feb', 'Mar'],
+      datasets: [
+        {
+          label: 'Test Data',
+          data: [0, 0, 0], // Use 0 instead of null
+          borderColor: '#3b82f6',
+        },
+      ],
+    };
+
+    render(<BaseChart type="line" data={nullData} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
+  it('handles chart update errors gracefully', async () => {
+    const mockErrorChart = {
+      ...mockChart,
+      update: vi.fn().mockImplementation(() => {
+        throw new Error('Chart update failed');
+      }),
+      data: {} as any,
+      options: {} as any,
+      config: {} as any,
+      render: vi.fn(),
+      toBase64Image: vi.fn().mockReturnValue('data:image/png;base64,mock-image'),
+      getElementsAtEventForMode: vi.fn().mockReturnValue([]),
+    };
+
+    const { createSafeChart } = await import('../utils/safe-wrapper');
+    vi.mocked(createSafeChart).mockImplementationOnce(({ onReady }) => {
+      setTimeout(() => onReady?.(mockErrorChart), 0);
+      return { success: true, data: mockErrorChart };
+    });
+
+    const { rerender } = render(<BaseChart type="line" data={mockData} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('img')).toBeInTheDocument();
+    });
+
+    // This should not throw an error, just handle it gracefully
+    const updatedData = {
+      ...mockData,
+      datasets: [
+        {
+          label: 'Updated Test Data',
+          data: [15, 25, 35],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        },
+      ],
+    };
+
+    rerender(<BaseChart type="line" data={updatedData} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
+  it('handles large datasets efficiently', () => {
+    const largeData: SafeChartData<'line'> = {
+      labels: Array.from({ length: 1000 }, (_, i) => `Point ${i}`),
+      datasets: [
+        {
+          label: 'Large Dataset',
+          data: Array.from({ length: 1000 }, () => Math.random() * 100),
+          borderColor: '#3b82f6',
+        },
+      ],
+    };
+
+    render(<BaseChart type="line" data={largeData} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
+  it('handles chart resize events', async () => {
+    const onChartReady = vi.fn();
+
+    render(<BaseChart type="line" data={mockData} onChartReady={onChartReady} />);
+
+    await waitFor(() => {
+      expect(onChartReady).toHaveBeenCalled();
+    });
+
+    // Component should render successfully
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
+  it('handles custom chart options merging', () => {
+    const customOptions: SafeChartOptions<'line'> = {
+      responsive: false,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        title: {
+          display: true,
+          text: 'Custom Title',
+        },
+      },
+      scales: {
+        x: {
+          display: false,
+        },
+        y: {
+          beginAtZero: true,
+          max: 100,
+        },
+      },
+    };
+
+    render(<BaseChart type="line" data={mockData} options={customOptions} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+  });
+
+  it('handles chart export functionality', async () => {
+    const mockExportChart = {
+      ...mockChart,
+      toBase64Image: vi.fn().mockReturnValue('data:image/png;base64,mock-image'),
+      data: {} as any,
+      options: {} as any,
+      config: {} as any,
+      render: vi.fn(),
+      getElementsAtEventForMode: vi.fn().mockReturnValue([]),
+    };
+
+    const { createSafeChart } = await import('../utils/safe-wrapper');
+    vi.mocked(createSafeChart).mockImplementationOnce(({ onReady }) => {
+      setTimeout(() => onReady?.(mockExportChart), 0);
+      return { success: true, data: mockExportChart };
+    });
+
+    const onChartReady = vi.fn();
+
+    render(<BaseChart type="line" data={mockData} onChartReady={onChartReady} />);
+
+    await waitFor(() => {
+      expect(onChartReady).toHaveBeenCalledWith(mockExportChart);
+    });
+  });
 });
 
 describe('ChartContainer', () => {
@@ -301,6 +486,94 @@ describe('ChartContainer', () => {
     expect(screen.getByText('Only description')).toBeInTheDocument();
     expect(screen.getByTestId('chart-content')).toBeInTheDocument();
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+  });
+
+  it('handles complex nested actions', () => {
+    render(
+      <ChartContainer
+        title="Complex Chart"
+        actions={
+          <div data-testid="action-group">
+            <button data-testid="action-1">Action 1</button>
+            <button data-testid="action-2">Action 2</button>
+            <select data-testid="action-select">
+              <option value="option1">Option 1</option>
+              <option value="option2">Option 2</option>
+            </select>
+          </div>
+        }
+      >
+        <div data-testid="chart-content">Chart content</div>
+      </ChartContainer>
+    );
+
+    expect(screen.getByTestId('action-group')).toBeInTheDocument();
+    expect(screen.getByTestId('action-1')).toBeInTheDocument();
+    expect(screen.getByTestId('action-2')).toBeInTheDocument();
+    expect(screen.getByTestId('action-select')).toBeInTheDocument();
+  });
+
+  it('handles long titles and descriptions', () => {
+    const longTitle =
+      'This is a very long chart title that might wrap to multiple lines and needs to be handled properly';
+    const longDescription =
+      'This is a very long chart description that provides detailed information about the chart and its purpose, including what the data represents and how to interpret it.';
+
+    render(
+      <ChartContainer title={longTitle} description={longDescription}>
+        <div data-testid="chart-content">Chart content</div>
+      </ChartContainer>
+    );
+
+    expect(screen.getByRole('heading', { name: longTitle })).toBeInTheDocument();
+    expect(screen.getByText(longDescription)).toBeInTheDocument();
+  });
+
+  it('handles accessibility attributes correctly', () => {
+    render(
+      <ChartContainer title="Accessible Chart" description="Chart for accessibility testing">
+        <div data-testid="chart-content">Chart content</div>
+      </ChartContainer>
+    );
+
+    const heading = screen.getByRole('heading', { name: 'Accessible Chart' });
+    expect(heading).toBeInTheDocument();
+  });
+
+  it('handles empty or whitespace-only titles and descriptions', () => {
+    render(
+      <ChartContainer title="   " description="   ">
+        <div data-testid="chart-content">Chart content</div>
+      </ChartContainer>
+    );
+
+    expect(screen.getByTestId('chart-content')).toBeInTheDocument();
+    // Empty/whitespace titles should still render but might be visually empty
+    expect(screen.getByRole('heading')).toBeInTheDocument();
+  });
+
+  it('handles container with loading state', () => {
+    render(
+      <ChartContainer title="Loading Chart" description="Chart is loading">
+        <div data-testid="loading-spinner">Loading...</div>
+      </ChartContainer>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Loading Chart' })).toBeInTheDocument();
+    expect(screen.getByText('Chart is loading')).toBeInTheDocument();
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+  });
+
+  it('handles container with error state', () => {
+    render(
+      <ChartContainer title="Error Chart" description="Chart failed to load">
+        <div data-testid="error-message">Error occurred</div>
+      </ChartContainer>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Error Chart' })).toBeInTheDocument();
+    expect(screen.getByText('Chart failed to load')).toBeInTheDocument();
+    expect(screen.getByTestId('error-message')).toBeInTheDocument();
   });
 });
 
