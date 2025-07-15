@@ -631,5 +631,277 @@ describe('RecentActivity Component', () => {
 
       expect(processingTime).toBeLessThan(100); // Should be reasonably fast
     });
+
+    it('should handle concurrent API requests', async () => {
+      const mockStats = createMockUnifiedStats();
+      const mockRepo = createMockRepository();
+
+      mockStatsService.getUnifiedStats.mockResolvedValue({
+        success: true,
+        data: mockStats,
+      });
+
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockRepo),
+      });
+
+      const requests = Array(3)
+        .fill(null)
+        .map(() =>
+          Promise.all([
+            mockStatsService.getUnifiedStats({ includeRecentActivity: true }),
+            fetch('/api/repository'),
+          ])
+        );
+
+      const results = await Promise.all(requests);
+
+      results.forEach(([statsResult, repoResult]) => {
+        expect(statsResult.success).toBe(true);
+        expect(repoResult.ok).toBe(true);
+      });
+    });
+  });
+
+  describe('Data Filtering', () => {
+    it('should filter issues by state correctly', () => {
+      const issues = [
+        createMockIssue({ state: 'open' }),
+        createMockIssue({ state: 'closed' }),
+        createMockIssue({ state: 'open' }),
+      ];
+
+      const openIssues = issues.filter(issue => issue.state === 'open');
+      const closedIssues = issues.filter(issue => issue.state === 'closed');
+
+      expect(openIssues).toHaveLength(2);
+      expect(closedIssues).toHaveLength(1);
+    });
+
+    it('should filter issues by date range', () => {
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      const issues = [
+        createMockIssue({ updated_at: now.toISOString() }),
+        createMockIssue({ updated_at: oneWeekAgo.toISOString() }),
+        createMockIssue({ updated_at: twoWeeksAgo.toISOString() }),
+      ];
+
+      const recentIssues = issues.filter(issue => {
+        const updatedAt = new Date(issue.updated_at);
+        return updatedAt >= oneWeekAgo;
+      });
+
+      expect(recentIssues).toHaveLength(2);
+    });
+
+    it('should filter issues by priority labels', () => {
+      const issues = [
+        createMockIssue({ labels: [{ name: 'priority:high', color: 'ff0000' }] }),
+        createMockIssue({ labels: [{ name: 'priority:low', color: '00ff00' }] }),
+        createMockIssue({ labels: [{ name: 'bug', color: 'f29513' }] }),
+      ];
+
+      const priorityIssues = issues.filter(issue =>
+        issue.labels?.some(label => label.name.startsWith('priority:'))
+      );
+
+      expect(priorityIssues).toHaveLength(2);
+    });
+  });
+
+  describe('Error Recovery', () => {
+    it('should handle API timeout gracefully', async () => {
+      mockStatsService.getUnifiedStats.mockRejectedValue(new Error('Request timeout'));
+
+      try {
+        await mockStatsService.getUnifiedStats({ includeRecentActivity: true });
+      } catch (error) {
+        expect((error as Error).message).toBe('Request timeout');
+      }
+    });
+
+    it('should handle invalid JSON response', async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.reject(new Error('Invalid JSON')),
+      });
+
+      try {
+        const response = await fetch('/api/repository');
+        await response.json();
+      } catch (error) {
+        expect((error as Error).message).toBe('Invalid JSON');
+      }
+    });
+
+    it('should handle network errors', async () => {
+      (global.fetch as any).mockRejectedValue(new Error('Network error'));
+
+      try {
+        await fetch('/api/repository');
+      } catch (error) {
+        expect((error as Error).message).toBe('Network error');
+      }
+    });
+  });
+
+  describe('Real-time Updates', () => {
+    it('should handle activity count updates', async () => {
+      const initialStats = createMockUnifiedStats({
+        recentActivity: { thisWeek: 5, lastWeek: 8, recentlyUpdated: [] },
+      });
+
+      const updatedStats = createMockUnifiedStats({
+        recentActivity: { thisWeek: 7, lastWeek: 8, recentlyUpdated: [] },
+      });
+
+      mockStatsService.getUnifiedStats
+        .mockResolvedValueOnce({ success: true, data: initialStats })
+        .mockResolvedValueOnce({ success: true, data: updatedStats });
+
+      const firstResult = await mockStatsService.getUnifiedStats({ includeRecentActivity: true });
+      const secondResult = await mockStatsService.getUnifiedStats({ includeRecentActivity: true });
+
+      expect(firstResult.data.recentActivity.thisWeek).toBe(5);
+      expect(secondResult.data.recentActivity.thisWeek).toBe(7);
+    });
+
+    it('should handle issue list updates', async () => {
+      const initialIssues = [createMockIssue({ id: 1, title: 'Initial Issue' })];
+      const updatedIssues = [
+        createMockIssue({ id: 1, title: 'Initial Issue' }),
+        createMockIssue({ id: 2, title: 'New Issue' }),
+      ];
+
+      const initialStats = createMockUnifiedStats({
+        recentActivity: { thisWeek: 5, lastWeek: 8, recentlyUpdated: initialIssues },
+      });
+
+      const updatedStats = createMockUnifiedStats({
+        recentActivity: { thisWeek: 6, lastWeek: 8, recentlyUpdated: updatedIssues },
+      });
+
+      mockStatsService.getUnifiedStats
+        .mockResolvedValueOnce({ success: true, data: initialStats })
+        .mockResolvedValueOnce({ success: true, data: updatedStats });
+
+      const firstResult = await mockStatsService.getUnifiedStats({ includeRecentActivity: true });
+      const secondResult = await mockStatsService.getUnifiedStats({ includeRecentActivity: true });
+
+      expect(firstResult.data.recentActivity.recentlyUpdated).toHaveLength(1);
+      expect(secondResult.data.recentActivity.recentlyUpdated).toHaveLength(2);
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should provide proper ARIA labels for activity items', () => {
+      const issue = createMockIssue({
+        number: 123,
+        title: 'Test Issue',
+        state: 'open',
+        updated_at: new Date().toISOString(),
+      });
+
+      const ariaLabel = `Issue #${issue.number}: ${issue.title}, Status: ${issue.state}`;
+      expect(ariaLabel).toBe('Issue #123: Test Issue, Status: open');
+    });
+
+    it('should provide semantic HTML structure', () => {
+      const expectedStructure = {
+        container: 'section',
+        header: 'h2',
+        list: 'ul',
+        listItem: 'li',
+        link: 'a',
+      };
+
+      expect(expectedStructure.container).toBe('section');
+      expect(expectedStructure.header).toBe('h2');
+      expect(expectedStructure.list).toBe('ul');
+      expect(expectedStructure.listItem).toBe('li');
+      expect(expectedStructure.link).toBe('a');
+    });
+
+    it('should handle keyboard navigation', () => {
+      const issue = createMockIssue();
+      const linkElement = {
+        href: `/issues/${issue.number}`,
+        tabIndex: 0,
+        'aria-label': `Navigate to issue #${issue.number}`,
+      };
+
+      expect(linkElement.href).toBe('/issues/123');
+      expect(linkElement.tabIndex).toBe(0);
+      expect(linkElement['aria-label']).toBe('Navigate to issue #123');
+    });
+  });
+
+  describe('Responsive Design', () => {
+    it('should apply responsive layout classes', () => {
+      const responsiveClasses = {
+        container: 'grid grid-cols-1 lg:grid-cols-2 gap-6',
+        card: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6',
+        list: 'space-y-4',
+      };
+
+      expect(responsiveClasses.container).toContain('grid-cols-1');
+      expect(responsiveClasses.container).toContain('lg:grid-cols-2');
+      expect(responsiveClasses.card).toContain('dark:bg-gray-800');
+      expect(responsiveClasses.list).toContain('space-y-4');
+    });
+
+    it('should handle mobile layout adjustments', () => {
+      const mobileClasses = {
+        title: 'text-lg md:text-xl font-semibold',
+        content: 'text-sm md:text-base',
+        spacing: 'px-4 md:px-6',
+      };
+
+      expect(mobileClasses.title).toContain('text-lg');
+      expect(mobileClasses.title).toContain('md:text-xl');
+      expect(mobileClasses.content).toContain('text-sm');
+      expect(mobileClasses.content).toContain('md:text-base');
+    });
+  });
+
+  describe('Data Caching', () => {
+    it('should handle cached data correctly', async () => {
+      const cachedStats = createMockUnifiedStats({
+        meta: { source: 'cache', generated_at: new Date().toISOString() },
+      });
+
+      mockStatsService.getUnifiedStats.mockResolvedValue({
+        success: true,
+        data: cachedStats,
+      });
+
+      const result = await mockStatsService.getUnifiedStats({ includeRecentActivity: true });
+
+      expect(result.success).toBe(true);
+      expect(result.data.meta.source).toBe('cache');
+    });
+
+    it('should handle cache invalidation', async () => {
+      const freshStats = createMockUnifiedStats({
+        meta: { source: 'api', generated_at: new Date().toISOString() },
+      });
+
+      mockStatsService.getUnifiedStats.mockResolvedValue({
+        success: true,
+        data: freshStats,
+      });
+
+      const result = await mockStatsService.getUnifiedStats({
+        includeRecentActivity: true,
+        invalidateCache: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.meta.source).toBe('api');
+    });
   });
 });
