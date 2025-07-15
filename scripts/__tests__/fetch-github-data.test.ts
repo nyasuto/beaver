@@ -501,7 +501,6 @@ describe('fetch-github-data スクリプト', () => {
               total: 0,
               open: 0,
               closed: 0,
-              merged: 0,
             },
             labels: 3, // bug, high-priority, feature
           },
@@ -536,7 +535,7 @@ describe('fetch-github-data スクリプト', () => {
       expect(consoleLogSpy).toHaveBeenCalledWith('     - 総数: 0');
       expect(consoleLogSpy).toHaveBeenCalledWith('     - オープン: 0');
       expect(consoleLogSpy).toHaveBeenCalledWith('     - クローズ: 0');
-      expect(consoleLogSpy).toHaveBeenCalledWith('     - マージ済み: 0');
+      // マージ済みPRは取得対象外のためコンソール出力なし
       expect(consoleLogSpy).toHaveBeenCalledWith('   - ラベル数: 3');
     });
   });

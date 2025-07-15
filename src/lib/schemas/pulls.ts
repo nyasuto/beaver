@@ -10,7 +10,7 @@ import { UserSchema, LabelSchema } from './github';
 /**
  * Pull Request state enumeration
  */
-export const PullRequestState = z.enum(['open', 'closed', 'merged']);
+export const PullRequestState = z.enum(['open', 'closed']);
 export type PullRequestStateType = z.infer<typeof PullRequestState>;
 
 /**
@@ -116,7 +116,7 @@ export const PullRequestSchema = z.object({
  */
 export const EnhancedPullRequestSchema = PullRequestSchema.extend({
   // Computed fields for UI display
-  status: z.enum(['open', 'closed', 'merged', 'draft']),
+  status: z.enum(['open', 'closed', 'draft']),
   reviews_count: z.number(),
   comments_count: z.number(),
   approval_status: z.enum(['approved', 'changes_requested', 'review_required', 'pending']),

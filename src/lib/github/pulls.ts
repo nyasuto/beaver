@@ -39,8 +39,8 @@ export class GitHubPullsService {
       // Validate query parameters
       const validatedQuery = PullsQuerySchema.parse(query);
 
-      // Map our extended state to GitHub API state
-      const apiState = validatedQuery.state === 'merged' ? 'closed' : validatedQuery.state;
+      // Use state directly since we no longer support merged state
+      const apiState = validatedQuery.state;
 
       const response = await this.client.getOctokit().request('GET /repos/{owner}/{repo}/pulls', {
         owner,
@@ -66,9 +66,9 @@ export class GitHubPullsService {
         })
         .filter((pull: PullRequest | null): pull is PullRequest => pull !== null);
 
-      // Filter for merged state if requested
-      if (validatedQuery.state === 'merged') {
-        pulls = pulls.filter((pull: PullRequest) => pull.merged_at !== null);
+      // Filter out merged PRs from closed state results
+      if (validatedQuery.state === 'closed') {
+        pulls = pulls.filter((pull: PullRequest) => pull.merged_at === null);
       }
 
       return {
@@ -220,12 +220,10 @@ export class GitHubPullsService {
 
     const lastActivity = pull.updated_at;
 
-    // Determine status
-    let status: 'open' | 'closed' | 'merged' | 'draft';
+    // Determine status (no longer include merged)
+    let status: 'open' | 'closed' | 'draft';
     if (pull.draft) {
       status = 'draft';
-    } else if (pull.merged_at) {
-      status = 'merged';
     } else if (pull.state === 'closed') {
       status = 'closed';
     } else {
@@ -282,7 +280,6 @@ export class GitHubPullsService {
         total: number;
         open: number;
         closed: number;
-        merged: number;
         draft: number;
       },
       GitHubError
@@ -319,16 +316,15 @@ export class GitHubPullsService {
       const closedPulls = closedResult.data;
 
       const draftCount = openPulls.filter((pr: any) => pr.draft).length;
-      const mergedCount = closedPulls.filter((pr: any) => pr.merged_at !== null).length;
-      const closedCount = closedPulls.length - mergedCount;
+      // Filter out merged PRs from closed count
+      const closedCount = closedPulls.filter((pr: any) => pr.merged_at === null).length;
 
       return {
         success: true,
         data: {
-          total: openPulls.length + closedPulls.length,
+          total: openPulls.length + closedCount,
           open: openPulls.length - draftCount,
           closed: closedCount,
-          merged: mergedCount,
           draft: draftCount,
         },
       };
