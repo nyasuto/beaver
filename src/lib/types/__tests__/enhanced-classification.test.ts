@@ -1057,10 +1057,10 @@ describe('Enhanced Classification Types', () => {
       const scores: TaskScoreUnion[] = [legacyScore, enhancedScore];
 
       expect(scores).toHaveLength(2);
-      expect(scores[0].issueNumber).toBe(1);
-      expect(scores[1].issueNumber).toBe(1);
-      expect(isEnhancedTaskScore(scores[0])).toBe(false);
-      expect(isEnhancedTaskScore(scores[1])).toBe(true);
+      expect(scores[0]?.issueNumber).toBe(1);
+      expect(scores[1]?.issueNumber).toBe(1);
+      expect(isEnhancedTaskScore(scores[0]!)).toBe(false);
+      expect(isEnhancedTaskScore(scores[1]!)).toBe(true);
     });
 
     it('should handle mixed environments', () => {
@@ -1132,8 +1132,8 @@ describe('Enhanced Classification Types', () => {
       });
 
       expect(processedResults).toHaveLength(2);
-      expect(processedResults[0].processingType).toBe('legacy');
-      expect(processedResults[1].processingType).toBe('enhanced');
+      expect(processedResults[0]?.processingType).toBe('legacy');
+      expect(processedResults[1]?.processingType).toBe('enhanced');
     });
   });
 
@@ -1226,8 +1226,8 @@ describe('Enhanced Classification Types', () => {
       };
 
       expect(dashboardResult.topTasks).toHaveLength(1);
-      expect(dashboardResult.topTasks[0].score).toBe(95);
-      expect(dashboardResult.topTasks[0].scoreBreakdown.category).toBe(50);
+      expect(dashboardResult.topTasks[0]?.score).toBe(95);
+      expect(dashboardResult.topTasks[0]?.scoreBreakdown.category).toBe(50);
       expect(dashboardResult.analysisMetrics.averageScore).toBe(78.5);
       expect(dashboardResult.performanceMetrics.cacheHitRate).toBe(0.8);
       expect(config.repositoryContext?.owner).toBe('test-org');
