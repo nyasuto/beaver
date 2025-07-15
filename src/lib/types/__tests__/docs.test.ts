@@ -304,8 +304,8 @@ describe('Documentation Types', () => {
       expect(navigation.title).toBe('Getting Started');
       expect(navigation.slug).toBe('getting-started');
       expect(navigation.children).toHaveLength(2);
-      expect(navigation.children?.[0].title).toBe('Installation');
-      expect(navigation.children?.[1].title).toBe('Configuration');
+      expect(navigation.children?.[0]?.title).toBe('Installation');
+      expect(navigation.children?.[1]?.title).toBe('Configuration');
       expect(navigation.category).toBe('guides');
       expect(navigation.order).toBe(1);
     });
@@ -342,8 +342,8 @@ describe('Documentation Types', () => {
       };
 
       expect(navigation.children).toHaveLength(1);
-      expect(navigation.children?.[0].children).toHaveLength(1);
-      expect(navigation.children?.[0].children?.[0].title).toBe('Deep Section');
+      expect(navigation.children?.[0]?.children).toHaveLength(1);
+      expect(navigation.children?.[0]?.children?.[0]?.title).toBe('Deep Section');
     });
 
     it('should handle empty children array', () => {
@@ -417,10 +417,10 @@ describe('Documentation Types', () => {
       expect(processedDoc.path).toBe('/docs/processed.md');
       expect(processedDoc.metadata.title).toBe('Processed Document');
       expect(processedDoc.sections).toHaveLength(1);
-      expect(processedDoc.sections[0].title).toBe('Section 1');
+      expect(processedDoc.sections[0]?.title).toBe('Section 1');
       expect(processedDoc.relatedDocs).toEqual(['related-doc-1', 'related-doc-2']);
       expect(processedDoc.breadcrumbs).toHaveLength(3);
-      expect(processedDoc.breadcrumbs[2].title).toBe('Processed Document');
+      expect(processedDoc.breadcrumbs[2]?.title).toBe('Processed Document');
     });
 
     it('should validate minimal ProcessedDoc structure', () => {
@@ -503,8 +503,8 @@ describe('Documentation Types', () => {
 
       expect(processedDoc.breadcrumbs).toHaveLength(3);
       processedDoc.breadcrumbs.forEach((breadcrumb, index) => {
-        expect(breadcrumb.title).toBe(breadcrumbs[index].title);
-        expect(breadcrumb.slug).toBe(breadcrumbs[index].slug);
+        expect(breadcrumb.title).toBe(breadcrumbs[index]?.title);
+        expect(breadcrumb.slug).toBe(breadcrumbs[index]?.slug);
         expect(typeof breadcrumb.title).toBe('string');
         expect(typeof breadcrumb.slug).toBe('string');
       });
@@ -647,11 +647,11 @@ describe('Documentation Types', () => {
       };
 
       expect(docsCollection.docs).toHaveLength(2);
-      expect(docsCollection.docs[0].slug).toBe('doc1');
-      expect(docsCollection.docs[1].slug).toBe('doc2');
+      expect(docsCollection.docs[0]?.slug).toBe('doc1');
+      expect(docsCollection.docs[1]?.slug).toBe('doc2');
       expect(docsCollection.navigation).toHaveLength(2);
-      expect(docsCollection.navigation[0].title).toBe('Getting Started');
-      expect(docsCollection.navigation[1].title).toBe('API Reference');
+      expect(docsCollection.navigation[0]?.title).toBe('Getting Started');
+      expect(docsCollection.navigation[1]?.title).toBe('API Reference');
       expect(Object.keys(docsCollection.categories)).toHaveLength(2);
       expect(docsCollection.categories['getting-started']).toHaveLength(1);
       expect(docsCollection.categories['api']).toHaveLength(1);
@@ -696,7 +696,7 @@ describe('Documentation Types', () => {
 
       expect(docsCollection.docs).toEqual(docs);
       expect(docsCollection.docs).toHaveLength(1);
-      expect(docsCollection.docs[0].slug).toBe('test-doc');
+      expect(docsCollection.docs[0]?.slug).toBe('test-doc');
     });
 
     it('should validate navigation array', () => {
@@ -721,8 +721,8 @@ describe('Documentation Types', () => {
 
       expect(docsCollection.navigation).toEqual(navigation);
       expect(docsCollection.navigation).toHaveLength(1);
-      expect(docsCollection.navigation[0].title).toBe('Main Navigation');
-      expect(docsCollection.navigation[0].children).toHaveLength(1);
+      expect(docsCollection.navigation[0]?.title).toBe('Main Navigation');
+      expect(docsCollection.navigation[0]?.children).toHaveLength(1);
     });
 
     it('should validate categories record', () => {
@@ -817,11 +817,11 @@ describe('Documentation Types', () => {
       };
 
       expect(docsCollection.docs).toHaveLength(1);
-      expect(docsCollection.docs[0].metadata.tags).toEqual(['complex', 'example']);
-      expect(docsCollection.docs[0].sections).toHaveLength(1);
-      expect(docsCollection.docs[0].breadcrumbs).toHaveLength(3);
+      expect(docsCollection.docs[0]?.metadata.tags).toEqual(['complex', 'example']);
+      expect(docsCollection.docs[0]?.sections).toHaveLength(1);
+      expect(docsCollection.docs[0]?.breadcrumbs).toHaveLength(3);
       expect(docsCollection.navigation).toHaveLength(1);
-      expect(docsCollection.navigation[0].children).toHaveLength(1);
+      expect(docsCollection.navigation[0]?.children).toHaveLength(1);
       expect(docsCollection.categories['examples']).toHaveLength(1);
     });
   });
@@ -889,9 +889,9 @@ describe('Documentation Types', () => {
         },
       };
 
-      expect(docsCollection.docs[0].slug).toBe(docNavigation.slug);
-      expect(docsCollection.navigation[0].title).toBe(processedDoc.metadata.title);
-      expect(docsCollection.categories['test'][0].slug).toBe(processedDoc.slug);
+      expect(docsCollection.docs[0]?.slug).toBe(docNavigation.slug);
+      expect(docsCollection.navigation[0]?.title).toBe(processedDoc.metadata.title);
+      expect(docsCollection.categories['test']?.[0]?.slug).toBe(processedDoc.slug);
     });
 
     it('should handle optional properties correctly', () => {
@@ -998,8 +998,8 @@ describe('Documentation Types', () => {
 
       // Validate the complete workflow
       expect(docsCollection.docs).toHaveLength(1);
-      expect(docsCollection.docs[0].metadata.title).toBe('API Documentation');
-      expect(docsCollection.docs[0].sections).toHaveLength(2);
+      expect(docsCollection.docs[0]?.metadata.title).toBe('API Documentation');
+      expect(docsCollection.docs[0]?.sections).toHaveLength(2);
       expect(docsCollection.docs[0]?.breadcrumbs).toHaveLength(3);
       expect(docsCollection.navigation[0]?.children).toHaveLength(1);
       expect(docsCollection.categories['api']).toHaveLength(1);
