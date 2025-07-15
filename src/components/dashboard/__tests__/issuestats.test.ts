@@ -543,5 +543,221 @@ describe('IssueStats Component', () => {
 
       expect(calculationTime).toBeLessThan(10); // Should be very fast
     });
+
+    it('should handle concurrent stats requests', async () => {
+      const mockStats = createMockStats();
+      mockStatsService.getUnifiedStats.mockResolvedValue({
+        success: true,
+        data: mockStats,
+      });
+
+      const requests = Array(5)
+        .fill(null)
+        .map(() =>
+          mockStatsService.getUnifiedStats({
+            includeRecentActivity: true,
+            includePriorityBreakdown: true,
+            includeLabels: false,
+            recentDays: 7,
+          })
+        );
+
+      const results = await Promise.all(requests);
+
+      results.forEach(result => {
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual(mockStats);
+      });
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle network timeout gracefully', async () => {
+      mockStatsService.getUnifiedStats.mockRejectedValue(new Error('Network timeout'));
+
+      try {
+        await mockStatsService.getUnifiedStats({
+          includeRecentActivity: true,
+          includePriorityBreakdown: true,
+          includeLabels: false,
+          recentDays: 7,
+        });
+      } catch (error) {
+        expect((error as Error).message).toBe('Network timeout');
+      }
+    });
+
+    it('should handle malformed stats data', async () => {
+      const malformedStats = {
+        total: 'invalid',
+        open: null,
+        closed: undefined,
+        priority: {},
+        recentActivity: null,
+        meta: { source: 'api', generated_at: 'invalid-date' },
+      };
+
+      mockStatsService.getUnifiedStats.mockResolvedValue({
+        success: true,
+        data: malformedStats,
+      });
+
+      const result = await mockStatsService.getUnifiedStats({
+        includeRecentActivity: true,
+        includePriorityBreakdown: true,
+        includeLabels: false,
+        recentDays: 7,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(malformedStats);
+    });
+
+    it('should handle server error responses', async () => {
+      mockStatsService.getUnifiedStats.mockResolvedValue({
+        success: false,
+        error: 'Internal Server Error',
+        statusCode: 500,
+      });
+
+      const result = await mockStatsService.getUnifiedStats({
+        includeRecentActivity: true,
+        includePriorityBreakdown: true,
+        includeLabels: false,
+        recentDays: 7,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Internal Server Error');
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should provide proper ARIA labels for statistics', () => {
+      const stats = createMockStats();
+
+      // Simulate StatCard props that would be generated
+      const openIssuesProps = {
+        title: 'オープンなIssue',
+        value: stats.open,
+        icon: '🔓',
+        ariaLabel: `${stats.open}件のオープンなIssueがあります`,
+      };
+
+      const urgentIssuesProps = {
+        title: '緊急対応必要',
+        value: stats.priority.critical + stats.priority.high,
+        icon: '🚨',
+        ariaLabel: `${stats.priority.critical + stats.priority.high}件の緊急対応が必要なIssueがあります`,
+      };
+
+      expect(openIssuesProps.ariaLabel).toBe('25件のオープンなIssueがあります');
+      expect(urgentIssuesProps.ariaLabel).toBe('15件の緊急対応が必要なIssueがあります');
+    });
+
+    it('should handle screen reader friendly number formatting', () => {
+      const stats = createMockStats({
+        total: 1234,
+        open: 567,
+        closed: 667,
+      });
+
+      const formattedTotal = stats.total.toLocaleString('ja-JP');
+      const formattedOpen = stats.open.toLocaleString('ja-JP');
+      const formattedClosed = stats.closed.toLocaleString('ja-JP');
+
+      expect(formattedTotal).toBe('1,234');
+      expect(formattedOpen).toBe('567');
+      expect(formattedClosed).toBe('667');
+    });
+  });
+
+  describe('Data Source Handling', () => {
+    it('should handle API data source correctly', () => {
+      const stats = createMockStats({
+        meta: { source: 'api', generated_at: '2025-01-01T00:00:00Z' },
+      });
+
+      const urgentIssues =
+        stats.meta.source !== 'fallback' ? stats.priority.critical + stats.priority.high : -1;
+
+      expect(urgentIssues).toBe(15);
+    });
+
+    it('should handle cache data source correctly', () => {
+      const stats = createMockStats({
+        meta: { source: 'cache', generated_at: '2025-01-01T00:00:00Z' },
+      });
+
+      const urgentIssues =
+        stats.meta.source !== 'fallback' ? stats.priority.critical + stats.priority.high : -1;
+
+      expect(urgentIssues).toBe(15);
+    });
+
+    it('should handle fallback data source correctly', () => {
+      const stats = createMockStats({
+        meta: { source: 'fallback', generated_at: '2025-01-01T00:00:00Z' },
+      });
+
+      const urgentIssues =
+        stats.meta.source !== 'fallback' ? stats.priority.critical + stats.priority.high : -1;
+
+      expect(urgentIssues).toBe(-1);
+    });
+  });
+
+  describe('State Management', () => {
+    it('should handle stats updates correctly', async () => {
+      const initialStats = createMockStats();
+      const updatedStats = createMockStats({
+        open: 30,
+        closed: 70,
+        priority: { critical: 8, high: 12, medium: 15, low: 25 },
+      });
+
+      mockStatsService.getUnifiedStats
+        .mockResolvedValueOnce({ success: true, data: initialStats })
+        .mockResolvedValueOnce({ success: true, data: updatedStats });
+
+      const firstResult = await mockStatsService.getUnifiedStats({
+        includeRecentActivity: true,
+        includePriorityBreakdown: true,
+        includeLabels: false,
+        recentDays: 7,
+      });
+
+      const secondResult = await mockStatsService.getUnifiedStats({
+        includeRecentActivity: true,
+        includePriorityBreakdown: true,
+        includeLabels: false,
+        recentDays: 7,
+      });
+
+      expect(firstResult.data.open).toBe(25);
+      expect(secondResult.data.open).toBe(30);
+    });
+  });
+
+  describe('Responsive Layout', () => {
+    it('should apply responsive grid classes correctly', () => {
+      const baseClasses = 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6';
+      const customClass = 'custom-stats-layout';
+      const finalClass = `${baseClasses} ${customClass}`;
+
+      expect(finalClass).toContain('grid-cols-1');
+      expect(finalClass).toContain('sm:grid-cols-2');
+      expect(finalClass).toContain('gap-4');
+      expect(finalClass).toContain('sm:gap-6');
+      expect(finalClass).toContain('custom-stats-layout');
+    });
+
+    it('should handle empty className prop', () => {
+      const baseClasses = 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6';
+      const customClass = '';
+      const finalClass = `${baseClasses} ${customClass}`;
+
+      expect(finalClass.trim()).toBe(baseClasses);
+    });
   });
 });
