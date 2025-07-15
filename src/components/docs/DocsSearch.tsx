@@ -2,7 +2,7 @@
  * Documentation search component with real-time search
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { resolveUrl } from '../../lib/utils/url.js';
 
 interface SearchResult {
@@ -64,6 +64,13 @@ export default function DocsSearch({
   const searchRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
+  const navigateToResult = useCallback(
+    (result: SearchResult) => {
+      window.location.href = `${baseUrl}/${result.slug}`;
+    },
+    [baseUrl]
+  );
+
   // Debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -108,7 +115,7 @@ export default function DocsSearch({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, results, selectedIndex]);
+  }, [isOpen, results, selectedIndex, navigateToResult]);
 
   // Click outside to close
   useEffect(() => {
@@ -146,10 +153,6 @@ export default function DocsSearch({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const navigateToResult = (result: SearchResult) => {
-    window.location.href = `${baseUrl}/${result.slug}`;
   };
 
   const highlightQuery = (text: string, query: string) => {
