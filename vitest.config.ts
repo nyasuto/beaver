@@ -33,6 +33,15 @@ export default defineConfig({
         '**/coverage/**',
         '**/dist/**',
         '**/.astro/**',
+        // Astro component files - exclude from coverage
+        'src/components/**/*.astro',
+        'src/pages/**/*.astro',
+        'src/layouts/**/*.astro',
+        // Test files
+        '**/__tests__/**',
+        '**/__mocks__/**',
+        '**/*.test.*',
+        '**/*.spec.*',
       ],
       thresholds: {
         global: {
