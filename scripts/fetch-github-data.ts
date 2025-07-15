@@ -225,7 +225,7 @@ async function fetchAndSaveGitHubData() {
     
     const pullsService = new GitHubPullsService(clientResult.data);
     
-    // すべての状態のPull Requestを取得（open, closed, merged）
+    // すべての状態のPull Requestを取得（open, closed）
     const pullsResults = await Promise.all([
       pullsService.fetchEnhancedPullRequests(config.owner, config.repo, {
         state: 'open',
@@ -301,10 +301,9 @@ async function fetchAndSaveGitHubData() {
       return acc;
     }, {} as Record<string, number>);
 
-    // Pull Requests統計の計算
+    // Pull Requests統計の計算（マージ済みPRは除外）
     const openPulls = allPulls.filter(pr => pr.state === 'open');
-    const closedPulls = allPulls.filter(pr => pr.state === 'closed' && !pr.merged_at);
-    const mergedPulls = allPulls.filter(pr => pr.merged_at);
+    const closedPulls = allPulls.filter(pr => pr.state === 'closed');
 
     // メタデータの保存
     const metadata = {
@@ -323,7 +322,6 @@ async function fetchAndSaveGitHubData() {
           total: allPulls.length,
           open: openPulls.length,
           closed: closedPulls.length,
-          merged: mergedPulls.length,
         },
         labels: Object.keys(labelCounts).length,
       },
@@ -349,7 +347,7 @@ async function fetchAndSaveGitHubData() {
     console.log(`     - 総数: ${metadata.statistics.pullRequests.total}`);
     console.log(`     - オープン: ${metadata.statistics.pullRequests.open}`);
     console.log(`     - クローズ: ${metadata.statistics.pullRequests.closed}`);
-    console.log(`     - マージ済み: ${metadata.statistics.pullRequests.merged}`);
+    // マージ済みPRは取得対象外
     console.log(`   - ラベル数: ${metadata.statistics.labels}`);
     console.log(`   - 最終更新: ${new Date(metadata.lastUpdated).toLocaleString('ja-JP')}`);
 
