@@ -173,9 +173,16 @@ const mockMetadata: GitHubMetadata = {
     name: 'testrepo',
   },
   statistics: {
-    total: 3,
-    open: 2,
-    closed: 1,
+    issues: {
+      total: 3,
+      open: 2,
+      closed: 1,
+    },
+    pullRequests: {
+      total: 0,
+      open: 0,
+      closed: 0,
+    },
     labels: 3,
   },
   labelCounts: {
@@ -184,6 +191,7 @@ const mockMetadata: GitHubMetadata = {
     'priority: high': 1,
   },
   lastIssue: mockIssuesData[0]!,
+  lastPullRequest: null,
 };
 
 const mockFallbackIssues: GitHubIssue[] = [
@@ -287,7 +295,7 @@ describe('GitHub Data Processing Layer', () => {
         const result = githubData.getStaticMetadata();
 
         expect(result.repository.owner).toBe('testowner');
-        expect(result.statistics.total).toBe(3);
+        expect(result.statistics.issues.total).toBe(3);
         expect(result.labelCounts['bug']).toBe(2);
         expect(mockJoin).toHaveBeenCalledWith('/test', 'src/data/github', 'metadata.json');
       });

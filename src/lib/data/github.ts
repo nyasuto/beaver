@@ -18,13 +18,21 @@ const MetadataSchema = z.object({
     name: z.string(),
   }),
   statistics: z.object({
-    total: z.number(),
-    open: z.number(),
-    closed: z.number(),
+    issues: z.object({
+      total: z.number(),
+      open: z.number(),
+      closed: z.number(),
+    }),
+    pullRequests: z.object({
+      total: z.number(),
+      open: z.number(),
+      closed: z.number(),
+    }),
     labels: z.number(),
   }),
   labelCounts: z.record(z.string(), z.number()),
   lastIssue: IssueSchema.nullable(),
+  lastPullRequest: z.any().optional().nullable(), // Pull Request schema is complex, allow flexible validation
 });
 
 const IssuesArraySchema = z.array(IssueSchema);
