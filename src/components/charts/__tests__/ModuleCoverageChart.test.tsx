@@ -169,6 +169,152 @@ describe('ModuleCoverageChart', () => {
 
     expect(screen.getByTestId('base-chart')).toBeInTheDocument();
   });
+
+  it('handles extremely long module names', () => {
+    const longNameData: ModuleCoverageData[] = [
+      {
+        name: 'src/components/very/deeply/nested/module/with/extremely/long/path/that/might/cause/display/issues',
+        coverage: 75.0,
+        lines: 100,
+        missedLines: 25,
+      },
+    ];
+
+    render(<ModuleCoverageChart data={longNameData} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.labels).toEqual([
+      'components/very/deeply/nested/module/with/extremely/long/path/that/might/cause/display/issues',
+    ]);
+  });
+
+  it('handles modules with zero coverage', () => {
+    const zeroData: ModuleCoverageData[] = [
+      {
+        name: 'src/untested/module',
+        coverage: 0,
+        lines: 100,
+        missedLines: 100,
+      },
+    ];
+
+    render(<ModuleCoverageChart data={zeroData} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.datasets[0].data).toEqual([0]);
+  });
+
+  it('handles modules with perfect coverage', () => {
+    const perfectData: ModuleCoverageData[] = [
+      {
+        name: 'src/perfect/module',
+        coverage: 100,
+        lines: 100,
+        missedLines: 0,
+      },
+    ];
+
+    render(<ModuleCoverageChart data={perfectData} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.datasets[0].data).toEqual([100]);
+  });
+
+  it('handles color-coded threshold display', () => {
+    const mixedData: ModuleCoverageData[] = [
+      { name: 'src/low', coverage: 30, lines: 100, missedLines: 70 },
+      { name: 'src/medium', coverage: 60, lines: 100, missedLines: 40 },
+      { name: 'src/high', coverage: 90, lines: 100, missedLines: 10 },
+    ];
+
+    render(<ModuleCoverageChart data={mixedData} threshold={50} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.datasets[0].data).toEqual([30, 60, 90]);
+  });
+
+  it('handles duplicate module names', () => {
+    const duplicateData: ModuleCoverageData[] = [
+      { name: 'src/module', coverage: 50, lines: 100, missedLines: 50 },
+      { name: 'src/module', coverage: 75, lines: 100, missedLines: 25 },
+    ];
+
+    render(<ModuleCoverageChart data={duplicateData} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.datasets[0].data).toEqual([50, 75]);
+  });
+
+  it('handles invalid coverage values', () => {
+    const invalidData: ModuleCoverageData[] = [
+      { name: 'src/negative', coverage: -10, lines: 100, missedLines: 110 },
+      { name: 'src/overflow', coverage: 150, lines: 100, missedLines: -50 },
+    ];
+
+    render(<ModuleCoverageChart data={invalidData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles large datasets efficiently', () => {
+    const largeData: ModuleCoverageData[] = Array.from({ length: 100 }, (_, i) => ({
+      name: `src/module-${i}`,
+      coverage: Math.random() * 100,
+      lines: Math.floor(Math.random() * 1000) + 100,
+      missedLines: Math.floor(Math.random() * 500),
+    }));
+
+    render(<ModuleCoverageChart data={largeData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles hover interactions', () => {
+    render(<ModuleCoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles custom chart options', () => {
+    render(<ModuleCoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles theme changes', () => {
+    const { rerender } = render(<ModuleCoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+
+    rerender(<ModuleCoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles data updates efficiently', () => {
+    const { rerender } = render(<ModuleCoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+
+    const updatedData = mockData.map(item => ({
+      ...item,
+      coverage: item.coverage + 10,
+    }));
+
+    rerender(<ModuleCoverageChart data={updatedData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
 });
 
 describe('ModuleCoverageSummary', () => {

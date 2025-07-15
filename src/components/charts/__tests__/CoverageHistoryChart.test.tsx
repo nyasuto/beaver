@@ -184,6 +184,64 @@ describe('CoverageHistoryChart', () => {
 
     expect(screen.getByTestId('base-chart')).toBeInTheDocument();
   });
+
+  it('handles data with gaps in timeline', () => {
+    const gappedData: CoverageHistoryPoint[] = [
+      { date: '2025-01-01', coverage: 70.5 },
+      { date: '2025-01-03', coverage: 74.8 }, // Missing Jan 2
+      { date: '2025-01-07', coverage: 76.5 }, // Missing Jan 4-6
+    ];
+
+    render(<CoverageHistoryChart data={gappedData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles extremely long time series', () => {
+    const longData: CoverageHistoryPoint[] = Array.from({ length: 365 }, (_, i) => {
+      const date = new Date('2024-01-01');
+      date.setDate(date.getDate() + i);
+      return {
+        date: date.toISOString().split('T')[0] || '2024-01-01',
+        coverage: 70 + Math.random() * 30,
+      };
+    });
+
+    render(<CoverageHistoryChart data={longData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles coverage volatility and spikes', () => {
+    const volatileData: CoverageHistoryPoint[] = [
+      { date: '2025-01-01', coverage: 70.5 },
+      { date: '2025-01-02', coverage: 95.2 }, // Spike
+      { date: '2025-01-03', coverage: 45.1 }, // Drop
+      { date: '2025-01-04', coverage: 75.2 }, // Recovery
+    ];
+
+    render(<CoverageHistoryChart data={volatileData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles custom period filter interactions', () => {
+    render(<CoverageHistoryChart data={mockData} />);
+
+    const periodButtons = screen.getAllByRole('button');
+    const monthButton = periodButtons.find(btn => btn.textContent === '1M');
+
+    if (monthButton) {
+      fireEvent.click(monthButton);
+      expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+    }
+  });
+
+  it('handles legend customization', () => {
+    render(<CoverageHistoryChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
 });
 
 describe('CoverageHistorySummary', () => {

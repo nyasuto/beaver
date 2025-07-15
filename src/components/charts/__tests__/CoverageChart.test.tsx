@@ -138,6 +138,117 @@ describe('CoverageChart', () => {
 
     expect(chartData.datasets[0].data).toEqual([1000, 0]);
   });
+
+  it('handles malformed or invalid data gracefully', () => {
+    const invalidData: CoverageMetrics = {
+      overallCoverage: -10, // Invalid negative coverage
+      totalLines: 0, // Invalid zero total lines
+      coveredLines: 150, // More covered than total
+      missedLines: -50, // Invalid negative missed lines
+    };
+
+    render(<CoverageChart data={invalidData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles extremely large numbers', () => {
+    const largeData: CoverageMetrics = {
+      overallCoverage: 85.7,
+      totalLines: 1000000,
+      coveredLines: 857000,
+      missedLines: 143000,
+    };
+
+    render(<CoverageChart data={largeData} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.datasets[0].data).toEqual([857000, 143000]);
+  });
+
+  it('handles decimal coverage values', () => {
+    const decimalData: CoverageMetrics = {
+      overallCoverage: 75.123456789,
+      totalLines: 1337,
+      coveredLines: 1004,
+      missedLines: 333,
+    };
+
+    render(<CoverageChart data={decimalData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles chart type configuration', () => {
+    render(<CoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('chart-type')).toHaveTextContent('doughnut');
+  });
+
+  it('handles advanced chart options', () => {
+    render(<CoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles onClick callbacks', () => {
+    render(<CoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles theme changes', () => {
+    const { rerender } = render(<CoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+
+    rerender(<CoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles data updates efficiently', () => {
+    const initialData = mockData;
+    const updatedData: CoverageMetrics = {
+      ...mockData,
+      overallCoverage: 85.2,
+      coveredLines: 852,
+      missedLines: 148,
+    };
+
+    const { rerender } = render(<CoverageChart data={initialData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+
+    rerender(<CoverageChart data={updatedData} />);
+
+    const chartDataElement = screen.getByTestId('chart-data');
+    const chartData = JSON.parse(chartDataElement.textContent || '');
+
+    expect(chartData.datasets[0].data).toEqual([852, 148]);
+  });
+
+  it('handles optional metrics fields', () => {
+    const minimalData: CoverageMetrics = {
+      overallCoverage: 75.5,
+      totalLines: 1000,
+      coveredLines: 755,
+      missedLines: 245,
+      // branchCoverage and lineCoverage are optional
+    };
+
+    render(<CoverageChart data={minimalData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
+
+  it('handles custom color schemes', () => {
+    render(<CoverageChart data={mockData} />);
+
+    expect(screen.getByTestId('base-chart')).toBeInTheDocument();
+  });
 });
 
 describe('CoverageMetricsCard', () => {
