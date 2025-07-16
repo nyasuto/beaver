@@ -33,20 +33,52 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
       <div class="p-4">
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
           <h3 class="font-semibold text-sm text-gray-900">📋 {t('docs.tableOfContents')}</h3>
-          <button
-            id="toc-toggle"
-            class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="目次を折りたたむ"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+          <div class="flex items-center gap-1">
+            <button
+              id="toc-expand-all"
+              class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="全ての項目を展開"
+              title="全て展開"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+            </button>
+            <button
+              id="toc-collapse-all"
+              class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="全ての項目を折りたたむ"
+              title="全て折りたたみ"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 12H4"
+                />
+              </svg>
+            </button>
+            <button
+              id="toc-toggle"
+              class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="目次を折りたたむ"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <nav id="toc-content">
@@ -114,21 +146,55 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
         <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-lg text-gray-900">📋 {t('docs.tableOfContents')}</h3>
-            <button
-              id="mobile-toc-close"
-              class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
-              aria-label="目次を閉じる"
-              style="touch-action: manipulation;"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                id="mobile-toc-expand-all"
+                class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                aria-label="全ての項目を展開"
+                title="全て展開"
+                style="touch-action: manipulation;"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </button>
+              <button
+                id="mobile-toc-collapse-all"
+                class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                aria-label="全ての項目を折りたたむ"
+                title="全て折りたたみ"
+                style="touch-action: manipulation;"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 12H4"
+                  />
+                </svg>
+              </button>
+              <button
+                id="mobile-toc-close"
+                class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                aria-label="目次を閉じる"
+                style="touch-action: manipulation;"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
           {/* ドラッグハンドル */}
           <div class="flex justify-center mt-2">
@@ -170,21 +236,55 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
         <div class="p-4">
           <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
             <h3 class="font-semibold text-lg text-gray-900">📋 {t('docs.tableOfContents')}</h3>
-            <button
-              id="tablet-toc-close"
-              class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
-              aria-label="目次を閉じる"
-              style="touch-action: manipulation;"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                id="tablet-toc-expand-all"
+                class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                aria-label="全ての項目を展開"
+                title="全て展開"
+                style="touch-action: manipulation;"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </button>
+              <button
+                id="tablet-toc-collapse-all"
+                class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                aria-label="全ての項目を折りたたむ"
+                title="全て折りたたみ"
+                style="touch-action: manipulation;"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 12H4"
+                  />
+                </svg>
+              </button>
+              <button
+                id="tablet-toc-close"
+                class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                aria-label="目次を閉じる"
+                style="touch-action: manipulation;"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <nav>
@@ -330,6 +430,48 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
     #mobile-toc-overlay {
       display: none !important;
     }
+  }
+
+  /* TOC Collapsible Styles */
+  .toc-section-container {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .toc-section-toggle {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toc-children {
+    animation: slideDown 0.2s ease-out;
+    overflow: hidden;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      max-height: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      max-height: 200px;
+      transform: translateY(0);
+    }
+  }
+
+  .toc-section-toggle svg {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .toc-section-toggle[aria-expanded='true'] svg {
+    transform: rotate(90deg);
   }
 
   /* レスポンシブブレークポイント最適化 */
