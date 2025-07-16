@@ -1,0 +1,254 @@
+---
+/**
+ * Floating Table of Contents Component
+ *
+ * Displays document sections as a floating sidebar that doesn't interfere
+ * with main content flow. Responsive design hides on smaller screens.
+ */
+
+import type { ProcessedDoc } from '../../lib/types/docs.js';
+import { getTranslator, getUIConfig } from '../../lib/config/docs.js';
+
+interface Props {
+  doc: ProcessedDoc;
+  className?: string;
+}
+
+const { doc, className = '' } = Astro.props;
+
+// Load configuration and translations
+const t = await getTranslator();
+const uiConfig = await getUIConfig();
+
+// Only show if TOC is enabled and sections exist
+const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
+---
+
+{
+  shouldShowTOC && (
+    <aside
+      id="floating-toc"
+      class={`fixed right-4 top-1/2 transform -translate-y-1/2 w-64 max-h-[70vh] bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto z-40 hidden xl:block ${className}`}
+    >
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+          <h3 class="font-semibold text-sm text-gray-900">📋 {t('docs.tableOfContents')}</h3>
+          <button
+            id="toc-toggle"
+            class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="目次を折りたたむ"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <nav id="toc-content">
+          <ul class="space-y-1 text-sm">
+            {doc.sections.map(section => (
+              <li style={`margin-left: ${(section.level - 1) * 0.75}rem`}>
+                <a
+                  href={`#${section.anchor}`}
+                  class="block py-1 px-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200 toc-link"
+                  data-anchor={section.anchor}
+                  data-level={section.level}
+                >
+                  <span
+                    class={
+                      section.level === 1
+                        ? 'font-medium'
+                        : section.level === 2
+                          ? 'font-normal'
+                          : 'text-sm'
+                    }
+                  >
+                    {section.title}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      <div
+        id="toc-resize-handle"
+        class="absolute left-0 top-0 w-1 h-full cursor-col-resize bg-gray-300 opacity-0 hover:opacity-100 transition-opacity"
+        title="サイズを調整"
+      />
+    </aside>
+  )
+}
+
+{
+  shouldShowTOC && (
+    <button
+      id="mobile-toc-toggle"
+      class="fixed bottom-4 right-4 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50 xl:hidden"
+      aria-label="目次を表示"
+    >
+      <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h7"
+        />
+      </svg>
+    </button>
+  )
+}
+
+{
+  shouldShowTOC && (
+    <div id="mobile-toc-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden xl:hidden">
+      <div class="fixed right-0 top-0 w-80 h-full bg-white shadow-lg overflow-y-auto">
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+            <h3 class="font-semibold text-lg text-gray-900">📋 {t('docs.tableOfContents')}</h3>
+            <button
+              id="mobile-toc-close"
+              class="p-2 text-gray-400 hover:text-gray-600"
+              aria-label="目次を閉じる"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <nav>
+            <ul class="space-y-2">
+              {doc.sections.map(section => (
+                <li style={`margin-left: ${(section.level - 1) * 1}rem`}>
+                  <a
+                    href={`#${section.anchor}`}
+                    class="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200 mobile-toc-link"
+                    data-anchor={section.anchor}
+                    data-level={section.level}
+                  >
+                    <span
+                      class={
+                        section.level === 1
+                          ? 'font-medium text-base'
+                          : section.level === 2
+                            ? 'font-normal text-sm'
+                            : 'text-sm text-gray-600'
+                      }
+                    >
+                      {section.title}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  import { FloatingTOCController } from './floating-toc-controller.js';
+
+  // Initialize floating TOC when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const tocController = new FloatingTOCController({
+      scrollOffset: 100,
+      enableResize: true,
+      resizeConstraints: { min: 200, max: 400 },
+    });
+
+    tocController.initialize();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      tocController.destroy();
+    });
+
+    // Make controller available globally for debugging
+    if (typeof window !== 'undefined') {
+      (window as any).tocController = tocController;
+    }
+  });
+</script>
+
+<style>
+  .toc-link {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .mobile-toc-link {
+    transition: all 0.2s ease-in-out;
+  }
+
+  #floating-toc::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  #floating-toc::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  #floating-toc::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+
+  #floating-toc::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  #floating-toc {
+    animation: fadeInSlide 0.3s ease-out;
+  }
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translate(20px, -50%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(0, -50%);
+    }
+  }
+
+  #mobile-toc-overlay > div {
+    animation: slideInFromRight 0.3s ease-out;
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 1279px) {
+    #floating-toc {
+      display: none !important;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    #mobile-toc-toggle,
+    #mobile-toc-overlay {
+      display: none !important;
+    }
+  }
+</style>
