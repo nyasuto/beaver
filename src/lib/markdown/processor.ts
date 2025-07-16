@@ -5,6 +5,7 @@
 import { remark } from 'remark';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
+import rehypeSlug from 'rehype-slug';
 import matter from 'gray-matter';
 import fs from 'fs/promises';
 import path from 'path';
@@ -28,6 +29,7 @@ export async function processMarkdown(
   // Convert markdown to HTML
   const result = await remark()
     .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeSlug) // Add ID attributes to headings
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(processedContent);
 
@@ -53,6 +55,11 @@ export async function processMarkdown(
 function extractSections(content: string): DocSection[] {
   const sections: DocSection[] = [];
   const lines = content.split('\n');
+  const isDebugMode = typeof process !== 'undefined' && process.env['NODE_ENV'] === 'development';
+
+  if (isDebugMode) {
+    console.log('🔍 [ToC Debug] Starting section extraction from markdown content');
+  }
 
   for (const line of lines) {
     const match = line.match(/^(#{1,6})\s+(.+)$/);
@@ -64,13 +71,31 @@ function extractSections(content: string): DocSection[] {
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-');
 
-      sections.push({
+      const section = {
         id: `section-${sections.length}`,
         title,
         level,
         anchor,
-      });
+      };
+
+      sections.push(section);
+
+      if (isDebugMode) {
+        console.log(`📋 [ToC Debug] Section extracted:`, {
+          level,
+          title,
+          anchor,
+          originalLine: line,
+        });
+      }
     }
+  }
+
+  if (isDebugMode) {
+    console.log(
+      `✅ [ToC Debug] Total ${sections.length} sections extracted:`,
+      sections.map(s => ({ title: s.title, anchor: s.anchor }))
+    );
   }
 
   return sections;

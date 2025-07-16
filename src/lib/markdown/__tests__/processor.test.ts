@@ -49,7 +49,7 @@ More content.`;
       expect(result.htmlContent).not.toContain(
         'This is a <strong>test</strong> document with some content.'
       );
-      expect(result.htmlContent).toContain('<h2>Section 1</h2>');
+      expect(result.htmlContent).toContain('<h2 id="section-1">Section 1</h2>');
       expect(result.htmlContent).toContain('Some content here.');
       expect(result.sections).toHaveLength(3); // H1, H2, H3 (sections are extracted before removal)
     });
