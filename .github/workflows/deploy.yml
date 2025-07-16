@@ -42,7 +42,7 @@ jobs:
     # レート制限対策: 同時実行を制限
     concurrency:
       group: github-pages-deploy
-      cancel-in-progress: true
+      cancel-in-progress: false
     
     steps:
       - name: Log workflow trigger
