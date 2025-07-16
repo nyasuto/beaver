@@ -1,11 +1,11 @@
 ---
 /**
  * Dynamic documentation page - displays individual documentation files
+ * Using integrated sidebar layout as default (Issue #382)
  */
 
 import PageLayout from '../../components/layouts/PageLayout.astro';
-import DocsLayout from '../../components/docs/DocsLayout.astro';
-import FloatingTOC from '../../components/docs/FloatingTOC.astro';
+import IntegratedDocsLayout from '../../components/docs/IntegratedDocsLayout.astro';
 import { DocsService } from '../../lib/services/DocsService.js';
 import {
   getTranslator,
@@ -55,11 +55,23 @@ if (!doc) {
 
 const pageTitle = `${doc.metadata.title} - ${projectInfo.name} ${t('docs.title')}`;
 const pageDescription = doc.metadata.description || `${doc.metadata.title}に関するドキュメント`;
+
+// Calculate content characteristics for adaptive layout
+const contentLength = doc.content.length;
+const sectionCount = doc.sections.length;
+// Content complexity information is used by IntegratedDocsLayout component
+// const isShortContent = contentLength < 2000 && sectionCount < 5;
+// const isComplexContent = sectionCount > 10 || contentLength > 10000;
 ---
 
 <PageLayout title={pageTitle} description={pageDescription}>
-  <DocsLayout doc={doc} navigation={navigation}>
-    <!-- Breadcrumbs -->
+  <IntegratedDocsLayout
+    doc={doc}
+    navigation={navigation}
+    enableAdaptiveLayout={true}
+    enableIntegratedTOC={true}
+  >
+    {/* Breadcrumbs */}
     <nav class="mb-6 text-sm">
       <ol class="flex items-center space-x-2 text-gray-500">
         <li><a href={await buildNavUrl('')} class="hover:text-blue-600">{t('docs.title')}</a></li>
@@ -80,207 +92,194 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
       </ol>
     </nav>
 
-    <!-- Document Header - Optimized Layout -->
-    <header class="mb-6">
-      <h1 class="text-4xl font-bold text-gray-900 mb-3">{doc.metadata.title}</h1>
+    {/* Document Header - Enhanced for Integrated Layout */}
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{doc.metadata.title}</h1>
 
       {
         doc.metadata.description && (
-          <p class="text-xl text-gray-600 mb-3">{doc.metadata.description}</p>
+          <p class="text-xl text-gray-600 mb-4">{doc.metadata.description}</p>
         )
       }
 
-      <!-- Compact metadata and tags layout -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <!-- Metadata in horizontal layout -->
-        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+      {/* Enhanced metadata layout for integrated approach */}
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+          {/* Reading Time */}
           {
             uiConfig.showReadingTime && (
-              <span class="flex items-center">
-                📖 {doc.readingTime}
-                {t('docs.readingTime')}
-              </span>
+              <div class="flex items-center text-gray-600">
+                <span class="mr-2">📖</span>
+                <span>{doc.readingTime}</span>
+              </div>
             )
           }
+
+          {/* Last Updated */}
           {
-            uiConfig.showWordCount && (
-              <span class="flex items-center">
-                📝 {doc.wordCount}
-                {t('docs.wordCount')}
-              </span>
+            uiConfig.showLastModified && doc.metadata.lastModified && (
+              <div class="flex items-center text-gray-600">
+                <span class="mr-2">📅</span>
+                <span>{new Date(doc.metadata.lastModified).toLocaleDateString('ja-JP')}</span>
+              </div>
             )
           }
-          {
-            uiConfig.showLastModified && (
-              <span class="flex items-center">
-                📅{' '}
-                {doc.metadata.lastModified.toLocaleDateString(
-                  uiConfig.language === 'ja' ? 'ja-JP' : 'en-US'
-                )}
-              </span>
-            )
-          }
+
+          {/* Section Count */}
+          <div class="flex items-center text-gray-600">
+            <span class="mr-2">📋</span>
+            <span>{sectionCount}セクション</span>
+          </div>
+
+          {/* Content Length */}
+          <div class="flex items-center text-gray-600">
+            <span class="mr-2">📄</span>
+            <span>{Math.round(contentLength / 1000)}k文字</span>
+          </div>
         </div>
 
-        <!-- Inline tags -->
+        {/* Tags (if available) */}
         {
           doc.metadata.tags && doc.metadata.tags.length > 0 && (
-            <div class="flex flex-wrap gap-2">
-              {doc.metadata.tags.map(tag => (
-                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full whitespace-nowrap">
-                  {tag}
-                </span>
-              ))}
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <div class="flex flex-wrap gap-2">
+                {doc.metadata.tags.map(tag => (
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           )
         }
       </div>
     </header>
 
-    <!-- Document Content -->
+    {/* Main Content */}
     <article class="prose prose-lg max-w-none">
       <div set:html={doc.htmlContent} />
     </article>
 
-    <!-- Document Footer -->
+    {/* Enhanced Footer Section */}
     <footer class="mt-12 pt-8 border-t border-gray-200">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {
-          uiConfig.showLastModified && (
-            <div class="text-sm text-gray-500">
-              {t('docs.lastModified')}:{' '}
-              {doc.metadata.lastModified.toLocaleDateString(
-                uiConfig.language === 'ja' ? 'ja-JP' : 'en-US',
-                {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }
-              )}
-            </div>
-          )
-        }
-
-        <div class="flex items-center gap-4">
-          {
-            uiConfig.showEditLink && projectInfo.editBaseUrl && (
-              <a
-                href={await buildEditUrl(doc.path)}
-                class="text-sm text-blue-600 hover:text-blue-800"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                📝 {t('docs.editPage')}
-              </a>
-            )
-          }
-          <a href={await buildNavUrl('')} class="text-sm text-gray-600 hover:text-gray-800">
-            📚 {t('docs.backToList')}
-          </a>
-        </div>
-      </div>
-    </footer>
-
-    <!-- Related Documents (if any) -->
-    {
-      doc.relatedDocs.length > 0 && (
-        <section class="mt-12">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-4">関連ドキュメント</h2>
-          <div class="grid md:grid-cols-2 gap-4">
-            {relatedDocsWithUrls.slice(0, 4).map(relatedDoc => {
-              // This would need to be enhanced to fetch related doc metadata
-              return (
-                <a
-                  href={relatedDoc.href}
-                  class="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
-                >
-                  <div class="font-medium text-gray-900">{relatedDoc.slug}</div>
-                </a>
-              );
-            })}
+      {/* Edit Link */}
+      {
+        uiConfig.showEditLink && (
+          <div class="mb-6">
+            <a
+              href={await buildEditUrl(doc.slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              {t('docs.editPage')}
+            </a>
           </div>
-        </section>
-      )
-    }
+        )
+      }
 
-    <!-- Floating Table of Contents -->
-    <FloatingTOC doc={doc} />
-  </DocsLayout>
+      {/* Related Documents */}
+      {
+        relatedDocsWithUrls.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">関連ドキュメント</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {relatedDocsWithUrls.map(related => (
+                <a
+                  href={related.href}
+                  class="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <span class="text-blue-600 hover:text-blue-700 font-medium">{related.slug}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </footer>
+  </IntegratedDocsLayout>
 </PageLayout>
 
 <style>
-  /* Custom styles for documentation content */
-  .prose {
-    @apply text-gray-900;
+  /* Enhanced content styling for integrated layout */
+  .integrated-content-area {
+    /* Improved readability for integrated sidebar layout */
+    line-height: 1.7;
   }
 
-  .prose h1,
-  .prose h2,
-  .prose h3,
-  .prose h4,
-  .prose h5,
-  .prose h6 {
-    @apply font-bold text-gray-900;
+  .integrated-content-area h1,
+  .integrated-content-area h2,
+  .integrated-content-area h3,
+  .integrated-content-area h4,
+  .integrated-content-area h5,
+  .integrated-content-area h6 {
     scroll-margin-top: 2rem;
   }
 
-  .prose h1 {
-    @apply text-3xl mb-4 mt-8;
-  }
-  .prose h2 {
-    @apply text-2xl mb-3 mt-6;
-  }
-  .prose h3 {
-    @apply text-xl mb-2 mt-4;
+  /* Code block improvements */
+  .integrated-content-area pre {
+    @apply bg-gray-900 rounded-lg p-4 overflow-x-auto;
   }
 
-  .prose p {
-    @apply mb-4 leading-relaxed;
+  .integrated-content-area code {
+    @apply bg-gray-100 px-1 py-0.5 rounded text-sm;
   }
 
-  .prose ul,
-  .prose ol {
-    @apply mb-4 ml-6;
+  .integrated-content-area pre code {
+    @apply bg-transparent px-0 py-0;
   }
 
-  .prose li {
-    @apply mb-1;
+  /* Table improvements */
+  .integrated-content-area table {
+    @apply w-full border-collapse border border-gray-300 rounded-lg overflow-hidden;
   }
 
-  .prose blockquote {
-    @apply border-l-4 border-blue-200 pl-4 ml-0 italic text-gray-700 bg-blue-50 py-2;
+  .integrated-content-area th,
+  .integrated-content-area td {
+    @apply border border-gray-300 px-4 py-2;
   }
 
-  .prose code {
-    @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono;
+  .integrated-content-area th {
+    @apply bg-gray-100 font-semibold;
   }
 
-  .prose pre {
-    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+  /* Blockquote improvements */
+  .integrated-content-area blockquote {
+    @apply border-l-4 border-blue-500 bg-blue-50 px-4 py-2 my-4 rounded-r-lg;
   }
 
-  .prose pre code {
-    @apply bg-transparent p-0;
-  }
-
-  .prose table {
-    @apply w-full border-collapse border border-gray-300 mb-4;
-  }
-
-  .prose th,
-  .prose td {
-    @apply border border-gray-300 px-3 py-2 text-left;
-  }
-
-  .prose th {
-    @apply bg-gray-50 font-semibold;
-  }
-
-  .prose a {
+  /* Link improvements */
+  .integrated-content-area a {
     @apply text-blue-600 hover:text-blue-800 hover:underline;
   }
 
-  .prose img {
-    @apply max-w-full h-auto rounded-lg shadow-sm;
+  /* List improvements */
+  .integrated-content-area ul,
+  .integrated-content-area ol {
+    @apply space-y-1;
+  }
+
+  .integrated-content-area li {
+    @apply leading-relaxed;
+  }
+
+  /* Image improvements */
+  .integrated-content-area img {
+    @apply rounded-lg shadow-md;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1023px) {
+    .integrated-content-area {
+      font-size: 16px;
+    }
   }
 </style>
