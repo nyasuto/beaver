@@ -74,6 +74,7 @@ const sectionCount = doc.sections.length;
     {/* Breadcrumbs */}
     <nav class="mb-6 text-sm">
       <ol class="flex items-center space-x-2 text-gray-500">
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
         <li><a href={await buildNavUrl('')} class="hover:text-blue-600">{t('docs.title')}</a></li>
         {
           breadcrumbsWithUrls.map((crumb, _index) => (
@@ -166,6 +167,7 @@ const sectionCount = doc.sections.length;
       {
         uiConfig.showEditLink && (
           <div class="mb-6">
+            {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
             <a
               href={await buildEditUrl(doc.slug)}
               target="_blank"
