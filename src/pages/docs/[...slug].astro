@@ -80,55 +80,61 @@ const pageDescription = doc.metadata.description || `${doc.metadata.title}に関
       </ol>
     </nav>
 
-    <!-- Document Header -->
-    <header class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-4">{doc.metadata.title}</h1>
+    <!-- Document Header - Optimized Layout -->
+    <header class="mb-6">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">{doc.metadata.title}</h1>
+
       {
         doc.metadata.description && (
-          <p class="text-xl text-gray-600 mb-4">{doc.metadata.description}</p>
+          <p class="text-xl text-gray-600 mb-3">{doc.metadata.description}</p>
         )
       }
 
-      <!-- Document Meta -->
-      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
+      <!-- Compact metadata and tags layout -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <!-- Metadata in horizontal layout -->
+        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+          {
+            uiConfig.showReadingTime && (
+              <span class="flex items-center">
+                📖 {doc.readingTime}
+                {t('docs.readingTime')}
+              </span>
+            )
+          }
+          {
+            uiConfig.showWordCount && (
+              <span class="flex items-center">
+                📝 {doc.wordCount}
+                {t('docs.wordCount')}
+              </span>
+            )
+          }
+          {
+            uiConfig.showLastModified && (
+              <span class="flex items-center">
+                📅{' '}
+                {doc.metadata.lastModified.toLocaleDateString(
+                  uiConfig.language === 'ja' ? 'ja-JP' : 'en-US'
+                )}
+              </span>
+            )
+          }
+        </div>
+
+        <!-- Inline tags -->
         {
-          uiConfig.showReadingTime && (
-            <span>
-              📖 {doc.readingTime}
-              {t('docs.readingTime')}
-            </span>
-          )
-        }
-        {
-          uiConfig.showWordCount && (
-            <span>
-              📝 {doc.wordCount}
-              {t('docs.wordCount')}
-            </span>
-          )
-        }
-        {
-          uiConfig.showLastModified && (
-            <span>
-              📅{' '}
-              {doc.metadata.lastModified.toLocaleDateString(
-                uiConfig.language === 'ja' ? 'ja-JP' : 'en-US'
-              )}
-            </span>
+          doc.metadata.tags && doc.metadata.tags.length > 0 && (
+            <div class="flex flex-wrap gap-2">
+              {doc.metadata.tags.map(tag => (
+                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full whitespace-nowrap">
+                  {tag}
+                </span>
+              ))}
+            </div>
           )
         }
       </div>
-
-      <!-- Tags -->
-      {
-        doc.metadata.tags && doc.metadata.tags.length > 0 && (
-          <div class="flex flex-wrap gap-2 mb-6">
-            {doc.metadata.tags.map(tag => (
-              <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">{tag}</span>
-            ))}
-          </div>
-        )
-      }
     </header>
 
     <!-- Document Content -->
