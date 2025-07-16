@@ -1,0 +1,333 @@
+---
+/**
+ * Integrated Documentation Page Template
+ *
+ * Issue #364: Testing ground for integrated sidebar approach
+ * This is a parallel implementation to test the new layout
+ */
+
+import PageLayout from '../../../components/layouts/PageLayout.astro';
+import IntegratedDocsLayout from '../../../components/docs/IntegratedDocsLayout.astro';
+import { DocsService } from '../../../lib/services/DocsService.js';
+import {
+  getTranslator,
+  getProjectInfo,
+  getUIConfig,
+  buildEditUrl,
+  buildNavUrl,
+} from '../../../lib/config/docs.js';
+
+export async function getStaticPaths() {
+  const docsService = new DocsService();
+  const docsCollection = await docsService.collectDocs();
+
+  return docsCollection.docs.map(doc => ({
+    params: { slug: doc.slug },
+    props: { doc, navigation: docsCollection.navigation },
+  }));
+}
+
+const { doc, navigation } = Astro.props;
+
+// Load configuration and translations
+const t = await getTranslator();
+const projectInfo = await getProjectInfo();
+const uiConfig = await getUIConfig();
+
+// Pre-build breadcrumb URLs
+const breadcrumbsWithUrls = await Promise.all(
+  doc.breadcrumbs.slice(1).map(async crumb => ({
+    ...crumb,
+    href: await buildNavUrl(crumb.slug),
+  }))
+);
+
+// Pre-build related docs URLs
+const relatedDocsWithUrls = await Promise.all(
+  doc.relatedDocs.map(async relatedSlug => ({
+    slug: relatedSlug,
+    href: await buildNavUrl(relatedSlug),
+  }))
+);
+
+if (!doc) {
+  const docsBaseUrl = await buildNavUrl('');
+  return Astro.redirect(docsBaseUrl);
+}
+
+const pageTitle = `${doc.metadata.title} - ${projectInfo.name} ${t('docs.title')} (統合版)`;
+const pageDescription =
+  doc.metadata.description ||
+  `${doc.metadata.title}に関するドキュメント - 統合サイドバーレイアウト`;
+
+// Calculate content characteristics for adaptive layout
+const contentLength = doc.content.length;
+const sectionCount = doc.sections.length;
+const isShortContent = contentLength < 2000 && sectionCount < 5;
+const isComplexContent = sectionCount > 10 || contentLength > 10000;
+---
+
+<PageLayout title={pageTitle} description={pageDescription}>
+  <IntegratedDocsLayout
+    doc={doc}
+    navigation={navigation}
+    enableAdaptiveLayout={true}
+    enableIntegratedTOC={true}
+  >
+    <!-- Layout Indicator for Testing -->
+    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span
+            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+          >
+            🧪 統合レイアウト版
+          </span>
+          <span class="text-sm text-blue-600"> Issue #364: 統合サイドバーアプローチのテスト </span>
+        </div>
+        <div class="flex items-center space-x-2 text-xs text-blue-600">
+          <span class="complexity-indicator"></span>
+          <span>
+            {isComplexContent ? '複雑' : isShortContent ? 'シンプル' : '標準'}
+            ({sectionCount}セクション, {Math.round(contentLength / 1000)}k文字)
+          </span>
+        </div>
+      </div>
+      <div class="mt-2 text-xs text-blue-600">
+        <a href={`/docs/${doc.slug}`} class="hover:underline"> → 従来レイアウトと比較する </a>
+      </div>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <nav class="mb-6 text-sm">
+      <ol class="flex items-center space-x-2 text-gray-500">
+        <li><a href={await buildNavUrl('')} class="hover:text-blue-600">{t('docs.title')}</a></li>
+        {
+          breadcrumbsWithUrls.map((crumb, _index) => (
+            <li class="flex items-center space-x-2">
+              <span>/</span>
+              <a href={crumb.href} class="hover:text-blue-600">
+                {crumb.title}
+              </a>
+            </li>
+          ))
+        }
+        <li class="flex items-center space-x-2">
+          <span>/</span>
+          <span class="text-gray-900">{doc.metadata.title}</span>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Document Header - Enhanced for Integrated Layout -->
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{doc.metadata.title}</h1>
+
+      {
+        doc.metadata.description && (
+          <p class="text-xl text-gray-600 mb-4">{doc.metadata.description}</p>
+        )
+      }
+
+      <!-- Enhanced metadata layout for integrated approach -->
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+          <!-- Reading Time -->
+          {
+            uiConfig.showReadingTime && (
+              <div class="flex items-center text-gray-600">
+                <span class="mr-2">📖</span>
+                <span>{doc.readingTime}</span>
+              </div>
+            )
+          }
+
+          <!-- Last Updated -->
+          {
+            uiConfig.showLastModified && doc.metadata.lastModified && (
+              <div class="flex items-center text-gray-600">
+                <span class="mr-2">📅</span>
+                <span>{new Date(doc.metadata.lastModified).toLocaleDateString('ja-JP')}</span>
+              </div>
+            )
+          }
+
+          <!-- Section Count -->
+          <div class="flex items-center text-gray-600">
+            <span class="mr-2">📋</span>
+            <span>{sectionCount}セクション</span>
+          </div>
+
+          <!-- Content Length -->
+          <div class="flex items-center text-gray-600">
+            <span class="mr-2">📄</span>
+            <span>{Math.round(contentLength / 1000)}k文字</span>
+          </div>
+        </div>
+
+        <!-- Tags (if available) -->
+        {
+          doc.metadata.tags && doc.metadata.tags.length > 0 && (
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <div class="flex flex-wrap gap-2">
+                {doc.metadata.tags.map(tag => (
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <article class="prose prose-lg max-w-none">
+      <div class="integrated-content-area" set:html={doc.content} />
+    </article>
+
+    <!-- Enhanced Footer Section -->
+    <footer class="mt-12 pt-8 border-t border-gray-200">
+      <!-- Edit Link -->
+      {
+        uiConfig.showEditLink && (
+          <div class="mb-6">
+            <a
+              href={await buildEditUrl(doc.slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              {t('docs.editPage')}
+            </a>
+          </div>
+        )
+      }
+
+      <!-- Related Documents -->
+      {
+        relatedDocsWithUrls.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">関連ドキュメント</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {relatedDocsWithUrls.map(related => (
+                <a
+                  href={related.href}
+                  class="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <span class="text-blue-600 hover:text-blue-700 font-medium">{related.slug}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      <!-- Layout Comparison Links -->
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h4 class="text-sm font-medium text-yellow-800 mb-2">🧪 レイアウト比較テスト</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div class="flex items-center justify-between p-2 bg-yellow-100 rounded">
+            <span class="text-yellow-700">現在: 統合サイドバー</span>
+            <span class="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded">ACTIVE</span>
+          </div>
+          <a
+            href={`/docs/${doc.slug}`}
+            class="flex items-center justify-between p-2 bg-white border border-yellow-300 rounded hover:bg-yellow-50 transition-colors"
+          >
+            <span class="text-yellow-700">従来: フローティングTOC</span>
+            <span class="text-xs text-yellow-600">比較 →</span>
+          </a>
+        </div>
+        <p class="mt-2 text-xs text-yellow-700">
+          どちらのレイアウトが使いやすいか、ぜひフィードバックをお聞かせください。
+        </p>
+      </div>
+    </footer>
+  </IntegratedDocsLayout>
+</PageLayout>
+
+<style>
+  /* Enhanced content styling for integrated layout */
+  .integrated-content-area {
+    /* Improved readability for integrated sidebar layout */
+    line-height: 1.7;
+  }
+
+  .integrated-content-area h1,
+  .integrated-content-area h2,
+  .integrated-content-area h3,
+  .integrated-content-area h4,
+  .integrated-content-area h5,
+  .integrated-content-area h6 {
+    scroll-margin-top: 2rem;
+  }
+
+  /* Code block improvements */
+  .integrated-content-area pre {
+    @apply bg-gray-900 rounded-lg p-4 overflow-x-auto;
+  }
+
+  .integrated-content-area code {
+    @apply bg-gray-100 px-1 py-0.5 rounded text-sm;
+  }
+
+  .integrated-content-area pre code {
+    @apply bg-transparent px-0 py-0;
+  }
+
+  /* Table improvements */
+  .integrated-content-area table {
+    @apply w-full border-collapse border border-gray-300 rounded-lg overflow-hidden;
+  }
+
+  .integrated-content-area th,
+  .integrated-content-area td {
+    @apply border border-gray-300 px-4 py-2;
+  }
+
+  .integrated-content-area th {
+    @apply bg-gray-100 font-semibold;
+  }
+
+  /* Blockquote improvements */
+  .integrated-content-area blockquote {
+    @apply border-l-4 border-blue-500 bg-blue-50 px-4 py-2 my-4 rounded-r-lg;
+  }
+
+  /* Link improvements */
+  .integrated-content-area a {
+    @apply text-blue-600 hover:text-blue-800 hover:underline;
+  }
+
+  /* List improvements */
+  .integrated-content-area ul,
+  .integrated-content-area ol {
+    @apply space-y-1;
+  }
+
+  .integrated-content-area li {
+    @apply leading-relaxed;
+  }
+
+  /* Image improvements */
+  .integrated-content-area img {
+    @apply rounded-lg shadow-md;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1023px) {
+    .integrated-content-area {
+      font-size: 16px;
+    }
+  }
+</style>
