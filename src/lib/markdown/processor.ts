@@ -22,11 +22,14 @@ export async function processMarkdown(
   // Extract sections for table of contents
   const sections = extractSections(markdownContent);
 
+  // Remove the first h1 title to avoid duplication with page header
+  const processedContent = removeFirstH1Title(markdownContent);
+
   // Convert markdown to HTML
   const result = await remark()
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(markdownContent);
+    .process(processedContent);
 
   const htmlContent = String(result);
 
@@ -124,6 +127,49 @@ export function calculateReadingTime(content: string): number {
  */
 export function calculateWordCount(content: string): number {
   return content.split(/\s+/).filter(word => word.length > 0).length;
+}
+
+/**
+ * Remove the first h1 title from markdown content to avoid duplication
+ * with the page header that displays the same title
+ */
+function removeFirstH1Title(content: string): string {
+  const lines = content.split('\n');
+  let foundFirstH1 = false;
+  let removeNextDescription = false;
+
+  const filteredLines = lines.filter(line => {
+    // Match h1 heading
+    const h1Match = line.match(/^#\s+(.+)$/);
+
+    if (h1Match && !foundFirstH1) {
+      foundFirstH1 = true;
+      removeNextDescription = true;
+      return false; // Remove the first h1
+    }
+
+    // Remove the description paragraph that immediately follows the first h1
+    if (removeNextDescription) {
+      // Skip empty lines
+      if (line.trim() === '') {
+        return false;
+      }
+      // Remove the first non-empty line after h1 (description)
+      if (line.trim() !== '' && !line.match(/^#+\s/)) {
+        removeNextDescription = false;
+        return false; // Remove the description
+      }
+      // If we encounter another heading, stop removing
+      if (line.match(/^#+\s/)) {
+        removeNextDescription = false;
+        return true; // Keep this line
+      }
+    }
+
+    return true; // Keep all other lines
+  });
+
+  return filteredLines.join('\n');
 }
 
 /**

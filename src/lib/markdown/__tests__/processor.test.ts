@@ -44,9 +44,14 @@ More content.`;
       expect(result.metadata.title).toBe('Test Document');
       expect(result.metadata.description).toBe('A test document');
       expect(result.metadata.tags).toEqual(['test', 'markdown']);
-      expect(result.htmlContent).toContain('<h1>Test Document</h1>');
-      expect(result.htmlContent).toContain('<strong>test</strong>');
-      expect(result.sections).toHaveLength(3); // H1, H2, H3
+      // The first h1 title and its description should be removed to avoid duplication with page header
+      expect(result.htmlContent).not.toContain('<h1>Test Document</h1>');
+      expect(result.htmlContent).not.toContain(
+        'This is a <strong>test</strong> document with some content.'
+      );
+      expect(result.htmlContent).toContain('<h2>Section 1</h2>');
+      expect(result.htmlContent).toContain('Some content here.');
+      expect(result.sections).toHaveLength(3); // H1, H2, H3 (sections are extracted before removal)
     });
 
     it('should extract title from content if not in frontmatter', async () => {
