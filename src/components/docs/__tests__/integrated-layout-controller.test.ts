@@ -396,6 +396,7 @@ describe('Integrated Layout Controller', () => {
 
       controller = new IntegratedLayoutController({
         enableAdaptiveLayout: true,
+        enableIntelligentTracking: false, // Disable for testing
       });
       controller.initialize();
 
@@ -414,6 +415,7 @@ describe('Integrated Layout Controller', () => {
 
       controller = new IntegratedLayoutController({
         enableAdaptiveLayout: true,
+        enableIntelligentTracking: false, // Disable for testing
       });
       controller.initialize();
 
@@ -428,6 +430,7 @@ describe('Integrated Layout Controller', () => {
     it('should handle resize events', () => {
       controller = new IntegratedLayoutController({
         enableAdaptiveLayout: true,
+        enableIntelligentTracking: false, // Disable for testing
       });
       controller.initialize();
 
@@ -445,7 +448,9 @@ describe('Integrated Layout Controller', () => {
 
   describe('Section Change Handling', () => {
     beforeEach(() => {
-      controller = new IntegratedLayoutController();
+      controller = new IntegratedLayoutController({
+        enableIntelligentTracking: false, // Disable for testing
+      });
       controller.initialize();
     });
 
@@ -471,6 +476,7 @@ describe('Integrated Layout Controller', () => {
     it('should update minimap highlighting on section change', async () => {
       controller = new IntegratedLayoutController({
         enableMinimap: true,
+        enableIntelligentTracking: false, // Disable for testing
       });
       controller.initialize();
 
@@ -495,7 +501,9 @@ describe('Integrated Layout Controller', () => {
 
   describe('Public API', () => {
     beforeEach(() => {
-      controller = new IntegratedLayoutController();
+      controller = new IntegratedLayoutController({
+        enableIntelligentTracking: false, // Disable for testing
+      });
       controller.initialize();
     });
 
@@ -535,7 +543,9 @@ describe('Integrated Layout Controller', () => {
     it('should log debug information when enabled', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      controller = new IntegratedLayoutController();
+      controller = new IntegratedLayoutController({
+        enableIntelligentTracking: false, // Disable for testing
+      });
       controller.initialize();
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[Integrated Layout]'));
@@ -549,7 +559,9 @@ describe('Integrated Layout Controller', () => {
       // Clear DOM
       document.body.innerHTML = '';
 
-      controller = new IntegratedLayoutController();
+      controller = new IntegratedLayoutController({
+        enableIntelligentTracking: false, // Disable for testing
+      });
 
       // Should not throw error even with missing elements
       expect(() => controller.initialize()).not.toThrow();
@@ -561,6 +573,7 @@ describe('Integrated Layout Controller', () => {
 
       controller = new IntegratedLayoutController({
         enableAdaptiveLayout: true,
+        enableIntelligentTracking: false, // Disable for testing
       });
 
       // Should not throw error
