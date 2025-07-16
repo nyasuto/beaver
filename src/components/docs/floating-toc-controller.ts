@@ -56,9 +56,28 @@ export class FloatingTOCController {
    * Initialize the TOC controller
    */
   public initialize(): void {
+    const isDebugMode =
+      typeof window !== 'undefined' && window.location.search.includes('debug=toc');
+
+    if (isDebugMode) {
+      console.log('🚀 [ToC Debug] Initializing FloatingTOC controller');
+    }
+
     this.findElements();
     this.setupEventListeners();
     this.updateActiveSection();
+
+    if (isDebugMode) {
+      console.log('✅ [ToC Debug] FloatingTOC controller initialized:', {
+        floatingTOCFound: !!this.floatingTOC,
+        mobileTOCFound: !!this.mobileTocToggle,
+        tocLinksCount: document.querySelectorAll('.toc-link, .mobile-toc-link, .tablet-toc-link')
+          .length,
+        headingsWithId: document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]')
+          .length,
+        allHeadings: document.querySelectorAll('h1, h2, h3, h4, h5, h6').length,
+      });
+    }
   }
 
   /**
@@ -193,15 +212,60 @@ export class FloatingTOCController {
     e.preventDefault();
     const link = e.currentTarget as HTMLElement;
     const anchor = link.getAttribute('data-anchor');
+    const isDebugMode =
+      typeof window !== 'undefined' && window.location.search.includes('debug=toc');
+
+    if (isDebugMode) {
+      console.log('🔗 [ToC Debug] Link clicked:', {
+        anchor,
+        href: link.getAttribute('href'),
+        linkElement: link,
+      });
+    }
 
     if (anchor) {
       const target = document.getElementById(anchor);
+
+      if (isDebugMode) {
+        console.log('🎯 [ToC Debug] Target search result:', {
+          anchor,
+          targetElement: target,
+          targetExists: !!target,
+          allIdsInDOM: Array.from(document.querySelectorAll('[id]')).map(el => el.id),
+        });
+      }
+
       if (target) {
-        const offset = 80; // Account for fixed headers
+        const offset = 100; // Account for fixed headers (64px header + 36px margin)
         const targetPosition = target.offsetTop - offset;
+
+        if (isDebugMode) {
+          console.log('📜 [ToC Debug] Scrolling to target:', {
+            anchor,
+            targetOffsetTop: target.offsetTop,
+            offset,
+            finalPosition: targetPosition,
+            currentScrollY: window.scrollY,
+          });
+        }
+
         window.scrollTo({
           top: targetPosition,
           behavior: 'smooth',
+        });
+
+        // Update active section after scroll
+        setTimeout(() => {
+          this.updateActiveSection();
+        }, 100);
+      } else if (isDebugMode) {
+        console.warn('⚠️ [ToC Debug] Target element not found:', {
+          anchor,
+          availableIds: Array.from(document.querySelectorAll('[id]')).map(el => el.id),
+          tocSections: Array.from(document.querySelectorAll('.toc-link')).map(link => ({
+            anchor: link.getAttribute('data-anchor'),
+            href: link.getAttribute('href'),
+          })),
         });
       }
     }
