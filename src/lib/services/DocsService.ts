@@ -229,19 +229,19 @@ export class DocsService {
     slug: string,
     category?: string
   ): Array<{ title: string; slug: string }> {
-    const breadcrumbs = [{ title: 'ドキュメント', slug: 'docs' }];
+    const breadcrumbs = [{ title: 'ドキュメント', slug: '' }]; // Empty slug points to /docs/ root
 
     if (category && category !== 'overview') {
-      const categoryTitles: Record<string, string> = {
-        documentation: 'ドキュメント',
-        general: '一般',
-        overview: '概要',
-      };
-
-      breadcrumbs.push({
-        title: categoryTitles[category] || category,
-        slug: category,
-      });
+      // Don't add intermediate breadcrumb since we don't have category index pages
+      // const categoryTitles: Record<string, string> = {
+      //   documentation: 'ドキュメント',
+      //   general: '一般',
+      //   overview: '概要',
+      // };
+      // breadcrumbs.push({
+      //   title: categoryTitles[category] || category,
+      //   slug: category,
+      // });
     }
 
     return breadcrumbs;
