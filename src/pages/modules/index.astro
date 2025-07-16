@@ -14,6 +14,7 @@ import PageLayout from '../../components/layouts/PageLayout.astro';
 import PageHeader from '../../components/ui/PageHeader.astro';
 import { getModuleAnalysisService } from '../../lib/services/ModuleAnalysisService';
 import { resolveUrl } from '../../lib/utils/url';
+import { ModuleStatisticsCalculator } from '../../lib/utils/module-statistics';
 
 const title = 'モジュール詳細分析';
 const description = 'コードベースの詳細なモジュール分析とホットスポット検出';
@@ -67,45 +68,22 @@ if (!analysisReport) {
     recommendations: [],
     metadata: {
       generatedAt: new Date().toISOString(),
-      analysisType: 'failed',
-      dataSource: 'none',
+      analysisType: 'cached' as const,
+      dataSource: 'mock' as const,
       version: '1.0.0',
     },
   };
 }
 
-// Process modules for display
-const modulesByPriority = {
-  critical: analysisReport.modules.filter(m => m.priority === 'critical'),
-  high: analysisReport.modules.filter(m => m.priority === 'high'),
-  medium: analysisReport.modules.filter(m => m.priority === 'medium'),
-  low: analysisReport.modules.filter(m => m.priority === 'low'),
-};
+// Generate comprehensive statistics using extracted utility
+const summaryStats = ModuleStatisticsCalculator.generateSummaryStats(analysisReport);
 
-// Get top hotspots
-const topHotspots = analysisReport.hotspots.slice(0, 5);
-
-// Get critical code smells
-const criticalCodeSmells = analysisReport.codeSmells
-  .filter(s => s.severity === 'critical' || s.severity === 'major')
-  .slice(0, 10);
-
-// Calculate priority stats
-const priorityStats = {
-  total: analysisReport.modules.length,
-  critical: modulesByPriority.critical.length,
-  high: modulesByPriority.high.length,
-  medium: modulesByPriority.medium.length,
-  low: modulesByPriority.low.length,
-};
-
-// Get quality distribution
-const qualityDistribution = {
-  excellent: analysisReport.modules.filter(m => m.qualityScore >= 90).length,
-  good: analysisReport.modules.filter(m => m.qualityScore >= 70 && m.qualityScore < 90).length,
-  fair: analysisReport.modules.filter(m => m.qualityScore >= 50 && m.qualityScore < 70).length,
-  poor: analysisReport.modules.filter(m => m.qualityScore < 50).length,
-};
+// Extract individual statistics for template use
+const modulesByPriority = summaryStats.modulesByPriority;
+const topHotspots = summaryStats.topHotspots;
+const criticalCodeSmells = summaryStats.criticalCodeSmells;
+const priorityStats = summaryStats.priorityStats;
+const qualityDistribution = summaryStats.qualityDistribution;
 ---
 
 <PageLayout
@@ -225,7 +203,7 @@ const qualityDistribution = {
                   ({modules.length})
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {modules.map(module => (
+                  {modules.map((module: any) => (
                     <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div class="flex items-start justify-between mb-2">
                         <h4 class="font-medium text-heading truncate">{module.displayName}</h4>
@@ -473,7 +451,7 @@ const qualityDistribution = {
             {
               analysisReport.metadata.dataSource === 'mock'
                 ? 'サンプルデータ'
-                : analysisReport.metadata.dataSource === 'cached'
+                : analysisReport.metadata.dataSource === 'static_analysis'
                   ? 'キャッシュデータ'
                   : '実際のデータ'
             }
