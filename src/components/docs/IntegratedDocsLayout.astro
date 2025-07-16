@@ -1,0 +1,721 @@
+---
+/**
+ * Integrated Documentation Layout Component
+ *
+ * Issue #364: Enhanced documentation layout with integrated sidebar approach
+ * Features:
+ * - Integrated TOC in sidebar for better mobile usability
+ * - Adaptive layout based on content length
+ * - Improved accessibility and reduced cognitive load
+ * - Better wide monitor navigation
+ */
+
+import type { ProcessedDoc, DocNavigation } from '../../lib/types/docs.js';
+import {
+  getDocsConfig,
+  getTranslator,
+  getProjectInfo,
+  getUIConfig,
+  getPathConfig,
+  buildNavUrl,
+} from '../../lib/config/docs.js';
+
+interface Props {
+  doc: ProcessedDoc;
+  navigation: DocNavigation[];
+  enableAdaptiveLayout?: boolean;
+  enableIntegratedTOC?: boolean;
+}
+
+const { doc, navigation, enableAdaptiveLayout = true, enableIntegratedTOC = true } = Astro.props;
+
+// Load configuration and translations
+const config = await getDocsConfig();
+const t = await getTranslator();
+const projectInfo = await getProjectInfo();
+const uiConfig = await getUIConfig();
+const pathConfig = await getPathConfig();
+
+// Build project title
+const projectTitle = `${projectInfo.emoji || ''} ${projectInfo.name} ${t('docs.title')}`.trim();
+const docsBaseUrl = await buildNavUrl('');
+
+// Pre-build navigation URLs
+const navigationWithUrls = await Promise.all(
+  navigation.map(async navItem => ({
+    ...navItem,
+    href: navItem.slug ? await buildNavUrl(navItem.slug) : undefined,
+    children: navItem.children
+      ? await Promise.all(
+          navItem.children.map(async child => ({
+            ...child,
+            href: await buildNavUrl(child.slug),
+          }))
+        )
+      : undefined,
+  }))
+);
+
+// Determine layout configuration
+const shouldShowTOC =
+  enableIntegratedTOC && uiConfig.showTableOfContents && doc.sections.length > 0;
+
+// Calculate content complexity for adaptive layout
+const contentLength = doc.content.length;
+const sectionCount = doc.sections.length;
+const isShortContent = contentLength < 2000 && sectionCount < 5;
+const isComplexContent = sectionCount > 10 || contentLength > 10000;
+
+// Adaptive sidebar width based on content complexity
+const sidebarWidth = enableAdaptiveLayout
+  ? isComplexContent
+    ? 'w-80'
+    : shouldShowTOC
+      ? 'w-72'
+      : 'w-64'
+  : 'w-72';
+const marginLeft = isComplexContent ? 'lg:ml-80' : shouldShowTOC ? 'lg:ml-72' : 'lg:ml-64';
+
+// Search configuration for client-side
+const searchConfig = {
+  placeholder: config.search?.placeholder || t('docs.search.placeholder'),
+  maxResults: config.search?.maxResults || 10,
+  language: uiConfig.language || 'ja',
+  baseUrl: pathConfig.baseUrl,
+};
+
+// TOC configuration
+const tocConfig = {
+  enableIntelligentTracking: true,
+  enableReadingProgress: !isShortContent,
+  enableCollapsible: isComplexContent,
+  enableMinimap: sectionCount > 15,
+};
+---
+
+<div
+  class="flex min-h-screen bg-white"
+  data-layout-type="integrated-sidebar"
+  data-content-complexity={isComplexContent ? 'complex' : isShortContent ? 'simple' : 'standard'}
+  data-search-placeholder={searchConfig.placeholder}
+  data-search-max-results={searchConfig.maxResults.toString()}
+  data-search-language={searchConfig.language}
+  data-docs-base-url={searchConfig.baseUrl}
+>
+  {/* Integrated Sidebar with Navigation and TOC */}
+  <aside
+    class={`hidden lg:block ${sidebarWidth} bg-gray-50 border-r border-gray-200 fixed h-full overflow-y-auto`}
+    data-sidebar-width={sidebarWidth}
+  >
+    <div class="flex flex-col h-full">
+      {/* Header Section */}
+      <div class="flex-shrink-0 p-6 border-b border-gray-200">
+        {/* Logo/Header */}
+        <div class="mb-4">
+          <a
+            href={docsBaseUrl}
+            class="flex items-center text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            {projectTitle}
+          </a>
+        </div>
+
+        {/* Search */}
+        <div class="mb-4">
+          <div id="integrated-docs-search-container"></div>
+        </div>
+
+        {/* Quick Actions for Complex Content */}
+        {
+          isComplexContent && (
+            <div class="flex gap-2 mb-4">
+              <button
+                id="sidebar-expand-all"
+                class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                title="全て展開"
+              >
+                📖 展開
+              </button>
+              <button
+                id="sidebar-collapse-all"
+                class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                title="全て折りたたみ"
+              >
+                📚 折りたたみ
+              </button>
+              {tocConfig.enableMinimap && (
+                <button
+                  id="sidebar-minimap-toggle"
+                  class="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+                  title="ミニマップ切り替え"
+                >
+                  🗺️ マップ
+                </button>
+              )}
+            </div>
+          )
+        }
+      </div>
+
+      {/* Scrollable Navigation and TOC Section */}
+      <div class="flex-1 overflow-y-auto">
+        <div class="p-6">
+          {/* Navigation Menu */}
+          <nav class="mb-8">
+            <div class="text-sm font-medium text-gray-900 mb-3 flex items-center">
+              📚 ナビゲーション
+            </div>
+            <ul class="space-y-1">
+              {
+                navigationWithUrls.map(navItem => (
+                  <li>
+                    {navItem.children ? (
+                      /* Category with children */
+                      <div class="mb-2">
+                        <div class="font-medium text-gray-900 px-3 py-2 text-sm bg-gray-100 rounded-md">
+                          {navItem.title}
+                        </div>
+                        <ul class="ml-3 mt-1 space-y-1">
+                          {navItem.children.map(child => (
+                            <li>
+                              <a
+                                href={child.href}
+                                class={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                                  doc.slug === child.slug
+                                    ? 'bg-blue-100 text-blue-700 font-medium border-l-3 border-blue-500'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                }`}
+                              >
+                                {child.title}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      /* Single navigation item */
+                      <a
+                        href={navItem.href}
+                        class={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                          doc.slug === navItem.slug
+                            ? 'bg-blue-100 text-blue-700 font-medium border-l-3 border-blue-500'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {navItem.title}
+                      </a>
+                    )}
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+
+          {/* Integrated Table of Contents */}
+          {
+            shouldShowTOC && (
+              <div class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-sm font-medium text-gray-900 flex items-center">
+                    📋 {t('docs.tableOfContents')}
+                  </div>
+                  {isComplexContent && (
+                    <div class="flex gap-1">
+                      <button
+                        id="integrated-toc-expand-all"
+                        class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="全ての項目を展開"
+                        title="全て展開"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        id="integrated-toc-collapse-all"
+                        class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="全ての項目を折りたたむ"
+                        title="全て折りたたみ"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M20 12H4"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* TOC Container */}
+                <nav id="integrated-toc-content" class="space-y-1 text-sm">
+                  {doc.sections.map(section => (
+                    <div
+                      class="toc-section"
+                      data-section-level={section.level}
+                      style={`margin-left: ${(section.level - 1) * 0.75}rem`}
+                    >
+                      <a
+                        href={`#${section.anchor}`}
+                        class="integrated-toc-link block py-1.5 px-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200"
+                        data-anchor={section.anchor}
+                        data-level={section.level}
+                        aria-label={`${section.title}へ移動`}
+                      >
+                        <span
+                          class={
+                            section.level === 1
+                              ? 'font-medium text-base'
+                              : section.level === 2
+                                ? 'font-normal text-sm'
+                                : 'text-sm text-gray-500'
+                          }
+                        >
+                          {section.title}
+                        </span>
+                      </a>
+                    </div>
+                  ))}
+                </nav>
+
+                {/* Reading Progress for Long Content */}
+                {!isShortContent && (
+                  <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="text-xs text-gray-500 mb-2">読書進捗</div>
+                    <div class="integrated-progress-container">
+                      <div
+                        class="integrated-progress-bar w-full h-2 bg-gray-200 rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-label="読書進捗"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="0"
+                      >
+                        <div
+                          class="integrated-progress-fill h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out"
+                          style="width: 0%"
+                        />
+                      </div>
+                      <div class="text-xs text-gray-500 mt-1 text-right">
+                        <span class="integrated-progress-text">0%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          {/* Minimap for Very Complex Content */}
+          {
+            tocConfig.enableMinimap && (
+              <div class="border-t border-gray-200 pt-6 mt-6 hidden" id="content-minimap">
+                <div class="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                  🗺️ コンテンツマップ
+                </div>
+                <div class="minimap-container bg-gray-100 rounded-lg p-3 text-xs">
+                  {/* Minimap content will be dynamically generated */}
+                </div>
+              </div>
+            )
+          }
+        </div>
+      </div>
+
+      {/* Footer Section with Quick Links */}
+      <div class="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50">
+        <div class="text-sm font-medium text-gray-900 mb-3">{t('nav.quickLinks')}</div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <a
+            href={projectInfo.homeUrl || '/'}
+            class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            🏠 {t('nav.home')}
+          </a>
+          <a
+            href="/issues"
+            class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            📋 {t('nav.issues')}
+          </a>
+          <a
+            href="/quality"
+            class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            📊 {t('nav.quality')}
+          </a>
+          {
+            projectInfo.githubUrl && (
+              <a
+                href={projectInfo.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                🔗 {t('nav.github')}
+              </a>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  {/* Mobile Menu Button */}
+  <div class="lg:hidden fixed top-4 left-4 z-50">
+    <button
+      id="integrated-mobile-menu-button"
+      class="p-3 bg-white border border-gray-300 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+      aria-label={t('mobile.openMenu')}
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </div>
+
+  {/* Enhanced Mobile Navigation Overlay */}
+  <div
+    id="integrated-mobile-nav-overlay"
+    class="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50 hidden"
+  >
+    <div class="w-full max-w-sm bg-white h-full shadow-xl overflow-y-auto">
+      <div class="flex flex-col h-full">
+        {/* Mobile Header */}
+        <div class="flex-shrink-0 p-4 border-b border-gray-200">
+          <div class="flex items-center justify-between mb-4">
+            <a href={docsBaseUrl} class="flex items-center text-lg font-bold text-gray-900">
+              {projectTitle}
+            </a>
+            <button
+              id="integrated-mobile-menu-close"
+              class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label={t('mobile.closeMenu')}
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile Search */}
+          <div class="mb-4">
+            <div id="integrated-mobile-docs-search-container"></div>
+          </div>
+        </div>
+
+        {/* Mobile Content */}
+        <div class="flex-1 overflow-y-auto p-4">
+          {/* Mobile Navigation */}
+          <nav class="mb-6">
+            <div class="text-sm font-medium text-gray-900 mb-3">📚 ナビゲーション</div>
+            <ul class="space-y-1">
+              {
+                navigationWithUrls.map(navItem => (
+                  <li>
+                    {navItem.children ? (
+                      <div class="mb-2">
+                        <div class="font-medium text-gray-900 px-3 py-2 text-sm bg-gray-100 rounded-md">
+                          {navItem.title}
+                        </div>
+                        <ul class="ml-3 mt-1 space-y-1">
+                          {navItem.children.map(child => (
+                            <li>
+                              <a
+                                href={child.href}
+                                class={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                                  doc.slug === child.slug
+                                    ? 'bg-blue-100 text-blue-700 font-medium'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                }`}
+                              >
+                                {child.title}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <a
+                        href={navItem.href}
+                        class={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                          doc.slug === navItem.slug
+                            ? 'bg-blue-100 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {navItem.title}
+                      </a>
+                    )}
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+
+          {/* Mobile TOC */}
+          {
+            shouldShowTOC && (
+              <div class="border-t border-gray-200 pt-4">
+                <div class="text-sm font-medium text-gray-900 mb-3">📋 目次</div>
+                <nav class="space-y-1 text-sm">
+                  {doc.sections.map(section => (
+                    <a
+                      href={`#${section.anchor}`}
+                      class="mobile-toc-link block py-2 px-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                      data-anchor={section.anchor}
+                      data-level={section.level}
+                      style={`margin-left: ${(section.level - 1) * 1}rem`}
+                    >
+                      <span
+                        class={
+                          section.level === 1
+                            ? 'font-medium text-base'
+                            : section.level === 2
+                              ? 'font-normal text-sm'
+                              : 'text-sm text-gray-500'
+                        }
+                      >
+                        {section.title}
+                      </span>
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            )
+          }
+        </div>
+
+        {/* Mobile Footer */}
+        <div class="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50">
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <a
+              href={projectInfo.homeUrl || '/'}
+              class="flex items-center text-gray-600 hover:text-gray-900"
+            >
+              🏠 ホーム
+            </a>
+            <a href="/issues" class="flex items-center text-gray-600 hover:text-gray-900">
+              📋 課題
+            </a>
+            <a href="/quality" class="flex items-center text-gray-600 hover:text-gray-900">
+              📊 品質
+            </a>
+            {
+              projectInfo.githubUrl && (
+                <a
+                  href={projectInfo.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center text-gray-600 hover:text-gray-900"
+                >
+                  🔗 GitHub
+                </a>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Main Content */}
+  <main class={`flex-1 ${marginLeft}`}>
+    <div class="max-w-4xl mx-auto px-6 lg:px-8 py-8 lg:py-12">
+      {/* Content area for slot */}
+      <slot />
+    </div>
+  </main>
+
+  {/* Global Reading Progress Bar for Short Content */}
+  {
+    !isShortContent && (
+      <div class="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50" id="global-progress-bar">
+        <div
+          class="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out"
+          id="global-progress-fill"
+          style="width: 0%"
+        />
+      </div>
+    )
+  }
+</div>
+
+<script>
+  import { IntegratedLayoutController } from './integrated-layout-controller.js';
+
+  // Initialize integrated layout when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const layoutController = new IntegratedLayoutController({
+      enableAdaptiveLayout: true,
+      enableIntelligentTracking: true,
+      enableReadingProgress: true,
+      enableMinimap: document.querySelector('[data-content-complexity="complex"]') !== null,
+      scrollTrackerOptions: {
+        rootMargin: '-10% 0px -80% 0px',
+        threshold: 0,
+        debounceDelay: 100,
+      },
+    });
+
+    layoutController.initialize();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      layoutController.destroy();
+    });
+
+    // Make controller available globally for debugging
+    if (typeof window !== 'undefined') {
+      (window as any).integratedLayoutController = layoutController;
+    }
+  });
+</script>
+
+<style>
+  /* Integrated Layout Specific Styles */
+  .integrated-toc-link {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .integrated-toc-link:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  }
+
+  .mobile-toc-link {
+    transition: all 0.2s ease-in-out;
+    touch-action: manipulation;
+  }
+
+  /* Progress Bar Styles */
+  .integrated-progress-bar {
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+  }
+
+  .integrated-progress-fill {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  }
+
+  /* TOC Active States */
+  .integrated-toc-active {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 3px solid #3b82f6;
+    font-weight: 600;
+    color: #1e40af;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+    transform: translateX(2px);
+  }
+
+  .integrated-toc-nearby {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-left: 2px solid #e2e8f0;
+    color: #64748b;
+    opacity: 0.8;
+  }
+
+  /* Mobile Optimizations */
+  @media (max-width: 1023px) {
+    .integrated-toc-link,
+    .mobile-toc-link {
+      min-height: 44px; /* iOS touch target minimum */
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  /* Sidebar Width Transitions */
+  aside[data-sidebar-width] {
+    transition: width 0.3s ease-in-out;
+  }
+
+  /* Content Complexity Indicators */
+  [data-content-complexity='simple'] .complexity-indicator::before {
+    content: '📄';
+  }
+
+  [data-content-complexity='standard'] .complexity-indicator::before {
+    content: '📖';
+  }
+
+  [data-content-complexity='complex'] .complexity-indicator::before {
+    content: '📚';
+  }
+
+  /* Minimap Styles */
+  .minimap-container {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .minimap-section {
+    padding: 2px 4px;
+    margin: 1px 0;
+    border-left: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .minimap-section.active {
+    border-left-color: #3b82f6;
+    background-color: #dbeafe;
+  }
+
+  .minimap-section:hover {
+    background-color: #f1f5f9;
+    cursor: pointer;
+  }
+
+  /* Responsive Breakpoint Optimizations */
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    /* Large tablet optimizations */
+    aside[data-sidebar-width='w-80'] {
+      width: 18rem; /* Slightly narrower on large tablets */
+    }
+  }
+
+  @media (min-width: 1280px) {
+    /* Desktop optimizations */
+    aside[data-sidebar-width='w-80'] {
+      width: 22rem; /* Full width on desktop */
+    }
+  }
+
+  /* Accessibility improvements */
+  @media (prefers-reduced-motion: reduce) {
+    .integrated-toc-link,
+    .mobile-toc-link,
+    .integrated-progress-fill,
+    aside[data-sidebar-width] {
+      transition: none;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .integrated-toc-link:hover {
+      outline: 2px solid currentColor;
+    }
+
+    .integrated-toc-active {
+      outline: 2px solid #1e40af;
+    }
+  }
+</style>
