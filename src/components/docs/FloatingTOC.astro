@@ -90,8 +90,9 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
   shouldShowTOC && (
     <button
       id="mobile-toc-toggle"
-      class="fixed bottom-4 right-4 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50 xl:hidden"
+      class="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 z-50 xl:hidden touch-manipulation"
       aria-label="目次を表示"
+      style="touch-action: manipulation;"
     >
       <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -108,14 +109,72 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
 {
   shouldShowTOC && (
     <div id="mobile-toc-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden xl:hidden">
-      <div class="fixed right-0 top-0 w-80 h-full bg-white shadow-lg overflow-y-auto">
+      {/* モバイル: ボトムシート */}
+      <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-xl max-h-[80vh] overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold text-lg text-gray-900">📋 {t('docs.tableOfContents')}</h3>
+            <button
+              id="mobile-toc-close"
+              class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+              aria-label="目次を閉じる"
+              style="touch-action: manipulation;"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          {/* ドラッグハンドル */}
+          <div class="flex justify-center mt-2">
+            <div class="w-12 h-1 bg-gray-300 rounded-full" />
+          </div>
+        </div>
+
+        <nav class="overflow-y-auto" style="max-height: calc(80vh - 80px);">
+          <ul class="p-4 space-y-1">
+            {doc.sections.map(section => (
+              <li style={`margin-left: ${(section.level - 1) * 1.5}rem`}>
+                <a
+                  href={`#${section.anchor}`}
+                  class="block py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 mobile-toc-link touch-manipulation"
+                  data-anchor={section.anchor}
+                  data-level={section.level}
+                  style="min-height: 44px; touch-action: manipulation;"
+                >
+                  <span
+                    class={
+                      section.level === 1
+                        ? 'font-medium text-base'
+                        : section.level === 2
+                          ? 'font-normal text-sm'
+                          : 'text-sm text-gray-600'
+                    }
+                  >
+                    {section.title}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      {/* タブレット: サイドパネル */}
+      <div class="hidden md:block lg:hidden fixed right-0 top-0 w-80 h-full bg-white shadow-xl overflow-y-auto">
         <div class="p-4">
           <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
             <h3 class="font-semibold text-lg text-gray-900">📋 {t('docs.tableOfContents')}</h3>
             <button
-              id="mobile-toc-close"
-              class="p-2 text-gray-400 hover:text-gray-600"
+              id="tablet-toc-close"
+              class="p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
               aria-label="目次を閉じる"
+              style="touch-action: manipulation;"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -134,9 +193,10 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
                 <li style={`margin-left: ${(section.level - 1) * 1}rem`}>
                   <a
                     href={`#${section.anchor}`}
-                    class="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200 mobile-toc-link"
+                    class="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all duration-200 tablet-toc-link touch-manipulation"
                     data-anchor={section.anchor}
                     data-level={section.level}
+                    style="min-height: 40px; touch-action: manipulation;"
                   >
                     <span
                       class={
@@ -190,8 +250,28 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
     transition: all 0.2s ease-in-out;
   }
 
-  .mobile-toc-link {
+  .mobile-toc-link,
+  .tablet-toc-link {
     transition: all 0.2s ease-in-out;
+  }
+
+  /* タッチ最適化 */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* ボトムシートアニメーション */
+  #mobile-toc-overlay .md\\:hidden {
+    animation: slideUpFromBottom 0.3s ease-out;
+  }
+
+  @keyframes slideUpFromBottom {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 
   #floating-toc::-webkit-scrollbar {
@@ -249,6 +329,29 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
     #mobile-toc-toggle,
     #mobile-toc-overlay {
       display: none !important;
+    }
+  }
+
+  /* レスポンシブブレークポイント最適化 */
+  @media (max-width: 767px) {
+    /* モバイル: FABボタンを大きく */
+    #mobile-toc-toggle {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    /* タブレット: サイドパネル専用 */
+    #mobile-toc-overlay .md\\:hidden {
+      display: none !important;
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    /* ラージタブレット: サイドパネルを少し狭く */
+    #mobile-toc-overlay .hidden.md\\:block.lg\\:hidden {
+      width: 20rem;
     }
   }
 </style>
