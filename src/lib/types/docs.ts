@@ -26,6 +26,12 @@ export interface DocSection {
   title: string;
   level: number;
   anchor: string;
+  children?: DocSection[];
+  expanded?: boolean;
+}
+
+export interface TOCCollapsibleState {
+  [sectionId: string]: boolean;
 }
 
 export interface DocNavigation {
