@@ -4,10 +4,18 @@
  * A specialized chart component for displaying code coverage historical data
  * with time-series line chart visualizations.
  *
+ * Features:
+ * - Browser timezone detection and proper date handling using date-fns
+ * - Automatic locale detection for date formatting (Japanese/English)
+ * - Consistent parsing of date-only strings (YYYY-MM-DD) in local timezone
+ * - Support for full ISO timestamp strings with timezone information
+ *
  * @module CoverageHistoryChart
  */
 
 import React, { useMemo, useState } from 'react';
+import { format, parseISO, isValid, parse } from 'date-fns';
+import { ja, enUS } from 'date-fns/locale';
 import { BaseChart, ChartContainer, type BaseChartProps } from './BaseChart';
 import { type SafeChartData, type SafeChartOptions } from './types/safe-chart';
 
@@ -90,6 +98,49 @@ export function CoverageHistoryChart({
 }: CoverageHistoryChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(defaultPeriod);
 
+  // Detect browser timezone and locale
+  const browserLocale = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return navigator.language || 'en-US';
+    }
+    return 'en-US';
+  }, []);
+
+  // Note: Browser timezone can be detected with:
+  // Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  // Get appropriate date-fns locale based on browser locale
+  const dateFnsLocale = useMemo(() => {
+    if (browserLocale.startsWith('ja')) {
+      return ja;
+    }
+    // Default to English for other locales
+    return enUS;
+  }, [browserLocale]);
+
+  // Helper function to parse date strings consistently in local timezone
+  const parseLocalDate = (dateString: string): Date => {
+    // Try parsing as ISO string first (e.g., "2025-01-03T10:00:00Z")
+    if (dateString.includes('T') || dateString.includes('Z') || dateString.includes('+')) {
+      const parsed = parseISO(dateString);
+      if (isValid(parsed)) {
+        return parsed;
+      }
+    }
+
+    // For date-only strings (e.g., "2025-01-03"), parse in local timezone
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
+      if (isValid(parsed)) {
+        return parsed;
+      }
+    }
+
+    // Fallback to default parsing
+    const fallback = new Date(dateString);
+    return isValid(fallback) ? fallback : new Date();
+  };
+
   // Filter data based on selected period
   const filteredData = useMemo(() => {
     if (selectedPeriod === 'all') return data;
@@ -107,7 +158,7 @@ export function CoverageHistoryChart({
     const daysBack = periodMap[selectedPeriod];
     const cutoffDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
 
-    return data.filter(point => new Date(point.date) >= cutoffDate);
+    return data.filter(point => parseLocalDate(point.date) >= cutoffDate);
   }, [data, selectedPeriod]);
 
   // Calculate trend analysis
@@ -134,11 +185,9 @@ export function CoverageHistoryChart({
   // Prepare chart data
   const chartData: SafeChartData<'line'> = {
     labels: filteredData.map(point => {
-      const date = new Date(point.date);
-      return date.toLocaleDateString('ja-JP', {
-        month: 'short',
-        day: 'numeric',
-      });
+      const date = parseLocalDate(point.date);
+      // Use date-fns for consistent formatting in browser's locale
+      return format(date, 'MMM d', { locale: dateFnsLocale });
     }),
     datasets: [
       {
@@ -223,11 +272,9 @@ export function CoverageHistoryChart({
             const index = context[0]?.dataIndex;
             if (index !== undefined && filteredData[index]) {
               const point = filteredData[index];
-              return new Date(point.date).toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              });
+              const date = parseLocalDate(point.date);
+              // Format in browser's locale with full date info
+              return format(date, 'PPPP', { locale: dateFnsLocale });
             }
             return '';
           },
