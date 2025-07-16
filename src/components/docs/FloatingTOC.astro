@@ -12,9 +12,11 @@ import { getTranslator, getUIConfig } from '../../lib/config/docs.js';
 interface Props {
   doc: ProcessedDoc;
   className?: string;
+  enableIntelligentTracking?: boolean;
+  enableReadingProgress?: boolean;
 }
 
-const { doc, className = '' } = Astro.props;
+const { doc, className = '', enableReadingProgress = true } = Astro.props;
 
 // Load configuration and translations
 const t = await getTranslator();
@@ -23,6 +25,22 @@ const uiConfig = await getUIConfig();
 // Only show if TOC is enabled and sections exist
 const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
 ---
+
+{/* Reading Progress Bar */}
+{
+  enableReadingProgress && shouldShowTOC && (
+    <div
+      class="reading-progress-bar"
+      role="progressbar"
+      aria-label="読書進捗"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    >
+      <div class="reading-progress-fill" />
+    </div>
+  )
+}
 
 {
   shouldShowTOC && (
@@ -329,6 +347,13 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
       scrollOffset: 100,
       enableResize: true,
       resizeConstraints: { min: 200, max: 400 },
+      enableIntelligentTracking: true,
+      enableReadingProgress: true,
+      scrollTrackerOptions: {
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0,
+        debounceDelay: 100,
+      },
     });
 
     tocController.initialize();
@@ -474,12 +499,98 @@ const shouldShowTOC = uiConfig.showTableOfContents && doc.sections.length > 0;
     transform: rotate(90deg);
   }
 
+  /* Reading Progress Bar Styles */
+  .reading-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+  }
+
+  .reading-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Intelligent TOC Highlight Styles */
+  .toc-active {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 3px solid #3b82f6;
+    font-weight: 600;
+    color: #1e40af;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+    transform: translateX(2px);
+  }
+
+  .toc-previous,
+  .toc-next {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-left: 2px solid #e2e8f0;
+    color: #64748b;
+    opacity: 0.8;
+  }
+
+  .toc-nearby {
+    background: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+    color: #475569;
+  }
+
+  /* Enhanced link transitions */
+  .toc-link {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .toc-link:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+  }
+
+  /* Reading progress indicator in TOC items */
+  .toc-link::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: transparent;
+    transition: all 0.3s ease;
+  }
+
+  .toc-active::after {
+    background: #3b82f6;
+    transform: translateY(-50%) scale(1.5);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  }
+
+  .toc-previous::after,
+  .toc-next::after {
+    background: #cbd5e1;
+    transform: translateY(-50%) scale(1);
+  }
+
   /* レスポンシブブレークポイント最適化 */
   @media (max-width: 767px) {
     /* モバイル: FABボタンを大きく */
     #mobile-toc-toggle {
       width: 3.5rem;
       height: 3.5rem;
+    }
+
+    /* プログレスバーを少し太く */
+    .reading-progress-bar {
+      height: 4px;
     }
   }
 

@@ -9,6 +9,8 @@
  * - Resize functionality
  * - Keyboard navigation
  * - Hierarchical section folding/expanding
+ * - Intelligent scroll tracking with Intersection Observer
+ * - Reading progress tracking
  */
 
 import type { DocSection } from '../../lib/types/docs.js';
@@ -22,6 +24,10 @@ import {
   loadTOCState,
   type HierarchicalSection,
 } from '../../lib/utils/toc-hierarchy.js';
+import {
+  TOCScrollTracker,
+  type TOCScrollTrackerOptions,
+} from '../../lib/utils/toc-scroll-tracker.js';
 
 export interface TOCControllerOptions {
   /** Scroll offset for active section detection */
@@ -39,6 +45,12 @@ export interface TOCControllerOptions {
   enableCollapsible?: boolean;
   /** Document ID for state persistence */
   documentId?: string;
+  /** Enable intelligent scroll tracking */
+  enableIntelligentTracking?: boolean;
+  /** Enable reading progress indicator */
+  enableReadingProgress?: boolean;
+  /** Scroll tracker options */
+  scrollTrackerOptions?: TOCScrollTrackerOptions;
 }
 
 export class FloatingTOCController {
@@ -61,6 +73,9 @@ export class FloatingTOCController {
   private tocHierarchy: HierarchicalSection[] = [];
   private originalSections: DocSection[] = [];
 
+  // Intelligent scroll tracking
+  private scrollTracker: TOCScrollTracker | null = null;
+
   private options: Required<TOCControllerOptions>;
 
   constructor(options: TOCControllerOptions = {}) {
@@ -71,8 +86,11 @@ export class FloatingTOCController {
       resizeConstraints: { min: 200, max: 400 },
       enableCollapsible: true,
       documentId: window.location.pathname,
+      enableIntelligentTracking: true,
+      enableReadingProgress: true,
+      scrollTrackerOptions: {},
       ...options,
-    };
+    } as Required<TOCControllerOptions>;
   }
 
   /**
@@ -88,6 +106,7 @@ export class FloatingTOCController {
 
     this.findElements();
     this.initializeHierarchicalTOC();
+    this.initializeIntelligentTracking();
     this.setupEventListeners();
     this.updateActiveSection();
 
@@ -111,6 +130,7 @@ export class FloatingTOCController {
    */
   public destroy(): void {
     this.removeEventListeners();
+    this.scrollTracker?.destroy();
   }
 
   /**
@@ -189,6 +209,7 @@ export class FloatingTOCController {
     document.removeEventListener('keydown', this.handleKeydown);
     document.removeEventListener('mousemove', this.handleResize);
     document.removeEventListener('mouseup', this.handleResizeEnd);
+    document.removeEventListener('toc-section-change', this.handleSectionChange as EventListener);
   }
 
   /**
@@ -270,49 +291,55 @@ export class FloatingTOCController {
     }
 
     if (anchor) {
-      const target = document.getElementById(anchor);
-
-      if (isDebugMode) {
-        console.log('🎯 [ToC Debug] Target search result:', {
-          anchor,
-          targetElement: target,
-          targetExists: !!target,
-          allIdsInDOM: Array.from(document.querySelectorAll('[id]')).map(el => el.id),
-        });
-      }
-
-      if (target) {
-        const offset = 100; // Account for fixed headers (64px header + 36px margin)
-        const targetPosition = target.offsetTop - offset;
+      // Use scroll tracker's smooth scroll if available
+      if (this.scrollTracker && this.options.enableIntelligentTracking) {
+        this.scrollTracker.scrollToSection(anchor);
+      } else {
+        // Fallback to original scroll behavior
+        const target = document.getElementById(anchor);
 
         if (isDebugMode) {
-          console.log('📜 [ToC Debug] Scrolling to target:', {
+          console.log('🎯 [ToC Debug] Target search result:', {
             anchor,
-            targetOffsetTop: target.offsetTop,
-            offset,
-            finalPosition: targetPosition,
-            currentScrollY: window.scrollY,
+            targetElement: target,
+            targetExists: !!target,
+            allIdsInDOM: Array.from(document.querySelectorAll('[id]')).map(el => el.id),
           });
         }
 
-        window.scrollTo({
-          top: targetPosition,
-          behavior: 'smooth',
-        });
+        if (target) {
+          const offset = 100; // Account for fixed headers (64px header + 36px margin)
+          const targetPosition = target.offsetTop - offset;
 
-        // Update active section after scroll
-        setTimeout(() => {
-          this.updateActiveSection();
-        }, 100);
-      } else if (isDebugMode) {
-        console.warn('⚠️ [ToC Debug] Target element not found:', {
-          anchor,
-          availableIds: Array.from(document.querySelectorAll('[id]')).map(el => el.id),
-          tocSections: Array.from(document.querySelectorAll('.toc-link')).map(link => ({
-            anchor: link.getAttribute('data-anchor'),
-            href: link.getAttribute('href'),
-          })),
-        });
+          if (isDebugMode) {
+            console.log('📜 [ToC Debug] Scrolling to target:', {
+              anchor,
+              targetOffsetTop: target.offsetTop,
+              offset,
+              finalPosition: targetPosition,
+              currentScrollY: window.scrollY,
+            });
+          }
+
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth',
+          });
+
+          // Update active section after scroll
+          setTimeout(() => {
+            this.updateActiveSection();
+          }, this.options.animationDuration);
+        } else if (isDebugMode) {
+          console.warn('⚠️ [ToC Debug] Target element not found:', {
+            anchor,
+            availableIds: Array.from(document.querySelectorAll('[id]')).map(el => el.id),
+            tocSections: Array.from(document.querySelectorAll('.toc-link')).map(link => ({
+              anchor: link.getAttribute('data-anchor'),
+              href: link.getAttribute('href'),
+            })),
+          });
+        }
       }
     }
   };
@@ -788,5 +815,70 @@ export class FloatingTOCController {
     this.renderHierarchicalTOC();
     this.setupTocLinks();
     saveTOCState(this.tocHierarchy, this.options.documentId);
+  }
+
+  /**
+   * Initialize intelligent scroll tracking
+   */
+  private initializeIntelligentTracking(): void {
+    if (!this.options.enableIntelligentTracking) return;
+
+    this.scrollTracker = new TOCScrollTracker({
+      enableProgress: this.options.enableReadingProgress,
+      ...this.options.scrollTrackerOptions,
+    });
+
+    // Listen for section change events
+    document.addEventListener('toc-section-change', this.handleSectionChange as EventListener);
+
+    const isDebugMode =
+      typeof window !== 'undefined' && window.location.search.includes('debug=toc');
+
+    if (isDebugMode) {
+      console.log('🎯 [ToC Debug] Intelligent tracking initialized');
+    }
+  }
+
+  /**
+   * Handle section change from scroll tracker
+   */
+  private handleSectionChange = (event: CustomEvent): void => {
+    const { current, previous, next } = event.detail;
+
+    // Update hierarchical TOC expansion if enabled
+    if (this.options.enableCollapsible && current) {
+      const currentSection = this.originalSections.find(s => s.anchor === current.id);
+      if (currentSection) {
+        this.tocHierarchy = expandSectionAndParents(this.tocHierarchy, currentSection.id);
+        this.renderHierarchicalTOC();
+        this.setupTocLinks();
+        saveTOCState(this.tocHierarchy, this.options.documentId);
+      }
+    }
+
+    const isDebugMode =
+      typeof window !== 'undefined' && window.location.search.includes('debug=toc');
+
+    if (isDebugMode) {
+      console.log('🔄 [ToC Debug] Section changed:', {
+        current: current?.title,
+        previous: previous?.title,
+        next: next?.title,
+      });
+    }
+  };
+
+  /**
+   * Get current reading progress
+   */
+  public getReadingProgress(): number {
+    return this.scrollTracker?.getProgress() || 0;
+  }
+
+  /**
+   * Force update scroll tracking
+   */
+  public forceUpdateTracking(): void {
+    this.scrollTracker?.forceUpdate();
   }
 }
