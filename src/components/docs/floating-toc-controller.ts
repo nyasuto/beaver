@@ -31,6 +31,7 @@ export class FloatingTOCController {
   private mobileTocToggle: HTMLElement | null = null;
   private mobileTocOverlay: HTMLElement | null = null;
   private mobileTocClose: HTMLElement | null = null;
+  private tabletTocClose: HTMLElement | null = null;
   private resizeHandle: HTMLElement | null = null;
 
   private isCollapsed = false;
@@ -77,6 +78,7 @@ export class FloatingTOCController {
     this.mobileTocToggle = document.getElementById('mobile-toc-toggle');
     this.mobileTocOverlay = document.getElementById('mobile-toc-overlay');
     this.mobileTocClose = document.getElementById('mobile-toc-close');
+    this.tabletTocClose = document.getElementById('tablet-toc-close');
     this.resizeHandle = document.getElementById('toc-resize-handle');
   }
 
@@ -90,6 +92,7 @@ export class FloatingTOCController {
     // Mobile TOC
     this.mobileTocToggle?.addEventListener('click', this.showMobileTOC);
     this.mobileTocClose?.addEventListener('click', this.hideMobileTOC);
+    this.tabletTocClose?.addEventListener('click', this.hideMobileTOC);
     this.mobileTocOverlay?.addEventListener('click', this.handleOverlayClick);
 
     // TOC links
@@ -114,6 +117,7 @@ export class FloatingTOCController {
     this.tocToggle?.removeEventListener('click', this.handleTocToggle);
     this.mobileTocToggle?.removeEventListener('click', this.showMobileTOC);
     this.mobileTocClose?.removeEventListener('click', this.hideMobileTOC);
+    this.tabletTocClose?.removeEventListener('click', this.hideMobileTOC);
     this.mobileTocOverlay?.removeEventListener('click', this.handleOverlayClick);
 
     window.removeEventListener('scroll', this.handleScroll);
@@ -169,14 +173,14 @@ export class FloatingTOCController {
    * Setup TOC link event listeners
    */
   private setupTocLinks(): void {
-    const tocLinks = document.querySelectorAll('.toc-link, .mobile-toc-link');
+    const tocLinks = document.querySelectorAll('.toc-link, .mobile-toc-link, .tablet-toc-link');
 
     tocLinks.forEach(link => {
       link.addEventListener('click', this.handleTocLinkClick);
     });
 
-    // Mobile TOC links also close the overlay
-    const mobileTocLinks = document.querySelectorAll('.mobile-toc-link');
+    // Mobile and tablet TOC links also close the overlay
+    const mobileTocLinks = document.querySelectorAll('.mobile-toc-link, .tablet-toc-link');
     mobileTocLinks.forEach(link => {
       link.addEventListener('click', this.hideMobileTOC);
     });
@@ -220,7 +224,7 @@ export class FloatingTOCController {
    */
   private updateActiveSection(): void {
     const sections = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
-    const tocLinks = document.querySelectorAll('.toc-link, .mobile-toc-link');
+    const tocLinks = document.querySelectorAll('.toc-link, .mobile-toc-link, .tablet-toc-link');
 
     let currentSection: Element | null = null;
     const scrollTop = window.scrollY + this.options.scrollOffset;
@@ -237,10 +241,17 @@ export class FloatingTOCController {
       const anchor = link.getAttribute('data-anchor');
       if (currentSection && currentSection.id === anchor) {
         link.classList.add('text-blue-600', 'bg-blue-50', 'font-medium');
-        link.classList.remove('text-gray-600');
+        link.classList.remove('text-gray-600', 'text-gray-700');
       } else {
         link.classList.remove('text-blue-600', 'bg-blue-50', 'font-medium');
-        link.classList.add('text-gray-600');
+        if (
+          link.classList.contains('mobile-toc-link') ||
+          link.classList.contains('tablet-toc-link')
+        ) {
+          link.classList.add('text-gray-700');
+        } else {
+          link.classList.add('text-gray-600');
+        }
       }
     });
   }
