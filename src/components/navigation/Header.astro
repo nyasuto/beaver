@@ -31,7 +31,7 @@ const navItems = [
   { name: 'ホーム', href: resolveUrl('/'), icon: 'home', priority: 'primary' },
   { name: 'Issue', href: resolveUrl('/issues'), icon: 'bug', priority: 'primary' },
   {
-    name: 'Pull Requests',
+    name: 'PRs',
     href: resolveUrl('/pulls'),
     icon: 'git-pull-request',
     priority: 'primary',
@@ -43,6 +43,7 @@ const navItems = [
     href: resolveUrl('/beaver-facts'),
     icon: 'info',
     priority: 'secondary',
+    isIconOnly: true, // アイコンのみ表示
   },
 ];
 
@@ -177,8 +178,12 @@ const headerClasses = [
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800'
                   }`}
                   aria-current={isActive(item.href) ? 'page' : undefined}
+                  title={item.isIconOnly ? item.name : undefined}
+                  aria-label={item.isIconOnly ? item.name : undefined}
                 >
-                  <span class="flex items-center space-x-2">
+                  <span
+                    class={item.isIconOnly ? 'flex items-center' : 'flex items-center space-x-2'}
+                  >
                     {item.icon === 'chart' && (
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -209,7 +214,7 @@ const headerClasses = [
                         />
                       </svg>
                     )}
-                    <span>{item.name}</span>
+                    {!item.isIconOnly && <span>{item.name}</span>}
                   </span>
                 </a>
               ))}
@@ -447,8 +452,12 @@ const headerClasses = [
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800'
                   }`}
                   aria-current={isActive(item.href) ? 'page' : undefined}
+                  title={item.isIconOnly ? item.name : undefined}
+                  aria-label={item.isIconOnly ? item.name : undefined}
                 >
-                  <span class="flex items-center space-x-2">
+                  <span
+                    class={item.isIconOnly ? 'flex items-center' : 'flex items-center space-x-2'}
+                  >
                     {item.icon === 'chart' && (
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -479,7 +488,7 @@ const headerClasses = [
                         />
                       </svg>
                     )}
-                    <span>{item.name}</span>
+                    {!item.isIconOnly && <span>{item.name}</span>}
                   </span>
                 </a>
               ))}
@@ -521,7 +530,7 @@ const headerClasses = [
                   stroke-width="2"
                   d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
               </svg>
-              <span>Pull Requests</span>
+              <span>PRs</span>
             </span>
           </a>
         </div>
