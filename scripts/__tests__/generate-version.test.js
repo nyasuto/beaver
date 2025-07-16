@@ -304,8 +304,8 @@ describe('generate-version.js', () => {
     it('should generate unique local build IDs', async () => {
       const versionInfo1 = generateVersionInfo();
       
-      // Add a small delay to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 1));
+      // Add a longer delay to ensure different timestamps in CI environments
+      await new Promise(resolve => setTimeout(resolve, 10));
       
       const versionInfo2 = generateVersionInfo();
       
