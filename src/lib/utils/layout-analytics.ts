@@ -1,13 +1,13 @@
 /**
  * Layout Analytics Utility
  *
- * Issue #364: A/B testing and performance measurement for documentation layouts
- * Provides tools for measuring user interactions, performance metrics,
- * and conducting A/B tests between different layout approaches
+ * Issue #382: Performance measurement for integrated documentation layout
+ * Provides tools for measuring user interactions and performance metrics
+ * for the integrated sidebar layout (legacy floating layout removed)
  */
 
 export interface LayoutMetrics {
-  layoutType: 'floating' | 'integrated' | 'adaptive';
+  layoutType: 'integrated' | 'adaptive';
   sessionId: string;
   userId?: string;
 
@@ -47,8 +47,8 @@ export interface LayoutMetrics {
 export interface ABTestConfig {
   testId: string;
   variants: {
-    control: 'floating';
-    treatment: 'integrated';
+    control: 'integrated';
+    treatment: 'adaptive';
   };
   trafficSplit: number; // 0-1, percentage for treatment
   enabledForUsers?: string[];
@@ -518,17 +518,17 @@ export class ABTestManager {
    * Load test configurations
    */
   private loadTestConfigs(): void {
-    // Default test configuration for Issue #364
+    // Updated test configuration for Issue #382
     const layoutTest: ABTestConfig = {
-      testId: 'layout-comparison-364',
+      testId: 'layout-comparison-382',
       variants: {
-        control: 'floating',
-        treatment: 'integrated',
+        control: 'integrated',
+        treatment: 'adaptive',
       },
-      trafficSplit: 0.5, // 50/50 split
+      trafficSplit: 0.3, // 30% adaptive, 70% integrated
       startDate: new Date('2024-01-01'),
       endDate: new Date('2024-12-31'),
-      isActive: true,
+      isActive: false, // Disabled for now since integrated is the default
     };
 
     this.testConfigs.set(layoutTest.testId, layoutTest);
@@ -639,9 +639,9 @@ export function initializeLayoutAnalytics(
 }
 
 /**
- * Check if user should see integrated layout
+ * Check if user should see adaptive layout (instead of default integrated)
  */
-export function shouldUseIntegratedLayout(userId?: string): boolean {
+export function shouldUseAdaptiveLayout(userId?: string): boolean {
   const abTest = ABTestManager.getInstance();
-  return abTest.isInTreatment('layout-comparison-364', userId);
+  return abTest.isInTreatment('layout-comparison-382', userId);
 }

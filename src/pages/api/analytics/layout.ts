@@ -1,8 +1,8 @@
 /**
  * Layout Analytics API Endpoint
  *
- * Issue #364: Collects and processes layout analytics data
- * Handles A/B testing metrics for documentation layout comparison
+ * Issue #382: Collects and processes layout analytics data
+ * Tracks integrated sidebar layout metrics (legacy floating layout removed)
  */
 
 import type { APIRoute } from 'astro';
@@ -10,7 +10,7 @@ import { z } from 'zod';
 
 // Schema for layout metrics validation
 const LayoutMetricsSchema = z.object({
-  layoutType: z.enum(['floating', 'integrated', 'adaptive']),
+  layoutType: z.enum(['integrated', 'adaptive']),
   sessionId: z.string(),
   userId: z.string().optional(),
 

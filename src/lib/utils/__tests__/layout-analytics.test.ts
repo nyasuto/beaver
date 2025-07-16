@@ -8,7 +8,7 @@ import {
   LayoutAnalytics,
   ABTestManager,
   initializeLayoutAnalytics,
-  shouldUseIntegratedLayout,
+  shouldUseAdaptiveLayout,
 } from '../layout-analytics.js';
 
 // Mock PerformanceObserver
@@ -130,12 +130,12 @@ describe('Layout Analytics', () => {
   });
 
   describe('Initialization', () => {
-    it('should initialize with floating layout type', () => {
-      analytics = new LayoutAnalytics('floating');
+    it('should initialize with integrated layout type', () => {
+      analytics = new LayoutAnalytics('integrated');
       expect(analytics).toBeDefined();
 
       const metrics = analytics.getMetrics();
-      expect(metrics.layoutType).toBe('floating');
+      expect(metrics.layoutType).toBe('integrated');
       expect(metrics.sessionId).toBeDefined();
       expect(metrics.timestamp).toBeInstanceOf(Date);
     });
@@ -149,7 +149,7 @@ describe('Layout Analytics', () => {
     });
 
     it('should collect device information', () => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
 
       const metrics = analytics.getMetrics();
       expect(metrics.screenWidth).toBe(1024);
@@ -161,7 +161,7 @@ describe('Layout Analytics', () => {
     it('should detect mobile device type', () => {
       Object.defineProperty(window, 'innerWidth', { value: 500 });
 
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
 
       const metrics = analytics.getMetrics();
       expect(metrics.deviceType).toBe('mobile');
@@ -170,7 +170,7 @@ describe('Layout Analytics', () => {
     it('should detect tablet device type', () => {
       Object.defineProperty(window, 'innerWidth', { value: 800 });
 
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
 
       const metrics = analytics.getMetrics();
       expect(metrics.deviceType).toBe('tablet');
@@ -179,13 +179,13 @@ describe('Layout Analytics', () => {
 
   describe('Performance Tracking', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     it('should track performance metrics', () => {
       // Create a fresh analytics instance to ensure mock is setup
       analytics.destroy();
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
 
       // Simulate performance entries after analytics is initialized
       mockPerformanceObserver.trigger([
@@ -221,14 +221,14 @@ describe('Layout Analytics', () => {
       vi.stubGlobal('PerformanceObserver', undefined);
 
       expect(() => {
-        analytics = new LayoutAnalytics('floating');
+        analytics = new LayoutAnalytics('integrated');
       }).not.toThrow();
     });
   });
 
   describe('User Interaction Tracking', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     it('should track TOC interactions', () => {
@@ -296,7 +296,7 @@ describe('Layout Analytics', () => {
   describe('Reading Time Tracking', () => {
     beforeEach(() => {
       vi.useFakeTimers();
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     afterEach(() => {
@@ -336,7 +336,7 @@ describe('Layout Analytics', () => {
 
   describe('Scroll Depth Tracking', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
 
       // Mock document dimensions
       Object.defineProperty(document.documentElement, 'scrollHeight', {
@@ -376,7 +376,7 @@ describe('Layout Analytics', () => {
 
   describe('Content Characteristics', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     it('should set content characteristics', () => {
@@ -402,7 +402,7 @@ describe('Layout Analytics', () => {
 
   describe('Bounce Rate Detection', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     it('should detect bounce with minimal interaction', () => {
@@ -457,7 +457,7 @@ describe('Layout Analytics', () => {
 
   describe('Metrics Sending', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     it('should send metrics via sendBeacon when available', () => {
@@ -495,7 +495,7 @@ describe('Layout Analytics', () => {
 
   describe('Public API Methods', () => {
     beforeEach(() => {
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
     });
 
     it('should provide trackTOCInteraction method', () => {
@@ -559,7 +559,7 @@ describe('Layout Analytics', () => {
     it('should log debug information when enabled', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      analytics = new LayoutAnalytics('floating');
+      analytics = new LayoutAnalytics('integrated');
       analytics.trackTOCInteraction();
 
       // Verify that debug logs were called (any calls mean debug mode is working)
@@ -610,7 +610,7 @@ describe('A/B Test Manager', () => {
 
   describe('User Assignment', () => {
     it('should assign users to control or treatment', () => {
-      const assignment = abTestManager.assignUserToVariant('layout-comparison-364');
+      const assignment = abTestManager.assignUserToVariant('layout-comparison-382');
 
       expect(['control', 'treatment']).toContain(assignment);
     });
@@ -618,8 +618,8 @@ describe('A/B Test Manager', () => {
     it('should maintain consistent assignment for same user', () => {
       const userId = 'test-user-123';
 
-      const assignment1 = abTestManager.assignUserToVariant('layout-comparison-364', userId);
-      const assignment2 = abTestManager.assignUserToVariant('layout-comparison-364', userId);
+      const assignment1 = abTestManager.assignUserToVariant('layout-comparison-382', userId);
+      const assignment2 = abTestManager.assignUserToVariant('layout-comparison-382', userId);
 
       expect(assignment1).toBe(assignment2);
     });
@@ -631,7 +631,7 @@ describe('A/B Test Manager', () => {
     });
 
     it('should handle session-based assignment when no user ID provided', () => {
-      const assignment = abTestManager.assignUserToVariant('layout-comparison-364');
+      const assignment = abTestManager.assignUserToVariant('layout-comparison-382');
 
       expect(['control', 'treatment']).toContain(assignment);
     });
@@ -639,8 +639,8 @@ describe('A/B Test Manager', () => {
 
   describe('Treatment Detection', () => {
     it('should correctly identify treatment users', () => {
-      const assignment = abTestManager.assignUserToVariant('layout-comparison-364', 'test-user');
-      const isInTreatment = abTestManager.isInTreatment('layout-comparison-364', 'test-user');
+      const assignment = abTestManager.assignUserToVariant('layout-comparison-382', 'test-user');
+      const isInTreatment = abTestManager.isInTreatment('layout-comparison-382', 'test-user');
 
       expect(isInTreatment).toBe(assignment === 'treatment');
     });
@@ -655,8 +655,8 @@ describe('A/B Test Manager', () => {
       const activeTests = abTestManager.getActiveTests();
 
       expect(Array.isArray(activeTests)).toBe(true);
-      expect(activeTests.length).toBeGreaterThan(0);
-      expect(activeTests[0]?.testId).toBe('layout-comparison-364');
+      // Since the new test is inactive by default, we expect 0 active tests
+      expect(activeTests.length).toBe(0);
 
       vi.useRealTimers();
     });
@@ -683,24 +683,24 @@ describe('Utility Functions', () => {
 
   describe('initializeLayoutAnalytics', () => {
     it('should create LayoutAnalytics instance', () => {
-      const analytics = initializeLayoutAnalytics('floating');
+      const analytics = initializeLayoutAnalytics('integrated');
 
       expect(analytics).toBeInstanceOf(LayoutAnalytics);
-      expect(analytics.getMetrics().layoutType).toBe('floating');
+      expect(analytics.getMetrics().layoutType).toBe('integrated');
 
       analytics.destroy();
     });
   });
 
-  describe('shouldUseIntegratedLayout', () => {
+  describe('shouldUseAdaptiveLayout', () => {
     it('should return boolean value', () => {
-      const result = shouldUseIntegratedLayout();
+      const result = shouldUseAdaptiveLayout();
 
       expect(typeof result).toBe('boolean');
     });
 
     it('should handle user ID parameter', () => {
-      const result = shouldUseIntegratedLayout('test-user-123');
+      const result = shouldUseAdaptiveLayout('test-user-123');
 
       expect(typeof result).toBe('boolean');
     });
