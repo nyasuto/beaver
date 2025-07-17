@@ -158,18 +158,18 @@ const headerID = `${settingsId}-header`;
 
   <!-- Settings Content -->
   <div id={contentId} class="p-responsive space-stack-lg">
-    <!-- Notification Settings Section -->
+    <!-- Basic Settings Section -->
     <section class="space-stack-md">
       <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
-        🔔 通知設定
+        ⚙️ 基本設定
       </h3>
 
       <div class="space-stack-sm">
-        <!-- Main Notification Toggle -->
+        <!-- Notifications Toggle -->
         <div class="flex items-center justify-between py-3">
           <div class="flex-1 space-stack-xs">
             <label class="text-body font-medium text-heading" for="notifications-enabled">
-              自動更新通知
+              🔔 自動更新通知
             </label>
             <p class="text-body-small text-muted">
               新しいバージョンが利用可能になったときに通知を表示します
@@ -183,286 +183,59 @@ const headerID = `${settingsId}-header`;
                 id="notifications-enabled"
                 class="sr-only peer"
                 data-setting="notifications.enabled"
-                aria-describedby="notifications-enabled-desc"
               />
               <div class="toggle-switch"></div>
             </label>
           </div>
         </div>
 
-        <!-- Notification Position -->
-        <div class="notification-subsetting">
-          <label class="label" for="notification-position"> 通知表示位置 </label>
-          <select
-            id="notification-position"
-            class="input w-full"
-            data-setting="notifications.position"
-          >
-            <option value="top">上部</option>
-            <option value="bottom">下部</option>
-          </select>
-        </div>
-
-        <!-- Notification Animation -->
-        <div class="notification-subsetting">
-          <label class="label" for="notification-animation"> アニメーション </label>
-          <select
-            id="notification-animation"
-            class="input w-full"
-            data-setting="notifications.animation"
-          >
-            <option value="slide">スライド</option>
-            <option value="fade">フェード</option>
-            <option value="bounce">バウンス</option>
-          </select>
-        </div>
-
-        <!-- Show Version Details -->
-        <div class="notification-subsetting flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="show-version-details">
-              バージョン詳細を表示
-            </label>
-            <p class="text-body-small text-muted">通知にバージョン情報を含めます</p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="show-version-details"
-              class="sr-only peer"
-              data-setting="notifications.showVersionDetails"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-
-        <!-- Browser Notifications Section -->
-        <div class="notification-subsetting border-t border-soft pt-4 mt-4">
-          <h4 class="text-body font-semibold text-heading mb-3">🔔 ブラウザ通知</h4>
-
-          <!-- Browser Notifications Toggle -->
-          <div class="flex items-center justify-between py-2">
-            <div class="flex-1 space-stack-xs">
-              <label class="text-body font-medium text-heading" for="browser-notifications-enabled">
-                ネイティブ通知
-              </label>
-              <p class="text-body-small text-muted">
-                ブラウザのネイティブ通知システムを使用します（許可が必要）
-              </p>
-            </div>
-
-            <label class="relative inline-flex items-center cursor-pointer ml-4">
-              <input
-                type="checkbox"
-                id="browser-notifications-enabled"
-                class="sr-only peer"
-                data-setting="notifications.browser.enabled"
-              />
-              <div class="toggle-switch-sm"></div>
-            </label>
-          </div>
-
-          <!-- Browser notification subsettings -->
-          <div
-            class="browser-notification-subsetting ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700 space-stack-sm"
-          >
-            <!-- Permission Info -->
-            <div
-              class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3"
-            >
-              <div class="flex items-start space-x-2">
-                <svg
-                  class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                <div class="flex-1">
-                  <p class="text-body-small font-medium text-blue-800 dark:text-blue-200">
-                    通知許可状態: <span id="notification-permission-status" class="font-mono"
-                      >確認中...</span
-                    >
-                  </p>
-                  <button
-                    type="button"
-                    id="request-notification-permission"
-                    class="mt-2 text-body-small text-blue-600 dark:text-blue-400 underline hover:no-underline"
-                    style="display: none;"
-                  >
-                    通知を許可する
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Simplified notification control -->
-            <div class="text-body-small text-muted p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p class="font-medium mb-1">ℹ️ PWA連携情報</p>
-              <p>PWA機能が有効な場合、ブラウザ通知はPWAシステムが管理します。</p>
-            </div>
-
-            <!-- Test Browser Notification -->
-            <div class="pt-2">
-              <button
-                type="button"
-                id="test-browser-notification"
-                class="btn btn-outline btn-sm w-full"
-              >
-                <svg
-                  class="icon icon-sm mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 17h5l-5 5-5-5h5v-6H5l5-5 5 5h-5v6z"></path>
-                </svg>
-                テスト通知を送信
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PWA Settings Section -->
-    <section class="space-stack-md">
-      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
-        📱 PWA設定
-      </h3>
-
-      <div class="space-stack-sm">
-        <!-- PWA Status Display -->
-        <div
-          class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
-        >
-          <div class="flex items-center space-x-3">
-            <div id="pwa-status-icon" class="flex-shrink-0">
-              <svg
-                class="w-6 h-6 text-blue-600 dark:text-blue-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                  clip-rule="evenodd"></path>
-              </svg>
-            </div>
-            <div class="flex-1">
-              <p class="text-body font-medium text-blue-800 dark:text-blue-200">
-                PWAステータス: <span id="pwa-status-text" class="font-mono">確認中...</span>
-              </p>
-              <p
-                id="pwa-status-details"
-                class="text-body-small text-blue-600 dark:text-blue-300 mt-1"
-              >
-                Service Worker とオフライン機能の状態
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- PWA Enable Toggle -->
+        <!-- Theme Selection -->
         <div class="flex items-center justify-between py-3">
           <div class="flex-1 space-stack-xs">
-            <label class="text-body font-medium text-heading" for="pwa-enabled">
-              PWA機能を有効化
+            <label class="text-body font-medium text-heading" for="theme-select"> 🎨 テーマ </label>
+            <p class="text-body-small text-muted">外観のテーマを選択します</p>
+          </div>
+
+          <div class="ml-4 min-w-0 w-32">
+            <select id="theme-select" class="input w-full" data-setting="ui.theme">
+              <option value="system">システム</option>
+              <option value="light">ライト</option>
+              <option value="dark">ダーク</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Auto Reload -->
+        <div class="flex items-center justify-between py-3">
+          <div class="flex-1 space-stack-xs">
+            <label class="text-body font-medium text-heading" for="auto-reload">
+              🔄 自動リロード
             </label>
-            <p class="text-body-small text-muted">
-              Service Worker を使用したオフライン機能と自動更新を有効にします
-            </p>
+            <p class="text-body-small text-muted">バージョン更新時に自動でページをリロードします</p>
           </div>
 
           <div class="ml-4">
             <label class="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                id="pwa-enabled"
+                id="auto-reload"
                 class="sr-only peer"
-                data-setting="pwa.enabled"
+                data-setting="pwa.autoReload"
               />
               <div class="toggle-switch"></div>
             </label>
           </div>
         </div>
 
-        <!-- Offline Mode -->
-        <div class="pwa-subsetting flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="offline-mode">
-              オフラインモード
-            </label>
-            <p class="text-body-small text-muted">
-              インターネット接続がないときでもアプリを使用できます
-            </p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="offline-mode"
-              class="sr-only peer"
-              data-setting="pwa.offlineMode"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-
-        <!-- Auto Update Service Worker -->
-        <div class="pwa-subsetting flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="auto-update-sw">
-              自動アップデート
-            </label>
-            <p class="text-body-small text-muted">
-              新しいバージョンが利用可能になったときに自動的に適用します
-            </p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="auto-update-sw"
-              class="sr-only peer"
-              data-setting="pwa.autoUpdate"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-
-        <!-- Auto Reload -->
-        <div class="pwa-subsetting flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="auto-reload">
-              自動リロード
-            </label>
-            <p class="text-body-small text-muted">バージョン更新時に自動でページをリロードします</p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="auto-reload"
-              class="sr-only peer"
-              data-setting="pwa.autoReload"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-
         <!-- Auto Reload Delay -->
-        <div class="pwa-subsetting" id="auto-reload-delay-container">
-          <label class="label" for="auto-reload-delay">自動リロード遅延時間</label>
-          <div class="flex items-center space-x-3">
+        <div
+          class="auto-reload-subsetting ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700"
+          id="auto-reload-delay-container"
+        >
+          <label class="text-body font-medium text-heading" for="auto-reload-delay">
+            ⏱️ 自動リロード遅延時間
+          </label>
+          <div class="flex items-center space-x-3 mt-2">
             <input
               type="range"
               id="auto-reload-delay"
@@ -474,45 +247,157 @@ const headerID = `${settingsId}-header`;
             />
             <span
               id="auto-reload-delay-value"
-              class="text-body-small font-mono text-muted min-w-0 w-8">5秒</span
+              class="text-body-small font-mono text-muted min-w-0 w-12 text-right">5秒</span
             >
           </div>
           <p class="text-body-small text-muted mt-1">0秒で即座、5秒でユーザーの準備時間を確保</p>
         </div>
+      </div>
+    </section>
 
-        <!-- Cache Strategy -->
-        <div class="pwa-subsetting">
-          <label class="label" for="cache-strategy">キャッシュ戦略</label>
-          <select id="cache-strategy" class="input w-full" data-setting="pwa.cacheStrategy">
-            <option value="immediate">即座更新</option>
-            <option value="background">バックグラウンド更新</option>
-            <option value="user-consent">ユーザー確認</option>
-          </select>
-        </div>
+    <!-- Advanced Settings Toggle -->
+    <section class="space-stack-md">
+      <button
+        type="button"
+        id="advanced-settings-toggle"
+        class="w-full flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        <span class="text-body font-medium text-heading"> 🔧 詳細設定 </span>
+        <svg
+          id="advanced-settings-icon"
+          class="w-5 h-5 text-muted transform transition-transform"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
+      </button>
 
-        <!-- Push Notifications -->
-        <div class="pwa-subsetting flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="push-notifications">
-              プッシュ通知
+      <!-- Advanced Settings Content -->
+      <div id="advanced-settings-content" class="hidden space-stack-md">
+        <!-- PWA Settings -->
+        <div class="space-stack-sm">
+          <h4 class="text-body font-semibold text-heading mb-3">📱 PWA機能</h4>
+
+          <!-- PWA Enable Toggle -->
+          <div class="flex items-center justify-between py-2">
+            <div class="flex-1">
+              <label class="text-body font-medium text-heading" for="pwa-enabled">
+                PWA機能を有効化
+              </label>
+              <p class="text-body-small text-muted">オフライン機能と自動更新を有効にします</p>
+            </div>
+
+            <label class="relative inline-flex items-center cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                id="pwa-enabled"
+                class="sr-only peer"
+                data-setting="pwa.enabled"
+              />
+              <div class="toggle-switch-sm"></div>
             </label>
-            <p class="text-body-small text-muted">アプリが非アクティブ時でも通知を受信します</p>
           </div>
 
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="push-notifications"
-              class="sr-only peer"
-              data-setting="pwa.pushNotifications"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
+          <!-- Auto Update Service Worker -->
+          <div class="pwa-subsetting flex items-center justify-between py-2">
+            <div class="flex-1">
+              <label class="text-body font-medium text-heading" for="auto-update-sw">
+                自動アップデート
+              </label>
+              <p class="text-body-small text-muted">
+                新しいバージョンが利用可能になったときに自動的に適用します
+              </p>
+            </div>
+
+            <label class="relative inline-flex items-center cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                id="auto-update-sw"
+                class="sr-only peer"
+                data-setting="pwa.autoUpdate"
+              />
+              <div class="toggle-switch-sm"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="space-stack-sm">
+          <h4 class="text-body font-semibold text-heading mb-3">🔔 通知詳細設定</h4>
+
+          <!-- Notification Position -->
+          <div class="notification-subsetting flex items-center justify-between py-2">
+            <div class="flex-1">
+              <label class="text-body font-medium text-heading" for="notification-position">
+                通知表示位置
+              </label>
+              <p class="text-body-small text-muted">通知バナーの表示位置を選択します</p>
+            </div>
+
+            <div class="ml-4 min-w-0 w-24">
+              <select
+                id="notification-position"
+                class="input w-full"
+                data-setting="notifications.position"
+              >
+                <option value="top">上部</option>
+                <option value="bottom">下部</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- UI Settings -->
+        <div class="space-stack-sm">
+          <h4 class="text-body font-semibold text-heading mb-3">🎨 表示詳細設定</h4>
+
+          <!-- Enable Animations -->
+          <div class="flex items-center justify-between py-2">
+            <div class="flex-1">
+              <label class="text-body font-medium text-heading" for="ui-animations">
+                アニメーション
+              </label>
+              <p class="text-body-small text-muted">UI要素のアニメーション効果を有効にします</p>
+            </div>
+
+            <label class="relative inline-flex items-center cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                id="ui-animations"
+                class="sr-only peer"
+                data-setting="ui.animations"
+              />
+              <div class="toggle-switch-sm"></div>
+            </label>
+          </div>
+
+          <!-- Compact Mode -->
+          <div class="flex items-center justify-between py-2">
+            <div class="flex-1">
+              <label class="text-body font-medium text-heading" for="compact-mode">
+                コンパクトモード
+              </label>
+              <p class="text-body-small text-muted">より密度の高いレイアウトを使用します</p>
+            </div>
+
+            <label class="relative inline-flex items-center cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                id="compact-mode"
+                class="sr-only peer"
+                data-setting="ui.compactMode"
+              />
+              <div class="toggle-switch-sm"></div>
+            </label>
+          </div>
         </div>
 
         <!-- PWA Actions -->
-        <div class="pwa-subsetting border-t border-soft pt-4 mt-4">
-          <h4 class="text-body font-semibold text-heading mb-3">📱 PWA管理</h4>
+        <div class="space-stack-sm">
+          <h4 class="text-body font-semibold text-heading mb-3">🛠️ システム操作</h4>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button type="button" id="clear-pwa-cache" class="btn btn-outline btn-sm">
@@ -539,132 +424,6 @@ const headerID = `${settingsId}-header`;
               強制アップデート
             </button>
           </div>
-
-          <div class="mt-3">
-            <button
-              type="button"
-              id="install-pwa"
-              class="btn btn-primary btn-sm w-full"
-              style="display: none;"
-            >
-              <svg class="icon icon-sm mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              PWAとしてインストール
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- UI Settings Section -->
-    <section class="space-stack-md">
-      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
-        🎨 表示設定
-      </h3>
-
-      <div class="space-stack-sm">
-        <!-- Theme Selection -->
-        <div>
-          <label class="label" for="theme-select"> テーマ </label>
-          <select id="theme-select" class="input w-full" data-setting="ui.theme">
-            <option value="system">システム設定に従う</option>
-            <option value="light">ライト</option>
-            <option value="dark">ダーク</option>
-          </select>
-        </div>
-
-        <!-- Enable Animations -->
-        <div class="flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="ui-animations">
-              アニメーション
-            </label>
-            <p class="text-body-small text-muted">UI要素のアニメーション効果を有効にします</p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="ui-animations"
-              class="sr-only peer"
-              data-setting="ui.animations"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-
-        <!-- Compact Mode -->
-        <div class="flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="compact-mode">
-              コンパクトモード
-            </label>
-            <p class="text-body-small text-muted">より密度の高いレイアウトを使用します</p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="compact-mode"
-              class="sr-only peer"
-              data-setting="ui.compactMode"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-      </div>
-    </section>
-
-    <!-- Privacy Settings Section -->
-    <section class="space-stack-md">
-      <h3 class="text-heading-3 text-heading font-semibold border-b border-soft pb-2">
-        🔒 プライバシー
-      </h3>
-
-      <div class="space-stack-sm">
-        <!-- Analytics -->
-        <div class="flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="analytics-enabled">
-              使用状況分析
-            </label>
-            <p class="text-body-small text-muted">サービス改善のための匿名使用データを送信します</p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="analytics-enabled"
-              class="sr-only peer"
-              data-setting="privacy.analytics"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
-        </div>
-
-        <!-- Error Reporting -->
-        <div class="flex items-center justify-between py-2">
-          <div class="flex-1">
-            <label class="text-body font-medium text-heading" for="error-reporting">
-              エラーレポート
-            </label>
-            <p class="text-body-small text-muted">エラー発生時の情報を開発者に送信します</p>
-          </div>
-
-          <label class="relative inline-flex items-center cursor-pointer ml-4">
-            <input
-              type="checkbox"
-              id="error-reporting"
-              class="sr-only peer"
-              data-setting="privacy.errorReporting"
-            />
-            <div class="toggle-switch-sm"></div>
-          </label>
         </div>
       </div>
     </section>
@@ -747,7 +506,6 @@ const headerID = `${settingsId}-header`;
   let settingsManager: UserSettingsManager | null = null;
   let settingsPanel: HTMLElement | null = null;
   let backdrop: HTMLElement | null = null;
-  let browserNotificationManager: any = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     initializeSettings();
@@ -780,25 +538,6 @@ const headerID = `${settingsId}-header`;
       // Dynamically import settings manager
       const { createSettingsManager } = await import('../lib/settings');
       settingsManager = createSettingsManager();
-
-      // Dynamically import browser notification manager
-      const { createBrowserNotificationManager } = await import('../lib/notifications');
-      const settings = settingsManager.getSettings();
-
-      // Safely access browser settings with fallbacks
-      const browserSettings = settings.notifications.browser || {
-        enabled: false,
-        autoRequestPermission: false,
-        onlyWhenHidden: true,
-        maxConcurrent: 3,
-      };
-
-      browserNotificationManager = createBrowserNotificationManager({
-        enabled: browserSettings.enabled,
-        autoRequestPermission: browserSettings.autoRequestPermission,
-        onlyWhenHidden: browserSettings.onlyWhenHidden,
-        maxConcurrent: browserSettings.maxConcurrent,
-      });
     } catch (error) {
       console.error('Failed to load settings manager:', error);
     }
@@ -812,18 +551,6 @@ const headerID = `${settingsId}-header`;
     // Load notification settings
     setCheckboxValue('notifications-enabled', settings.notifications.enabled);
     setSelectValue('notification-position', settings.notifications.position);
-    setSelectValue('notification-animation', settings.notifications.animation);
-    setCheckboxValue('show-version-details', settings.notifications.showVersionDetails);
-
-    // Load browser notification settings with fallbacks
-    const browserSettings = settings.notifications.browser || {
-      enabled: false,
-      autoRequestPermission: false,
-      onlyWhenHidden: true,
-      maxConcurrent: 3,
-    };
-
-    setCheckboxValue('browser-notifications-enabled', browserSettings.enabled);
 
     // Load PWA settings with fallbacks
     const pwaSettings = settings.pwa || {
@@ -862,12 +589,6 @@ const headerID = `${settingsId}-header`;
 
     // Update subsetting visibility
     updateSubsettingVisibility();
-
-    // Update browser notification permission status
-    updateBrowserNotificationStatus();
-
-    // Update PWA status
-    updatePWAStatus();
   }
 
   function setupEventListeners() {
@@ -903,12 +624,9 @@ const headerID = `${settingsId}-header`;
       }
     });
 
-    // Browser notification specific events
-    const permissionButton = settingsPanel.querySelector('#request-notification-permission');
-    permissionButton?.addEventListener('click', requestNotificationPermission);
-
-    const testButton = settingsPanel.querySelector('#test-browser-notification');
-    testButton?.addEventListener('click', testBrowserNotification);
+    // Advanced settings toggle
+    const advancedToggle = settingsPanel.querySelector('#advanced-settings-toggle');
+    advancedToggle?.addEventListener('click', toggleAdvancedSettings);
 
     // PWA specific events
     const clearCacheButton = settingsPanel.querySelector('#clear-pwa-cache');
@@ -916,9 +634,6 @@ const headerID = `${settingsId}-header`;
 
     const forceUpdateButton = settingsPanel.querySelector('#force-sw-update');
     forceUpdateButton?.addEventListener('click', forceServiceWorkerUpdate);
-
-    const installButton = settingsPanel.querySelector('#install-pwa');
-    installButton?.addEventListener('click', installPWA);
 
     // Auto-reload delay range input - only handle display updates
     const autoReloadDelayRange = settingsPanel.querySelector('#auto-reload-delay');
@@ -973,22 +688,6 @@ const headerID = `${settingsId}-header`;
             [key as keyof typeof currentSettings.browser]: value,
           },
         });
-
-        // Update browser notification manager
-        if (browserNotificationManager) {
-          const browserConfig = settingsManager.getNotificationSettings().browser;
-          browserNotificationManager.updateConfig({
-            enabled: browserConfig.enabled,
-            autoRequestPermission: browserConfig.autoRequestPermission,
-            onlyWhenHidden: browserConfig.onlyWhenHidden,
-            maxConcurrent: browserConfig.maxConcurrent,
-          });
-
-          // Request permission if auto-request is enabled and notifications are enabled
-          if (key === 'enabled' && value && browserConfig.autoRequestPermission) {
-            requestNotificationPermission();
-          }
-        }
       } else {
         settingsManager.updateNotificationSettings({
           [subsection as keyof NotificationSettings]: value,
@@ -1064,9 +763,6 @@ const headerID = `${settingsId}-header`;
     }
 
     if (detail.section === 'pwa' && 'enabled' in detail.updates) {
-      // Update PWA status display
-      updatePWAStatus();
-
       // Dispatch event for PWA system
       document.dispatchEvent(
         new CustomEvent('settings:pwa-toggled', {
@@ -1104,15 +800,6 @@ const headerID = `${settingsId}-header`;
       (element as HTMLElement).style.display = notificationsEnabled ? 'block' : 'none';
     });
 
-    // Show/hide browser notification subsettings
-    const browserNotificationsEnabled = getCheckboxValue('browser-notifications-enabled');
-    const browserNotificationSubsettings = settingsPanel?.querySelectorAll(
-      '.browser-notification-subsetting'
-    );
-    browserNotificationSubsettings?.forEach(element => {
-      (element as HTMLElement).style.display = browserNotificationsEnabled ? 'block' : 'none';
-    });
-
     // Show/hide PWA subsettings
     const pwaEnabled = getCheckboxValue('pwa-enabled');
     const pwaSubsettings = settingsPanel?.querySelectorAll('.pwa-subsetting');
@@ -1129,6 +816,23 @@ const headerID = `${settingsId}-header`;
     const delayContainer = settingsPanel?.querySelector('#auto-reload-delay-container');
     if (delayContainer) {
       (delayContainer as HTMLElement).style.display = autoReloadEnabled ? 'block' : 'none';
+    }
+  }
+
+  function toggleAdvancedSettings() {
+    const content = settingsPanel?.querySelector('#advanced-settings-content');
+    const icon = settingsPanel?.querySelector('#advanced-settings-icon');
+
+    if (content && icon) {
+      const isHidden = content.classList.contains('hidden');
+
+      if (isHidden) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+      } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+      }
     }
   }
 
@@ -1279,134 +983,6 @@ const headerID = `${settingsId}-header`;
     return checkbox ? checkbox.checked : false;
   }
 
-  // Browser notification functions
-  function updateBrowserNotificationStatus() {
-    if (!browserNotificationManager) return;
-
-    const statusElement = document.getElementById('notification-permission-status');
-    const requestButton = document.getElementById('request-notification-permission');
-
-    if (!statusElement || !requestButton) return;
-
-    const permission = browserNotificationManager.getPermissionState();
-    const supportInfo = browserNotificationManager.getSupportInfo();
-
-    let statusText = '';
-    let showRequestButton = false;
-
-    if (!supportInfo.supported) {
-      statusText = '未対応';
-    } else {
-      switch (permission) {
-        case 'granted':
-          statusText = '許可済み';
-          break;
-        case 'denied':
-          statusText = 'ブロック中';
-          break;
-        case 'default':
-          statusText = '未許可';
-          showRequestButton = true;
-          break;
-      }
-    }
-
-    statusElement.textContent = statusText;
-    requestButton.style.display = showRequestButton ? 'inline' : 'none';
-  }
-
-  async function requestNotificationPermission() {
-    if (!browserNotificationManager) return;
-
-    try {
-      const permission = await browserNotificationManager.requestPermission();
-      updateBrowserNotificationStatus();
-
-      if (permission === 'granted') {
-        console.log('🔔 Browser notification permission granted');
-      } else {
-        console.warn('🔔 Browser notification permission denied');
-      }
-    } catch (error) {
-      console.error('Failed to request notification permission:', error);
-    }
-  }
-
-  async function testBrowserNotification() {
-    if (!browserNotificationManager) return;
-
-    try {
-      const result = await browserNotificationManager.show({
-        title: 'Beaver Astro Edition',
-        body: 'これはテスト通知です。ブラウザ通知が正常に動作しています！',
-        icon: '/beaver/favicon.png',
-        tag: 'test-notification',
-        requireInteraction: false,
-        autoClose: 5000,
-      });
-
-      if (result.success) {
-        console.log('🔔 Test browser notification sent successfully');
-      } else {
-        console.warn('🔔 Test browser notification fallback:', result.fallback);
-      }
-    } catch (error) {
-      console.error('Failed to send test notification:', error);
-    }
-  }
-
-  // PWA specific functions
-  function updatePWAStatus(retryCount = 0) {
-    const statusText = document.getElementById('pwa-status-text');
-    const statusDetails = document.getElementById('pwa-status-details');
-    const installButton = document.getElementById('install-pwa');
-
-    if (!statusText || !statusDetails || !installButton) return;
-
-    const pwaSystem = (window as any).beaverSystems?.pwa;
-
-    if (pwaSystem) {
-      const status = pwaSystem.getStatus();
-
-      statusText.textContent = status.initialized ? 'アクティブ' : '非アクティブ';
-
-      const details = [];
-      if (status.serviceWorkerRegistered) details.push('Service Worker: 登録済み');
-      if (status.offline) details.push('オフライン機能: 利用可能');
-      if (status.isStandalone) details.push('スタンドアロンモード');
-
-      statusDetails.textContent =
-        details.length > 0 ? details.join(' • ') : 'Service Worker とオフライン機能の状態';
-
-      // Show install button if PWA is installable
-      installButton.style.display = status.installable && !status.isStandalone ? 'block' : 'none';
-    } else if (retryCount < 10) {
-      // PWAシステムの初期化を待つ（最大10秒）
-      statusText.textContent = '初期化中...';
-      statusDetails.textContent = `PWAシステムの初期化を待機中 (${retryCount + 1}/10)`;
-      installButton.style.display = 'none';
-
-      setTimeout(() => updatePWAStatus(retryCount + 1), 1000);
-    } else {
-      // Service Workerの基本サポートをチェック
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          if (registrations.length > 0) {
-            statusText.textContent = 'Service Worker検出';
-            statusDetails.textContent = 'PWAシステム未連携・Service Worker動作中';
-          } else {
-            statusText.textContent = '利用不可';
-            statusDetails.textContent = 'Service Worker未登録・PWAシステム初期化失敗';
-          }
-        });
-      } else {
-        statusText.textContent = '非対応';
-        statusDetails.textContent = 'このブラウザはPWA機能に対応していません';
-      }
-      installButton.style.display = 'none';
-    }
-  }
-
   async function clearPWACache() {
     const pwaSystem = (window as any).beaverSystems?.pwa;
     if (pwaSystem) {
@@ -1436,55 +1012,10 @@ const headerID = `${settingsId}-header`;
     }
   }
 
-  function installPWA() {
-    const installPrompt = (window as any).deferredPrompt;
-    if (installPrompt) {
-      installPrompt.prompt();
-      installPrompt.userChoice.then((choiceResult: any) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('📱 PWAインストールが受け入れられました');
-        }
-        (window as any).deferredPrompt = null;
-        updatePWAStatus();
-      });
-    }
-  }
-
-  // Listen for PWA system events
-  document.addEventListener('pwa:system-initialized', e => {
-    console.log('🚀 PWA System initialized event received:', e);
-    updatePWAStatus();
-  });
-
-  document.addEventListener('pwa:ready', e => {
-    console.log('✅ PWA ready event received:', e);
-    updatePWAStatus();
-  });
-
-  document.addEventListener('pwa:sw-registered', e => {
-    console.log('📝 Service Worker registered event received:', e);
-    updatePWAStatus();
-  });
-
-  // Listen for PWA install prompt
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    (window as any).deferredPrompt = e;
-    updatePWAStatus();
-  });
-
-  // Listen for PWA installation
-  window.addEventListener('appinstalled', () => {
-    console.log('📱 PWAがインストールされました');
-    (window as any).deferredPrompt = null;
-    updatePWAStatus();
-  });
-
   // Expose functions globally for external use
   (window as any).openSettings = openSettings;
   (window as any).closeSettings = closeSettings;
   (window as any).settingsManager = settingsManager;
-  (window as any).updatePWAStatus = updatePWAStatus;
 </script>
 
 <style>
@@ -1559,7 +1090,8 @@ const headerID = `${settingsId}-header`;
 
   /* Subsetting styles */
   .notification-subsetting,
-  .pwa-subsetting {
+  .pwa-subsetting,
+  .auto-reload-subsetting {
     @apply ml-4 pl-4 border-l-2 border-gray-200 dark:border-gray-700;
   }
 
