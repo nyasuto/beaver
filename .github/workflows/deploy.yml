@@ -65,8 +65,10 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (include dev)
+        run: |
+          # Ensure devDependencies are installed (Tailwind v4 Vite plugin is a devDep)
+          NODE_ENV= npm ci --include=dev
       
       - name: Fetch GitHub data and build
         run: npm run build:full
