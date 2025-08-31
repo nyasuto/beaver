@@ -137,7 +137,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <!-- State Filters -->
       <div class="flex items-center gap-3">
-        <span class="text-sm font-medium text-heading">Filter:</span>
+        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Filter:</span>
         <div class="flex items-center gap-2">
           <button class="filter-btn active" data-state="open" aria-pressed="true">
             <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span>
@@ -156,7 +156,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
 
       <!-- Sort Controls -->
       <div class="flex items-center gap-3">
-        <span class="text-sm font-medium text-heading">Sort:</span>
+        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Sort:</span>
         <select id="sort-select" class="input input-sm" aria-label="Sort pull requests">
           <option value="created">Recently Created</option>
           <option value="updated">Recently Updated</option>
@@ -175,7 +175,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
             aria-label="Search pull requests"
           />
           <svg
-            class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted"
+            class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -209,8 +209,10 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h3 class="text-lg font-semibold text-heading mb-2">Failed to Load Pull Requests</h3>
-          <p class="text-muted mb-4">{error}</p>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Failed to Load Pull Requests
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400 mb-4">{error}</p>
           <button onclick="window.location.reload()" class="btn btn-primary">
             Try Again
           </button>
@@ -220,7 +222,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
       <div class="card">
         <div class="text-center py-12">
           <svg
-            class="w-12 h-12 text-muted mx-auto mb-4"
+            class="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -232,8 +234,12 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
               d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
             />
           </svg>
-          <h3 class="text-lg font-semibold text-heading mb-2">No Pull Requests Found</h3>
-          <p class="text-muted mb-4">There are no pull requests matching your current filters.</p>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            No Pull Requests Found
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400 mb-4">
+            There are no pull requests matching your current filters.
+          </p>
           <a
             href={`${repoUrls.repository}/compare`}
             target="_blank"
@@ -248,7 +254,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
       <div class="space-y-4" id="pulls-list">
         {pulls.map(pull => (
           <article
-            class="card hover:border-primary-300 transition-colors duration-200"
+            class="card hover:border-blue-300 transition-colors duration-200"
             data-pull-id={pull.id}
             data-state={pull.status}
           >
@@ -275,15 +281,15 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
                     </svg>
                   )}
 
-                  <h3 class="text-lg font-semibold text-heading hover:text-primary-600 transition-colors">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 transition-colors">
                     <a href={resolveUrl(`/pulls/${pull.number}`)} class="hover:underline">
                       {pull.title}
                     </a>
                   </h3>
 
-                  <span class="text-sm text-muted">#{pull.number}</span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">#{pull.number}</span>
                 </div>
-                <div class="flex items-center gap-4 text-sm text-muted">
+                <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <span>
                     opened{' '}
                     {Math.floor(
@@ -295,7 +301,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
                       href={`https://github.com/${pull.user.login}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-primary-600 hover:text-primary-700 font-medium"
+                      class="text-blue-600 hover:text-blue-700 font-medium"
                     >
                       @{pull.user.login}
                     </a>
@@ -326,7 +332,12 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
               <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-md font-mono text-xs">
                 {pull.branch_info.head_branch}
               </span>
-              <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -346,7 +357,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
             </div>
 
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-4 text-sm text-muted">
+              <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 {pull.comments_count > 0 && (
                   <div class="flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,7 +429,7 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
           <button class="btn btn-outline btn-sm" disabled>
             Previous
           </button>
-          <span class="px-3 py-1 text-sm text-muted">Page 1 of 1</span>
+          <span class="px-3 py-1 text-sm text-gray-500 dark:text-gray-400">Page 1 of 1</span>
           <button class="btn btn-outline btn-sm" disabled>
             Next
           </button>
@@ -429,16 +440,18 @@ const description = 'Manage and track GitHub Pull Requests directly within Beave
 </PageLayout>
 
 <style>
+  @reference "../../styles/global.css";
+
   .filter-btn {
     @apply px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center;
   }
 
   .filter-btn.active {
-    @apply bg-primary-50 border-primary-300 text-primary-700;
+    @apply bg-blue-50 border-blue-300 text-blue-700;
   }
 
   .filter-btn[aria-pressed='true'] {
-    @apply bg-primary-100 border-primary-400 text-primary-800;
+    @apply bg-blue-100 border-blue-400 text-blue-800;
   }
 </style>
 
