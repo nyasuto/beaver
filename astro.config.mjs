@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import VitePWA from '@vite-pwa/astro';
 import { generateVersionInfo } from './scripts/generate-version.js';
 import fs from 'fs';
@@ -49,9 +49,6 @@ function versionIntegration() {
 export default defineConfig({
   integrations: [
     react(),
-    tailwind({
-      applyBaseStyles: true,
-    }),
     versionIntegration(),
     VitePWA({
       // PWA Configuration for Beaver
@@ -252,6 +249,9 @@ export default defineConfig({
     },
   },
   vite: {
+    plugins: [
+      tailwindcss(),
+    ],
     optimizeDeps: {
       include: ['react', 'react-dom', 'chart.js', 'date-fns'],
     },
