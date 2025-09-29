@@ -43,7 +43,7 @@
     "@octokit/auth-app": "^8.1.0",
     "@octokit/rest": "^22.0.0",
     "@tailwindcss/forms": "^0.5.9",
-    "@tailwindcss/typography": "^0.5.15",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/dompurify": "^3.2.0",
     "@types/jsdom": "^21.1.7",
     "@vite-pwa/astro": "^1.1.0",
