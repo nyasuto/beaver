@@ -8,6 +8,7 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -17,3 +18,4 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
