@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.3",
-    "@astrojs/react": "^4.3.0",
+    "@astrojs/react": "^4.4.2",
     "@octokit/auth-app": "^8.1.0",
     "@octokit/rest": "^22.0.0",
     "@tailwindcss/forms": "^0.5.9",
