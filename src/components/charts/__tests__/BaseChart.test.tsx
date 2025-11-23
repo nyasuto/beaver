@@ -577,8 +577,7 @@ describe('ChartContainer', () => {
   });
 });
 
-// TODO: Fix for vitest v4 - ResizeObserver mocking issues
-describe.skip('withChartTheme HOC', () => {
+describe('withChartTheme HOC', () => {
   const mockData: SafeChartData<'line'> = {
     datasets: [{ label: 'Test Dataset', data: [1, 2, 3] }],
   };
@@ -608,10 +607,12 @@ describe.skip('withChartTheme HOC', () => {
     });
 
     // Mock MutationObserver
-    global.MutationObserver = vi.fn().mockImplementation(callback => ({
-      observe: vi.fn(),
-      disconnect: vi.fn(),
-    }));
+    class MockMutationObserver {
+      constructor(callback: MutationCallback) {}
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+    global.MutationObserver = MockMutationObserver as any;
   });
 
   it('renders wrapped component with theme detection', () => {

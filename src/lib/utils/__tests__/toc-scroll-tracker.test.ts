@@ -48,8 +48,7 @@ class MockIntersectionObserver {
   }
 }
 
-// TODO: Fix for vitest v4 - IntersectionObserver mocking issues
-describe.skip('TOC Scroll Tracker', () => {
+describe('TOC Scroll Tracker', () => {
   let mockObserver: MockIntersectionObserver;
   let tracker: TOCScrollTracker;
 
@@ -67,13 +66,12 @@ describe.skip('TOC Scroll Tracker', () => {
     `;
 
     // Mock Intersection Observer with proper callback handling
-    vi.stubGlobal(
-      'IntersectionObserver',
-      vi.fn((callback: IntersectionObserverCallback) => {
+    global.IntersectionObserver = class {
+      constructor(callback: IntersectionObserverCallback) {
         mockObserver = new MockIntersectionObserver(callback);
-        return mockObserver;
-      })
-    );
+        return mockObserver as any;
+      }
+    } as any;
 
     // Mock window properties
     Object.defineProperty(window, 'scrollY', {

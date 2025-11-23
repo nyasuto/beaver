@@ -57,8 +57,7 @@ vi.mock('../../lib/utils/toc-scroll-tracker.js', () => ({
 // Helper function to wait for async operations
 const waitForAsync = (ms = 50) => new Promise(resolve => setTimeout(resolve, ms));
 
-// TODO: Fix for vitest v4 - ResizeObserver/IntersectionObserver mocking issues
-describe.skip('Integrated Layout Controller', () => {
+describe('Integrated Layout Controller', () => {
   let controller: IntegratedLayoutController;
   let mockResizeObserver: MockResizeObserver;
 
@@ -106,10 +105,12 @@ describe.skip('Integrated Layout Controller', () => {
 
     // Mock ResizeObserver
     mockResizeObserver = new MockResizeObserver(() => {});
-    vi.stubGlobal(
-      'ResizeObserver',
-      vi.fn(() => mockResizeObserver)
-    );
+    global.ResizeObserver = class {
+      constructor(callback: ResizeObserverCallback) {
+        mockResizeObserver = new MockResizeObserver(callback);
+        return mockResizeObserver as any;
+      }
+    } as any;
 
     // Mock window properties
     Object.defineProperty(window, 'innerWidth', {
