@@ -182,7 +182,7 @@ describe('Layout Analytics', () => {
       analytics = new LayoutAnalytics('integrated');
     });
 
-    // TODO: Fix for vitest v4 - PerformanceObserver issues
+    // TODO: Fix for vitest v4 - PerformanceObserver mock timing issues
     it.skip('should track performance metrics', () => {
       // Create a fresh analytics instance to ensure mock is setup
       analytics.destroy();

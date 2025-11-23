@@ -26,7 +26,7 @@ const mockCreateGitHubClient = vi.mocked(createGitHubClient);
 const mockGitHubIssuesService = vi.mocked(GitHubIssuesService);
 const mockCreateTestClassificationEngine = vi.mocked(createTestClassificationEngine);
 
-// TODO: Fix for vitest v4 - node: prefix mocking issues
+// TODO: Fix for vitest v4 - node module mocking requires further investigation
 describe.skip('fetch-github-data スクリプト', () => {
   const originalEnv = process.env;
   const originalConsoleLog = console.log;

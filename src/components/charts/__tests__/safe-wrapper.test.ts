@@ -30,9 +30,30 @@ const mockChart = {
   getElementsAtEventForMode: vi.fn().mockReturnValue([]),
 };
 
-vi.mock('chart.js', () => ({
-  Chart: vi.fn().mockImplementation(() => mockChart),
-}));
+vi.mock('chart.js', () => {
+  class MockChart {
+    update = vi.fn();
+    resize = vi.fn();
+    render = vi.fn();
+    destroy = vi.fn();
+    toBase64Image = vi.fn().mockReturnValue('data:image/png;base64,mock');
+    getElementsAtEventForMode = vi.fn().mockReturnValue([]);
+
+    constructor() {
+      // Copy methods from mockChart for test assertions
+      this.update = mockChart.update;
+      this.resize = mockChart.resize;
+      this.render = mockChart.render;
+      this.destroy = mockChart.destroy;
+      this.toBase64Image = mockChart.toBase64Image;
+      this.getElementsAtEventForMode = mockChart.getElementsAtEventForMode;
+    }
+  }
+
+  return {
+    Chart: MockChart,
+  };
+});
 
 describe('validateChartData', () => {
   it('validates valid chart data', () => {
@@ -242,8 +263,7 @@ describe('convertToChartJSOptions', () => {
   });
 });
 
-// TODO: Fix for vitest v4 - Chart.js mocking issues
-describe.skip('createSafeChart', () => {
+describe('createSafeChart', () => {
   let mockCanvas: HTMLCanvasElement;
 
   beforeEach(() => {

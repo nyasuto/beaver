@@ -4,13 +4,21 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../search.js';
-import { DocsService } from '../../../../lib/services/DocsService.js';
 
 // Mock DocsService
-vi.mock('../../../../lib/services/DocsService.js');
+const mockSearchDocs = vi.fn();
 
-// TODO: Fix for vitest v4 - DocsService initialization issues
-describe.skip('Docs Search API', () => {
+vi.mock('../../../../lib/services/DocsService.js', () => {
+  class MockDocsService {
+    searchDocs = mockSearchDocs;
+  }
+
+  return {
+    DocsService: MockDocsService,
+  };
+});
+
+describe('Docs Search API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -38,12 +46,7 @@ describe.skip('Docs Search API', () => {
       },
     ];
 
-    vi.mocked(DocsService).mockImplementation(
-      () =>
-        ({
-          searchDocs: vi.fn().mockResolvedValue(mockResults),
-        }) as any
-    );
+    mockSearchDocs.mockResolvedValue(mockResults);
 
     const url = new URL('http://localhost/api/docs/search?q=test');
     const response = await GET({ url } as any);
@@ -76,12 +79,7 @@ describe.skip('Docs Search API', () => {
   });
 
   it('should handle service errors gracefully', async () => {
-    vi.mocked(DocsService).mockImplementation(
-      () =>
-        ({
-          searchDocs: vi.fn().mockRejectedValue(new Error('Service error')),
-        }) as any
-    );
+    mockSearchDocs.mockRejectedValue(new Error('Service error'));
 
     const url = new URL('http://localhost/api/docs/search?q=test');
     const response = await GET({ url } as any);
@@ -117,12 +115,7 @@ describe.skip('Docs Search API', () => {
       },
     ];
 
-    vi.mocked(DocsService).mockImplementation(
-      () =>
-        ({
-          searchDocs: vi.fn().mockResolvedValue(mockResults),
-        }) as any
-    );
+    mockSearchDocs.mockResolvedValue(mockResults);
 
     const url = new URL('http://localhost/api/docs/search?q=search');
     const response = await GET({ url } as any);

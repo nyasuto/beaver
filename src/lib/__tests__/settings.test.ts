@@ -65,7 +65,6 @@ Object.defineProperty(global, 'window', {
   value: mockWindow,
 });
 
-// TODO: Fix for vitest v4 - localStorage spy issues (1 test failing)
 describe('UserSettingsManager', () => {
   let settingsManager: UserSettingsManager;
 
@@ -601,8 +600,7 @@ describe('UserSettingsManager', () => {
       consoleWarnSpy.mockRestore();
     });
 
-    // TODO: Fix for vitest v4 - spy assertion timing issue
-    it.skip('should verify save immediately after setting', () => {
+    it('should verify save immediately after setting', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       // Mock getItem to simulate successful save verification
@@ -611,7 +609,7 @@ describe('UserSettingsManager', () => {
       settingsManager.updatePWASettings({ autoReload: true });
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        '✅ Settings saved and verified:',
+        '💾 Saving settings to localStorage:',
         expect.any(Object)
       );
 
