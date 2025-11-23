@@ -28,7 +28,7 @@ jobs:
       statuses: write          # ステータスの更新
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0          # 全履歴を取得してgit操作を可能に
           token: ${{ secrets.GITHUB_TOKEN }}  # GitHub Token for git operations
