@@ -64,7 +64,7 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
-    "workbox-window": "^7.3.0",
+    "workbox-window": "^7.4.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
