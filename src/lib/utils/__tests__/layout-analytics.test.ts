@@ -55,9 +55,12 @@ const waitForAsync = (ms = 50) => new Promise(resolve => setTimeout(resolve, ms)
 
 describe('Layout Analytics', () => {
   let analytics: LayoutAnalytics;
-  let mockPerformanceObserver: MockPerformanceObserver;
+  let performanceObserverInstances: MockPerformanceObserver[] = [];
 
   beforeEach(() => {
+    // Reset instances array
+    performanceObserverInstances = [];
+
     // Setup DOM
     document.body.innerHTML = `
       <div>
@@ -99,12 +102,13 @@ describe('Layout Analytics', () => {
     // Mock performance.now
     vi.spyOn(performance, 'now').mockReturnValue(1000);
 
-    // Mock PerformanceObserver
+    // Mock PerformanceObserver - track all instances
     vi.stubGlobal(
       'PerformanceObserver',
       vi.fn(callback => {
-        mockPerformanceObserver = new MockPerformanceObserver(callback);
-        return mockPerformanceObserver;
+        const instance = new MockPerformanceObserver(callback);
+        performanceObserverInstances.push(instance);
+        return instance;
       })
     );
 
@@ -183,13 +187,18 @@ describe('Layout Analytics', () => {
     });
 
     // TODO: Fix for vitest v4 - PerformanceObserver mock timing issues
+    // Issue: performanceObserverInstances remains empty, suggesting PerformanceObserver is not being constructed
     it.skip('should track performance metrics', () => {
       // Create a fresh analytics instance to ensure mock is setup
       analytics.destroy();
       analytics = new LayoutAnalytics('integrated');
 
+      // Get the latest mock instance after creating analytics
+      const latestMockObserver =
+        performanceObserverInstances[performanceObserverInstances.length - 1];
+
       // Simulate performance entries after analytics is initialized
-      mockPerformanceObserver.trigger([
+      latestMockObserver?.trigger([
         {
           name: 'first-contentful-paint',
           entryType: 'paint',
@@ -208,6 +217,7 @@ describe('Layout Analytics', () => {
     });
 
     // TODO: Fix for vitest v4 - window load event timing issues
+    // Issue: metrics.loadTime remains undefined after window load event
     it.skip('should track load time on window load', async () => {
       const loadEvent = new Event('load');
       window.dispatchEvent(loadEvent);

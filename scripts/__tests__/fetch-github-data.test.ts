@@ -1,32 +1,64 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
-import { join } from 'path';
 import { fetchAndSaveGitHubData } from '../fetch-github-data.js';
-import { createGitHubClient } from '../../src/lib/github/client.js';
-import { GitHubIssuesService } from '../../src/lib/github/issues.js';
-import { createTestClassificationEngine } from '../../src/lib/classification/engine.js';
 import { z } from 'zod';
 
+// Vitest v4 requires vi.hoisted() for mocks used in vi.mock() factories
+const mockWriteFileSync = vi.hoisted(() => vi.fn());
+const mockMkdirSync = vi.hoisted(() => vi.fn());
+const mockExistsSync = vi.hoisted(() => vi.fn());
+const mockReadFileSync = vi.hoisted(() => vi.fn());
+const mockJoin = vi.hoisted(() => vi.fn());
+const mockCreateGitHubClient = vi.hoisted(() => vi.fn());
+const mockCreateTestClassificationEngine = vi.hoisted(() => vi.fn());
+
+// Shared mock functions for GitHubIssuesService methods
+const mockGetIssues = vi.hoisted(() => vi.fn());
+const mockFetchIssuesOptimized = vi.hoisted(() => vi.fn());
+
+// GitHubIssuesService needs to be a class constructor
+const MockGitHubIssuesService = vi.hoisted(() => {
+  return class MockGitHubIssuesService {
+    getIssues = mockGetIssues;
+    fetchIssuesOptimized = mockFetchIssuesOptimized;
+
+    constructor(client: any) {
+      // Constructor receives client parameter
+    }
+  };
+});
+
 // Node.js モジュールのモック
+// TODO: Fix for vitest v4 - node:fs/node:path with named imports not supported
 vi.mock('fs');
 vi.mock('path');
 
 // アプリケーションモジュールのモック
-vi.mock('../../src/lib/github/client.js');
-vi.mock('../../src/lib/github/issues.js');
-vi.mock('../../src/lib/classification/engine.js');
+vi.mock('../../src/lib/github/client.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/lib/github/client.js')>();
+  return {
+    ...actual,
+    createGitHubClient: mockCreateGitHubClient,
+  };
+});
 
-// 型安全なモック
-const mockWriteFileSync = vi.mocked(writeFileSync);
-const mockMkdirSync = vi.mocked(mkdirSync);
-const mockExistsSync = vi.mocked(existsSync);
-const mockReadFileSync = vi.mocked(readFileSync);
-const mockJoin = vi.mocked(join);
-const mockCreateGitHubClient = vi.mocked(createGitHubClient);
-const mockGitHubIssuesService = vi.mocked(GitHubIssuesService);
-const mockCreateTestClassificationEngine = vi.mocked(createTestClassificationEngine);
+vi.mock('../../src/lib/github/issues.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/lib/github/issues.js')>();
+  return {
+    ...actual,
+    GitHubIssuesService: MockGitHubIssuesService,
+  };
+});
 
-// TODO: Fix for vitest v4 - node module mocking requires further investigation
+vi.mock('../../src/lib/classification/engine.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/lib/classification/engine.js')>();
+  return {
+    ...actual,
+    createTestClassificationEngine: mockCreateTestClassificationEngine,
+  };
+});
+
+// TODO: Fix for vitest v4 - node:fs/node:path mocking with named imports requires further investigation
+// Issue: "No 'default' export is defined on the 'node:fs' mock" when using named imports
 describe.skip('fetch-github-data スクリプト', () => {
   const originalEnv = process.env;
   const originalConsoleLog = console.log;
@@ -114,17 +146,14 @@ describe.skip('fetch-github-data スクリプト', () => {
       });
 
       // Issues サービスのモック設定
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
-          success: true,
-          data: [],
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
-          success: true,
-          data: [],
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+      mockGetIssues.mockResolvedValue({
+        success: true,
+        data: [],
+      });
+      mockFetchIssuesOptimized.mockResolvedValue({
+        success: true,
+        data: [],
+      });
 
       await fetchAndSaveGitHubData();
 
@@ -157,17 +186,14 @@ describe.skip('fetch-github-data スクリプト', () => {
         data: mockClient,
       });
 
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
+      mockGetIssues.mockResolvedValue({
           success: true,
           data: [],
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+        });
+      mockFetchIssuesOptimized.mockResolvedValue({
           success: true,
           data: [],
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+        });
 
       await fetchAndSaveGitHubData();
 
@@ -189,17 +215,14 @@ describe.skip('fetch-github-data スクリプト', () => {
         data: mockClient,
       });
 
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
+      mockGetIssues.mockResolvedValue({
           success: true,
           data: [],
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+        });
+      mockFetchIssuesOptimized.mockResolvedValue({
           success: true,
           data: [],
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+        });
 
       await fetchAndSaveGitHubData();
 
@@ -253,7 +276,6 @@ describe.skip('fetch-github-data スクリプト', () => {
           error: new Error('API レート制限'),
         }),
       };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
 
       await fetchAndSaveGitHubData();
 
@@ -271,21 +293,18 @@ describe.skip('fetch-github-data スクリプト', () => {
         data: mockClient,
       });
 
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
+      mockGetIssues.mockResolvedValue({
           success: true,
           data: [],
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+        });
+      mockFetchIssuesOptimized.mockResolvedValue({
           success: true,
           data: [],
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+        });
 
       await fetchAndSaveGitHubData();
 
-      expect(mockIssuesService.fetchIssuesOptimized).toHaveBeenCalledWith(
+      expect(mockFetchIssuesOptimized).toHaveBeenCalledWith(
         'test-owner',
         'test-repo', 
         {
@@ -335,17 +354,14 @@ describe.skip('fetch-github-data スクリプト', () => {
         data: mockClient,
       });
 
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
+      mockGetIssues.mockResolvedValue({
           success: true,
           data: sampleIssues,
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+        });
+      mockFetchIssuesOptimized.mockResolvedValue({
           success: true,
           data: sampleIssues,
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+        });
 
       // Classification engine mock
       const mockClassificationEngine = {
@@ -559,17 +575,14 @@ describe.skip('fetch-github-data スクリプト', () => {
         data: mockClient,
       });
 
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
+      mockGetIssues.mockResolvedValue({
           success: true,
           data: [],
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+        });
+      mockFetchIssuesOptimized.mockResolvedValue({
           success: true,
           data: [],
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+        });
 
       // ファイル保存でエラーを発生させる
       mockWriteFileSync.mockImplementation(() => {
@@ -592,17 +605,14 @@ describe.skip('fetch-github-data スクリプト', () => {
         data: mockClient,
       });
 
-      const mockIssuesService = {
-        getIssues: vi.fn().mockResolvedValue({
+      mockGetIssues.mockResolvedValue({
           success: true,
           data: [],
-        }),
-        fetchIssuesOptimized: vi.fn().mockResolvedValue({
+        });
+      mockFetchIssuesOptimized.mockResolvedValue({
           success: true,
           data: [],
-        }),
-      };
-      mockGitHubIssuesService.mockReturnValue(mockIssuesService as any);
+        });
 
       // 予期しないエラーを発生させる
       const testError = new Error('予期しないエラー');
