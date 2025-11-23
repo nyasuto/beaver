@@ -11,21 +11,24 @@ import { GitHubClient, type GitHubConfig } from '../client';
 import { createMockGitHubIssue } from '../__mocks__/data';
 
 // Mock the Octokit constructor
-vi.mock('@octokit/rest', () => ({
-  Octokit: vi.fn().mockImplementation(() => ({
-    rest: {
+vi.mock('@octokit/rest', () => {
+  class MockOctokit {
+    rest = {
       issues: {
         listForRepo: vi.fn(),
         get: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
       },
-    },
-  })),
-}));
+    };
+  }
 
-// TODO: Fix for vitest v4 - Octokit mocking issues
-describe.skip('GitHub Issues API', () => {
+  return {
+    Octokit: MockOctokit,
+  };
+});
+
+describe('GitHub Issues API', () => {
   let mockConfig: GitHubConfig;
   let issuesService: GitHubIssuesService;
   let mockClient: GitHubClient;

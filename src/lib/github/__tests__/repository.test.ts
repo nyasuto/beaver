@@ -27,18 +27,24 @@ const mockOctokit = {
 };
 
 // Mock GitHubClient
-vi.mock('../client', () => ({
-  GitHubClient: vi.fn().mockImplementation(() => ({
-    getConfig: vi.fn().mockReturnValue({
-      owner: 'test-owner',
-      repo: 'test-repo',
-      token: 'test-token',
-      baseUrl: 'https://api.github.com',
-      userAgent: 'beaver-astro/1.0.0',
-    }),
-    getOctokit: vi.fn().mockReturnValue(mockOctokit),
-  })),
-  GitHubError: class GitHubError extends Error {
+vi.mock('../client', () => {
+  class MockGitHubClient {
+    getConfig() {
+      return {
+        owner: 'test-owner',
+        repo: 'test-repo',
+        token: 'test-token',
+        baseUrl: 'https://api.github.com',
+        userAgent: 'beaver-astro/1.0.0',
+      };
+    }
+
+    getOctokit() {
+      return mockOctokit;
+    }
+  }
+
+  class GitHubError extends Error {
     constructor(
       message: string,
       public status?: number,
@@ -47,11 +53,15 @@ vi.mock('../client', () => ({
       super(message);
       this.name = 'GitHubError';
     }
-  },
-}));
+  }
 
-// TODO: Fix for vitest v4 - Octokit mocking issues
-describe.skip('GitHubRepositoryService', () => {
+  return {
+    GitHubClient: MockGitHubClient,
+    GitHubError,
+  };
+});
+
+describe('GitHubRepositoryService', () => {
   let service: GitHubRepositoryService;
   let mockClient: GitHubClient;
 

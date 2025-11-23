@@ -9,9 +9,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GitHubClient, type GitHubConfig } from '../client';
 
 // Mock the Octokit constructor
-vi.mock('@octokit/rest', () => ({
-  Octokit: vi.fn().mockImplementation(() => ({
-    rest: {
+vi.mock('@octokit/rest', () => {
+  class MockOctokit {
+    rest = {
       repos: {
         get: vi.fn(),
         listLanguages: vi.fn(),
@@ -26,12 +26,15 @@ vi.mock('@octokit/rest', () => ({
       users: {
         getAuthenticated: vi.fn(),
       },
-    },
-  })),
-}));
+    };
+  }
 
-// TODO: Fix for vitest v4 - Octokit mocking issues
-describe.skip('GitHubClient', () => {
+  return {
+    Octokit: MockOctokit,
+  };
+});
+
+describe('GitHubClient', () => {
   let client: GitHubClient;
   let mockConfig: GitHubConfig;
 
