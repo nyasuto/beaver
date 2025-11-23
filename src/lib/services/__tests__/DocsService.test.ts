@@ -4,10 +4,16 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DocsService } from '../DocsService.js';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 
 // Mock fs module
-vi.mock('fs/promises');
+vi.mock('node:fs/promises', () => ({
+  default: {
+    readFile: vi.fn(),
+    readdir: vi.fn(),
+    stat: vi.fn(),
+  },
+}));
 
 describe('DocsService', () => {
   let docsService: DocsService;

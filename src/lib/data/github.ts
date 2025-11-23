@@ -5,8 +5,8 @@
  * 型安全に読み込むためのユーティリティ関数群
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { IssueSchema } from '@/lib/schemas/github';
 import { z } from 'zod';
 

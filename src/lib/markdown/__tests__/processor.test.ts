@@ -9,10 +9,14 @@ import {
   calculateWordCount,
   resolveRelativeLinks,
 } from '../processor.js';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 
 // Mock fs module
-vi.mock('fs/promises');
+vi.mock('node:fs/promises', () => ({
+  default: {
+    stat: vi.fn(),
+  },
+}));
 
 describe('Markdown Processor', () => {
   describe('processMarkdown', () => {

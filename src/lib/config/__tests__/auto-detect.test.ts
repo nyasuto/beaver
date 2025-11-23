@@ -5,11 +5,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import { autoDetectConfig } from '../auto-detect';
 
 // Mock fs/promises
-vi.mock('fs/promises');
+vi.mock('node:fs/promises', () => ({
+  default: {
+    readFile: vi.fn(),
+    access: vi.fn(),
+    stat: vi.fn(),
+  },
+}));
 
 describe('Auto-detect Configuration', () => {
   const mockFs = vi.mocked(fs);

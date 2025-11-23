@@ -7,8 +7,8 @@ import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import rehypeSlug from 'rehype-slug';
 import matter from 'gray-matter';
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { DocMetadata, DocSection } from '../types/docs.js';
 
 /**

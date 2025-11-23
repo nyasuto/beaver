@@ -2,8 +2,8 @@
  * Service for collecting and processing documentation files
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { ProcessedDoc, DocsCollection, DocNavigation } from '../types/docs.js';
 import {
   processMarkdown,

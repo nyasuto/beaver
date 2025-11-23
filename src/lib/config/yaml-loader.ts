@@ -2,8 +2,8 @@
  * YAML configuration loader for beaver.yml
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { DocsConfig } from '../types/docs-config.js';
 
 /**

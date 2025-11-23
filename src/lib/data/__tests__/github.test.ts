@@ -6,14 +6,30 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import * as githubData from '../github';
 import type { GitHubIssue, GitHubMetadata } from '../github';
 
 // モック設定
-vi.mock('fs');
-vi.mock('path');
+vi.mock('node:fs', () => {
+  const readFileSync = vi.fn();
+  const existsSync = vi.fn();
+  const mockFs = { readFileSync, existsSync };
+  return {
+    ...mockFs,
+    default: mockFs,
+  };
+});
+
+vi.mock('node:path', () => {
+  const join = vi.fn();
+  const mockPath = { join };
+  return {
+    ...mockPath,
+    default: mockPath,
+  };
+});
 
 const mockReadFileSync = vi.mocked(readFileSync);
 const mockExistsSync = vi.mocked(existsSync);

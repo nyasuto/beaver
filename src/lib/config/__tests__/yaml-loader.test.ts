@@ -5,11 +5,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import { loadYamlConfig, generateExampleYaml } from '../yaml-loader';
 
 // Mock fs/promises
-vi.mock('fs/promises');
+vi.mock('node:fs/promises', () => ({
+  default: {
+    readFile: vi.fn(),
+  },
+}));
 
 describe('YAML Loader', () => {
   const mockFs = vi.mocked(fs);

@@ -3,8 +3,8 @@
  * Generates reasonable defaults by analyzing the project structure
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { DocsConfig } from '../types/docs-config.js';
 
 interface PackageJson {
