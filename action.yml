@@ -183,7 +183,7 @@ runs:
     
     - name: Setup GitHub Pages
       if: inputs.deploy-to-pages == 'true'
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6
     
     - name: Upload Pages artifact
       if: inputs.deploy-to-pages == 'true'
