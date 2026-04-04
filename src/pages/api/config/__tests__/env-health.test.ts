@@ -567,9 +567,8 @@ describe('Environment Health API Endpoint', () => {
       });
 
       it('バリデーションエラーを適切に処理すること', async () => {
-        const { getEnvValidator, EnvValidationError } = await import(
-          '../../../../lib/config/env-validation'
-        );
+        const { getEnvValidator, EnvValidationError } =
+          await import('../../../../lib/config/env-validation');
 
         const mockValidator = {
           validate: vi.fn().mockResolvedValue({
