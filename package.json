@@ -45,7 +45,7 @@
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.19",
     "@types/dompurify": "^3.2.0",
-    "@types/jsdom": "^27.0.0",
+    "@types/jsdom": "^28.0.1",
     "@vite-pwa/astro": "https://pkg.pr.new/@vite-pwa/astro@73",
     "astro": "^6.1.5",
     "chart.js": "^4.5.1",
