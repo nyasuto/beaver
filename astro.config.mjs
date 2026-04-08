@@ -239,12 +239,6 @@ export default defineConfig({
     inlineStylesheets: 'auto',
     rollupOptions: {
       external: ['jsdom'],
-      output: {
-        manualChunks: {
-          'vendor-charts': ['chart.js'],
-          'vendor-date': ['date-fns'],
-        },
-      },
     },
   },
   vite: {
@@ -261,12 +255,6 @@ export default defineConfig({
       minify: 'esbuild',
       rollupOptions: {
         external: ['jsdom'],
-        output: {
-          manualChunks: {
-            'vendor-charts': ['chart.js'],
-            'vendor-date': ['date-fns'],
-          },
-        },
       },
     },
   },
