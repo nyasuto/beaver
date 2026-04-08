@@ -241,7 +241,6 @@ export default defineConfig({
       external: ['jsdom'],
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
           'vendor-charts': ['chart.js'],
           'vendor-date': ['date-fns'],
         },
@@ -264,7 +263,6 @@ export default defineConfig({
         external: ['jsdom'],
         output: {
           manualChunks: {
-            'vendor-react': ['react', 'react-dom'],
             'vendor-charts': ['chart.js'],
             'vendor-date': ['date-fns'],
           },
