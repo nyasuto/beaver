@@ -54,7 +54,7 @@ runs:
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: '20'
+        node-version: '22'
     
     - name: Setup environment
       shell: bash
@@ -187,7 +187,7 @@ runs:
     
     - name: Upload Pages artifact
       if: inputs.deploy-to-pages == 'true'
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v5
       with:
         path: beaver-output
     
