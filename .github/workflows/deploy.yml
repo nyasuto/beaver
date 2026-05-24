@@ -66,7 +66,10 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      
+
+      - name: Upgrade npm to latest
+        run: npm install -g npm@latest
+
       - name: Install dependencies (include dev)
         run: |
           # Ensure devDependencies are installed (Tailwind v4 Vite plugin is a devDep)
