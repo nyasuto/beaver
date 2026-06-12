@@ -64,7 +64,7 @@ function readJsonFile<T>(filePath: string, schema: z.ZodSchema<T>): T {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('データ検証エラー:', error.issues);
-      throw new Error(`データ形式が不正です: ${filePath}`);
+      throw new Error(`データ形式が不正です: ${filePath}`, { cause: error });
     }
     throw error;
   }

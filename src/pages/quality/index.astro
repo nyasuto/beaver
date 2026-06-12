@@ -27,7 +27,7 @@ const description = 'Codecov APIを使用してコードカバレッジの品質
 const repoUrls = getRepositoryUrls();
 
 // Codecovからの品質メトリクスを取得
-let qualityData = null;
+let qualityData: Awaited<ReturnType<typeof getQualityMetrics>>;
 let isDataAvailable = false;
 let errorMessage = null;
 let errorType = 'unknown';
