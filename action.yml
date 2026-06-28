@@ -92,6 +92,9 @@ runs:
         cp -r "${{ github.action_path }}/src" .
         cp -r "${{ github.action_path }}/public" .
         cp "${{ github.action_path }}/package.json" .
+        # Copy .npmrc so legacy-peer-deps applies during `npm install`
+        # (eslint-plugin-jsx-a11y / eslint-plugin-react do not yet declare eslint@10 peer support)
+        cp "${{ github.action_path }}/.npmrc" .
         cp "${{ github.action_path }}/astro.config.mjs" .
         cp "${{ github.action_path }}/tailwind.config.mjs" .
         cp "${{ github.action_path }}/tsconfig.json" .
