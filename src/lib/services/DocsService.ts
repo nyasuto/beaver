@@ -128,7 +128,9 @@ export class DocsService {
         breadcrumbs,
       };
     } catch (error) {
-      throw new Error(`Failed to process document file ${filePath}: ${error}`);
+      throw new Error(`Failed to process document file ${filePath}: ${error}`, {
+        cause: error,
+      });
     }
   }
 
