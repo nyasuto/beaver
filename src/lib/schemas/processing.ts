@@ -413,7 +413,7 @@ function evaluateFilterCondition<T>(item: T, condition: FilterCondition): boolea
   const value = getFieldValue(item, condition.field);
   const conditionValue = condition.value;
 
-  let result = false;
+  let result: boolean;
 
   switch (condition.operator) {
     case 'eq':

@@ -187,12 +187,9 @@ const buttonSizeClasses = {
       const isSystemMode = this.manager.currentTheme === 'system';
 
       // Update button title
-      let title = '';
-      if (isSystemMode) {
-        title = `テーマ: システム (${isEffectiveDark ? 'ダーク' : 'ライト'})`;
-      } else {
-        title = `テーマ: ${isEffectiveDark ? 'ダーク' : 'ライト'}`;
-      }
+      const title = isSystemMode
+        ? `テーマ: システム (${isEffectiveDark ? 'ダーク' : 'ライト'})`
+        : `テーマ: ${isEffectiveDark ? 'ダーク' : 'ライト'}`;
       this.button.setAttribute('title', title);
       this.button.setAttribute('aria-label', title);
 
