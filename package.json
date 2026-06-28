@@ -39,11 +39,11 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
-    "@astrojs/react": "^5.0.4",
+    "@astrojs/react": "^5.0.7",
     "@octokit/auth-app": "^8.2.0",
     "@octokit/rest": "^22.0.1",
     "@tailwindcss/forms": "^0.5.11",
-    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/dompurify": "^3.2.0",
     "@types/jsdom": "^28.0.3",
     "@vite-pwa/astro": "https://pkg.pr.new/@vite-pwa/astro@73",
@@ -87,14 +87,14 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "gh-pages": "^6.1.1",
     "globals": "^17.6.0",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^20.10.3",
     "jsdom": "^29.0.2",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
-    "tsx": "^4.22.3",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.4",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.8"
   },
   "engines": {
     "node": ">=22.12.0"
