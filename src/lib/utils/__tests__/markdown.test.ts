@@ -1,3 +1,7 @@
+// @vitest-environment node
+// markdownToHtml はサーバー側(SSR)で jsdom を用いてサニタイズするため、
+// テストも本番と同じ node 環境(jsdom 経路)で実行する。happy-dom では
+// 一部の DOMPurify バージョンがブロック要素(h1/ul)を誤って除去するため。
 /**
  * @file Markdown utility tests
  */
