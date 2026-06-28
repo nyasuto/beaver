@@ -537,7 +537,7 @@ export async function getQualityMetrics(): Promise<QualityMetrics> {
             .filter(item => item && typeof item === 'object')
             .map(item => {
               // Handle different possible timestamp formats
-              let dateStr = '';
+              let dateStr: string;
               if (item.date) {
                 dateStr = item.date;
               } else if (item.timestamp) {
