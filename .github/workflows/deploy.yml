@@ -26,6 +26,9 @@ env:
   GITHUB_RUN_ID: ${{ github.run_id }}
   GITHUB_SHA: ${{ github.sha }}
   GITHUB_REF: ${{ github.ref }}
+  # Keep in sync with .github/workflows/ci.yml — see the note there on why
+  # `npm@latest` is not used.
+  NPM_VERSION: '12'
 
 jobs:
   build-and-deploy:
@@ -67,8 +70,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Upgrade npm to latest
-        run: npm install -g npm@latest
+      - name: Pin npm to ${{ env.NPM_VERSION }}
+        run: npm install -g npm@${{ env.NPM_VERSION }}
 
       - name: Install dependencies (include dev)
         run: |

@@ -1,4 +1,16 @@
 version: 2
+
+# Grouping notes
+# --------------
+# Without groups, dependabot opens one PR per dependency. Because virtually every
+# npm PR rewrites package-lock.json, only one can merge before the rest need a
+# rebase and a full CI re-run, so the queue serialises and never drains. Grouping
+# related packages into a single PR removes most of that contention.
+#
+# Groups whose members must move in lockstep (astro, eslint, typescript) are left
+# unrestricted so that major bumps land together instead of arriving as separate,
+# mutually-blocking PRs. The catch-all groups are limited to minor/patch, which
+# leaves any remaining major bump as its own PR for individual review.
 updates:
   # Enable version updates for npm
   - package-ecosystem: "npm"
@@ -9,6 +21,42 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 10
+    groups:
+      # astro and its integrations pin each other via peerDependencies, so a
+      # standalone bump of any one of them is not independently mergeable.
+      astro:
+        patterns:
+          - "astro"
+          - "@astrojs/*"
+          - "vite"
+          - "vite-plugin-*"
+          - "@vite-pwa/*"
+
+      # The typescript-eslint packages are published from one monorepo and share
+      # a version; splitting them produced three separate PRs for one release.
+      eslint:
+        patterns:
+          - "eslint"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
+          - "eslint-plugin-*"
+          - "eslint-config-*"
+
+      types:
+        patterns:
+          - "@types/*"
+
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -19,3 +67,7 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
