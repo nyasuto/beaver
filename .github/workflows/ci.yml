@@ -17,6 +17,11 @@ env:
   GITHUB_RUN_ID: ${{ github.run_id }}
   GITHUB_SHA: ${{ github.sha }}
   GITHUB_REF: ${{ github.ref }}
+  # Pinned to a major line so a breaking npm release cannot silently break CI.
+  # `npm@latest` previously did exactly that: npm 12 flipped the `allow-remote`
+  # default to `none` and every `npm ci` started failing with EALLOWREMOTE
+  # without a single change landing in this repository.
+  NPM_VERSION: '12'
 
 jobs:
   quality-check:
@@ -27,18 +32,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         
-      - name: Setup Node.js 22.x
+      - name: Setup Node.js 24.x
         uses: actions/setup-node@v6
         with:
           node-version: '24.x'
           cache: 'npm'
 
-      - name: Upgrade npm to latest
-        run: npm install -g npm@latest
+      - name: Pin npm to ${{ env.NPM_VERSION }}
+        run: npm install -g npm@${{ env.NPM_VERSION }}
 
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run quality checks
         run: |
           echo "🔍 Running comprehensive quality checks..."
@@ -81,12 +86,12 @@ jobs:
           node-version: '24.x'
           cache: 'npm'
 
-      - name: Upgrade npm to latest
-        run: npm install -g npm@latest
+      - name: Pin npm to ${{ env.NPM_VERSION }}
+        run: npm install -g npm@${{ env.NPM_VERSION }}
 
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run tests
         run: npm run test
         continue-on-error: true  # Tests may not exist yet
