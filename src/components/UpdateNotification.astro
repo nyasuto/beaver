@@ -9,8 +9,10 @@
 import { z } from 'zod';
 import { BaseUIPropsSchema } from '../lib/schemas/ui';
 
-// UpdateNotification props schema
-export const UpdateNotificationPropsSchema = BaseUIPropsSchema.extend({
+// UpdateNotification props schema.
+// Kept local: astro/no-exports-from-components (eslint-plugin-astro 2+) forbids
+// exporting values from a component, and nothing outside this file consumes it.
+const UpdateNotificationPropsSchema = BaseUIPropsSchema.extend({
   /** Whether to show the notification */
   isVisible: z.boolean().default(false),
   /** Current version info */
@@ -31,7 +33,7 @@ export const UpdateNotificationPropsSchema = BaseUIPropsSchema.extend({
   variant: z.enum(['info', 'success', 'warning']).default('info'),
 });
 
-export type UpdateNotificationProps = z.infer<typeof UpdateNotificationPropsSchema>;
+type UpdateNotificationProps = z.infer<typeof UpdateNotificationPropsSchema>;
 
 type Props = UpdateNotificationProps;
 

@@ -17,8 +17,10 @@
 import { z } from 'zod';
 import { BaseUIPropsSchema } from '../lib/schemas/ui';
 
-// Settings component props schema
-export const SettingsPropsSchema = BaseUIPropsSchema.extend({
+// Settings component props schema.
+// Kept local: astro/no-exports-from-components (eslint-plugin-astro 2+) forbids
+// exporting values from a component, and nothing outside this file consumes it.
+const SettingsPropsSchema = BaseUIPropsSchema.extend({
   /** Initial open state */
   isOpen: z.boolean().default(false),
   /** Position of the settings panel */
@@ -31,7 +33,7 @@ export const SettingsPropsSchema = BaseUIPropsSchema.extend({
   title: z.string().default('設定'),
 });
 
-export type SettingsProps = z.infer<typeof SettingsPropsSchema>;
+type SettingsProps = z.infer<typeof SettingsPropsSchema>;
 
 type Props = SettingsProps;
 
