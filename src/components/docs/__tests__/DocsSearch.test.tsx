@@ -238,12 +238,16 @@ describe('DocsSearch Component', () => {
         expect(screen.getByText('Result 1')).toBeInTheDocument();
       });
 
-      // Arrow down to select first result
-      fireEvent.keyDown(document, { key: 'ArrowDown' });
+      // Arrow down to select first result.
+      // user.keyboard (not fireEvent) so the interaction is wrapped in act and the
+      // component's keydown listener -- which is re-registered by an effect on every
+      // isOpen/results/selectedIndex change -- is guaranteed to be the current one.
+      await user.keyboard('{ArrowDown}');
 
       // First result should be selected
-      const firstButton = screen.getByText('Result 1').closest('button');
-      expect(firstButton).toHaveClass('bg-blue-50');
+      await waitFor(() => {
+        expect(screen.getByText('Result 1').closest('button')).toHaveClass('bg-blue-50');
+      });
     });
 
     it('should cycle through results with arrow keys', async () => {
@@ -257,11 +261,11 @@ describe('DocsSearch Component', () => {
       });
 
       // Arrow down twice to select second result
-      fireEvent.keyDown(document, { key: 'ArrowDown' });
-      fireEvent.keyDown(document, { key: 'ArrowDown' });
+      await user.keyboard('{ArrowDown}{ArrowDown}');
 
-      const secondButton = screen.getByText('Result 2').closest('button');
-      expect(secondButton).toHaveClass('bg-blue-50');
+      await waitFor(() => {
+        expect(screen.getByText('Result 2').closest('button')).toHaveClass('bg-blue-50');
+      });
     });
 
     it('should navigate to selected result with Enter key', async () => {
@@ -282,10 +286,11 @@ describe('DocsSearch Component', () => {
       });
 
       // Select first result and press Enter
-      fireEvent.keyDown(document, { key: 'ArrowDown' });
-      fireEvent.keyDown(document, { key: 'Enter' });
+      await user.keyboard('{ArrowDown}{Enter}');
 
-      expect(mockLocation.href).toBe('/docs/result1');
+      await waitFor(() => {
+        expect(mockLocation.href).toBe('/docs/result1');
+      });
     });
 
     it('should close results with Escape key', async () => {
@@ -298,9 +303,11 @@ describe('DocsSearch Component', () => {
         expect(screen.getByText('Result 1')).toBeInTheDocument();
       });
 
-      fireEvent.keyDown(document, { key: 'Escape' });
+      await user.keyboard('{Escape}');
 
-      expect(screen.queryByText('Result 1')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Result 1')).not.toBeInTheDocument();
+      });
     });
   });
 
