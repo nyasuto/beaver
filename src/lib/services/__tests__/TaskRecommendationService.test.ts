@@ -14,19 +14,6 @@ import {
 import type { Issue } from '../../schemas/github';
 import type { TaskScore, EnhancedTaskScore } from '../../types/enhanced-classification';
 
-// Mock enhanced classification dependencies
-vi.mock('../../classification/enhanced-config-manager', () => ({
-  enhancedConfigManager: {
-    getConfig: vi.fn(() =>
-      Promise.resolve({
-        version: '2.0.0',
-        algorithm: 'enhanced-v2',
-        thresholds: { minConfidence: 0.5 },
-      })
-    ),
-  },
-}));
-
 // Mock for Enhanced Classification Engine
 const mockClassifyIssuesBatch = vi.fn();
 
@@ -42,6 +29,12 @@ vi.mock('../../classification/engine', () => ({
   })),
 }));
 
+// Keep this the ONLY vi.mock for enhanced-config-manager in this file. A second
+// factory used to sit above and expose just getConfig, with no loadConfig. vitest
+// resolves same-action mocks in parallel and registers them last-write-wins, so
+// whichever resolved last won -- and when the loadConfig-less one did, every call
+// site below blew up with `enhancedConfigManager.loadConfig is not a function`,
+// which the service swallowed into a fallback that scores every issue 52.
 vi.mock('../../classification/enhanced-config-manager', () => ({
   enhancedConfigManager: {
     getConfig: vi.fn(() =>
