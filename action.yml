@@ -52,9 +52,11 @@ runs:
         echo "Target repository path: ${{ github.workspace }}/target-repo"
     
     - name: Setup Node.js
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
-        node-version: '22'
+        # Matches package.json engines (>=24.0.0) and the version CI builds with.
+        # Pinning the dependency tree only reproduces CI if the runtime matches too.
+        node-version: '24'
     
     - name: Setup environment
       shell: bash
@@ -92,10 +94,19 @@ runs:
         cp -r "${{ github.action_path }}/src" .
         cp -r "${{ github.action_path }}/public" .
         cp "${{ github.action_path }}/package.json" .
-        # Copy .npmrc so legacy-peer-deps and allow-remote apply during `npm install`
+        # Copy the lockfile so the workspace installs the exact dependency set that
+        # CI validates. Without it `npm install` re-resolved every semver range on
+        # each run, so the workspace drifted away from the tested tree and broke on
+        # unrelated upstream releases -- e.g. a @tailwindcss/vite / vite mismatch:
+        #   [@tailwindcss/vite:generate:build] Missing field `tsconfigPaths` on
+        #   BindingViteResolvePluginConfig.resolveOptions
+        cp "${{ github.action_path }}/package-lock.json" .
+        # Copy .npmrc so legacy-peer-deps and allow-remote apply during `npm ci`
         # (eslint-plugin-jsx-a11y / eslint-plugin-react do not yet declare eslint@10
         # peer support; @vite-pwa/astro is pinned to a tarball URL, which npm 12
         # refuses unless allow-remote is set)
+        # Note: npm applies legacy-peer-deps to `npm ci` as well, so the lockfile
+        # -- which was itself generated under that setting -- installs cleanly.
         cp "${{ github.action_path }}/.npmrc" .
         cp "${{ github.action_path }}/astro.config.mjs" .
         cp "${{ github.action_path }}/tailwind.config.mjs" .
@@ -141,7 +152,12 @@ runs:
       working-directory: beaver-workspace
       run: |
         echo "📦 Installing workspace dependencies..."
-        npm install
+        # `npm ci` (not `npm install`) so the lockfile is honoured exactly and a
+        # drifting transitive tree cannot break a build that CI proved green.
+        # NODE_ENV is cleared and dev dependencies forced in because consumers may
+        # run this action from a workflow with NODE_ENV=production, under which npm
+        # omits devDependencies -- and the build needs them (@tailwindcss/vite).
+        NODE_ENV= npm ci --include=dev
     
     - name: Analyze GitHub data
       id: analyze
