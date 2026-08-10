@@ -252,7 +252,14 @@ export default defineConfig({
     build: {
       // Performance optimizations
       target: 'es2020',
-      minify: 'esbuild',
+      // `true` rather than 'esbuild' so the minifier tracks whatever vite ships with.
+      // vite normalises true to 'esbuild' on v7 (which depends on esbuild) and to 'oxc'
+      // on v8, where esbuild became an *optional peer* dependency and is no longer
+      // installed -- pinning 'esbuild' there fails the build with
+      //   Failed to load `transformWithEsbuild`. It is deprecated and it now requires
+      //   esbuild to be installed separately.
+      // because vite's buildEsbuildPlugin is only registered for minify === 'esbuild'.
+      minify: true,
       rollupOptions: {
         external: ['jsdom'],
       },
