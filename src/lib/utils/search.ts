@@ -341,6 +341,8 @@ export async function searchIssuesWithClassification(
 ): Promise<SearchResult> {
   try {
     // If priority sorting is requested, compute classification data
+    // prettier-ignore -- see safe-chart.ts: prettier 3.9 collapses this union onto one
+    // line, so the layout would depend on the formatter version rather than on us.
     let classificationData:
       | Record<number, { priority: 'critical' | 'high' | 'medium' | 'low' | 'backlog' }>
       | undefined;

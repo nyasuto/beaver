@@ -242,6 +242,10 @@ export interface TimeSeriesPoint {
 /**
  * Result type for error handling
  */
+// prettier-ignore -- keep the discriminated union one variant per line. prettier 3.9
+// collapses it onto a single line because it fits in printWidth, which reformats the
+// file purely on the prettier version in use; pinning the layout keeps the shape the
+// project documents for Result types and decouples it from formatter churn.
 export type SafeChartResult<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
