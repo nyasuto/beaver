@@ -142,30 +142,26 @@ const errorClasses = 'mt-1 text-sm text-red-600';
 ---
 
 <div class="input-group">
-  {
-    label && (
-      <label for={inputId} class={labelClasses}>
-        {label}
-      </label>
-    )
-  }
+  {label && (
+    <label for={inputId} class={labelClasses}>
+      {label}
+    </label>
+  )}
 
   <div class={containerBaseClasses}>
-    {
-      hasLeftElement && (
-        <div class={leftIconClasses}>
-          {leftIcon ? (
-            <span class={iconSizeClasses} aria-hidden="true">
-              <Fragment set:html={leftIcon} />
-            </span>
-          ) : (
-            <div class="left-element">
-              <Fragment set:html={leftElement} />
-            </div>
-          )}
-        </div>
-      )
-    }
+    {hasLeftElement && (
+      <div class={leftIconClasses}>
+        {leftIcon ? (
+          <span class={iconSizeClasses} aria-hidden="true">
+            <Fragment set:html={leftIcon} />
+          </span>
+        ) : (
+          <div class="left-element">
+            <Fragment set:html={leftElement} />
+          </div>
+        )}
+      </div>
+    )}
 
     <input
       class={inputClasses}
@@ -188,38 +184,32 @@ const errorClasses = 'mt-1 text-sm text-red-600';
       {...rest}
     />
 
-    {
-      hasRightElement && (
-        <div class={rightIconClasses}>
-          {rightIcon ? (
-            <span class={iconSizeClasses} aria-hidden="true">
-              <Fragment set:html={rightIcon} />
-            </span>
-          ) : (
-            <div class="right-element">
-              <Fragment set:html={rightElement} />
-            </div>
-          )}
-        </div>
-      )
-    }
+    {hasRightElement && (
+      <div class={rightIconClasses}>
+        {rightIcon ? (
+          <span class={iconSizeClasses} aria-hidden="true">
+            <Fragment set:html={rightIcon} />
+          </span>
+        ) : (
+          <div class="right-element">
+            <Fragment set:html={rightElement} />
+          </div>
+        )}
+      </div>
+    )}
   </div>
 
-  {
-    helperText && !errorText && (
-      <p id={helperId} class={helperClasses}>
-        {helperText}
-      </p>
-    )
-  }
+  {helperText && !errorText && (
+    <p id={helperId} class={helperClasses}>
+      {helperText}
+    </p>
+  )}
 
-  {
-    errorText && (
-      <p id={errorId} class={errorClasses} role="alert">
-        {errorText}
-      </p>
-    )
-  }
+  {errorText && (
+    <p id={errorId} class={errorClasses} role="alert">
+      {errorText}
+    </p>
+  )}
 </div>
 
 <style>

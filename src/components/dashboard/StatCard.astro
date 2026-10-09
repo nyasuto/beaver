@@ -90,91 +90,85 @@ const trendColors = {
         <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
           {value === -1 ? 'N/A' : value}
         </p>
-        {
-          description && (
-            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">
-              {description}
-            </p>
-          )
-        }
+        {description && (
+          <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">
+            {description}
+          </p>
+        )}
       </div>
     </div>
 
-    {
-      trend && (
-        <div class="flex items-center space-x-1 ml-2 flex-shrink-0">
-          <span class="text-sm">{trendIcons[trend.direction]}</span>
-          <span class={`text-sm font-medium ${trendColors[trend.direction]}`}>{trend.value}</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
-            {trend.period}
-          </span>
-        </div>
-      )
-    }
+    {trend && (
+      <div class="flex items-center space-x-1 ml-2 flex-shrink-0">
+        <span class="text-sm">{trendIcons[trend.direction]}</span>
+        <span class={`text-sm font-medium ${trendColors[trend.direction]}`}>{trend.value}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
+          {trend.period}
+        </span>
+      </div>
+    )}
   </div>
 
   {/* Tooltip Content */}
-  {
-    tooltip?.enabled && tooltip.content.length > 0 && (
-      <div
-        id={tooltipId}
-        class="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 hidden z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 w-80 max-w-sm"
-        role="tooltip"
-      >
-        <div class="space-y-3">
-          <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
-            <h4 class="font-semibold text-gray-900 dark:text-white">緊急Issue詳細</h4>
-            <span class="text-sm text-gray-500 dark:text-gray-400">{tooltip.content.length}件</span>
-          </div>
-
-          <div class="space-y-2 max-h-60 overflow-y-auto">
-            {tooltip.content.map(issue => (
-              <div class="border-l-2 border-red-400 pl-3 py-1">
-                <div class="flex items-start justify-between">
-                  <div class="min-w-0 flex-1">
-                    <a
-                      href={issue.url}
-                      class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline block truncate"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      #{issue.number} {issue.title}
-                    </a>
-                    <div class="flex items-center gap-2 mt-1">
-                      <span
-                        class={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          issue.priority === 'critical'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                        }`}
-                      >
-                        {issue.priority === 'critical' ? '🔴 緊急' : '🟠 高'}
-                      </span>
-                      <span class="text-xs text-gray-600 dark:text-gray-400">{issue.category}</span>
-                    </div>
-                    {issue.description && (
-                      <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                        {issue.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {tooltip.content.length >= 10 && (
-            <div class="text-xs text-gray-500 dark:text-gray-400 text-center pt-2 border-t border-gray-200 dark:border-gray-700">
-              さらに緊急Issueがある可能性があります
-            </div>
-          )}
+  {tooltip?.enabled && tooltip.content.length > 0 && (
+    <div
+      id={tooltipId}
+      class="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 hidden z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 w-80 max-w-sm"
+      role="tooltip"
+    >
+      <div class="space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+          <h4 class="font-semibold text-gray-900 dark:text-white">緊急Issue詳細</h4>
+          <span class="text-sm text-gray-500 dark:text-gray-400">{tooltip.content.length}件</span>
         </div>
 
-        {/* Tooltip Arrow */}
-        <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-800" />
+        <div class="space-y-2 max-h-60 overflow-y-auto">
+          {tooltip.content.map(issue => (
+            <div class="border-l-2 border-red-400 pl-3 py-1">
+              <div class="flex items-start justify-between">
+                <div class="min-w-0 flex-1">
+                  <a
+                    href={issue.url}
+                    class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline block truncate"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    #{issue.number} {issue.title}
+                  </a>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span
+                      class={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        issue.priority === 'critical'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                      }`}
+                    >
+                      {issue.priority === 'critical' ? '🔴 緊急' : '🟠 高'}
+                    </span>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{issue.category}</span>
+                  </div>
+                  {issue.description && (
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                      {issue.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {tooltip.content.length >= 10 && (
+          <div class="text-xs text-gray-500 dark:text-gray-400 text-center pt-2 border-t border-gray-200 dark:border-gray-700">
+            さらに緊急Issueがある可能性があります
+          </div>
+        )}
       </div>
-    )
-  }
+
+      {/* Tooltip Arrow */}
+      <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-800" />
+    </div>
+  )}
 </div>
 
 <style>

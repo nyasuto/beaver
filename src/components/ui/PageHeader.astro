@@ -48,52 +48,50 @@ const {
       {description && <p class="text-muted max-w-3xl">{description}</p>}
     </div>
 
-    {
-      (actions || actionSlot || metaInfo || warningMessage) && (
-        <div class="text-right flex-shrink-0 ml-8">
-          {actionSlot && (
-            <div class="mb-4">
-              <slot name="actions" />
-            </div>
-          )}
+    {(actions || actionSlot || metaInfo || warningMessage) && (
+      <div class="text-right flex-shrink-0 ml-8">
+        {actionSlot && (
+          <div class="mb-4">
+            <slot name="actions" />
+          </div>
+        )}
 
-          {metaInfo && metaInfo.isDataAvailable && (
-            <div class="text-sm text-muted space-y-1">
-              {metaInfo.totalCount !== undefined && <p>総 Issue 数: {metaInfo.totalCount}</p>}
-              {metaInfo.openCount !== undefined && metaInfo.closedCount !== undefined && (
-                <p>
-                  オープン: {metaInfo.openCount} / クローズ: {metaInfo.closedCount}
-                </p>
-              )}
-              {metaInfo.repositoryOwner && metaInfo.repositoryName && (
-                <p>
-                  Repository: {metaInfo.repositoryOwner}/{metaInfo.repositoryName}
-                </p>
-              )}
-              {metaInfo.lastUpdated && (
-                <p>最終更新: {metaInfo.lastUpdated.toLocaleDateString('ja-JP')}</p>
-              )}
-              {metaInfo.dataSource && <p>データソース: {metaInfo.dataSource}</p>}
-            </div>
-          )}
+        {metaInfo && metaInfo.isDataAvailable && (
+          <div class="text-sm text-muted space-y-1">
+            {metaInfo.totalCount !== undefined && <p>総 Issue 数: {metaInfo.totalCount}</p>}
+            {metaInfo.openCount !== undefined && metaInfo.closedCount !== undefined && (
+              <p>
+                オープン: {metaInfo.openCount} / クローズ: {metaInfo.closedCount}
+              </p>
+            )}
+            {metaInfo.repositoryOwner && metaInfo.repositoryName && (
+              <p>
+                Repository: {metaInfo.repositoryOwner}/{metaInfo.repositoryName}
+              </p>
+            )}
+            {metaInfo.lastUpdated && (
+              <p>最終更新: {metaInfo.lastUpdated.toLocaleDateString('ja-JP')}</p>
+            )}
+            {metaInfo.dataSource && <p>データソース: {metaInfo.dataSource}</p>}
+          </div>
+        )}
 
-          {warningMessage && (
-            <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
-              ⚠️ {warningMessage}
-            </div>
-          )}
+        {warningMessage && (
+          <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
+            ⚠️ {warningMessage}
+          </div>
+        )}
 
-          {metaInfo && !metaInfo.isDataAvailable && (
-            <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
-              <div class="font-medium">⚠️ 静的データが未生成です</div>
-              <div class="text-xs mt-1 text-warning-500">
-                GitHub API データの取得に失敗しました。GitHub
-                Actions設定またはアクセストークンを確認してください。
-              </div>
+        {metaInfo && !metaInfo.isDataAvailable && (
+          <div class="text-sm text-warning-600 bg-warning-50 dark:bg-warning-900/20 px-3 py-2 rounded">
+            <div class="font-medium">⚠️ 静的データが未生成です</div>
+            <div class="text-xs mt-1 text-warning-500">
+              GitHub API データの取得に失敗しました。GitHub
+              Actions設定またはアクセストークンを確認してください。
             </div>
-          )}
-        </div>
-      )
-    }
+          </div>
+        )}
+      </div>
+    )}
   </div>
 </div>

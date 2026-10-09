@@ -14,10 +14,22 @@ const { class: className = '' } = Astro.props;
 ---
 
 <div class={`skip-links ${className}`} role="navigation" aria-label="スキップリンク">
-  <a href="#main-content" class="skip-link"> メインコンテンツへスキップ </a>
-  <a href="#navigation" class="skip-link"> ナビゲーションへスキップ </a>
-  <a href="#sidebar" class="skip-link"> サイドバーへスキップ </a>
-  <a href="#footer" class="skip-link"> フッターへスキップ </a>
+  <a href="#main-content" class="skip-link">
+    {' '}
+    メインコンテンツへスキップ{' '}
+  </a>
+  <a href="#navigation" class="skip-link">
+    {' '}
+    ナビゲーションへスキップ{' '}
+  </a>
+  <a href="#sidebar" class="skip-link">
+    {' '}
+    サイドバーへスキップ{' '}
+  </a>
+  <a href="#footer" class="skip-link">
+    {' '}
+    フッターへスキップ{' '}
+  </a>
 </div>
 
 <style>

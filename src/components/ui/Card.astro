@@ -126,15 +126,13 @@ const Tag = clickable ? 'button' : 'div';
   tabindex={clickable ? 0 : undefined}
   {...rest}
 >
-  {
-    header && (
-      <div class={`border-b border-gray-200 ${headerFooterPadding[padding]}`}>
-        <div class="card-header">
-          <Fragment set:html={header} />
-        </div>
+  {header && (
+    <div class={`border-b border-gray-200 ${headerFooterPadding[padding]}`}>
+      <div class="card-header">
+        <Fragment set:html={header} />
       </div>
-    )
-  }
+    </div>
+  )}
 
   <div class={paddingClasses[padding]}>
     <div class="card-content">
@@ -142,15 +140,13 @@ const Tag = clickable ? 'button' : 'div';
     </div>
   </div>
 
-  {
-    footer && (
-      <div class={`border-t border-gray-200 ${headerFooterPadding[padding]}`}>
-        <div class="card-footer">
-          <Fragment set:html={footer} />
-        </div>
+  {footer && (
+    <div class={`border-t border-gray-200 ${headerFooterPadding[padding]}`}>
+      <div class="card-footer">
+        <Fragment set:html={footer} />
       </div>
-    )
-  }
+    </div>
+  )}
 </Tag>
 
 <style>

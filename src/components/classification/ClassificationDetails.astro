@@ -79,14 +79,10 @@ const processingTimeText = getProcessingTimeText(classification.processingTimeMs
   {/* Primary Classification */}
   <div class="classification-details__primary">
     <div class="classification-details__primary-header">
-      <h3 class="classification-details__title">
-        {variant === 'compact' ? '分類' : '分類結果'}
-      </h3>
-      {
-        classification.cacheHit && (
-          <span class="classification-details__cache-badge">💾 キャッシュ</span>
-        )
-      }
+      <h3 class="classification-details__title">{variant === 'compact' ? '分類' : '分類結果'}</h3>
+      {classification.cacheHit && (
+        <span class="classification-details__cache-badge">💾 キャッシュ</span>
+      )}
     </div>
 
     <div class="classification-details__primary-content">
@@ -117,119 +113,113 @@ const processingTimeText = getProcessingTimeText(classification.processingTimeMs
   </div>
 
   {/* Score Information */}
-  {
-    variant !== 'compact' && (
-      <div class="classification-details__score">
-        <div class="classification-details__score-main">
-          <span class="classification-details__score-value">{classification.score}</span>
-          <span class="classification-details__score-label">スコア</span>
-        </div>
-
-        <div class="classification-details__score-breakdown">
-          <div class="classification-details__score-item">
-            <span class="classification-details__score-item-label">カテゴリ</span>
-            <span class="classification-details__score-item-value">
-              {classification.scoreBreakdown.category}
-            </span>
-          </div>
-          <div class="classification-details__score-item">
-            <span class="classification-details__score-item-label">優先度</span>
-            <span class="classification-details__score-item-value">
-              {classification.scoreBreakdown.priority}
-            </span>
-          </div>
-          {/* Confidence score removed from scoreBreakdown */}
-          {classification.scoreBreakdown.recency && (
-            <div class="classification-details__score-item">
-              <span class="classification-details__score-item-label">最新性</span>
-              <span class="classification-details__score-item-value">
-                {classification.scoreBreakdown.recency}
-              </span>
-            </div>
-          )}
-        </div>
+  {variant !== 'compact' && (
+    <div class="classification-details__score">
+      <div class="classification-details__score-main">
+        <span class="classification-details__score-value">{classification.score}</span>
+        <span class="classification-details__score-label">スコア</span>
       </div>
-    )
-  }
+
+      <div class="classification-details__score-breakdown">
+        <div class="classification-details__score-item">
+          <span class="classification-details__score-item-label">カテゴリ</span>
+          <span class="classification-details__score-item-value">
+            {classification.scoreBreakdown.category}
+          </span>
+        </div>
+        <div class="classification-details__score-item">
+          <span class="classification-details__score-item-label">優先度</span>
+          <span class="classification-details__score-item-value">
+            {classification.scoreBreakdown.priority}
+          </span>
+        </div>
+        {/* Confidence score removed from scoreBreakdown */}
+        {classification.scoreBreakdown.recency && (
+          <div class="classification-details__score-item">
+            <span class="classification-details__score-item-label">最新性</span>
+            <span class="classification-details__score-item-value">
+              {classification.scoreBreakdown.recency}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  )}
 
   {/* Classification Rules */}
-  {
-    showReasons && topClassifications.length > 0 && (
-      <div class="classification-details__rules">
-        <h4 class="classification-details__rules-title">
-          {variant === 'compact' ? '理由' : '適用されたルール'}
-        </h4>
-        <div class="classification-details__rules-list">
-          {topClassifications.map((rule, index) => (
-            <div class="classification-details__rule">
-              <div class="classification-details__rule-header">
-                <span class="classification-details__rule-name">
-                  {rule.ruleName || `ルール ${index + 1}`}
-                </span>
-                <ConfidenceIndicator
-                  confidence={rule.confidence}
-                  size="small"
-                  variant="compact"
-                  showLabel={false}
-                />
-              </div>
-
-              {variant === 'detailed' && rule.reasons && (
-                <div class="classification-details__rule-reasons">
-                  {rule.reasons.slice(0, 2).map((reason, _reasonIndex) => (
-                    <span class="classification-details__reason">• {reason}</span>
-                  ))}
-                </div>
-              )}
-
-              {showKeywords && rule.keywords && rule.keywords.length > 0 && (
-                <div class="classification-details__rule-keywords">
-                  {rule.keywords.slice(0, 3).map((keyword, _keywordIndex) => (
-                    <span class="classification-details__keyword">{keyword}</span>
-                  ))}
-                </div>
-              )}
+  {showReasons && topClassifications.length > 0 && (
+    <div class="classification-details__rules">
+      <h4 class="classification-details__rules-title">
+        {variant === 'compact' ? '理由' : '適用されたルール'}
+      </h4>
+      <div class="classification-details__rules-list">
+        {topClassifications.map((rule, index) => (
+          <div class="classification-details__rule">
+            <div class="classification-details__rule-header">
+              <span class="classification-details__rule-name">
+                {rule.ruleName || `ルール ${index + 1}`}
+              </span>
+              <ConfidenceIndicator
+                confidence={rule.confidence}
+                size="small"
+                variant="compact"
+                showLabel={false}
+              />
             </div>
-          ))}
-        </div>
+
+            {variant === 'detailed' && rule.reasons && (
+              <div class="classification-details__rule-reasons">
+                {rule.reasons.slice(0, 2).map((reason, _reasonIndex) => (
+                  <span class="classification-details__reason">• {reason}</span>
+                ))}
+              </div>
+            )}
+
+            {showKeywords && rule.keywords && rule.keywords.length > 0 && (
+              <div class="classification-details__rule-keywords">
+                {rule.keywords.slice(0, 3).map((keyword, _keywordIndex) => (
+                  <span class="classification-details__keyword">{keyword}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )}
 
   {/* Metadata */}
-  {
-    showMetadata && variant !== 'compact' && (
-      <div class="classification-details__metadata">
-        <div class="classification-details__metadata-grid">
-          <div class="classification-details__metadata-item">
-            <span class="classification-details__metadata-label">処理時間</span>
-            <span class="classification-details__metadata-value">{processingTimeText}</span>
-          </div>
-
-          <div class="classification-details__metadata-item">
-            <span class="classification-details__metadata-label">アルゴリズム</span>
-            <span class="classification-details__metadata-value">
-              v{classification.algorithmVersion}
-            </span>
-          </div>
-
-          <div class="classification-details__metadata-item">
-            <span class="classification-details__metadata-label">設定</span>
-            <span class="classification-details__metadata-value">
-              v{classification.configVersion}
-            </span>
-          </div>
-
-          {classification.profileId && (
-            <div class="classification-details__metadata-item">
-              <span class="classification-details__metadata-label">プロファイル</span>
-              <span class="classification-details__metadata-value">{classification.profileId}</span>
-            </div>
-          )}
+  {showMetadata && variant !== 'compact' && (
+    <div class="classification-details__metadata">
+      <div class="classification-details__metadata-grid">
+        <div class="classification-details__metadata-item">
+          <span class="classification-details__metadata-label">処理時間</span>
+          <span class="classification-details__metadata-value">{processingTimeText}</span>
         </div>
+
+        <div class="classification-details__metadata-item">
+          <span class="classification-details__metadata-label">アルゴリズム</span>
+          <span class="classification-details__metadata-value">
+            v{classification.algorithmVersion}
+          </span>
+        </div>
+
+        <div class="classification-details__metadata-item">
+          <span class="classification-details__metadata-label">設定</span>
+          <span class="classification-details__metadata-value">
+            v{classification.configVersion}
+          </span>
+        </div>
+
+        {classification.profileId && (
+          <div class="classification-details__metadata-item">
+            <span class="classification-details__metadata-label">プロファイル</span>
+            <span class="classification-details__metadata-value">{classification.profileId}</span>
+          </div>
+        )}
       </div>
-    )
-  }
+    </div>
+  )}
 </div>
 
 <style>

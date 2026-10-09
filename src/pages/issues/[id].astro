@@ -181,30 +181,28 @@ try {
         </h1>
         <div class="flex items-center gap-4 text-sm text-muted">
           <span>
-            Opened {new Date(currentIssue.created_at).toLocaleDateString('ja-JP')} by @{
-              currentIssue.user?.login || 'Unknown'
-            }
+            Opened {new Date(currentIssue.created_at).toLocaleDateString('ja-JP')} by @
+            {currentIssue.user?.login || 'Unknown'}
           </span>
           <span
             class={`inline-block w-2 h-2 rounded-full ${
               currentIssue.state === 'open' ? 'bg-green-500' : 'bg-red-500'
-            }`}></span>
+            }`}
+          ></span>
           <span class={currentIssue.state === 'open' ? 'text-green-600' : 'text-red-600'}>
             {currentIssue.state === 'open' ? 'Open' : 'Closed'}
           </span>
         </div>
       </div>
       <div class="flex gap-2">
-        {
-          currentIssue.labels.map(label => (
-            <span
-              class="px-2 py-1 text-xs rounded font-medium"
-              style={`background-color: #${label.color}20; color: #${label.color}`}
-            >
-              {label.name}
-            </span>
-          ))
-        }
+        {currentIssue.labels.map(label => (
+          <span
+            class="px-2 py-1 text-xs rounded font-medium"
+            style={`background-color: #${label.color}20; color: #${label.color}`}
+          >
+            {label.name}
+          </span>
+        ))}
       </div>
     </div>
   </div>
@@ -216,20 +214,18 @@ try {
       <div class="card">
         <h2 class="text-lg font-semibold text-heading mb-4">Description</h2>
         <div class="prose dark:prose-invert max-w-none">
-          {
-            currentIssue.body ? (
-              processedBody.length > 0 ? (
-                <div set:html={processedBody} />
-              ) : (
-                <div>
-                  <p class="text-red-600 mb-2">Markdown processing failed. Showing raw content:</p>
-                  <pre class="whitespace-pre-wrap text-sm">{currentIssue.body}</pre>
-                </div>
-              )
+          {currentIssue.body ? (
+            processedBody.length > 0 ? (
+              <div set:html={processedBody} />
             ) : (
-              <p class="text-muted">この Issue には説明がありません。</p>
+              <div>
+                <p class="text-red-600 mb-2">Markdown processing failed. Showing raw content:</p>
+                <pre class="whitespace-pre-wrap text-sm">{currentIssue.body}</pre>
+              </div>
             )
-          }
+          ) : (
+            <p class="text-muted">この Issue には説明がありません。</p>
+          )}
         </div>
       </div>
 
@@ -239,7 +235,8 @@ try {
         <div class="space-y-4">
           <div class="text-center py-8">
             <p class="text-muted">
-              コメント機能は現在実装されていません。<br />
+              コメント機能は現在実装されていません。
+              <br />
               GitHub API の comments エンドポイントを統合する予定です。
             </p>
           </div>
@@ -252,28 +249,26 @@ try {
       <!-- Enhanced Classification Analysis -->
       <div class="card">
         <h3 class="text-lg font-semibold text-heading mb-4">🤖 AI分析</h3>
-        {
-          issueClassification ? (
-            <ClassificationDetails
-              classification={issueClassification}
-              variant="detailed"
-              showMetadata={true}
-              showReasons={true}
-              showKeywords={true}
-              maxReasons={3}
-            />
-          ) : (
-            <div class="space-y-3">
-              <div class="flex items-center gap-2 text-sm text-muted">
-                <span class="animate-spin">⏳</span>
-                <span>分類結果を生成中...</span>
-              </div>
-              <div class="text-xs text-muted">
-                <p>このIssueの内容を分析して、最適な分類と優先度を決定しています。</p>
-              </div>
+        {issueClassification ? (
+          <ClassificationDetails
+            classification={issueClassification}
+            variant="detailed"
+            showMetadata={true}
+            showReasons={true}
+            showKeywords={true}
+            maxReasons={3}
+          />
+        ) : (
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 text-sm text-muted">
+              <span class="animate-spin">⏳</span>
+              <span>分類結果を生成中...</span>
             </div>
-          )
-        }
+            <div class="text-xs text-muted">
+              <p>このIssueの内容を分析して、最適な分類と優先度を決定しています。</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <!-- Issue Metadata -->
@@ -283,11 +278,9 @@ try {
           <div>
             <span class="text-sm font-medium text-heading">Assignees:</span>
             <p class="text-sm text-muted">
-              {
-                currentIssue.assignees && currentIssue.assignees.length > 0
-                  ? currentIssue.assignees.map(a => `@${a.login}`).join(', ')
-                  : 'None'
-              }
+              {currentIssue.assignees && currentIssue.assignees.length > 0
+                ? currentIssue.assignees.map(a => `@${a.login}`).join(', ')
+                : 'None'}
             </p>
           </div>
           <div>
@@ -308,16 +301,14 @@ try {
               {new Date(currentIssue.updated_at).toLocaleDateString('ja-JP')}
             </p>
           </div>
-          {
-            currentIssue.closed_at && (
-              <div>
-                <span class="text-sm font-medium text-heading">Closed:</span>
-                <p class="text-sm text-muted">
-                  {new Date(currentIssue.closed_at).toLocaleDateString('ja-JP')}
-                </p>
-              </div>
-            )
-          }
+          {currentIssue.closed_at && (
+            <div>
+              <span class="text-sm font-medium text-heading">Closed:</span>
+              <p class="text-sm text-muted">
+                {new Date(currentIssue.closed_at).toLocaleDateString('ja-JP')}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

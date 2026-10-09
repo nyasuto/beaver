@@ -53,61 +53,57 @@ const categoriesArray = await Promise.all(
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-4">{projectInfo.emoji || '📚'} {pageTitle}</h1>
-      <p class="text-xl text-gray-600 max-w-3xl">
-        {pageDescription}
-      </p>
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">
+        {projectInfo.emoji || '📚'} {pageTitle}
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl">{pageDescription}</p>
     </div>
 
     <!-- Quick Links section removed as per user feedback -->
 
-    {
-      categoriesArray.map(category => (
-        <div class="mb-10">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-6">{category.title}</h2>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {category.docs.map(doc => {
-              const docData = docsCollection.docs.find(d => d.slug === doc.slug);
-              if (!docData) return null;
+    {categoriesArray.map(category => (
+      <div class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">{category.title}</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {category.docs.map(doc => {
+            const docData = docsCollection.docs.find(d => d.slug === doc.slug);
+            if (!docData) return null;
 
-              return (
-                <div class="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow bg-white">
-                  <div class="p-6">
-                    <h3 class="font-semibold text-lg mb-2 text-gray-900">
-                      <a href={doc.href} class="hover:text-blue-600 transition-colors">
-                        {doc.title}
-                      </a>
-                    </h3>
-                    {docData.metadata.description && (
-                      <p class="text-gray-600 mb-4 line-clamp-2">{docData.metadata.description}</p>
-                    )}
-                    <div class="flex items-center justify-between text-sm text-gray-500">
-                      <span>{docData.readingTime}分で読める</span>
-                      <span>{docData.wordCount}語</span>
-                    </div>
-                    {docData.metadata.tags && docData.metadata.tags.length > 0 && (
-                      <div class="mt-3 flex flex-wrap gap-1">
-                        {docData.metadata.tags.slice(0, 3).map(tag => (
-                          <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+            return (
+              <div class="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow bg-white">
+                <div class="p-6">
+                  <h3 class="font-semibold text-lg mb-2 text-gray-900">
+                    <a href={doc.href} class="hover:text-blue-600 transition-colors">
+                      {doc.title}
+                    </a>
+                  </h3>
+                  {docData.metadata.description && (
+                    <p class="text-gray-600 mb-4 line-clamp-2">{docData.metadata.description}</p>
+                  )}
+                  <div class="flex items-center justify-between text-sm text-gray-500">
+                    <span>{docData.readingTime}分で読める</span>
+                    <span>{docData.wordCount}語</span>
                   </div>
+                  {docData.metadata.tags && docData.metadata.tags.length > 0 && (
+                    <div class="mt-3 flex flex-wrap gap-1">
+                      {docData.metadata.tags.slice(0, 3).map(tag => (
+                        <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
-      ))
-    }
+      </div>
+    ))}
 
     <div class="mt-12 p-6 bg-gray-50 rounded-lg">
       <h3 class="font-semibold text-lg mb-2">🔍 {t('docs.search.placeholder')}</h3>
-      <p class="text-gray-600">
-        {t('docs.search.hint')}
-      </p>
+      <p class="text-gray-600">{t('docs.search.hint')}</p>
     </div>
   </div>
 </PageLayout>

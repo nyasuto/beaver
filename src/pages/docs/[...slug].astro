@@ -74,18 +74,20 @@ const sectionCount = doc.sections.length;
     {/* Breadcrumbs */}
     <nav class="mb-6 text-sm">
       <ol class="flex items-center space-x-2 text-gray-500">
-        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-        <li><a href={await buildNavUrl('')} class="hover:text-blue-600">{t('docs.title')}</a></li>
-        {
-          breadcrumbsWithUrls.map((crumb, _index) => (
-            <li class="flex items-center space-x-2">
-              <span>/</span>
-              <a href={crumb.href} class="hover:text-blue-600">
-                {crumb.title}
-              </a>
-            </li>
-          ))
-        }
+        <li>
+          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+          <a href={await buildNavUrl('')} class="hover:text-blue-600">
+            {t('docs.title')}
+          </a>
+        </li>
+        {breadcrumbsWithUrls.map((crumb, _index) => (
+          <li class="flex items-center space-x-2">
+            <span>/</span>
+            <a href={crumb.href} class="hover:text-blue-600">
+              {crumb.title}
+            </a>
+          </li>
+        ))}
         <li class="flex items-center space-x-2">
           <span>/</span>
           <span class="text-gray-900">{doc.metadata.title}</span>
@@ -97,34 +99,28 @@ const sectionCount = doc.sections.length;
     <header class="mb-8">
       <h1 class="text-4xl font-bold text-gray-900 mb-4">{doc.metadata.title}</h1>
 
-      {
-        doc.metadata.description && (
-          <p class="text-xl text-gray-600 mb-4">{doc.metadata.description}</p>
-        )
-      }
+      {doc.metadata.description && (
+        <p class="text-xl text-gray-600 mb-4">{doc.metadata.description}</p>
+      )}
 
       {/* Enhanced metadata layout for integrated approach */}
       <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           {/* Reading Time */}
-          {
-            uiConfig.showReadingTime && (
-              <div class="flex items-center text-gray-600">
-                <span class="mr-2">📖</span>
-                <span>{doc.readingTime}</span>
-              </div>
-            )
-          }
+          {uiConfig.showReadingTime && (
+            <div class="flex items-center text-gray-600">
+              <span class="mr-2">📖</span>
+              <span>{doc.readingTime}</span>
+            </div>
+          )}
 
           {/* Last Updated */}
-          {
-            uiConfig.showLastModified && doc.metadata.lastModified && (
-              <div class="flex items-center text-gray-600">
-                <span class="mr-2">📅</span>
-                <span>{new Date(doc.metadata.lastModified).toLocaleDateString('ja-JP')}</span>
-              </div>
-            )
-          }
+          {uiConfig.showLastModified && doc.metadata.lastModified && (
+            <div class="flex items-center text-gray-600">
+              <span class="mr-2">📅</span>
+              <span>{new Date(doc.metadata.lastModified).toLocaleDateString('ja-JP')}</span>
+            </div>
+          )}
 
           {/* Section Count */}
           <div class="flex items-center text-gray-600">
@@ -140,19 +136,17 @@ const sectionCount = doc.sections.length;
         </div>
 
         {/* Tags (if available) */}
-        {
-          doc.metadata.tags && doc.metadata.tags.length > 0 && (
-            <div class="mt-3 pt-3 border-t border-gray-200">
-              <div class="flex flex-wrap gap-2">
-                {doc.metadata.tags.map(tag => (
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {tag}
-                  </span>
-                ))}
-              </div>
+        {doc.metadata.tags && doc.metadata.tags.length > 0 && (
+          <div class="mt-3 pt-3 border-t border-gray-200">
+            <div class="flex flex-wrap gap-2">
+              {doc.metadata.tags.map(tag => (
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {tag}
+                </span>
+              ))}
             </div>
-          )
-        }
+          </div>
+        )}
       </div>
     </header>
 
@@ -164,48 +158,44 @@ const sectionCount = doc.sections.length;
     {/* Enhanced Footer Section */}
     <footer class="mt-12 pt-8 border-t border-gray-200">
       {/* Edit Link */}
-      {
-        uiConfig.showEditLink && (
-          <div class="mb-6">
-            {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-            <a
-              href={await buildEditUrl(doc.slug)}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
-            >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              {t('docs.editPage')}
-            </a>
-          </div>
-        )
-      }
+      {uiConfig.showEditLink && (
+        <div class="mb-6">
+          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+          <a
+            href={await buildEditUrl(doc.slug)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            {t('docs.editPage')}
+          </a>
+        </div>
+      )}
 
       {/* Related Documents */}
-      {
-        relatedDocsWithUrls.length > 0 && (
-          <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-3">関連ドキュメント</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {relatedDocsWithUrls.map(related => (
-                <a
-                  href={related.href}
-                  class="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                >
-                  <span class="text-blue-600 hover:text-blue-700 font-medium">{related.slug}</span>
-                </a>
-              ))}
-            </div>
+      {relatedDocsWithUrls.length > 0 && (
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">関連ドキュメント</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {relatedDocsWithUrls.map(related => (
+              <a
+                href={related.href}
+                class="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              >
+                <span class="text-blue-600 hover:text-blue-700 font-medium">{related.slug}</span>
+              </a>
+            ))}
           </div>
-        )
-      }
+        </div>
+      )}
     </footer>
   </IntegratedDocsLayout>
 </PageLayout>
