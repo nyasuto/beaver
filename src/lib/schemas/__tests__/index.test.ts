@@ -44,6 +44,65 @@ import {
   type ApiResponse,
 } from '../index';
 
+// Mock the functions since they are imported from other modules.
+// vi.mock() is hoisted to the top of the file, so these must live at module
+// top level (Vitest 5 rejects nested vi.mock calls).
+vi.mock('../validation', () => ({
+  validateData: vi.fn(),
+  validateDataOrThrow: vi.fn(),
+  ValidationError: class ValidationError extends Error {},
+}));
+
+vi.mock('../config', () => ({
+  validateConfig: vi.fn(),
+  createDefaultConfig: vi.fn(),
+  parseEnvironment: vi.fn(),
+  BeaverConfigSchema: vi.fn(),
+  GitHubConfigSchema: vi.fn(),
+  EnvironmentSchema: vi.fn(),
+}));
+
+vi.mock('../ui', () => ({
+  validateUIProps: vi.fn(),
+  createDefaultTheme: vi.fn(),
+  generateUIId: vi.fn(),
+  ThemeConfigSchema: vi.fn(),
+  ButtonPropsSchema: vi.fn(),
+  CardPropsSchema: vi.fn(),
+  InputPropsSchema: vi.fn(),
+  ModalPropsSchema: vi.fn(),
+}));
+
+vi.mock('../api', () => ({
+  validateAPIResponse: vi.fn(),
+  createSuccessResponse: vi.fn(),
+  createErrorResponse: vi.fn(),
+  SuccessAPIResponseSchema: vi.fn(),
+  ErrorAPIResponseSchema: vi.fn(),
+  PaginatedAPIResponseSchema: vi.fn(),
+  HealthCheckSchema: vi.fn(),
+}));
+
+vi.mock('../processing', () => ({
+  validateProcessingData: vi.fn(),
+  applyFilters: vi.fn(),
+  createDefaultProcessingOptions: vi.fn(),
+  FilterGroupSchema: vi.fn(),
+  DataPipelineSchema: vi.fn(),
+  ProcessingResultSchema: vi.fn(),
+  DataCategorySchema: vi.fn(),
+}));
+
+vi.mock('../github', () => ({
+  validateGitHubData: vi.fn(),
+  createGitHubResponse: vi.fn(),
+  parseGitHubPagination: vi.fn(),
+  IssueSchema: vi.fn(),
+  RepositorySchema: vi.fn(),
+  CommitSchema: vi.fn(),
+  WebhookEventSchema: vi.fn(),
+}));
+
 describe('Common Schemas', () => {
   describe('IdSchema', () => {
     it('should validate positive integers', () => {
@@ -284,63 +343,6 @@ describe('Validation Constants', () => {
 });
 
 describe('Validation Helper Functions', () => {
-  // Mock the functions since they are imported from other modules
-  vi.mock('../validation', () => ({
-    validateData: vi.fn(),
-    validateDataOrThrow: vi.fn(),
-    ValidationError: class ValidationError extends Error {},
-  }));
-
-  vi.mock('../config', () => ({
-    validateConfig: vi.fn(),
-    createDefaultConfig: vi.fn(),
-    parseEnvironment: vi.fn(),
-    BeaverConfigSchema: vi.fn(),
-    GitHubConfigSchema: vi.fn(),
-    EnvironmentSchema: vi.fn(),
-  }));
-
-  vi.mock('../ui', () => ({
-    validateUIProps: vi.fn(),
-    createDefaultTheme: vi.fn(),
-    generateUIId: vi.fn(),
-    ThemeConfigSchema: vi.fn(),
-    ButtonPropsSchema: vi.fn(),
-    CardPropsSchema: vi.fn(),
-    InputPropsSchema: vi.fn(),
-    ModalPropsSchema: vi.fn(),
-  }));
-
-  vi.mock('../api', () => ({
-    validateAPIResponse: vi.fn(),
-    createSuccessResponse: vi.fn(),
-    createErrorResponse: vi.fn(),
-    SuccessAPIResponseSchema: vi.fn(),
-    ErrorAPIResponseSchema: vi.fn(),
-    PaginatedAPIResponseSchema: vi.fn(),
-    HealthCheckSchema: vi.fn(),
-  }));
-
-  vi.mock('../processing', () => ({
-    validateProcessingData: vi.fn(),
-    applyFilters: vi.fn(),
-    createDefaultProcessingOptions: vi.fn(),
-    FilterGroupSchema: vi.fn(),
-    DataPipelineSchema: vi.fn(),
-    ProcessingResultSchema: vi.fn(),
-    DataCategorySchema: vi.fn(),
-  }));
-
-  vi.mock('../github', () => ({
-    validateGitHubData: vi.fn(),
-    createGitHubResponse: vi.fn(),
-    parseGitHubPagination: vi.fn(),
-    IssueSchema: vi.fn(),
-    RepositorySchema: vi.fn(),
-    CommitSchema: vi.fn(),
-    WebhookEventSchema: vi.fn(),
-  }));
-
   describe('Function Exports', () => {
     it('should export validation functions', () => {
       expect(validateData).toBeDefined();
