@@ -137,79 +137,77 @@ const closeButtonClasses = [
 const modalClasses = [containerClasses, sizeClasses[size], className].filter(Boolean).join(' ');
 ---
 
-{
-  isOpen && (
-    <div
-      class={overlayClasses}
-      id={modalId}
-      data-testid={testId}
-      aria-labelledby={titleId}
-      aria-describedby={ariaDescribedBy || bodyId}
-      aria-modal="true"
-      role={role || 'dialog'}
-      style={style}
-      {...rest}
-    >
-      <div class={modalClasses}>
-        <div class={contentClasses}>
-          {(title || header || showCloseButton) && (
-            <div class={headerClasses}>
-              <div class="flex-1">
-                {title && (
-                  <h2 id={titleId} class="text-lg font-semibold text-gray-900">
-                    {title}
-                  </h2>
-                )}
-                {header && !title && (
-                  <div class="modal-header">
-                    <Fragment set:html={header} />
-                  </div>
-                )}
-              </div>
-              {showCloseButton && (
-                <button
-                  type="button"
-                  class={closeButtonClasses}
-                  aria-label="モーダルを閉じる"
-                  data-modal-close
-                >
-                  <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+{isOpen && (
+  <div
+    class={overlayClasses}
+    id={modalId}
+    data-testid={testId}
+    aria-labelledby={titleId}
+    aria-describedby={ariaDescribedBy || bodyId}
+    aria-modal="true"
+    role={role || 'dialog'}
+    style={style}
+    {...rest}
+  >
+    <div class={modalClasses}>
+      <div class={contentClasses}>
+        {(title || header || showCloseButton) && (
+          <div class={headerClasses}>
+            <div class="flex-1">
+              {title && (
+                <h2 id={titleId} class="text-lg font-semibold text-gray-900">
+                  {title}
+                </h2>
+              )}
+              {header && !title && (
+                <div class="modal-header">
+                  <Fragment set:html={header} />
+                </div>
               )}
             </div>
-          )}
+            {showCloseButton && (
+              <button
+                type="button"
+                class={closeButtonClasses}
+                aria-label="モーダルを閉じる"
+                data-modal-close
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
 
-          <div id={bodyId} class={bodyClasses}>
-            <div class="modal-content">
-              <slot />
+        <div id={bodyId} class={bodyClasses}>
+          <div class="modal-content">
+            <slot />
+          </div>
+        </div>
+
+        {footer && (
+          <div class={footerClasses}>
+            <div class="modal-footer">
+              <Fragment set:html={footer} />
             </div>
           </div>
-
-          {footer && (
-            <div class={footerClasses}>
-              <div class="modal-footer">
-                <Fragment set:html={footer} />
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
-  )
-}
+  </div>
+)}
 
 <script>
   // Modal functionality (client-side)

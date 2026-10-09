@@ -219,72 +219,66 @@ const { class: className = '' } = Astro.props;
     </div>
 
     <div class="space-y-3">
-      {
-        recentIssues.length > 0 ? (
-          recentIssues.map((issue: RecentIssue) => (
-            <div class="flex items-start space-x-3 p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-              <span class="text-lg mt-0.5">{getIssueIcon(issue)}</span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between">
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {issue.title}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      #{issue.number} • {getIssueStateJa(issue.state)} •{' '}
-                      {getRelativeTime(issue.updated_at)}
-                    </p>
-                  </div>
-                  <div class="flex items-center space-x-1 ml-2">
-                    {issue.labels?.slice(0, 1).map(label => (
-                      <span
-                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                        style={`background-color: #${label.color}20; color: #${label.color};`}
-                      >
-                        {label.name}
-                      </span>
-                    ))}
-                  </div>
+      {recentIssues.length > 0 ? (
+        recentIssues.map((issue: RecentIssue) => (
+          <div class="flex items-start space-x-3 p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <span class="text-lg mt-0.5">{getIssueIcon(issue)}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {issue.title}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    #{issue.number} • {getIssueStateJa(issue.state)} •{' '}
+                    {getRelativeTime(issue.updated_at)}
+                  </p>
+                </div>
+                <div class="flex items-center space-x-1 ml-2">
+                  {issue.labels?.slice(0, 1).map(label => (
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                      style={`background-color: #${label.color}20; color: #${label.color};`}
+                    >
+                      {label.name}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <span class="text-2xl block mb-2">📭</span>
-            <p class="text-sm">最近のIssueが見つかりません</p>
           </div>
-        )
-      }
+        ))
+      ) : (
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <span class="text-2xl block mb-2">📭</span>
+          <p class="text-sm">最近のIssueが見つかりません</p>
+        </div>
+      )}
     </div>
   </div>
 </div>
 
 <!-- Data Source Status -->
-{
-  stats?.meta.source === 'fallback' && (
-    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-      <p class="text-sm text-yellow-700 dark:text-yellow-300">
-        ⚠️ サンプルデータを表示中 -
+{stats?.meta.source === 'fallback' && (
+  <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+    <p class="text-sm text-yellow-700 dark:text-yellow-300">
+      ⚠️ サンプルデータを表示中 -
+      <a href="/api/github/health" class="underline hover:no-underline">
+        GitHub API接続を確認
+      </a>
+      して実際のデータを取得してください
+    </p>
+  </div>
+)}
+{(!statsResult.success || !repoResult.success) &&
+  stats?.meta.source !== 'fallback' &&
+  stats?.meta.source !== 'static_data' && (
+    <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <p class="text-sm text-blue-700 dark:text-blue-300">
+        データが制限されている可能性があります。{' '}
         <a href="/api/github/health" class="underline hover:no-underline">
-          GitHub API接続を確認
+          APIステータス確認
         </a>
-        して実際のデータを取得してください
       </p>
     </div>
-  )
-}
-{
-  (!statsResult.success || !repoResult.success) &&
-    stats?.meta.source !== 'fallback' &&
-    stats?.meta.source !== 'static_data' && (
-      <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <p class="text-sm text-blue-700 dark:text-blue-300">
-          データが制限されている可能性があります。{' '}
-          <a href="/api/github/health" class="underline hover:no-underline">
-            APIステータス確認
-          </a>
-        </p>
-      </div>
-    )
-}
+  )}

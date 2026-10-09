@@ -56,51 +56,46 @@ const accessibilityLabel = getAccessibilityLabel(confidenceLevel, percentage);
   aria-label={accessibilityLabel}
   role="img"
 >
-  {
-    variant === 'detailed' && (
-      <div class="confidence-indicator__header">
-        {showLabel && <span class="confidence-indicator__label">信頼度</span>}
-        {showPercentage && <span class="confidence-indicator__percentage">{percentage}%</span>}
-      </div>
-    )
-  }
+  {variant === 'detailed' && (
+    <div class="confidence-indicator__header">
+      {showLabel && <span class="confidence-indicator__label">信頼度</span>}
+      {showPercentage && <span class="confidence-indicator__percentage">{percentage}%</span>}
+    </div>
+  )}
 
   <div class="confidence-indicator__bar">
-    <div class="confidence-indicator__fill" style={`width: ${percentage}%`} aria-hidden="true">
-    </div>
-    {
-      threshold > 0 && (
-        <div
-          class="confidence-indicator__threshold"
-          style={`left: ${threshold * 100}%`}
-          aria-hidden="true"
-        />
-      )
-    }
+    <div
+      class="confidence-indicator__fill"
+      style={`width: ${percentage}%`}
+      aria-hidden="true"
+    ></div>
+    {threshold > 0 && (
+      <div
+        class="confidence-indicator__threshold"
+        style={`left: ${threshold * 100}%`}
+        aria-hidden="true"
+      />
+    )}
   </div>
 
-  {
-    variant === 'compact' && showPercentage && (
-      <span class="confidence-indicator__percentage confidence-indicator__percentage--compact">
-        {percentage}%
-      </span>
-    )
-  }
+  {variant === 'compact' && showPercentage && (
+    <span class="confidence-indicator__percentage confidence-indicator__percentage--compact">
+      {percentage}%
+    </span>
+  )}
 
-  {
-    variant === 'default' && (
-      <div class="confidence-indicator__footer">
-        {showLabel && (
-          <span class="confidence-indicator__level">
-            {confidenceLevel === 'low' && '低信頼度'}
-            {confidenceLevel === 'medium' && '中信頼度'}
-            {confidenceLevel === 'high' && '高信頼度'}
-          </span>
-        )}
-        {showPercentage && <span class="confidence-indicator__percentage">{percentage}%</span>}
-      </div>
-    )
-  }
+  {variant === 'default' && (
+    <div class="confidence-indicator__footer">
+      {showLabel && (
+        <span class="confidence-indicator__level">
+          {confidenceLevel === 'low' && '低信頼度'}
+          {confidenceLevel === 'medium' && '中信頼度'}
+          {confidenceLevel === 'high' && '高信頼度'}
+        </span>
+      )}
+      {showPercentage && <span class="confidence-indicator__percentage">{percentage}%</span>}
+    </div>
+  )}
 </div>
 
 <style>

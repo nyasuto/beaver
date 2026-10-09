@@ -104,76 +104,68 @@ const isValid = Math.abs(calculatedTotal - score) < 0.01;
   class={`score-breakdown score-breakdown--${variant} ${className}`}
   aria-label={`スコア内訳: 合計 ${score}点`}
 >
-  {
-    showTotal && (
-      <div class="score-breakdown__header">
-        <h4 class="score-breakdown__title">スコア内訳</h4>
-        <div class="score-breakdown__total">
-          <span class="score-breakdown__total-value">{score}</span>
-          <span class="score-breakdown__total-label">/ {totalScore}</span>
-        </div>
+  {showTotal && (
+    <div class="score-breakdown__header">
+      <h4 class="score-breakdown__title">スコア内訳</h4>
+      <div class="score-breakdown__total">
+        <span class="score-breakdown__total-value">{score}</span>
+        <span class="score-breakdown__total-label">/ {totalScore}</span>
       </div>
-    )
-  }
+    </div>
+  )}
 
-  {
-    variant === 'detailed' && (
-      <div class="score-breakdown__summary">
-        <div class="score-breakdown__chart">
-          {breakdownItems.map(item => (
-            <div
-              class="score-breakdown__chart-segment"
-              style={`width: ${item.percentage}%; background-color: ${item.color}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+  {variant === 'detailed' && (
+    <div class="score-breakdown__summary">
+      <div class="score-breakdown__chart">
+        {breakdownItems.map(item => (
+          <div
+            class="score-breakdown__chart-segment"
+            style={`width: ${item.percentage}%; background-color: ${item.color}`}
+            aria-hidden="true"
+          />
+        ))}
       </div>
-    )
-  }
+    </div>
+  )}
 
   <div class="score-breakdown__items">
-    {
-      breakdownItems.map(item => (
-        <div class="score-breakdown__item">
-          {variant !== 'compact' && <div class="score-breakdown__item-icon">{item.icon}</div>}
+    {breakdownItems.map(item => (
+      <div class="score-breakdown__item">
+        {variant !== 'compact' && <div class="score-breakdown__item-icon">{item.icon}</div>}
 
-          <div class="score-breakdown__item-content">
-            <div class="score-breakdown__item-header">
-              <span class="score-breakdown__item-label">{item.label}</span>
-              <span class="score-breakdown__item-value">
-                {item.value}
-                {showPercentages && (
-                  <span class="score-breakdown__item-percentage">({item.percentage}%)</span>
-                )}
-              </span>
-            </div>
-
-            {variant !== 'compact' && (
-              <div class="score-breakdown__item-bar">
-                <div
-                  class="score-breakdown__item-fill"
-                  style={`width: ${item.percentage}%; background-color: ${item.color}`}
-                  aria-hidden="true"
-                />
-              </div>
-            )}
+        <div class="score-breakdown__item-content">
+          <div class="score-breakdown__item-header">
+            <span class="score-breakdown__item-label">{item.label}</span>
+            <span class="score-breakdown__item-value">
+              {item.value}
+              {showPercentages && (
+                <span class="score-breakdown__item-percentage">({item.percentage}%)</span>
+              )}
+            </span>
           </div>
+
+          {variant !== 'compact' && (
+            <div class="score-breakdown__item-bar">
+              <div
+                class="score-breakdown__item-fill"
+                style={`width: ${item.percentage}%; background-color: ${item.color}`}
+                aria-hidden="true"
+              />
+            </div>
+          )}
         </div>
-      ))
-    }
+      </div>
+    ))}
   </div>
 
-  {
-    !isValid && (
-      <div class="score-breakdown__warning">
-        <span class="score-breakdown__warning-icon">⚠️</span>
-        <span class="score-breakdown__warning-text">
-          スコア合計が一致しません (計算値: {calculatedTotal})
-        </span>
-      </div>
-    )
-  }
+  {!isValid && (
+    <div class="score-breakdown__warning">
+      <span class="score-breakdown__warning-icon">⚠️</span>
+      <span class="score-breakdown__warning-text">
+        スコア合計が一致しません (計算値: {calculatedTotal})
+      </span>
+    </div>
+  )}
 </div>
 
 <style>

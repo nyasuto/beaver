@@ -172,7 +172,6 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
         document.documentElement.setAttribute('data-theme', 'light');
       }
     </script>
-
     {/* Structured Data */}
     <script type="application/ld+json" is:inline>
       {
@@ -208,17 +207,15 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
     />
 
     {/* Header */}
-    {
-      showHeader && (
-        <Header
-          currentPath={Astro.url.pathname}
-          showSearch={showSearch}
-          fixed={headerFixed}
-          transparent={headerTransparent}
-          class={headerClass}
-        />
-      )
-    }
+    {showHeader && (
+      <Header
+        currentPath={Astro.url.pathname}
+        showSearch={showSearch}
+        fixed={headerFixed}
+        transparent={headerTransparent}
+        class={headerClass}
+      />
+    )}
 
     {/* Main Content */}
     <main id="main-content" class={mainClasses}>
@@ -244,7 +241,8 @@ const bodyClasses = `min-h-screen flex flex-col antialiased transition-colors du
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="2"
-          d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+          d="M5 10l7-7m0 0l7 7m-7-7v18"
+        ></path>
       </svg>
     </button>
 
