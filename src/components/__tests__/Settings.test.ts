@@ -933,11 +933,19 @@ describe('Settings Component Comprehensive Tests', () => {
     });
 
     it('should have proper focus management', () => {
+      const settingsPanel = document.getElementById('user-settings') as HTMLElement;
       const closeButton = document.querySelector('[data-action="close"]') as HTMLButtonElement;
 
+      expect(settingsPanel).toBeTruthy();
       expect(closeButton).toBeTruthy();
 
-      // Test focus
+      // While the panel is closed (display: none) its controls are not focusable,
+      // matching browser behaviour (enforced by jsdom since v30)
+      closeButton.focus();
+      expect(document.activeElement).not.toBe(closeButton);
+
+      // Once the panel is open, the close button can receive focus
+      settingsPanel.style.display = 'block';
       closeButton.focus();
       expect(document.activeElement).toBe(closeButton);
     });
