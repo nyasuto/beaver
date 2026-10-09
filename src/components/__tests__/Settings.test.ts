@@ -335,10 +335,12 @@ describe('Settings Component Comprehensive Tests', () => {
     // Set up global references
     (global as any).document = document;
     (global as any).window = window;
-    (global as any).navigator = window.navigator;
+    // `navigator` is a getter-only global under Vitest 5, so it cannot be assigned
+    vi.stubGlobal('navigator', window.navigator);
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
     vi.restoreAllMocks();
     dom.window.close();

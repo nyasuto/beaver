@@ -9,15 +9,13 @@ import { format, parse } from 'date-fns';
 import { ja, enUS } from 'date-fns/locale';
 
 describe('Timezone Integration', () => {
-  let originalNavigator: any;
-
   beforeEach(() => {
-    // Mock navigator for testing browser detection
-    originalNavigator = global.navigator;
-    global.navigator = {
+    // Mock navigator for testing browser detection.
+    // `navigator` is a getter-only global under Vitest 5, so stub it instead of assigning.
+    vi.stubGlobal('navigator', {
       ...global.navigator,
       language: 'ja-JP',
-    };
+    });
 
     // Mock window object
     Object.defineProperty(global, 'window', {
@@ -34,7 +32,7 @@ describe('Timezone Integration', () => {
   });
 
   afterEach(() => {
-    global.navigator = originalNavigator;
+    vi.unstubAllGlobals();
   });
 
   describe('Date parsing consistency', () => {
