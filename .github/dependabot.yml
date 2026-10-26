@@ -21,6 +21,11 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 10
+    # typescript-eslint and astro check do not support TypeScript 7 yet;
+    # hold the major until they do.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       # astro and its integrations pin each other via peerDependencies, so a
       # standalone bump of any one of them is not independently mergeable.
