@@ -52,7 +52,8 @@ jobs:
           echo "2/4 Format checking..."
           ./node_modules/.bin/prettier --check "src/**/*.{js,jsx,ts,tsx,astro,json,md}"
           echo "3/4 Type checking..."
-          ./node_modules/.bin/astro check --minimumSeverity error && ./node_modules/.bin/tsc --noEmit --skipLibCheck
+          ./node_modules/.bin/astro check --minimumSeverity error
+          ./node_modules/.bin/tsc --noEmit --skipLibCheck
           echo "4/4 Testing..."
           ./node_modules/.bin/vitest run
           echo "✅ Quality checks completed"
